@@ -27,6 +27,8 @@ export type ConnectResult = 'ok' | 'same' | 'cycle' | 'kind';
 const MAX_HISTORY = 100;
 export const MIN_ZOOM = 0.35;
 export const MAX_ZOOM = 2.5;
+/** O'ng pastdagi zoom tugmalari ustuni kengligi (fit uni chetlab o'tadi). */
+const ZOOM_TOOLS_W = 56;
 
 export class Editor {
   readonly spec = signal<Spec>({ inputs: [], outputs: [], gates: [] });
@@ -41,6 +43,11 @@ export class Editor {
   readonly canUndo = signal(false);
   readonly canRedo = signal(false);
   readonly outX = signal(560);
+  /**
+   * Vertikal rejim (telefon, tik holat): maydon transpozitsiya qilinadi — dunyodagi x ekranda pastga,
+   * y o'ngga yo'naladi. Sxema koordinatalari o'zgarmaydi, shuning uchun bir sxema ikkala holatda ham ishlaydi.
+   */
+  readonly vertical = signal(false);
 
   readonly layout = computed<Layout>(() => layout(this.spec.value, this.outX.value));
   readonly compiled = computed(() => compile(this.spec.value, this.circuit.value));
@@ -50,6 +57,8 @@ export class Editor {
 
   /** Board elementining o'lchami (fit va markazga qo'yish uchun). */
   size = { w: 800, h: 500 };
+  /** Maydon tepasini yopib turgan panel balandligi (telefondagi vazifa qatori). */
+  insetTop = 0;
   el: HTMLElement | null = null;
   viewTouched = false;
   onChange: ((c: Circuit) => void) | null = null;
@@ -146,13 +155,23 @@ export class Editor {
 
   /** Ekrandagi ko'rinish markaziga element qo'shish. */
   addGateAtCenter(type: GateType) {
-    const { tx, ty, s } = this.view.value;
-    this.addGate(type, (this.size.w / 2 - tx) / s, (this.size.h / 2 - ty) / s);
+    const c = this.toWorld(this.size.w / 2, (this.size.h + this.insetTop) / 2);
+    this.addGate(type, c.x, c.y);
   }
 
+  /** Ekran (board ichidagi px) → dunyo koordinatasi. */
   toWorld(sx: number, sy: number) {
     const { tx, ty, s } = this.view.value;
-    return { x: (sx - tx) / s, y: (sy - ty) / s };
+    const a = (sx - tx) / s;
+    const b = (sy - ty) / s;
+    return this.vertical.value ? { x: b, y: a } : { x: a, y: b };
+  }
+
+  /** Dunyo → ekran koordinatasi. */
+  toScreen(wx: number, wy: number) {
+    const { tx, ty, s } = this.view.value;
+    const [a, b] = this.vertical.value ? [wy, wx] : [wx, wy];
+    return { x: tx + a * s, y: ty + b * s };
   }
 
   beginDrag() {
@@ -215,16 +234,23 @@ export class Editor {
   }
 
   fit() {
-    const b = bounds(this.circuit.value, this.layout.value);
+    const vertical = this.vertical.value;
+    const b = bounds(this.circuit.value, this.layout.value, vertical);
+    // Ekranning gorizontal (a) va vertikal (b) o'qlariga dunyoning qaysi o'qi to'g'ri kelishi.
+    const [minA, maxA, minB, maxB] = vertical ? [b.minY, b.maxY, b.minX, b.maxX] : [b.minX, b.maxX, b.minY, b.maxY];
     const pad = this.size.w < 500 ? 8 : 24;
+    const top = this.insetTop;
+    // Gorizontal rejimda chiqishlar o'ngda — zoom tugmalari ularni yopmasin.
+    const availW = this.size.w - (vertical ? 0 : ZOOM_TOOLS_W);
+    const availH = this.size.h - top;
     const s = Math.max(
       MIN_ZOOM,
-      Math.min(1.35, (this.size.w - pad * 2) / (b.maxX - b.minX), (this.size.h - pad * 2) / (b.maxY - b.minY)),
+      Math.min(1.35, (availW - pad * 2) / (maxA - minA), (availH - pad * 2) / (maxB - minB)),
     );
     this.view.value = {
       s,
-      tx: (this.size.w - (b.maxX - b.minX) * s) / 2 - b.minX * s,
-      ty: (this.size.h - (b.maxY - b.minY) * s) / 2 - b.minY * s,
+      tx: (availW - (maxA - minA) * s) / 2 - minA * s,
+      ty: top + (availH - (maxB - minB) * s) / 2 - minB * s,
     };
   }
 

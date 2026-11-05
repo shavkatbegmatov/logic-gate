@@ -856,6 +856,7 @@ input[type='text']:focus {
   font: 700 10px var(--mono);
   fill: var(--muted);
   text-anchor: middle;
+  dominant-baseline: central;
   pointer-events: none;
 }
 
@@ -914,16 +915,22 @@ input[type='text']:focus {
   cursor: pointer;
 }
 
+.pin-name,
+.pin-val,
+.pin-exp {
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
 .pin-name {
   font: 700 16px var(--mono);
   fill: var(--text);
-  pointer-events: none;
 }
 
 .pin-val {
   font: 700 19px var(--mono);
   fill: var(--dim);
-  pointer-events: none;
 }
 
 .pin-in.on rect {
@@ -962,7 +969,6 @@ input[type='text']:focus {
 .pin-exp {
   font: 11px var(--mono);
   fill: var(--muted);
-  text-anchor: middle;
 }
 
 .pin-out.bad .pin-exp {

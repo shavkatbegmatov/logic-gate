@@ -7,7 +7,7 @@ Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqo
 - Element sonini tejagan o'yinchiga 3 ★. Keyingi bo'limlar yulduzlar bilan ochiladi.
 - Ro'yxatdan o'tmasdan o'ynash mumkin. Taxallus kiritilsa, natijalar reytingga qo'shiladi, progress esa tiklash kodi orqali boshqa qurilmaga o'tkaziladi.
 - Qum quti: istalgan sxemani erkin yig'ish.
-- Telefon va kompyuterda ishlaydi: sichqoncha, sensorli ekran, pinch-zoom, klaviatura (Delete, Ctrl+Z, Ctrl+Y, Ctrl+Enter).
+- Telefon va kompyuterda ishlaydi: sichqoncha, sensorli ekran, pinch-zoom, klaviatura (Delete, Ctrl+Z, Ctrl+Y, Ctrl+Enter). Tik telefonda sxema yuqoridan pastga joylashadi (kirishlar tepada, chiqishlar pastda) — elementlar kattaroq ko'rinadi.
 
 ## Stek
 

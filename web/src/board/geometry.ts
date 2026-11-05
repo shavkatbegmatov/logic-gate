@@ -70,10 +70,13 @@ export function isSourcePort(port: string): boolean {
   return port.startsWith('in:') || (!port.startsWith('out:') && !port.includes(':'));
 }
 
-/** Pinlar va elementlarni o'z ichiga olgan to'rtburchak. */
-export function bounds(circuit: Circuit, lay: Layout) {
+/**
+ * Pinlar va elementlarni o'z ichiga olgan to'rtburchak. Vertikal rejimda "kerak" yozuvi
+ * chiqish qutisining ostida (dunyoda — o'ngida) turadi, shuning uchun joy ko'proq.
+ */
+export function bounds(circuit: Circuit, lay: Layout, vertical = false) {
   let minX = -72;
-  let maxX = lay.outX + 80;
+  let maxX = lay.outX + (vertical ? 104 : 80);
   let minY = Infinity;
   let maxY = -Infinity;
   for (const p of [...lay.inputs.values(), ...lay.outputs.values()]) {

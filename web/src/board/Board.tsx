@@ -1,4 +1,5 @@
 import { useSignal } from '@preact/signals';
+import type { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { sfx } from '../audio';
 import { showToast } from '../components/Toast';
@@ -30,9 +31,15 @@ interface Props {
   editor: Editor;
   /** Joriy qator uchun kutilgan chiqishlar (darajada); qum qutida yo'q. */
   expected?: number[] | null;
+  /** Telefonda maydon tepasini yopadigan panellar balandligi (vazifa qatori, o'quv banneri). */
+  topInset?: number;
 }
 
-export function Board({ editor, expected }: Props) {
+// Tik ekran va tor maydonda vertikal rejim: kirishlar tepada, chiqishlar pastda.
+const isVertical = (w: number, h: number) => h > w * 1.1 && w < 700;
+const TRANSPOSE = 'matrix(0,1,1,0,0,0)';
+
+export function Board({ editor, expected, topInset = 0 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<Drag | null>(null);
@@ -47,15 +54,20 @@ export function Board({ editor, expected }: Props) {
       const { width, height } = entry.contentRect;
       if (width < 10 || height < 10) return;
       const big = Math.abs(width - editor.size.w) > 40 || Math.abs(height - editor.size.h) > 40;
+      const vertical = isVertical(width, height);
+      const insetTop = width <= 820 ? topInset : 0;
+      const changed = vertical !== editor.vertical.value || insetTop !== editor.insetTop;
       editor.size = { w: width, h: height };
-      if (!editor.viewTouched || big) editor.fit();
+      editor.vertical.value = vertical;
+      editor.insetTop = insetTop;
+      if (!editor.viewTouched || big || changed) editor.fit();
     });
     ro.observe(el);
     return () => {
       ro.disconnect();
       if (editor.el === el) editor.el = null;
     };
-  }, [editor]);
+  }, [editor, topInset]);
 
   const local = (e: PointerEvent | WheelEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
@@ -69,12 +81,12 @@ export function Board({ editor, expected }: Props) {
    */
   const nearestPort = (p: Point, e: PointerEvent, onGateBody: boolean): string | null => {
     const radius = onGateBody ? 10 : e.pointerType === 'mouse' ? 12 : 24;
-    const { tx, ty, s } = editor.view.value;
     const lay = editor.layout.value;
     let best: string | null = null;
     let bestD = radius;
     const consider = (id: string, w: Point) => {
-      const d = Math.hypot(w.x * s + tx - p.x, w.y * s + ty - p.y);
+      const sp = editor.toScreen(w.x, w.y);
+      const d = Math.hypot(sp.x - p.x, sp.y - p.y);
       if (d < bestD) {
         bestD = d;
         best = id;
@@ -249,6 +261,7 @@ export function Board({ editor, expected }: Props) {
   const { values, outputs } = editor.evaluation.value;
   const bits = editor.bits.value;
   const view = editor.view.value;
+  const vertical = editor.vertical.value;
   const sel = editor.selection.value;
   const pending = editor.pending.value;
   const highlight = editor.highlight.value;
@@ -259,7 +272,8 @@ export function Board({ editor, expected }: Props) {
   let deleteAt: Point | null = null;
   if (sel?.kind === 'gate') {
     const g = gmap.get(sel.id);
-    if (g) deleteAt = { x: g.x + GATE_W - 2, y: g.y - 12 };
+    // Ekranda elementning o'ng-yuqori burchagi (vertikal rejimda o'qlar almashgan).
+    if (g) deleteAt = vertical ? { x: g.x + 2, y: g.y + GATE_H + 12 } : { x: g.x + GATE_W - 2, y: g.y - 12 };
   }
 
   const wireEls = wires.map((w, i) => {
@@ -271,7 +285,7 @@ export function Board({ editor, expected }: Props) {
     const selected = sel?.kind === 'wire' && sel.index === i;
     if (selected) {
       // Simmetrik boshqaruv nuqtalari tufayli Bezier o'rtasi aynan a va b ning o'rtasi.
-      deleteAt = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - 14 };
+      deleteAt = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + (vertical ? 14 : -14) };
     }
     return (
       <g key={`${w.from}>${w.to}`} class={`wire${on ? ' on' : ''}${selected ? ' sel' : ''}`} data-kind="wire" data-index={i}>
@@ -294,6 +308,18 @@ export function Board({ editor, expected }: Props) {
     </g>
   );
 
+  // Matn vertikal rejimda ham to'g'ri o'qilishi uchun transpozitsiyaga teskari buriladi.
+  const label = (cls: string, x: number, y: number, text: ComponentChildren, vx = x, vy = y) =>
+    vertical ? (
+      <text class={cls} transform={`translate(${vx},${vy}) ${TRANSPOSE}`}>
+        {text}
+      </text>
+    ) : (
+      <text class={cls} x={x} y={y}>
+        {text}
+      </text>
+    );
+
   const driven = new Set(wires.map((w) => w.to));
   const usedSources = new Set(wires.map((w) => w.from));
 
@@ -314,7 +340,7 @@ export function Board({ editor, expected }: Props) {
             <circle cx={12} cy={12} r={1.1} class="grid-dot" />
           </pattern>
         </defs>
-        <g transform={`translate(${view.tx},${view.ty}) scale(${view.s})`}>
+        <g transform={`translate(${view.tx},${view.ty}) scale(${view.s})${vertical ? ` ${TRANSPOSE}` : ''}`}>
           <rect class="board-bg" x={-5000} y={-5000} width={10000} height={10000} fill="url(#grid)" />
 
           <g class="wires">{wireEls}</g>
@@ -331,9 +357,7 @@ export function Board({ editor, expected }: Props) {
                 <g data-kind="gate" data-id={g.id}>
                   <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
                   <GateShape type={g.type} />
-                  <text class="gate-label" x={g.type === 'NOT' ? 28 : 32} y={GATE_H / 2 + 4}>
-                    {g.type}
-                  </text>
+                  {label('gate-label', g.type === 'NOT' ? 28 : 32, GATE_H / 2, g.type)}
                 </g>
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
                   port(`${g.id}:${i}`, 0, inputPortY(g, i), false, driven.has(`${g.id}:${i}`), false),
@@ -350,12 +374,8 @@ export function Board({ editor, expected }: Props) {
               <g key={`in:${name}`} class={`pin pin-in${on ? ' on' : ''}`} transform={`translate(${p.x},${p.y})`}>
                 <g data-kind="pin" data-pin={k} class="pin-body">
                   <rect x={-70} y={-20} width={56} height={40} rx={9} />
-                  <text class="pin-name" x={-56} y={5}>
-                    {name}
-                  </text>
-                  <text class="pin-val" x={-30} y={6}>
-                    {on ? 1 : 0}
-                  </text>
+                  {label('pin-name', -52, 0, name)}
+                  {label('pin-val', -28, 0, on ? 1 : 0)}
                 </g>
                 <line class="lead" x1={-14} y1={0} x2={0} y2={0} />
                 {port(`in:${name}`, 0, 0, true, usedSources.has(`in:${name}`), on)}
@@ -377,15 +397,9 @@ export function Board({ editor, expected }: Props) {
               >
                 <line class="lead" x1={0} y1={0} x2={14} y2={0} />
                 <rect class="pin-box" x={14} y={-20} width={60} height={40} rx={9} />
-                <text class="pin-name" x={24} y={5}>
-                  {name}
-                </text>
+                {label('pin-name', 30, 0, name)}
                 <circle class="lamp" cx={58} cy={0} r={8} />
-                {exp !== undefined && (
-                  <text class="pin-exp" x={44} y={36}>
-                    {t.play.expected.toLowerCase()}: {exp}
-                  </text>
-                )}
+                {exp !== undefined && label('pin-exp', 44, 32, `${t.play.expected.toLowerCase()}: ${exp}`, 90, 0)}
                 {port(`out:${name}`, 0, 0, false, driven.has(`out:${name}`), v === 1)}
               </g>
             );

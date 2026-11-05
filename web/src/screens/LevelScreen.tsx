@@ -132,7 +132,7 @@ function Play({ level }: { level: Level }) {
 
       <div class="play-body">
         <div class="stage">
-          <Board editor={editor} expected={expected(level, row)} />
+          <Board editor={editor} expected={expected(level, row)} topInset={tutorialStep >= 0 ? 150 : 64} />
           <button class="task-strip" onClick={() => (showSide.value = !showSide.value)}>
             <span class="task-text">{level.task}</span>
             <span class={`count${used && used <= level.goal ? ' good' : ''}`}>
