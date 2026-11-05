@@ -312,6 +312,8 @@ input[type='text']:focus {
 
 .code-box code {
   flex: 1;
+  user-select: all;
+  -webkit-user-select: all;
   font: 700 18px var(--mono);
   letter-spacing: 0.06em;
   color: var(--copper);
@@ -611,6 +613,11 @@ input[type='text']:focus {
   overflow-y: auto;
   background: var(--bg2);
   border-left: 1px solid var(--line);
+}
+
+/* Bloklar siqilmasin: uzun kontentda panelning o'zi aylantiriladi. */
+.side > * {
+  flex-shrink: 0;
 }
 
 .side .task h2 {
@@ -977,6 +984,43 @@ input[type='text']:focus {
   stroke-width: 2.4;
   stroke-linecap: round;
   pointer-events: none;
+}
+
+/* ── Elementlar tavsifi ───────────────────────────────── */
+.gate-list h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.gate-info {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.gate-info .gate-icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+.gate-info b {
+  font-family: var(--mono);
+}
+
+.gate-text {
+  font-size: 13px;
+  margin: 2px 0 4px;
+}
+
+.gate-truth {
+  font: 12px var(--mono);
+  color: var(--copper);
+  white-space: pre-wrap;
 }
 
 /* ── Haqiqat jadvali ───────────────────────────────────── */

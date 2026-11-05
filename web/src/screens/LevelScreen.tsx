@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
+import { GateList } from '../components/GateList';
 import { JoinForm } from '../components/JoinForm';
 import { Palette } from '../components/Palette';
 import { showToast } from '../components/Toast';
@@ -164,6 +165,7 @@ function Play({ level }: { level: Level }) {
             onRow={(r) => editor.setRow(r)}
           />
           {allOk && <p class="all-ok">{t.play.rowsOk}</p>}
+          <GateList gates={level.gates} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}
           </button>

@@ -105,6 +105,7 @@ export const uz = {
     codeText: "Bu kodni saqlab qo'ying: u bilan boshqa qurilmada progressingizni tiklaysiz. Kodni hech kimga bermang.",
     copy: 'Nusxalash',
     copied: 'Nusxalandi',
+    copyManual: "Avtomatik nusxalab bo'lmadi — kod belgilandi, uni qo'lda nusxalang.",
     restore: 'Progressni tiklash',
     restoreText: 'Boshqa qurilmadagi tiklash kodini kiriting.',
     restoreButton: 'Tiklash',
@@ -114,8 +115,13 @@ export const uz = {
     on: 'Yoqilgan',
     off: "O'chirilgan",
     reset: "Progressni o'chirish",
-    resetText: "Qurilmadagi barcha natijalar va qoralamalar o'chiriladi. Serverdagi natijalar saqlanib qoladi.",
+    resetText: "Qurilmadagi barcha natijalar va qoralamalar o'chiriladi.",
+    resetTextProfile:
+      "Qurilmadagi natijalar, qoralamalar va profil o'chiriladi. Serverdagi natijalaringiz saqlanib qoladi — ularni tiklash kodi bilan qaytarish mumkin, shuning uchun avval kodni saqlab qo'ying.",
     resetConfirm: "Haqiqatan ham qurilmadagi progress o'chirilsinmi?",
+    resetConfirmProfile:
+      "Qurilmadagi progress va profil o'chirilsinmi? Qaytarish uchun tiklash kodi kerak bo'ladi — uni saqlab qo'ydingizmi?",
+    resetDone: "Qurilmadagi progress o'chirildi.",
     about: 'Dastur haqida',
     version: (v: string) => `Versiya ${v}`,
   },

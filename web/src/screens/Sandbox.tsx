@@ -3,6 +3,7 @@ import { useMemo } from 'preact/hooks';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
+import { GateList } from '../components/GateList';
 import { Palette } from '../components/Palette';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, TopBar } from '../components/ui';
@@ -86,6 +87,7 @@ export function Sandbox() {
             current={editor.row.value}
             onRow={(r) => editor.setRow(r)}
           />
+          <GateList gates={GATE_TYPES} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}
           </button>

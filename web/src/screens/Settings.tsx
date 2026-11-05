@@ -1,4 +1,6 @@
 import { useSignal } from '@preact/signals';
+import { useRef } from 'preact/hooks';
+import { copyText, selectContents } from '../clipboard';
 import { JoinForm } from '../components/JoinForm';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
@@ -14,6 +16,7 @@ export function Settings() {
   const nick = useSignal(p?.nickname ?? '');
   const code = useSignal('');
   const busy = useSignal(false);
+  const codeRef = useRef<HTMLElement>(null);
 
   const run = async (fn: () => Promise<void>, ok: string) => {
     busy.value = true;
@@ -28,12 +31,21 @@ export function Settings() {
   };
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(p!.code);
+    if (await copyText(p!.code)) {
       showToast(t.settings.copied, 'ok');
-    } catch {
-      // Clipboard ruxsati bo'lmasa, kod ekranda ko'rinib turadi.
+    } else if (codeRef.current) {
+      selectContents(codeRef.current);
+      showToast(t.settings.copyManual, 'info');
     }
+  };
+
+  const reset = () => {
+    if (!confirm(p ? t.settings.resetConfirmProfile : t.settings.resetConfirm)) return;
+    resetLocalProgress();
+    // Profil qolsa, keyingi ochilishda serverdagi natijalar qaytib kelardi — qurilma to'liq tozalanadi.
+    profile.value = null;
+    nick.value = '';
+    showToast(t.settings.resetDone, 'ok');
   };
 
   return (
@@ -65,7 +77,7 @@ export function Settings() {
                 </form>
                 <h3>{t.settings.code}</h3>
                 <div class="code-box">
-                  <code>{p.code}</code>
+                  <code ref={codeRef}>{p.code}</code>
                   <button class="icon-btn" onClick={copy} title={t.settings.copy} aria-label={t.settings.copy}>
                     <Icon name="copy" />
                   </button>
@@ -119,8 +131,8 @@ export function Settings() {
 
           <section class="card">
             <h2>{t.settings.reset}</h2>
-            <p class="muted">{t.settings.resetText}</p>
-            <button class="btn danger" onClick={() => confirm(t.settings.resetConfirm) && resetLocalProgress()}>
+            <p class="muted">{p ? t.settings.resetTextProfile : t.settings.resetText}</p>
+            <button class="btn danger" onClick={reset}>
               {t.settings.reset}
             </button>
           </section>
