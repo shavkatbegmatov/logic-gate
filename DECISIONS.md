@@ -60,3 +60,5 @@ eskiz.uz serveri (`170.168.6.82`, 4 vCPU / 8 GB, Ubuntu 24.04) toza emas: unda C
 - **`LG_TRUST_PROXY=private`:** Traefik Docker tarmog'idan (xususiy IP) keladi, shuning uchun `X-Real-IP` faqat xususiy manzillardan qabul qilinadi. Busiz barcha o'yinchilar bitta IP bo'lib ko'rinib, rate limit hammaga birga ta'sir qilardi.
 - **Asosiy image — `distroless/static:nonroot`** (~2 MB, shell yo'q). Health tekshiruvi uchun `logicgate health` buyrug'i qo'shildi.
 - **Dockerfile'da `VOLUME` yo'q:** anonim volume qayta joylashda yo'qolib ketadi. `/data` ni Coolify'da nomli volume sifatida ulash kerak.
+- **Coolify resursi:** loyiha `logic-gate` → production → Docker Image `ghcr.io/shavkatbegmatov/logic-gate:latest`, port 8080, volume `…-logic-gate-data` → `/data`, xotira chegarasi 128 MB.
+- **Manzil: `http://logic-gate.170.168.6.82.sslip.io` (HTTPS'siz).** Coolify ogohlantirdi: sslip.io uchun Let's Encrypt sertifikati limit sababli olinmaydi, HTTPS→HTTP yo'naltirish bilan esa brauzer xatosi chiqardi. O'z domeni qo'shilganda `https://` ga o'tkaziladi. HTTP'da faqat "Nusxalash" tugmasi ishlamaydi (Clipboard API xavfsiz kontekst talab qiladi) — kod ekranda ko'rinib turadi.

@@ -114,6 +114,8 @@ Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini
 
 ## Coolify orqali joylash (Docker)
 
+**Hozirgi joylash:** http://logic-gate.170.168.6.82.sslip.io — Coolify'da `logic-gate` loyihasi (production). Yangi versiyani chiqarish: `main` ga push → GitHub Actions image'ni yig'adi → Coolify'da **Redeploy** (yoki quyidagi webhook sozlansa, avtomatik).
+
 Serverda Coolify ishlayotgan bo'lsa (80/443 portlari Traefik'da), o'yin boshqa loyihalar kabi Docker image sifatida joylanadi. **Bunday serverda `deploy/setup.sh` ni ishga tushirmang:** u Nginx o'rnatib, firewall'ni yoqadi.
 
 1. `main` branch'ga push qilinganda GitHub Actions (`.github/workflows/docker.yml`) testlarni o'tkazadi va `ghcr.io/<owner>/logic-gate:latest` image'ini yig'adi. Kompilyatsiya serverda emas, GitHub'da bajariladi, shuning uchun server RAM'iga yuk tushmaydi.
