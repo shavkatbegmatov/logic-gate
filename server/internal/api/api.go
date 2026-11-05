@@ -27,6 +27,7 @@ type Server struct {
 	store  *store.Store
 	pack   *levels.Pack
 	log    *slog.Logger
+	opts   Options
 	api    *limiter // umumiy so'rovlar
 	signup *limiter // yangi o'yinchi yaratish
 	// Kalitlar: tiklash kodi bo'yicha noto'g'ri urinishlar.
@@ -37,11 +38,18 @@ type Server struct {
 	lbData []store.Entry
 }
 
-func New(st *store.Store, pack *levels.Pack, log *slog.Logger) *Server {
+// Options — muhitga bog'liq sozlamalar.
+type Options struct {
+	// Docker'da Traefik xususiy tarmoq manzilidan keladi; uning X-Real-IP sarlavhasiga ishonish.
+	TrustPrivateProxies bool
+}
+
+func New(st *store.Store, pack *levels.Pack, log *slog.Logger, opts Options) *Server {
 	return &Server{
 		store:  st,
 		pack:   pack,
 		log:    log,
+		opts:   opts,
 		api:    newLimiter(10, 40),
 		signup: newLimiter(1.0/30, 5),
 		auth:   newLimiter(0.2, 10),
@@ -64,13 +72,14 @@ func (s *Server) Handler() http.Handler {
 	return s.limit(mux)
 }
 
-// clientIP: Nginx orqasida X-Real-IP ishlatiladi, lekin faqat so'rov lokal manzildan kelsa.
-func clientIP(r *http.Request) string {
+// clientIP: proksi (Nginx yoki Traefik) qo'ygan X-Real-IP faqat ishonchli manzildan kelsa olinadi —
+// lokal manzil, TrustPrivateProxies yoqilgan bo'lsa esa xususiy tarmoq (Docker) manzillari ham.
+func (s *Server) clientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		host = r.RemoteAddr
 	}
-	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+	if ip := net.ParseIP(host); ip != nil && (ip.IsLoopback() || (s.opts.TrustPrivateProxies && ip.IsPrivate())) {
 		if real := strings.TrimSpace(r.Header.Get("X-Real-IP")); real != "" {
 			return real
 		}
@@ -83,7 +92,7 @@ func (s *Server) limit(next http.Handler) http.Handler {
 		if strings.HasPrefix(r.URL.Path, "/api/") {
 			w.Header().Set("Cache-Control", "no-store")
 			w.Header().Set("X-Content-Type-Options", "nosniff")
-			if !s.api.allow(clientIP(r)) {
+			if !s.api.allow(s.clientIP(r)) {
 				w.Header().Set("Retry-After", "5")
 				writeErr(w, http.StatusTooManyRequests, "rate_limited")
 				return
@@ -106,7 +115,7 @@ func (s *Server) authed(h http.HandlerFunc) http.HandlerFunc {
 		p, err := s.store.PlayerByToken(r.Context(), hashCode(code))
 		if errors.Is(err, store.ErrNotFound) {
 			// Kodni terib topishga urinishlarni sekinlashtirish.
-			if !s.auth.allow(clientIP(r)) {
+			if !s.auth.allow(s.clientIP(r)) {
 				writeErr(w, http.StatusTooManyRequests, "rate_limited")
 				return
 			}
@@ -158,7 +167,7 @@ type playerJSON struct {
 }
 
 func (s *Server) createPlayer(w http.ResponseWriter, r *http.Request) {
-	if !s.signup.allow(clientIP(r)) {
+	if !s.signup.allow(s.clientIP(r)) {
 		writeErr(w, http.StatusTooManyRequests, "rate_limited")
 		return
 	}

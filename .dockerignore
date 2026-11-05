@@ -1,0 +1,9 @@
+.git
+.claude
+**/node_modules
+web/dist
+dist
+data
+*.db
+*.db-*
+*.exe

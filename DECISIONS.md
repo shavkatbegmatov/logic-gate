@@ -48,3 +48,15 @@ Ishlab chiqish davomida qabul qilingan qarorlar. Yangilari pastga qo'shiladi.
 - **Qum qutida** 1–5 kirish, 1–4 chiqish, barcha elementlar; holat `localStorage` da.
 - **Ovozlar WebAudio'da** sintez qilinadi: fayl yuklanmaydi, sozlamalarda o'chiriladi.
 - **Shriftlar tizimniki** (monospace + system-ui): tashqi so'rov va qo'shimcha bayt yo'q.
+
+## Haqiqiy server (2026-11-05)
+
+eskiz.uz serveri (`170.168.6.82`, 4 vCPU / 8 GB, Ubuntu 24.04) toza emas: unda Coolify 4.6 (Traefik 80/443) va boshqa loyihalar ishlaydi, bo'sh RAM ~930 MB, swap to'liq band.
+
+- **`setup.sh` bu serverda ishlatilmaydi:** Nginx 80/443 ni egallay olmaydi, `ufw` esa Coolify'ga xalaqit berishi mumkin. U faqat toza server uchun qoldi.
+- **Joylash — Docker image + Coolify,** foydalanuvchining boshqa loyihalari kabi (`ghcr.io/shavkatbegmatov/...`).
+- **Image serverda emas, GitHub Actions'da yig'iladi:** `modernc.org/sqlite` ni kompilyatsiya qilish 1–2 GB RAM talab qiladi, serverda esa bunchalik bo'sh xotira yo'q.
+- **Konteynerda Nginx yo'q:** frontend'ni Go serverning o'zi uzatadi (`server/internal/web`) — `.gz` fayllar, kesh va CSP sarlavhalari bilan.
+- **`LG_TRUST_PROXY=private`:** Traefik Docker tarmog'idan (xususiy IP) keladi, shuning uchun `X-Real-IP` faqat xususiy manzillardan qabul qilinadi. Busiz barcha o'yinchilar bitta IP bo'lib ko'rinib, rate limit hammaga birga ta'sir qilardi.
+- **Asosiy image — `distroless/static:nonroot`** (~2 MB, shell yo'q). Health tekshiruvi uchun `logicgate health` buyrug'i qo'shildi.
+- **Dockerfile'da `VOLUME` yo'q:** anonim volume qayta joylashda yo'qolib ketadi. `/data` ni Coolify'da nomli volume sifatida ulash kerak.

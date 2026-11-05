@@ -3,8 +3,10 @@
 //	logicgate                  serverni ishga tushirish
 //	logicgate backup <fayl>    bazaning nusxasini yozish
 //	logicgate version          versiyani chiqarish
+//	logicgate health           ishlab turgan serverni tekshirish (Docker HEALTHCHECK uchun)
 //
 // Sozlamalar: -addr, -db, -static bayroqlari yoki LG_ADDR, LG_DB, LG_STATIC muhit o'zgaruvchilari.
+// LG_TRUST_PROXY=private — Docker tarmog'idagi proksining X-Real-IP sarlavhasiga ishonish.
 package main
 
 import (
@@ -13,11 +15,10 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"logicgate/levels"
 	"logicgate/server/internal/api"
 	"logicgate/server/internal/store"
+	"logicgate/server/internal/web"
 )
 
 // version build vaqtida -ldflags "-X main.version=..." orqali o'rnatiladi.
@@ -46,6 +48,12 @@ func main() {
 		case "version":
 			fmt.Println(version)
 			return
+		case "health":
+			if err := health(env("LG_ADDR", "127.0.0.1:8080")); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
 		case "backup":
 			if len(os.Args) != 3 {
 				fmt.Fprintln(os.Stderr, "foydalanish: logicgate backup <fayl>")
@@ -64,7 +72,7 @@ func main() {
 
 	addr := flag.String("addr", env("LG_ADDR", "127.0.0.1:8080"), "tinglash manzili")
 	db := flag.String("db", dbPath, "SQLite fayli")
-	static := flag.String("static", os.Getenv("LG_STATIC"), "statik fayllar papkasi (Nginx'siz lokal sinov uchun)")
+	static := flag.String("static", os.Getenv("LG_STATIC"), "frontend fayllari papkasi (Nginx bo'lmaganda)")
 	flag.Parse()
 
 	if err := run(log, *addr, *db, *static); err != nil {
@@ -84,6 +92,27 @@ func backup(dbPath, dest string) error {
 	return st.Backup(ctx, dest)
 }
 
+// health server /healthz ga javob beradimi, tekshiradi.
+func health(addr string) error {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return err
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		host = "127.0.0.1"
+	}
+	client := http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get("http://" + net.JoinHostPort(host, port) + "/healthz")
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("healthz: %s", resp.Status)
+	}
+	return nil
+}
+
 func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	pack, err := levels.Load()
 	if err != nil {
@@ -95,7 +124,8 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	}
 	defer st.Close()
 
-	var handler http.Handler = api.New(st, pack, log).Handler()
+	opts := api.Options{TrustPrivateProxies: os.Getenv("LG_TRUST_PROXY") == "private"}
+	var handler http.Handler = api.New(st, pack, log, opts).Handler()
 	if staticDir != "" {
 		handler = withStatic(handler, staticDir)
 	}
@@ -129,16 +159,13 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	return srv.Shutdown(shutdownCtx)
 }
 
-// withStatic — Nginx'siz lokal sinov uchun: statik fayllar va SPA uchun index.html.
+// withStatic — Nginx bo'lmaganda (Docker, lokal sinov) frontend fayllarini ham shu server uzatadi.
 func withStatic(api http.Handler, dir string) http.Handler {
-	files := http.FileServer(http.Dir(dir))
+	files := web.Static(dir)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/healthz" {
 			api.ServeHTTP(w, r)
 			return
-		}
-		if _, err := os.Stat(filepath.Join(dir, filepath.FromSlash(path.Clean("/"+r.URL.Path)))); err != nil {
-			r.URL.Path = "/"
 		}
 		files.ServeHTTP(w, r)
 	})

@@ -33,7 +33,7 @@ func newEnv(t *testing.T) *testEnv {
 	if err != nil {
 		t.Fatal(err)
 	}
-	a := New(st, pack, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	a := New(st, pack, slog.New(slog.NewTextHandler(io.Discard, nil)), Options{})
 	srv := httptest.NewServer(a.Handler())
 	t.Cleanup(srv.Close)
 	return &testEnv{t: t, srv: srv, api: a}
@@ -226,5 +226,30 @@ func TestLimiter(t *testing.T) {
 	}
 	if !l.allow("boshqa") {
 		t.Fatal("boshqa IP rad etildi")
+	}
+}
+
+func TestClientIP(t *testing.T) {
+	cases := []struct {
+		remote, real string
+		trustPrivate bool
+		want         string
+	}{
+		{"127.0.0.1:5000", "203.0.113.7", false, "203.0.113.7"},
+		{"172.18.0.5:5000", "203.0.113.7", false, "172.18.0.5"},
+		{"172.18.0.5:5000", "203.0.113.7", true, "203.0.113.7"},
+		{"198.51.100.2:5000", "203.0.113.7", true, "198.51.100.2"},
+		{"10.0.1.3:5000", "", true, "10.0.1.3"},
+	}
+	for _, tc := range cases {
+		s := &Server{opts: Options{TrustPrivateProxies: tc.trustPrivate}}
+		r := httptest.NewRequest("GET", "/", nil)
+		r.RemoteAddr = tc.remote
+		if tc.real != "" {
+			r.Header.Set("X-Real-IP", tc.real)
+		}
+		if got := s.clientIP(r); got != tc.want {
+			t.Errorf("%+v: %s", tc, got)
+		}
 	}
 }

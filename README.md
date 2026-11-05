@@ -112,7 +112,32 @@ node levels/build.mjs
 
 Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
 
+## Coolify orqali joylash (Docker)
+
+Serverda Coolify ishlayotgan bo'lsa (80/443 portlari Traefik'da), o'yin boshqa loyihalar kabi Docker image sifatida joylanadi. **Bunday serverda `deploy/setup.sh` ni ishga tushirmang:** u Nginx o'rnatib, firewall'ni yoqadi.
+
+1. `main` branch'ga push qilinganda GitHub Actions (`.github/workflows/docker.yml`) testlarni o'tkazadi va `ghcr.io/<owner>/logic-gate:latest` image'ini yig'adi. Kompilyatsiya serverda emas, GitHub'da bajariladi, shuning uchun server RAM'iga yuk tushmaydi.
+2. Coolify'da: **Project → + New → Docker Image** → `ghcr.io/<owner>/logic-gate:latest`.
+3. Sozlamalar:
+   - **Ports Exposes:** `8080`;
+   - **Domains:** `https://o-yin-domeningiz`;
+   - **Persistent Storage:** volume, **Destination Path** `/data` (SQLite bazasi shu yerda). Busiz har bir qayta joylashda ma'lumotlar yo'qoladi;
+   - **Resource Limits** (ixtiyoriy): Memory `128m`.
+4. **Deploy**.
+
+Kerakli muhit o'zgaruvchilari image ichida berilgan: `LG_ADDR=0.0.0.0:8080`, `LG_DB=/data/logicgate.db`, `LG_STATIC=/app/web`, `LG_TRUST_PROXY=private`, `GOMEMLIMIT=40MiB`. Frontend'ni Go serverning o'zi uzatadi: `.gz` fayllar, kesh va xavfsizlik sarlavhalari bilan. Konteyner salomatligi `logicgate health` buyrug'i orqali tekshiriladi.
+
+Avtomatik yangilash uchun GitHub repozitoriy Secrets'iga `COOLIFY_WEBHOOK` (ilovaning Deploy Webhook URL manzili) va `COOLIFY_TOKEN` qo'shing.
+
+Zaxira nusxa (serverda):
+
+```bash
+docker exec <konteyner> /app/logicgate backup /data/backup-$(date +%F).db
+```
+
 ## VPS'ga joylash (eskiz.uz)
+
+Bu bo'lim toza, faqat shu o'yin uchun ajratilgan Ubuntu server uchun (Nginx + systemd).
 
 ### 1. Server
 
