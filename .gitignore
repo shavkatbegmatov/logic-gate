@@ -1,0 +1,10 @@
+node_modules/
+web/dist/
+dist/
+data/
+*.db
+*.db-shm
+*.db-wal
+*.exe
+.vite/
+coverage/

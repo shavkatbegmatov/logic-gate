@@ -1,0 +1,24 @@
+{
+  "name": "logic-gate-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "levels": "node ../levels/build.mjs",
+    "dev": "npm run levels && vite",
+    "build": "npm run levels && tsc --noEmit && vite build && node scripts/compress.mjs",
+    "preview": "vite preview",
+    "test": "npm run levels && vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.11.4",
+    "preact": "^11.1.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  }
+}

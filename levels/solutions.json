@@ -1,0 +1,1620 @@
+{
+  "b1": {
+    "gates": [
+      {
+        "id": "n",
+        "type": "NOT",
+        "x": 120,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "n:0"
+      },
+      {
+        "from": "n",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "b2": {
+    "gates": [
+      {
+        "id": "a",
+        "type": "AND",
+        "x": 120,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "a:0"
+      },
+      {
+        "from": "in:B",
+        "to": "a:1"
+      },
+      {
+        "from": "a",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "b3": {
+    "gates": [
+      {
+        "id": "o",
+        "type": "OR",
+        "x": 120,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "o:0"
+      },
+      {
+        "from": "in:B",
+        "to": "o:1"
+      },
+      {
+        "from": "o",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "b4": {
+    "gates": [
+      {
+        "id": "a1",
+        "type": "AND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "a2",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "a1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "a1:1"
+      },
+      {
+        "from": "a1",
+        "to": "a2:0"
+      },
+      {
+        "from": "in:C",
+        "to": "a2:1"
+      },
+      {
+        "from": "a2",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "b5": {
+    "gates": [
+      {
+        "id": "nb",
+        "type": "NOT",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "a",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:B",
+        "to": "nb:0"
+      },
+      {
+        "from": "in:A",
+        "to": "a:0"
+      },
+      {
+        "from": "nb",
+        "to": "a:1"
+      },
+      {
+        "from": "a",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "b6": {
+    "gates": [
+      {
+        "id": "o",
+        "type": "OR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "n",
+        "type": "NOT",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "o:0"
+      },
+      {
+        "from": "in:B",
+        "to": "o:1"
+      },
+      {
+        "from": "o",
+        "to": "n:0"
+      },
+      {
+        "from": "n",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "x1": {
+    "gates": [
+      {
+        "id": "a",
+        "type": "AND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "n",
+        "type": "NOT",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "a:0"
+      },
+      {
+        "from": "in:B",
+        "to": "a:1"
+      },
+      {
+        "from": "a",
+        "to": "n:0"
+      },
+      {
+        "from": "n",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "x2": {
+    "gates": [
+      {
+        "id": "o",
+        "type": "OR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "a",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "na",
+        "type": "NOT",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "q",
+        "type": "AND",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "o:0"
+      },
+      {
+        "from": "in:B",
+        "to": "o:1"
+      },
+      {
+        "from": "in:A",
+        "to": "a:0"
+      },
+      {
+        "from": "in:B",
+        "to": "a:1"
+      },
+      {
+        "from": "a",
+        "to": "na:0"
+      },
+      {
+        "from": "o",
+        "to": "q:0"
+      },
+      {
+        "from": "na",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "x3": {
+    "gates": [
+      {
+        "id": "x1",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "x2",
+        "type": "XOR",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "x1:1"
+      },
+      {
+        "from": "x1",
+        "to": "x2:0"
+      },
+      {
+        "from": "in:C",
+        "to": "x2:1"
+      },
+      {
+        "from": "x2",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "x4": {
+    "gates": [
+      {
+        "id": "x",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "n",
+        "type": "NOT",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x:0"
+      },
+      {
+        "from": "in:B",
+        "to": "x:1"
+      },
+      {
+        "from": "x",
+        "to": "n:0"
+      },
+      {
+        "from": "n",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "x5": {
+    "gates": [
+      {
+        "id": "x",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x:0"
+      },
+      {
+        "from": "in:S",
+        "to": "x:1"
+      },
+      {
+        "from": "x",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "x6": {
+    "gates": [
+      {
+        "id": "ab",
+        "type": "AND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "o",
+        "type": "OR",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "co",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "q",
+        "type": "OR",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "ab:0"
+      },
+      {
+        "from": "in:B",
+        "to": "ab:1"
+      },
+      {
+        "from": "in:A",
+        "to": "o:0"
+      },
+      {
+        "from": "in:B",
+        "to": "o:1"
+      },
+      {
+        "from": "in:C",
+        "to": "co:0"
+      },
+      {
+        "from": "o",
+        "to": "co:1"
+      },
+      {
+        "from": "ab",
+        "to": "q:0"
+      },
+      {
+        "from": "co",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "c1": {
+    "gates": [
+      {
+        "id": "s",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "c",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "s:0"
+      },
+      {
+        "from": "in:B",
+        "to": "s:1"
+      },
+      {
+        "from": "in:A",
+        "to": "c:0"
+      },
+      {
+        "from": "in:B",
+        "to": "c:1"
+      },
+      {
+        "from": "s",
+        "to": "out:S"
+      },
+      {
+        "from": "c",
+        "to": "out:C"
+      }
+    ]
+  },
+  "c2": {
+    "gates": [
+      {
+        "id": "ns",
+        "type": "NOT",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "y0",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "y1",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:S",
+        "to": "ns:0"
+      },
+      {
+        "from": "in:D",
+        "to": "y0:0"
+      },
+      {
+        "from": "ns",
+        "to": "y0:1"
+      },
+      {
+        "from": "in:D",
+        "to": "y1:0"
+      },
+      {
+        "from": "in:S",
+        "to": "y1:1"
+      },
+      {
+        "from": "y0",
+        "to": "out:Y0"
+      },
+      {
+        "from": "y1",
+        "to": "out:Y1"
+      }
+    ]
+  },
+  "c3": {
+    "gates": [
+      {
+        "id": "ns",
+        "type": "NOT",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "a",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "b",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "q",
+        "type": "OR",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:S",
+        "to": "ns:0"
+      },
+      {
+        "from": "in:A",
+        "to": "a:0"
+      },
+      {
+        "from": "ns",
+        "to": "a:1"
+      },
+      {
+        "from": "in:B",
+        "to": "b:0"
+      },
+      {
+        "from": "in:S",
+        "to": "b:1"
+      },
+      {
+        "from": "a",
+        "to": "q:0"
+      },
+      {
+        "from": "b",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "c4": {
+    "gates": [
+      {
+        "id": "na",
+        "type": "NOT",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "nb",
+        "type": "NOT",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "y0",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "y1",
+        "type": "AND",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "y2",
+        "type": "AND",
+        "x": 260,
+        "y": 220
+      },
+      {
+        "id": "y3",
+        "type": "AND",
+        "x": 120,
+        "y": 220
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "na:0"
+      },
+      {
+        "from": "in:B",
+        "to": "nb:0"
+      },
+      {
+        "from": "na",
+        "to": "y0:0"
+      },
+      {
+        "from": "nb",
+        "to": "y0:1"
+      },
+      {
+        "from": "na",
+        "to": "y1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "y1:1"
+      },
+      {
+        "from": "in:A",
+        "to": "y2:0"
+      },
+      {
+        "from": "nb",
+        "to": "y2:1"
+      },
+      {
+        "from": "in:A",
+        "to": "y3:0"
+      },
+      {
+        "from": "in:B",
+        "to": "y3:1"
+      },
+      {
+        "from": "y0",
+        "to": "out:Y0"
+      },
+      {
+        "from": "y1",
+        "to": "out:Y1"
+      },
+      {
+        "from": "y2",
+        "to": "out:Y2"
+      },
+      {
+        "from": "y3",
+        "to": "out:Y3"
+      }
+    ]
+  },
+  "c5": {
+    "gates": [
+      {
+        "id": "x",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "g",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "e",
+        "type": "NOT",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "l",
+        "type": "AND",
+        "x": 260,
+        "y": 220
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x:0"
+      },
+      {
+        "from": "in:B",
+        "to": "x:1"
+      },
+      {
+        "from": "x",
+        "to": "g:0"
+      },
+      {
+        "from": "in:A",
+        "to": "g:1"
+      },
+      {
+        "from": "x",
+        "to": "e:0"
+      },
+      {
+        "from": "x",
+        "to": "l:0"
+      },
+      {
+        "from": "in:B",
+        "to": "l:1"
+      },
+      {
+        "from": "g",
+        "to": "out:G"
+      },
+      {
+        "from": "e",
+        "to": "out:E"
+      },
+      {
+        "from": "l",
+        "to": "out:L"
+      }
+    ]
+  },
+  "c6": {
+    "gates": [
+      {
+        "id": "x1",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "s",
+        "type": "XOR",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "a1",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "a2",
+        "type": "AND",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "co",
+        "type": "OR",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "x1:1"
+      },
+      {
+        "from": "x1",
+        "to": "s:0"
+      },
+      {
+        "from": "in:Ci",
+        "to": "s:1"
+      },
+      {
+        "from": "in:A",
+        "to": "a1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "a1:1"
+      },
+      {
+        "from": "x1",
+        "to": "a2:0"
+      },
+      {
+        "from": "in:Ci",
+        "to": "a2:1"
+      },
+      {
+        "from": "a1",
+        "to": "co:0"
+      },
+      {
+        "from": "a2",
+        "to": "co:1"
+      },
+      {
+        "from": "s",
+        "to": "out:S"
+      },
+      {
+        "from": "co",
+        "to": "out:Co"
+      }
+    ]
+  },
+  "n1": {
+    "gates": [
+      {
+        "id": "n",
+        "type": "NAND",
+        "x": 120,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "n:0"
+      },
+      {
+        "from": "in:A",
+        "to": "n:1"
+      },
+      {
+        "from": "n",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "n2": {
+    "gates": [
+      {
+        "id": "m",
+        "type": "NAND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "q",
+        "type": "NAND",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "m:0"
+      },
+      {
+        "from": "in:B",
+        "to": "m:1"
+      },
+      {
+        "from": "m",
+        "to": "q:0"
+      },
+      {
+        "from": "m",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "n3": {
+    "gates": [
+      {
+        "id": "na",
+        "type": "NAND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "nb",
+        "type": "NAND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "q",
+        "type": "NAND",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "na:0"
+      },
+      {
+        "from": "in:A",
+        "to": "na:1"
+      },
+      {
+        "from": "in:B",
+        "to": "nb:0"
+      },
+      {
+        "from": "in:B",
+        "to": "nb:1"
+      },
+      {
+        "from": "na",
+        "to": "q:0"
+      },
+      {
+        "from": "nb",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "n4": {
+    "gates": [
+      {
+        "id": "na",
+        "type": "NAND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "nb",
+        "type": "NAND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "o",
+        "type": "NAND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "q",
+        "type": "NAND",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "na:0"
+      },
+      {
+        "from": "in:A",
+        "to": "na:1"
+      },
+      {
+        "from": "in:B",
+        "to": "nb:0"
+      },
+      {
+        "from": "in:B",
+        "to": "nb:1"
+      },
+      {
+        "from": "na",
+        "to": "o:0"
+      },
+      {
+        "from": "nb",
+        "to": "o:1"
+      },
+      {
+        "from": "o",
+        "to": "q:0"
+      },
+      {
+        "from": "o",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "n5": {
+    "gates": [
+      {
+        "id": "m",
+        "type": "NAND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "p",
+        "type": "NAND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "r",
+        "type": "NAND",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "q",
+        "type": "NAND",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "m:0"
+      },
+      {
+        "from": "in:B",
+        "to": "m:1"
+      },
+      {
+        "from": "in:A",
+        "to": "p:0"
+      },
+      {
+        "from": "m",
+        "to": "p:1"
+      },
+      {
+        "from": "in:B",
+        "to": "r:0"
+      },
+      {
+        "from": "m",
+        "to": "r:1"
+      },
+      {
+        "from": "p",
+        "to": "q:0"
+      },
+      {
+        "from": "r",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "n6": {
+    "gates": [
+      {
+        "id": "ns",
+        "type": "NAND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "t1",
+        "type": "NAND",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "t2",
+        "type": "NAND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "q",
+        "type": "NAND",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:S",
+        "to": "ns:0"
+      },
+      {
+        "from": "in:S",
+        "to": "ns:1"
+      },
+      {
+        "from": "in:A",
+        "to": "t1:0"
+      },
+      {
+        "from": "ns",
+        "to": "t1:1"
+      },
+      {
+        "from": "in:B",
+        "to": "t2:0"
+      },
+      {
+        "from": "in:S",
+        "to": "t2:1"
+      },
+      {
+        "from": "t1",
+        "to": "q:0"
+      },
+      {
+        "from": "t2",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "m1": {
+    "gates": [
+      {
+        "id": "d",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "bo",
+        "type": "AND",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "d:0"
+      },
+      {
+        "from": "in:B",
+        "to": "d:1"
+      },
+      {
+        "from": "d",
+        "to": "bo:0"
+      },
+      {
+        "from": "in:B",
+        "to": "bo:1"
+      },
+      {
+        "from": "d",
+        "to": "out:D"
+      },
+      {
+        "from": "bo",
+        "to": "out:Bo"
+      }
+    ]
+  },
+  "m2": {
+    "gates": [
+      {
+        "id": "x1",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "x0",
+        "type": "XOR",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "q",
+        "type": "NOR",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A1",
+        "to": "x1:0"
+      },
+      {
+        "from": "in:B1",
+        "to": "x1:1"
+      },
+      {
+        "from": "in:A0",
+        "to": "x0:0"
+      },
+      {
+        "from": "in:B0",
+        "to": "x0:1"
+      },
+      {
+        "from": "x1",
+        "to": "q:0"
+      },
+      {
+        "from": "x0",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "m3": {
+    "gates": [
+      {
+        "id": "x1",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "x2",
+        "type": "XOR",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "q",
+        "type": "XNOR",
+        "x": 260,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "x1:1"
+      },
+      {
+        "from": "in:C",
+        "to": "x2:0"
+      },
+      {
+        "from": "in:D",
+        "to": "x2:1"
+      },
+      {
+        "from": "x1",
+        "to": "q:0"
+      },
+      {
+        "from": "x2",
+        "to": "q:1"
+      },
+      {
+        "from": "q",
+        "to": "out:Q"
+      }
+    ]
+  },
+  "m4": {
+    "gates": [
+      {
+        "id": "x",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "d",
+        "type": "XOR",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "b1",
+        "type": "AND",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "b2",
+        "type": "AND",
+        "x": 400,
+        "y": 40
+      },
+      {
+        "id": "bo",
+        "type": "OR",
+        "x": 540,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A",
+        "to": "x:0"
+      },
+      {
+        "from": "in:B",
+        "to": "x:1"
+      },
+      {
+        "from": "x",
+        "to": "d:0"
+      },
+      {
+        "from": "in:Bi",
+        "to": "d:1"
+      },
+      {
+        "from": "x",
+        "to": "b1:0"
+      },
+      {
+        "from": "in:B",
+        "to": "b1:1"
+      },
+      {
+        "from": "in:Bi",
+        "to": "b2:0"
+      },
+      {
+        "from": "d",
+        "to": "b2:1"
+      },
+      {
+        "from": "b1",
+        "to": "bo:0"
+      },
+      {
+        "from": "b2",
+        "to": "bo:1"
+      },
+      {
+        "from": "d",
+        "to": "out:D"
+      },
+      {
+        "from": "bo",
+        "to": "out:Bo"
+      }
+    ]
+  },
+  "m5": {
+    "gates": [
+      {
+        "id": "s0",
+        "type": "XOR",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "c0",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "x1",
+        "type": "XOR",
+        "x": 120,
+        "y": 220
+      },
+      {
+        "id": "s1",
+        "type": "XOR",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "a1",
+        "type": "AND",
+        "x": 120,
+        "y": 310
+      },
+      {
+        "id": "a2",
+        "type": "AND",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "c",
+        "type": "OR",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A0",
+        "to": "s0:0"
+      },
+      {
+        "from": "in:B0",
+        "to": "s0:1"
+      },
+      {
+        "from": "in:A0",
+        "to": "c0:0"
+      },
+      {
+        "from": "in:B0",
+        "to": "c0:1"
+      },
+      {
+        "from": "in:A1",
+        "to": "x1:0"
+      },
+      {
+        "from": "in:B1",
+        "to": "x1:1"
+      },
+      {
+        "from": "x1",
+        "to": "s1:0"
+      },
+      {
+        "from": "c0",
+        "to": "s1:1"
+      },
+      {
+        "from": "in:A1",
+        "to": "a1:0"
+      },
+      {
+        "from": "in:B1",
+        "to": "a1:1"
+      },
+      {
+        "from": "x1",
+        "to": "a2:0"
+      },
+      {
+        "from": "c0",
+        "to": "a2:1"
+      },
+      {
+        "from": "a1",
+        "to": "c:0"
+      },
+      {
+        "from": "a2",
+        "to": "c:1"
+      },
+      {
+        "from": "c",
+        "to": "out:C"
+      },
+      {
+        "from": "s1",
+        "to": "out:S1"
+      },
+      {
+        "from": "s0",
+        "to": "out:S0"
+      }
+    ]
+  },
+  "m6": {
+    "gates": [
+      {
+        "id": "p0",
+        "type": "AND",
+        "x": 120,
+        "y": 40
+      },
+      {
+        "id": "b",
+        "type": "AND",
+        "x": 120,
+        "y": 130
+      },
+      {
+        "id": "c",
+        "type": "AND",
+        "x": 120,
+        "y": 220
+      },
+      {
+        "id": "d",
+        "type": "AND",
+        "x": 120,
+        "y": 310
+      },
+      {
+        "id": "p1",
+        "type": "XOR",
+        "x": 260,
+        "y": 40
+      },
+      {
+        "id": "e",
+        "type": "AND",
+        "x": 260,
+        "y": 130
+      },
+      {
+        "id": "p2",
+        "type": "XOR",
+        "x": 400,
+        "y": 40
+      }
+    ],
+    "wires": [
+      {
+        "from": "in:A0",
+        "to": "p0:0"
+      },
+      {
+        "from": "in:B0",
+        "to": "p0:1"
+      },
+      {
+        "from": "in:A1",
+        "to": "b:0"
+      },
+      {
+        "from": "in:B0",
+        "to": "b:1"
+      },
+      {
+        "from": "in:A0",
+        "to": "c:0"
+      },
+      {
+        "from": "in:B1",
+        "to": "c:1"
+      },
+      {
+        "from": "in:A1",
+        "to": "d:0"
+      },
+      {
+        "from": "in:B1",
+        "to": "d:1"
+      },
+      {
+        "from": "b",
+        "to": "p1:0"
+      },
+      {
+        "from": "c",
+        "to": "p1:1"
+      },
+      {
+        "from": "b",
+        "to": "e:0"
+      },
+      {
+        "from": "c",
+        "to": "e:1"
+      },
+      {
+        "from": "d",
+        "to": "p2:0"
+      },
+      {
+        "from": "e",
+        "to": "p2:1"
+      },
+      {
+        "from": "e",
+        "to": "out:P3"
+      },
+      {
+        "from": "p2",
+        "to": "out:P2"
+      },
+      {
+        "from": "p1",
+        "to": "out:P1"
+      },
+      {
+        "from": "p0",
+        "to": "out:P0"
+      }
+    ]
+  }
+}
