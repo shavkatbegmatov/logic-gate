@@ -1,0 +1,45 @@
+[Unit]
+Description=Logic Gate o'yin serveri
+After=network.target
+
+[Service]
+Type=simple
+User=logicgate
+Group=logicgate
+EnvironmentFile=/etc/logicgate.env
+ExecStart=/opt/logicgate/bin/logicgate
+WorkingDirectory=/var/lib/logicgate
+StateDirectory=logicgate
+Restart=on-failure
+RestartSec=2
+
+# Resurs cheklovlari: odatda ~15–25 MB ishlatadi.
+MemoryHigh=64M
+MemoryMax=96M
+TasksMax=64
+LimitNOFILE=4096
+
+# Xavfsizlik: jarayon faqat o'z ma'lumotlar papkasiga yoza oladi.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+ReadWritePaths=/var/lib/logicgate /var/backups/logicgate
+
+[Install]
+WantedBy=multi-user.target

@@ -31,3 +31,20 @@ Ishlab chiqish davomida qabul qilingan qarorlar. Yangilari pastga qo'shiladi.
 - **Barcha elementlar ikki kirishli** (NOT — bir kirishli). Ko'p kirishli elementlar yo'q: masalalar qiziqroq va simulyator soddaroq.
 - **Tekshiruv qat'iy:** barcha chiqishlar va barcha element kirishlari ulangan bo'lishi, sikl bo'lmasligi shart. Jonli rejimda ulanmagan kirish 0 deb hisoblanadi.
 - **Yechimni server qayta tekshiradi** (Go simulyatori), mijozdan kelgan yulduz soniga ishonilmaydi.
+- **SQLite bitta ulanish bilan** (`SetMaxOpenConns(1)`), WAL rejimi, kesh ~2 MB. Kichik yukda `SQLITE_BUSY` bo'lmaydi va xotira tejaladi.
+- **Tiklash kodi = kirish tokeni.** 80 bitli Crockford base32 (`XXXX-XXXX-XXXX-XXXX`), bazada SHA-256 xeshi. Kiritishda O→0, I/L→1 almashtiriladi.
+- **Rate limit Go ichida, xotirada** (token bucket, IP bo'yicha) + Nginx `limit_req`. Redis kabi qo'shimcha xizmat kerak emas.
+- **Reyting 15 soniya keshlanadi**, natija yaxshilanganda kesh tozalanadi.
+- **`last_seen_at` soatiga ko'pi bilan bir marta yoziladi** — diskka keraksiz yozuvlar bo'lmasin.
+- **Zaxira nusxa `logicgate backup` buyrug'i bilan** (`VACUUM INTO`): serverga `sqlite3` paketi kerak emas, ishlab turgan bazadan ham izchil nusxa olinadi.
+- **Faqat gzip, brotli yo'q.** Ubuntu'ning standart Nginx'ida `gzip_static` bor, brotli moduli esa alohida paket talab qiladi. Fayllar build vaqtida siqiladi.
+- **Docker ishlatilmaydi:** qo'shimcha RAM va murakkablik; bitta binar fayl + systemd yetarli.
+- **1 GB swap** setup.sh da (agar swap bo'lmasa): 1 GB RAM'li serverda `apt` va certbot paytida xotira yetishmasligining oldini oladi.
+- **Firewall SSH portini `sshd -T` dan oladi**, shunda nostandart portda o'zingizni bloklab qo'ymaysiz. `SKIP_UFW=1` bilan o'chirish mumkin.
+- **Hash-marshrutlash** (`#/level/b1`): Nginx'da maxsus qoidalar kerak emas.
+- **Port tanlash eng yaqin port bo'yicha** (DOM hit-test emas): barmoq uchun radius 24 px, sichqoncha uchun 12 px, element tanasi ustida 10 px. Kichik masshtabda ham portni topish oson.
+- **Chiqish pinlari ustuni maqsadga qarab** (380 / 520 / 680 birlik): oddiy darajalar telefonda kattaroq ko'rinadi.
+- **Ulanmagan chiqish neytral ko'rsatiladi** (qizil emas) — o'yin boshida ekran "xato" bilan to'lib ketmasin.
+- **Qum qutida** 1–5 kirish, 1–4 chiqish, barcha elementlar; holat `localStorage` da.
+- **Ovozlar WebAudio'da** sintez qilinadi: fayl yuklanmaydi, sozlamalarda o'chiriladi.
+- **Shriftlar tizimniki** (monospace + system-ui): tashqi so'rov va qo'shimcha bayt yo'q.

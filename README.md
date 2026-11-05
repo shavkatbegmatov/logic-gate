@@ -1,0 +1,249 @@
+# Logic Gate
+
+Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqotirmalarni yechadigan brauzer o'yini.
+
+- 30 ta daraja, 5 ta bo'lim: asoslardan 2 bitli ko'paytirgichgacha.
+- Jonli simulyatsiya: simlar 1/0 holatiga qarab yonadi, haqiqat jadvali har bir o'zgarishda yangilanadi.
+- Element sonini tejagan o'yinchiga 3 ★. Keyingi bo'limlar yulduzlar bilan ochiladi.
+- Ro'yxatdan o'tmasdan o'ynash mumkin. Taxallus kiritilsa, natijalar reytingga qo'shiladi, progress esa tiklash kodi orqali boshqa qurilmaga o'tkaziladi.
+- Qum quti: istalgan sxemani erkin yig'ish.
+- Telefon va kompyuterda ishlaydi: sichqoncha, sensorli ekran, pinch-zoom, klaviatura (Delete, Ctrl+Z, Ctrl+Y, Ctrl+Enter).
+
+## Stek
+
+| Qatlam | Tanlov | Nega |
+|---|---|---|
+| Backend | Go + `net/http` + SQLite (`modernc.org/sqlite`, CGO'siz) | Bitta binar fayl, serverga runtime kerak emas, RAM ~15–25 MB |
+| Frontend | Vite + TypeScript + Preact + `@preact/signals`, o'yin maydoni SVG | JS gzip'da ~28 KB, hammasi statik fayllar |
+| Server | Nginx + certbot, systemd | Statik fayllar oldindan gzip qilingan, `/api` Go'ga proksi qilinadi |
+
+O'yin mantig'i to'liq brauzerda ishlaydi. Server faqat o'yinchi, progress, reyting va yechimni qayta tekshirish bilan shug'ullanadi.
+
+## Resurs hisoboti
+
+O'lchov WSL2 (Ubuntu) da, production Linux binari bilan, 50 o'yinchi × 30 daraja yechimi + 1000 ta reyting/statistika so'rovi (jami 2600 so'rov) yuborib qilindi. Skript: Python, `/proc/<pid>/status` va `/proc/<pid>/stat` dan o'qiydi.
+
+| Ko'rsatkich | Qiymat |
+|---|---|
+| Backend RAM, ishsiz | 15,2 MB |
+| Backend RAM, yukdan keyin | 23,1 MB |
+| Backend RAM, eng yuqori (VmHWM) | 24,1 MB |
+| CPU bitta so'rovga | ~0,38 ms |
+| Bitta mijozdan o'tkazuvchanlik | ~2000 so'rov/s |
+| Linux binar hajmi | 11 MB |
+| Frontend JS (gzip) | 28,3 KB |
+| Frontend CSS (gzip) | 4,3 KB |
+| Butun frontend (gzip) | 32,3 KB |
+
+Nginx sarfi o'lchanmagan: odatda 1 ta worker bilan 5–10 MB. systemd unit'da `MemoryHigh=64M`, `MemoryMax=96M`, `.env` da `GOMEMLIMIT=40MiB` o'rnatilgan.
+
+## Loyiha tuzilmasi
+
+```
+levels/          darajalar: source.mjs (manba) → build.mjs → levels.json (+ solutions.json testlar uchun)
+server/          Go backend
+  cmd/logicgate/   main.go: server, `backup`, `version` buyruqlari
+  internal/sim/    sxemani tekshirish (web/src/sim/sim.ts bilan bir xil qoidalar)
+  internal/store/  SQLite va migratsiyalar
+  internal/api/    HTTP API, rate limit, tiklash kodlari
+web/             frontend (Vite + Preact)
+  src/sim/         TypeScript simulyatori
+  src/board/       SVG sxema muharriri
+  src/screens/     ekranlar
+deploy/          systemd, Nginx, setup/install/backup/deploy skriptlari, .env.example
+scripts/build.sh testlar + release yig'ish (dist/release)
+PLAN.md          reja
+DECISIONS.md     qabul qilingan qarorlar
+```
+
+## Lokal ishga tushirish
+
+Kerak bo'ladi: Node.js 22+, pnpm, Go 1.26+, Git Bash (Windows'da).
+
+```bash
+cd web
+pnpm install
+```
+
+Ikki terminalda:
+
+```bash
+go run ./server/cmd/logicgate
+```
+
+```bash
+cd web
+pnpm dev
+```
+
+O'yin: http://localhost:5173 (Vite `/api` so'rovlarini 127.0.0.1:8080 ga yo'naltiradi). Ma'lumotlar bazasi `data/logicgate.db` da yaratiladi.
+
+Production build'ni Nginx'siz sinash:
+
+```bash
+cd web
+pnpm build
+```
+
+```bash
+go run ./server/cmd/logicgate -static web/dist
+```
+
+So'ng http://127.0.0.1:8080 ni oching.
+
+Testlar:
+
+```bash
+go test ./...
+```
+
+```bash
+cd web
+pnpm test
+```
+
+## Darajalarni tahrirlash
+
+Darajalar `levels/source.mjs` da: har bir daraja uchun maqsad funksiyasi (`fn`), ruxsat etilgan elementlar va mos yozuvdagi yechim (`sol`). Keyin:
+
+```bash
+node levels/build.mjs
+```
+
+Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
+
+## VPS'ga joylash (eskiz.uz)
+
+### 1. Server
+
+eskiz.uz da Ubuntu 24.04 (yoki 22.04) VPS oling. 1 vCPU / 1 GB RAM yetarli. Server IP manzilini va root parolini oling.
+
+### 2. SSH kalit
+
+Git Bash'da (kalit hali bo'lmasa):
+
+```bash
+ssh-keygen -t ed25519
+```
+
+Kalitni serverga qo'shing (root parolini bir marta so'raydi):
+
+```bash
+cat ~/.ssh/id_ed25519.pub | ssh root@SERVER_IP 'mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys'
+```
+
+### 3. Domen (ixtiyoriy)
+
+Domen bo'lsa, uning DNS sozlamasida `A` yozuvini server IP manziliga yo'naltiring va bir necha daqiqa kuting.
+
+### 4. Birinchi joylash
+
+Loyiha papkasida, Git Bash'da. Domensiz (IP orqali HTTP):
+
+```bash
+bash deploy/deploy.sh root@SERVER_IP --setup
+```
+
+Domen bilan (Let's Encrypt HTTPS; `--agree-tos` bilan Let's Encrypt shartlariga rozilik bildiriladi):
+
+```bash
+bash deploy/deploy.sh root@SERVER_IP --setup game.uz siz@pochta.uz
+```
+
+Skript nima qiladi:
+
+1. Testlarni o'tkazadi, frontend'ni va Linux uchun Go binarini yig'adi (`dist/release`).
+2. Release'ni SSH orqali serverning `/tmp` papkasiga yuklaydi.
+3. `deploy/setup.sh`:
+   - Nginx, ufw va kerak bo'lsa certbot'ni o'rnatadi;
+   - swap bo'lmasa, 1 GB swap yaratadi;
+   - `logicgate` tizim foydalanuvchisini va papkalarni yaratadi;
+   - systemd xizmatini, kunlik zaxira nusxa uchun cron'ni va Nginx saytini sozlaydi;
+   - firewall'da faqat SSH, 80 va 443 portlarini ochadi.
+4. `deploy/install.sh` binar va statik fayllarni `/opt/logicgate` ga o'rnatadi, xizmatni qayta ishga tushiradi va `/healthz` orqali tekshiradi.
+
+Brauzerda `http://SERVER_IP` (yoki `https://game.uz`) ni oching.
+
+### 5. Yangilash
+
+Koddagi o'zgarishlardan keyin:
+
+```bash
+bash deploy/deploy.sh root@SERVER_IP
+```
+
+### Domenni keyinroq qo'shish
+
+```bash
+bash deploy/deploy.sh root@SERVER_IP --setup game.uz siz@pochta.uz
+```
+
+### Serverda tekshirish
+
+```bash
+ssh root@SERVER_IP systemctl status logicgate
+```
+
+```bash
+ssh root@SERVER_IP journalctl -u logicgate -n 100
+```
+
+Sozlamalar `/etc/logicgate.env` faylida (namuna: `deploy/.env.example`). O'zgartirgandan keyin `systemctl restart logicgate`.
+
+| Yo'l | Nima |
+|---|---|
+| `/opt/logicgate/bin/logicgate` | server binari |
+| `/opt/logicgate/web/` | statik fayllar |
+| `/var/lib/logicgate/logicgate.db` | ma'lumotlar bazasi |
+| `/var/backups/logicgate/` | kunlik zaxira nusxalar |
+| `/etc/logicgate.env` | sozlamalar |
+| `/etc/nginx/sites-available/logicgate` | Nginx sayti |
+
+## Zaxira nusxa va tiklash
+
+Har kuni soat 03:30 da bazaning nusxasi `/var/backups/logicgate/logicgate-YYYY-MM-DD.db.gz` ga yoziladi, 7 kundan eskilari o'chiriladi. Nusxa server ishlab turganda ham izchil olinadi (`VACUUM INTO`).
+
+Qo'lda nusxa olish:
+
+```bash
+ssh root@SERVER_IP 'sudo -u logicgate /opt/logicgate/backup.sh'
+```
+
+Nusxalarni kompyuterga ko'chirib turish tavsiya etiladi (server diski buzilsa ham saqlanib qoladi):
+
+```bash
+scp 'root@SERVER_IP:/var/backups/logicgate/*.gz' .
+```
+
+Nusxadan tiklash (serverda):
+
+```bash
+systemctl stop logicgate
+gunzip -c /var/backups/logicgate/logicgate-2026-11-05.db.gz > /var/lib/logicgate/logicgate.db
+rm -f /var/lib/logicgate/logicgate.db-wal /var/lib/logicgate/logicgate.db-shm
+chown logicgate:logicgate /var/lib/logicgate/logicgate.db
+systemctl start logicgate
+```
+
+## API
+
+| Metod | Yo'l | Vazifa |
+|---|---|---|
+| POST | `/api/players` | `{nickname}` → `{id, nickname, code}` — yangi o'yinchi va tiklash kodi |
+| GET | `/api/me` | profil (`Authorization: Bearer <kod>`) |
+| PATCH | `/api/me` | `{nickname}` — taxallusni o'zgartirish |
+| GET | `/api/progress` | o'yinchining eng yaxshi yechimlari |
+| POST | `/api/levels/{id}/solve` | `{circuit}` — server sxemani tekshiradi va saqlaydi |
+| GET | `/api/levels/{id}/stats` | yechganlar soni va eng kam element |
+| GET | `/api/leaderboard` | top-50 (token bo'lsa, o'yinchining o'rni ham) |
+| GET | `/healthz` | holat tekshiruvi |
+
+Cheklovlar: Go'da IP bo'yicha 10 so'rov/s (40 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (5 tagacha), noto'g'ri tiklash kodi — 5 soniyada 1 ta; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim.
+
+## Xavfsizlik
+
+- Tiklash kodi 80 bitli tasodifiy son; bazada faqat uning SHA-256 xeshi saqlanadi.
+- Yechimlar serverda qayta tekshiriladi: mijoz yuborgan yulduz soniga ishonilmaydi.
+- Go server faqat `127.0.0.1` da tinglaydi va `X-Real-IP` ni faqat lokal manzildan kelgan so'rovda qabul qiladi.
+- systemd xizmati alohida foydalanuvchi nomidan, faqat o'qish uchun fayl tizimi va cheklangan huquqlar bilan ishlaydi.
+- Nginx CSP, `X-Frame-Options`, `nosniff` sarlavhalarini qo'shadi.
