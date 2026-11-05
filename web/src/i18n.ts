@@ -149,6 +149,7 @@ export const uz = {
   wrongRows: (n: number) => `${n} ta qatorda natija noto'g'ri. Jadvalda qizil qatorlarga qarang.`,
   network: "Server bilan aloqa yo'q.",
   badNickname: "Taxallus 2–20 belgidan iborat bo'lsin: harflar, raqamlar, bo'shliq, _ - .",
+  nicknameNotAllowed: "Bu taxallusni ishlatib bo'lmaydi. Boshqasini tanlang.",
   rateLimited: "Juda ko'p urinish. Birozdan keyin qayta urinib ko'ring.",
 
   gates: {

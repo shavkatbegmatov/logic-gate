@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 )
 
 // Crockford base32: o'qishda adashtiradigan I, L, O, U harflari yo'q.
@@ -65,20 +64,4 @@ func newID() string {
 	var b [8]byte
 	rand.Read(b[:])
 	return hex.EncodeToString(b[:])
-}
-
-// cleanNickname bo'shliqlarni tartibga keltiradi va taxallusni tekshiradi (2–20 belgi).
-func cleanNickname(s string) (string, bool) {
-	s = strings.Join(strings.Fields(s), " ")
-	n := utf8.RuneCountInString(s)
-	if n < 2 || n > 20 {
-		return "", false
-	}
-	for _, r := range s {
-		ok := unicode.IsLetter(r) || unicode.IsDigit(r) || strings.ContainsRune(" _-.'ʻʼ`", r)
-		if !ok {
-			return "", false
-		}
-	}
-	return s, true
 }

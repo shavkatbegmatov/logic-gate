@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"logicgate/levels"
+	"logicgate/server/internal/nickname"
 	"logicgate/server/internal/sim"
 	"logicgate/server/internal/store"
 )
@@ -182,9 +183,9 @@ func (s *Server) createPlayer(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &req) {
 		return
 	}
-	nick, ok := cleanNickname(req.Nickname)
-	if !ok {
-		writeErr(w, http.StatusBadRequest, "bad_nickname")
+	nick, err := nickname.Clean(req.Nickname)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	id, code := newID(), newCode()
@@ -208,9 +209,9 @@ func (s *Server) patchMe(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &req) {
 		return
 	}
-	nick, ok := cleanNickname(req.Nickname)
-	if !ok {
-		writeErr(w, http.StatusBadRequest, "bad_nickname")
+	nick, err := nickname.Clean(req.Nickname)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := s.store.SetNickname(r.Context(), p.ID, nick); err != nil {

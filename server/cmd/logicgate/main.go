@@ -4,6 +4,8 @@
 //	logicgate backup [fayl]    bazaning nusxasini yozish (faylsiz — LG_BACKUP_DIR ga, aylanish bilan)
 //	logicgate version          versiyani chiqarish
 //	logicgate health           ishlab turgan serverni tekshirish (Docker HEALTHCHECK uchun)
+//	logicgate players [qidiruv]       o'yinchilar ro'yxati (moderatsiya)
+//	logicgate rename <id> <taxallus>  o'yinchi taxallusini o'zgartirish (moderatsiya)
 //
 // Sozlamalar: -addr, -db, -static bayroqlari yoki LG_ADDR, LG_DB, LG_STATIC muhit o'zgaruvchilari.
 // LG_TRUST_PROXY=private — Docker tarmog'idagi proksining X-Real-IP sarlavhasiga ishonish.
@@ -73,6 +75,16 @@ func main() {
 				os.Exit(1)
 			}
 			fmt.Println(path)
+			return
+		case "players", "rename":
+			cmd := cmdPlayers
+			if os.Args[1] == "rename" {
+				cmd = cmdRename
+			}
+			if err := cmd(os.Stdout, dbPath, os.Args[2:]); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
 			return
 		default:
 			fmt.Fprintf(os.Stderr, "noma'lum buyruq: %s\n", os.Args[1])

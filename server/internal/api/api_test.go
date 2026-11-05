@@ -106,6 +106,10 @@ func TestPlayerFlow(t *testing.T) {
 			t.Errorf("%q taxallusi qabul qilindi: %d", bad, status)
 		}
 	}
+	// Haqoratli taxallus alohida kod bilan rad etiladi (yaratishda ham, o'zgartirishda ham).
+	if status, out := e.do("PATCH", "/api/me", code, map[string]string{"nickname": "x.u.y"}); status != 400 || out["error"] != "nickname_not_allowed" {
+		t.Errorf("haqoratli taxallus: %d %v", status, out)
+	}
 }
 
 func TestSolveAndLeaderboard(t *testing.T) {

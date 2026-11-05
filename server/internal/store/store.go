@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -273,6 +274,51 @@ func (s *Store) LevelStats(ctx context.Context, levelID string) (*LevelStats, er
 		st.BestBy = append(st.BestBy, n)
 	}
 	return &st, rows.Err()
+}
+
+type PlayerRow struct {
+	ID       string
+	Nickname string
+	Stars    int
+	Solved   int
+	Created  time.Time
+}
+
+// ListPlayers taxallusida query bor o'yinchilarni (bo'sh bo'lsa — hammasini) yulduzlar bo'yicha qaytaradi.
+func (s *Store) ListPlayers(ctx context.Context, query string, limit int) ([]PlayerRow, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT p.id, p.nickname, COALESCE(SUM(s.stars), 0), COUNT(s.level_id), p.created_at
+		 FROM players p LEFT JOIN solutions s ON s.player_id = p.id
+		 WHERE p.nickname LIKE '%' || ? || '%' ESCAPE '\'
+		 GROUP BY p.id ORDER BY 3 DESC, p.created_at LIMIT ?`,
+		strings.NewReplacer(`\`, `\\`, "%", `\%`, "_", `\_`).Replace(query), limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []PlayerRow
+	for rows.Next() {
+		var r PlayerRow
+		var created int64
+		if err := rows.Scan(&r.ID, &r.Nickname, &r.Stars, &r.Solved, &created); err != nil {
+			return nil, err
+		}
+		r.Created = time.Unix(created, 0)
+		out = append(out, r)
+	}
+	return out, rows.Err()
+}
+
+// RenamePlayer id bo'yicha taxallusni o'zgartiradi; o'yinchi topilmasa ErrNotFound.
+func (s *Store) RenamePlayer(ctx context.Context, id, nickname string) error {
+	res, err := s.db.ExecContext(ctx, `UPDATE players SET nickname = ? WHERE id = ?`, nickname, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // Backup bazaning izchil nusxasini dest fayliga yozadi (VACUUM INTO).

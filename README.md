@@ -158,6 +158,19 @@ docker run --rm -v nezdzxqjc5niwnbzzrl035ik-logic-gate-data:/d alpine sh -c '
   chown 65532:65532 /d/logicgate.db'
 ```
 
+### Moderatsiya
+
+Taxalluslar serverda tekshiriladi: uzunlik (2–20), ruxsat etilgan belgilar va haqoratli so'zlar filtri (o'zbek, rus, ingliz; nuqta, raqam va kirill harflari bilan niqoblangan variantlar ham) — `server/internal/nickname`. Filtr oddiy; o'tib ketgan nomni administrator o'zgartiradi:
+
+```bash
+C=$(docker ps --filter name=nezdzxqjc5niwnbzzrl035ik --format '{{.Names}}' | head -1)
+docker exec "$C" /app/logicgate players            # hamma o'yinchilar (id, taxallus, ★)
+docker exec "$C" /app/logicgate players Ali        # taxallus bo'yicha qidirish
+docker exec "$C" /app/logicgate rename <id> "O'yinchi 17"
+```
+
+Reyting 15 soniya ichida yangilanadi.
+
 ## VPS'ga joylash (eskiz.uz)
 
 Bu bo'lim toza, faqat shu o'yin uchun ajratilgan Ubuntu server uchun (Nginx + systemd).

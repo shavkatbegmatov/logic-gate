@@ -8,6 +8,7 @@ import type { Circuit } from './sim/types';
 export function errorText(e: unknown): string {
   if (!(e instanceof ApiError) || e.code === 'network') return t.network;
   if (e.code === 'bad_nickname') return t.badNickname;
+  if (e.code === 'nickname_not_allowed') return t.nicknameNotAllowed;
   if (e.code === 'rate_limited') return t.rateLimited;
   if (e.code === 'unauthorized') return t.settings.badCode;
   return t.network;
