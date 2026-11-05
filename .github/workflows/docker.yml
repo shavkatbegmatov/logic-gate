@@ -86,7 +86,8 @@ jobs:
         run: |
           for i in $(seq 1 30); do
             v=$(curl -fsS --max-time 10 "$SITE_URL/api/version" | jq -r '.version' 2>/dev/null || true)
-            echo "urinish $i: ${v:-javob yo'q}"
+            # Diqqat: "${v:-...}" ichida apostrof ishlatmang — bash uni ochiq qo'shtirnoq deb o'qiydi.
+            echo "urinish $i: ${v:-javob kelmadi}"
             if [ "$v" = "$GITHUB_SHA" ]; then
               echo "Yangi versiya ishlayapti: $SITE_URL"
               exit 0
