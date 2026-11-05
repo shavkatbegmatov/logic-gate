@@ -4,12 +4,13 @@
 //	logicgate backup <fayl>    bazaning nusxasini yozish
 //	logicgate version          versiyani chiqarish
 //
-// Sozlamalar muhit o'zgaruvchilari orqali: LG_ADDR, LG_DB, LG_STATIC.
+// Sozlamalar: -addr, -db, -static bayroqlari yoki LG_ADDR, LG_DB, LG_STATIC muhit o'zgaruvchilari.
 package main
 
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -40,7 +41,7 @@ func main() {
 	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	dbPath := env("LG_DB", "data/logicgate.db")
 
-	if len(os.Args) > 1 {
+	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") {
 		switch os.Args[1] {
 		case "version":
 			fmt.Println(version)
@@ -61,7 +62,12 @@ func main() {
 		}
 	}
 
-	if err := run(log, dbPath); err != nil {
+	addr := flag.String("addr", env("LG_ADDR", "127.0.0.1:8080"), "tinglash manzili")
+	db := flag.String("db", dbPath, "SQLite fayli")
+	static := flag.String("static", os.Getenv("LG_STATIC"), "statik fayllar papkasi (Nginx'siz lokal sinov uchun)")
+	flag.Parse()
+
+	if err := run(log, *addr, *db, *static); err != nil {
 		log.Error("server to'xtadi", "err", err)
 		os.Exit(1)
 	}
@@ -78,7 +84,7 @@ func backup(dbPath, dest string) error {
 	return st.Backup(ctx, dest)
 }
 
-func run(log *slog.Logger, dbPath string) error {
+func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	pack, err := levels.Load()
 	if err != nil {
 		return err
@@ -90,11 +96,10 @@ func run(log *slog.Logger, dbPath string) error {
 	defer st.Close()
 
 	var handler http.Handler = api.New(st, pack, log).Handler()
-	if dir := os.Getenv("LG_STATIC"); dir != "" {
-		handler = withStatic(handler, dir)
+	if staticDir != "" {
+		handler = withStatic(handler, staticDir)
 	}
 
-	addr := env("LG_ADDR", "127.0.0.1:8080")
 	srv := &http.Server{
 		Addr:              addr,
 		Handler:           handler,

@@ -4,7 +4,7 @@
     {
       "id": "basics",
       "title": "Asoslar",
-      "description": "Mantiqiy elementlar bilan tanishuv: EMAS, VA, YOKI.",
+      "description": "Mantiqiy elementlar bilan tanishuv: NOT (EMAS), AND (VA), OR (YOKI).",
       "unlockStars": 0
     },
     {

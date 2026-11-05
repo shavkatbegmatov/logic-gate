@@ -4,7 +4,7 @@ import solutions from '../../../levels/solutions.json';
 import { check, compile, evaluate, starsFor, truthTable, validate, wouldCycle } from './sim';
 import type { Circuit, LevelPack, Spec } from './types';
 
-const levels = (pack as LevelPack).levels;
+const levels = (pack as unknown as LevelPack).levels;
 const sols = solutions as Record<string, Circuit>;
 
 describe('darajalar', () => {
@@ -19,7 +19,7 @@ describe('darajalar', () => {
   });
 
   it('bo\'limlar tartibi va ochilish chegaralari o\'sib boradi', () => {
-    const { chapters } = pack as LevelPack;
+    const { chapters } = pack as unknown as LevelPack;
     for (let i = 1; i < chapters.length; i++) {
       expect(chapters[i].unlockStars).toBeGreaterThan(chapters[i - 1].unlockStars);
     }
