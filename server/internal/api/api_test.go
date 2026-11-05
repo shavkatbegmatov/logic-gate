@@ -33,7 +33,7 @@ func newEnv(t *testing.T) *testEnv {
 	if err != nil {
 		t.Fatal(err)
 	}
-	a := New(st, pack, slog.New(slog.NewTextHandler(io.Discard, nil)), Options{})
+	a := New(st, pack, slog.New(slog.NewTextHandler(io.Discard, nil)), Options{Version: "test-sha"})
 	srv := httptest.NewServer(a.Handler())
 	t.Cleanup(srv.Close)
 	return &testEnv{t: t, srv: srv, api: a}
@@ -251,5 +251,12 @@ func TestClientIP(t *testing.T) {
 		if got := s.clientIP(r); got != tc.want {
 			t.Errorf("%+v: %s", tc, got)
 		}
+	}
+}
+
+func TestVersion(t *testing.T) {
+	e := newEnv(t)
+	if status, out := e.do("GET", "/api/version", "", nil); status != 200 || out["version"] != "test-sha" {
+		t.Fatalf("version: %d %v", status, out)
 	}
 }

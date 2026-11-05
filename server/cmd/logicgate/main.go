@@ -124,7 +124,7 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	}
 	defer st.Close()
 
-	opts := api.Options{TrustPrivateProxies: os.Getenv("LG_TRUST_PROXY") == "private"}
+	opts := api.Options{TrustPrivateProxies: os.Getenv("LG_TRUST_PROXY") == "private", Version: version}
 	var handler http.Handler = api.New(st, pack, log, opts).Handler()
 	if staticDir != "" {
 		handler = withStatic(handler, staticDir)

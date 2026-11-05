@@ -42,6 +42,8 @@ type Server struct {
 type Options struct {
 	// Docker'da Traefik xususiy tarmoq manzilidan keladi; uning X-Real-IP sarlavhasiga ishonish.
 	TrustPrivateProxies bool
+	// Version /api/version da qaytariladi: CI deploy'dan keyin yangi versiya ishga tushganini tekshiradi.
+	Version string
 }
 
 func New(st *store.Store, pack *levels.Pack, log *slog.Logger, opts Options) *Server {
@@ -59,6 +61,9 @@ func New(st *store.Store, pack *levels.Pack, log *slog.Logger, opts Options) *Se
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte("ok")) })
+	mux.HandleFunc("GET /api/version", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"version": s.opts.Version})
+	})
 	mux.HandleFunc("POST /api/players", s.createPlayer)
 	mux.HandleFunc("GET /api/me", s.authed(s.getMe))
 	mux.HandleFunc("PATCH /api/me", s.authed(s.patchMe))

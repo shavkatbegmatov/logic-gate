@@ -114,7 +114,7 @@ Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini
 
 ## Coolify orqali joylash (Docker)
 
-**Hozirgi joylash:** http://logic-gate.170.168.6.82.sslip.io — Coolify'da `logic-gate` loyihasi (production). Yangi versiyani chiqarish: `main` ga push → GitHub Actions image'ni yig'adi → Coolify'da **Redeploy** (yoki quyidagi webhook sozlansa, avtomatik).
+**Hozirgi joylash:** http://logic-gate.170.168.6.82.sslip.io — Coolify'da `logic-gate` loyihasi (production). Yangi versiyani chiqarish: `main` ga push qilish kifoya — GitHub Actions testlarni o'tkazadi, image'ni yig'adi, Coolify'ni chaqiradi va sayt `/api/version` da yangi commit'ni qaytarguncha kutadi (5 daqiqadan oshsa, workflow xato bilan tugaydi).
 
 Serverda Coolify ishlayotgan bo'lsa (80/443 portlari Traefik'da), o'yin boshqa loyihalar kabi Docker image sifatida joylanadi. **Bunday serverda `deploy/setup.sh` ni ishga tushirmang:** u Nginx o'rnatib, firewall'ni yoqadi.
 
@@ -129,7 +129,7 @@ Serverda Coolify ishlayotgan bo'lsa (80/443 portlari Traefik'da), o'yin boshqa l
 
 Kerakli muhit o'zgaruvchilari image ichida berilgan: `LG_ADDR=0.0.0.0:8080`, `LG_DB=/data/logicgate.db`, `LG_STATIC=/app/web`, `LG_TRUST_PROXY=private`, `GOMEMLIMIT=40MiB`. Frontend'ni Go serverning o'zi uzatadi: `.gz` fayllar, kesh va xavfsizlik sarlavhalari bilan. Konteyner salomatligi `logicgate health` buyrug'i orqali tekshiriladi.
 
-Avtomatik yangilash uchun GitHub repozitoriy Secrets'iga `COOLIFY_WEBHOOK` (ilovaning Deploy Webhook URL manzili) va `COOLIFY_TOKEN` qo'shing.
+Avtomatik yangilash uchun repozitoriy Secrets'ida `COOLIFY_WEBHOOK` (ilovaning Deploy Webhook URL manzili) va `COOLIFY_TOKEN` (Coolify API token, faqat `deploy` huquqi) bo'lishi kerak. Sayt manzili o'zgarsa, repozitoriy Variables'ida `LOGIC_GATE_URL` ni yangilang.
 
 Zaxira nusxa (serverda):
 
