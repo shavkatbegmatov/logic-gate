@@ -32,6 +32,7 @@ ENV LG_ADDR=0.0.0.0:8080 \
     LG_DB=/data/logicgate.db \
     LG_STATIC=/app/web \
     LG_TRUST_PROXY=private \
+    LG_BACKUP_DIR=/data/backups \
     GOMEMLIMIT=40MiB
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --start-interval=1s --retries=3 \

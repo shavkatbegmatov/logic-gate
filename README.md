@@ -131,10 +131,31 @@ Kerakli muhit o'zgaruvchilari image ichida berilgan: `LG_ADDR=0.0.0.0:8080`, `LG
 
 Avtomatik yangilash uchun repozitoriy Secrets'ida `COOLIFY_WEBHOOK` (ilovaning Deploy Webhook URL manzili) va `COOLIFY_TOKEN` (Coolify API token, faqat `deploy` huquqi) bo'lishi kerak. Sayt manzili o'zgarsa, repozitoriy Variables'ida `LOGIC_GATE_URL` ni yangilang.
 
-Zaxira nusxa (serverda):
+### Zaxira nusxa (Coolify)
+
+Server o'zi har kuni soat 03:00 da (Toshkent; `LG_BACKUP_HOUR=22` — UTC) bazaning gzip qilingan nusxasini `/data/backups/logicgate-YYYY-MM-DD.db.gz` ga yozadi (sana UTC bo'yicha), oxirgi 7 tasi saqlanadi (`LG_BACKUP_KEEP`). Ishga tushganda oxirgi 24 soatda nusxa bo'lmasa, bir daqiqadan keyin darhol oladi. Konteynerda shell yo'q, shuning uchun Coolify Scheduled Tasks emas, serverning ichki rejalashtiruvchisi ishlatiladi.
+
+Nusxalar ro'yxati va qo'lda nusxa olish (serverda; `C` — konteyner nomi):
 
 ```bash
-docker exec <konteyner> /app/logicgate backup /data/backup-$(date +%F).db
+C=$(docker ps --filter name=nezdzxqjc5niwnbzzrl035ik --format '{{.Names}}' | head -1)
+docker exec "$C" /app/logicgate backup
+ls -la /var/lib/docker/volumes/nezdzxqjc5niwnbzzrl035ik-logic-gate-data/_data/backups/
+```
+
+Nusxalar bazaning o'zi bilan bir diskda turadi: ular xato deploy yoki ma'lumot buzilishidan himoya qiladi, lekin disk ishdan chiqsa — yo'q. Vaqti-vaqti bilan kompyuterga ko'chiring:
+
+```bash
+scp 'root@170.168.6.82:/var/lib/docker/volumes/nezdzxqjc5niwnbzzrl035ik-logic-gate-data/_data/backups/*.gz' .
+```
+
+Nusxadan tiklash: Coolify'da ilovani **Stop** qiling, serverda quyidagini bajaring (sanani o'zgartiring), keyin **Start**:
+
+```bash
+docker run --rm -v nezdzxqjc5niwnbzzrl035ik-logic-gate-data:/d alpine sh -c '
+  gunzip -c /d/backups/logicgate-2026-11-05.db.gz > /d/logicgate.db &&
+  rm -f /d/logicgate.db-wal /d/logicgate.db-shm &&
+  chown 65532:65532 /d/logicgate.db'
 ```
 
 ## VPS'ga joylash (eskiz.uz)

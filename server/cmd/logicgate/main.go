@@ -1,12 +1,14 @@
 // logicgate — Logic Gate o'yini serveri.
 //
 //	logicgate                  serverni ishga tushirish
-//	logicgate backup <fayl>    bazaning nusxasini yozish
+//	logicgate backup [fayl]    bazaning nusxasini yozish (faylsiz — LG_BACKUP_DIR ga, aylanish bilan)
 //	logicgate version          versiyani chiqarish
 //	logicgate health           ishlab turgan serverni tekshirish (Docker HEALTHCHECK uchun)
 //
 // Sozlamalar: -addr, -db, -static bayroqlari yoki LG_ADDR, LG_DB, LG_STATIC muhit o'zgaruvchilari.
 // LG_TRUST_PROXY=private — Docker tarmog'idagi proksining X-Real-IP sarlavhasiga ishonish.
+// LG_BACKUP_DIR — kunlik zaxira nusxalar papkasi (bo'sh bo'lsa o'chirilgan), LG_BACKUP_KEEP — nechta
+// nusxa saqlanadi (7), LG_BACKUP_HOUR — UTC soati (22 = Toshkentda 03:00).
 package main
 
 import (
@@ -19,12 +21,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"logicgate/levels"
 	"logicgate/server/internal/api"
+	"logicgate/server/internal/backup"
 	"logicgate/server/internal/store"
 	"logicgate/server/internal/web"
 )
@@ -55,14 +59,20 @@ func main() {
 			}
 			return
 		case "backup":
-			if len(os.Args) != 3 {
-				fmt.Fprintln(os.Stderr, "foydalanish: logicgate backup <fayl>")
+			if len(os.Args) > 3 {
+				fmt.Fprintln(os.Stderr, "foydalanish: logicgate backup [fayl]")
 				os.Exit(2)
 			}
-			if err := backup(dbPath, os.Args[2]); err != nil {
+			dest := ""
+			if len(os.Args) == 3 {
+				dest = os.Args[2]
+			}
+			path, err := backupNow(dbPath, dest, backupConfig())
+			if err != nil {
 				log.Error("zaxira nusxa", "err", err)
 				os.Exit(1)
 			}
+			fmt.Println(path)
 			return
 		default:
 			fmt.Fprintf(os.Stderr, "noma'lum buyruq: %s\n", os.Args[1])
@@ -81,15 +91,37 @@ func main() {
 	}
 }
 
-func backup(dbPath, dest string) error {
+func backupConfig() backup.Config {
+	return backup.Config{
+		Dir:  os.Getenv("LG_BACKUP_DIR"),
+		Keep: envInt("LG_BACKUP_KEEP", 7),
+		Hour: envInt("LG_BACKUP_HOUR", 22) % 24,
+	}
+}
+
+func envInt(key string, def int) int {
+	if n, err := strconv.Atoi(os.Getenv(key)); err == nil && n >= 0 {
+		return n
+	}
+	return def
+}
+
+// backupNow dest ga yoki (dest bo'sh bo'lsa) cfg.Dir ga aylanish bilan nusxa yozadi.
+func backupNow(dbPath, dest string, cfg backup.Config) (string, error) {
 	st, err := store.Open(dbPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer st.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	return st.Backup(ctx, dest)
+	if dest != "" {
+		return dest, st.Backup(ctx, dest)
+	}
+	if cfg.Dir == "" {
+		return "", errors.New("fayl ko'rsatilmagan va LG_BACKUP_DIR o'rnatilmagan")
+	}
+	return backup.Once(ctx, st, cfg.Dir, cfg.Keep, time.Now())
 }
 
 // health server /healthz ga javob beradimi, tekshiradi.
@@ -142,6 +174,24 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	backups := make(chan struct{})
+	if cfg := backupConfig(); cfg.Dir != "" {
+		go func() {
+			defer close(backups)
+			backup.Run(ctx, st, cfg, log)
+		}()
+		log.Info("kunlik zaxira yoqilgan", "dir", cfg.Dir, "keep", cfg.Keep, "hourUTC", cfg.Hour)
+	} else {
+		close(backups)
+	}
+	// Baza yopilishidan oldin nusxa olish to'xtatiladi va boshlangani tugashi kutiladi.
+	// stop() bu yerda ham chaqiriladi: server xato bilan to'xtasa, ctx hali bekor qilinmagan bo'ladi.
+	defer func() {
+		stop()
+		<-backups
+	}()
+
 	errc := make(chan error, 1)
 	go func() { errc <- srv.ListenAndServe() }()
 	log.Info("server ishga tushdi", "addr", addr, "db", dbPath, "version", version, "levels", len(pack.Levels))
