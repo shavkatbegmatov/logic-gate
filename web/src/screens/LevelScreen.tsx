@@ -11,7 +11,7 @@ import { showToast } from '../components/Toast';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, Modal, Stars, TopBar } from '../components/ui';
 import { t } from '../i18n';
-import { chapterOf, chapters, levelById, levelNumber } from '../levels';
+import { chapterOf, chapters, levelById, levelNumber, levels } from '../levels';
 import { go } from '../router';
 import { check, expected, type SimError } from '../sim/sim';
 import { emptyCircuit, type Level } from '../sim/types';
@@ -24,6 +24,7 @@ import {
   progress,
   recordSolve,
   setDraft,
+  solvedCount,
   totalStars,
 } from '../state';
 import { submitSolve } from '../sync';
@@ -69,7 +70,7 @@ function Play({ level }: { level: Level }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest('input, textarea')) return;
+      if (e.target instanceof Element && e.target.closest('input, textarea')) return;
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) runCheck();
     };
     addEventListener('keydown', onKey);
@@ -275,7 +276,7 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
         )}
       </div>
 
-      {!next && <p class="good">{t.success.allDone}</p>}
+      {solvedCount.value === levels.length && <p class="good">{t.success.allDone}</p>}
       {next && !nextOpen && nextChapter && !chapterUnlocked(nextChapter) && (
         <p class="muted">
           {t.success.nextLocked(nextChapter.unlockStars)} ({totalStars.value} ★)

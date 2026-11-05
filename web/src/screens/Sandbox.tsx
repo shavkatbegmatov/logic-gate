@@ -35,7 +35,7 @@ export function Sandbox() {
     const ed = new Editor();
     const ins = Math.min(5, Math.max(1, saved.inputs | 0));
     const outs = Math.min(4, Math.max(1, saved.outputs | 0));
-    ed.load(specFor(ins, outs), saved.circuit, outputColumn(9));
+    ed.load(specFor(ins, outs), saved.circuit, outputColumn(4));
     ed.onChange = (circuit) => {
       const spec = ed.spec.value;
       saveLater(KEYS.sandbox, { inputs: spec.inputs.length, outputs: spec.outputs.length, circuit });

@@ -5,7 +5,7 @@ import type { Editor } from '../board/editor';
 export function useEditorKeys(editor: Editor) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest('input, textarea, [role="dialog"]')) return;
+      if (e.target instanceof Element && e.target.closest('input, textarea, [role="dialog"]')) return;
       const mod = e.ctrlKey || e.metaKey;
       if (e.key === 'Delete' || e.key === 'Backspace') {
         if (editor.selection.value) {

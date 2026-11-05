@@ -216,7 +216,7 @@ export class Editor {
 
   fit() {
     const b = bounds(this.circuit.value, this.layout.value);
-    const pad = 24;
+    const pad = this.size.w < 500 ? 8 : 24;
     const s = Math.max(
       MIN_ZOOM,
       Math.min(1.35, (this.size.w - pad * 2) / (b.maxX - b.minX), (this.size.h - pad * 2) / (b.maxY - b.minY)),

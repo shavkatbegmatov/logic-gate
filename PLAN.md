@@ -1,6 +1,6 @@
 # Logic Gate — loyiha rejasi
 
-> Holat: savollarga javob kutilmoqda. Javoblardan keyin bu reja yangilanadi va qarorlar `DECISIONS.md`ga yoziladi.
+> Holat: 1-versiya tayyor (2026-11-05). Qabul qilingan qarorlar — `DECISIONS.md`, ishga tushirish va deploy — `README.md`.
 
 ## 1. Stek
 

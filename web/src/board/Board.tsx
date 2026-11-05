@@ -17,6 +17,15 @@ type Drag =
 
 const MOVE_THRESHOLD = 6;
 
+/** Ko'rsatkichni ushlab qolish; ba'zi brauzerlar allaqachon qo'yib yuborilgan ko'rsatkichda xato beradi. */
+export function capture(el: Element, pointerId: number) {
+  try {
+    el.setPointerCapture(pointerId);
+  } catch {
+    // Ushlab bo'lmasa ham hodisalar odatdagidek keladi.
+  }
+}
+
 interface Props {
   editor: Editor;
   /** Joriy qator uchun kutilgan chiqishlar (darajada); qum qutida yo'q. */
@@ -109,8 +118,7 @@ export function Board({ editor, expected }: Props) {
 
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
-    const svg = svgRef.current!;
-    svg.setPointerCapture(e.pointerId);
+    capture(svgRef.current!, e.pointerId);
     const p = local(e);
     pointers.current.set(e.pointerId, p);
 

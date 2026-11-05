@@ -1,5 +1,6 @@
 import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
+import { capture } from '../board/Board';
 import type { Editor } from '../board/editor';
 import { GateIcon } from '../board/GateShape';
 import { t } from '../i18n';
@@ -16,7 +17,7 @@ export function Palette({ editor, gates }: Props) {
   const start = useRef<{ type: GateType; x: number; y: number; moved: boolean } | null>(null);
 
   const onDown = (type: GateType) => (e: PointerEvent) => {
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    capture(e.currentTarget as Element, e.pointerId);
     start.current = { type, x: e.clientX, y: e.clientY, moved: false };
   };
 
