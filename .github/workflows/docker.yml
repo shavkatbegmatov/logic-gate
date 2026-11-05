@@ -61,38 +61,10 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/logic-gate:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      # Coolify 4.6: /api/v1/deploy faqat POST qabul qiladi (GET → 405).
-      - name: Coolify'da qayta joylash
-        id: deploy
+      # Deploy, yangi versiyani kutish va kerak bo'lsa bir marta qayta urinish — skript ichida izohlangan.
+      - name: Coolify'da joylash va tekshirish
         env:
           COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-        run: |
-          if [ -z "$COOLIFY_WEBHOOK" ] || [ -z "$COOLIFY_TOKEN" ]; then
-            echo "COOLIFY_WEBHOOK yoki COOLIFY_TOKEN yo'q — Coolify'da qo'lda Redeploy qiling."
-            exit 0
-          fi
-          curl -sS --fail-with-body --retry 2 --max-time 30 -X POST \
-            -H "Authorization: Bearer $COOLIFY_TOKEN" "$COOLIFY_WEBHOOK"
-          echo
-          echo "triggered=true" >> "$GITHUB_OUTPUT"
-
-      # Webhook qabul qilingani deploy muvaffaqiyatli degani emas: eski konteyner ham 200 qaytaradi.
-      # Shuning uchun sayt aynan shu commit versiyasini qaytarguncha kutiladi.
-      - name: Yangi versiya ishga tushganini tekshirish
-        if: steps.deploy.outputs.triggered == 'true'
-        env:
           SITE_URL: ${{ vars.LOGIC_GATE_URL || 'http://logic-gate.170.168.6.82.sslip.io' }}
-        run: |
-          for i in $(seq 1 30); do
-            v=$(curl -fsS --max-time 10 "$SITE_URL/api/version" | jq -r '.version' 2>/dev/null || true)
-            # Diqqat: "${v:-...}" ichida apostrof ishlatmang — bash uni ochiq qo'shtirnoq deb o'qiydi.
-            echo "urinish $i: ${v:-javob kelmadi}"
-            if [ "$v" = "$GITHUB_SHA" ]; then
-              echo "Yangi versiya ishlayapti: $SITE_URL"
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "::error::5 daqiqada yangi versiya ($GITHUB_SHA) ishga tushmadi — Coolify Deployment Logs'ni tekshiring"
-          exit 1
+        run: bash .github/scripts/deploy-coolify.sh
