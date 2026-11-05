@@ -114,7 +114,7 @@ Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini
 
 ## Coolify orqali joylash (Docker)
 
-**Hozirgi joylash:** http://logic-gate.170.168.6.82.sslip.io — Coolify'da `logic-gate` loyihasi (production). Yangi versiyani chiqarish: `main` ga push qilish kifoya — GitHub Actions testlarni o'tkazadi, image'ni yig'adi, Coolify'ni chaqiradi va sayt `/api/version` da yangi commit'ni qaytarguncha kutadi. 2,5 daqiqada yangi versiya ko'rinmasa (masalan, serverdan ghcr.io ga aloqa uzilib, image tortilmasa), Coolify bir marta qayta chaqiriladi; ~6 daqiqada ham bo'lmasa, workflow xato bilan tugaydi. Mantiq: `.github/scripts/deploy-coolify.sh`.
+**Hozirgi joylash:** http://logic-gate.170.168.6.82.sslip.io — Coolify'da `logic-gate` loyihasi (production). Yangi versiyani chiqarish: `main` ga push qilish kifoya — GitHub Actions testlarni o'tkazadi, image'ni yig'adi, Coolify'ni chaqiradi va sayt `/api/version` da yangi commit'ni qaytarguncha kutadi. Yangi versiya ko'rinmasa (serverdan ghcr.io ga ulanishlarning bir qismi uziladi va image tortilmay qoladi), Coolify har ~80 soniyada qayta chaqiriladi — jami 4 martagacha; ~7 daqiqada ham bo'lmasa, workflow xato bilan tugaydi. Mantiq: `.github/scripts/deploy-coolify.sh`.
 
 Serverda Coolify ishlayotgan bo'lsa (80/443 portlari Traefik'da), o'yin boshqa loyihalar kabi Docker image sifatida joylanadi. **Bunday serverda `deploy/setup.sh` ni ishga tushirmang:** u Nginx o'rnatib, firewall'ni yoqadi.
 
