@@ -131,6 +131,14 @@ Kerakli muhit o'zgaruvchilari image ichida berilgan: `LG_ADDR=0.0.0.0:8080`, `LG
 
 Avtomatik yangilash uchun repozitoriy Secrets'ida `COOLIFY_WEBHOOK` (ilovaning Deploy Webhook URL manzili) va `COOLIFY_TOKEN` (Coolify API token, faqat `deploy` huquqi) bo'lishi kerak. Sayt manzili o'zgarsa, repozitoriy Variables'ida `LOGIC_GATE_URL` ni yangilang.
 
+### Domen o'zgarganda
+
+1. Coolify → ilova → **Domains**: yangi domen (`https://` — Let's Encrypt avtomatik).
+2. `web/.env` dagi `VITE_SITE_URL` — Telegram/Open Graph havola rasmi to'liq manzil talab qiladi.
+3. GitHub repozitoriy **Variables** → `LOGIC_GATE_URL` — deploy'dan keyingi tekshiruv shu manzilga boradi.
+
+Havola rasmi `web/public/og.png` (1200×630) `web/scripts/og.html` dan olingan skrinshot.
+
 ### Zaxira nusxa (Coolify)
 
 Server o'zi har kuni soat 03:00 da (Toshkent; `LG_BACKUP_HOUR=22` — UTC) bazaning gzip qilingan nusxasini `/data/backups/logicgate-YYYY-MM-DD.db.gz` ga yozadi (sana UTC bo'yicha), oxirgi 7 tasi saqlanadi (`LG_BACKUP_KEEP`). Ishga tushganda oxirgi 24 soatda nusxa bo'lmasa, bir daqiqadan keyin darhol oladi. Konteynerda shell yo'q, shuning uchun Coolify Scheduled Tasks emas, serverning ichki rejalashtiruvchisi ishlatiladi.

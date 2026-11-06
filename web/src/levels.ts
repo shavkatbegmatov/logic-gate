@@ -1,5 +1,5 @@
 import data from '../../levels/levels.json';
-import type { Chapter, Level, LevelPack } from './sim/types';
+import type { Chapter, GateType, Level, LevelPack } from './sim/types';
 
 const pack = data as unknown as LevelPack;
 
@@ -24,4 +24,18 @@ export function chapterOf(level: Level): Chapter {
 /** Darajaning umumiy tartib raqami (1 dan). */
 export function levelNumber(level: Level): number {
   return levels.indexOf(level) + 1;
+}
+
+// Har bir daraja birinchi marta tanishtiradigan elementlar (oldingi darajalarda bo'lmaganlari).
+const introduced = new Map<string, GateType[]>();
+{
+  const seen = new Set<GateType>();
+  for (const l of levels) {
+    introduced.set(l.id, l.gates.filter((g) => !seen.has(g)));
+    l.gates.forEach((g) => seen.add(g));
+  }
+}
+
+export function newGates(level: Level): GateType[] {
+  return introduced.get(level.id) ?? [];
 }

@@ -9,6 +9,7 @@ const KEYS = {
   settings: 'lg.settings.v1',
   drafts: 'lg.drafts.v1',
   sandbox: 'lg.sandbox.v1',
+  intro: 'lg.intro.v1',
 };
 export { KEYS };
 
@@ -35,7 +36,11 @@ export const progress = signal<Record<string, LevelProgress>>(load(KEYS.progress
 export const profile = signal<Profile | null>(load(KEYS.profile, null));
 export const settings = signal<Settings>({ sound: true, ...load<Partial<Settings>>(KEYS.settings, {}) });
 
+/** Tanishtiruv kartasi ko'rsatilgan elementlar. */
+export const seenIntro = signal<string[]>(load(KEYS.intro, []));
+
 effect(() => save(KEYS.progress, progress.value));
+effect(() => save(KEYS.intro, seenIntro.value));
 effect(() => save(KEYS.profile, profile.value));
 effect(() => save(KEYS.settings, settings.value));
 
@@ -98,8 +103,13 @@ export function setDraft(levelId: string, circuit: Circuit) {
   saveLater(KEYS.drafts, drafts);
 }
 
+export function markIntroSeen(types: string[]) {
+  seenIntro.value = [...new Set([...seenIntro.value, ...types])];
+}
+
 export function resetLocalProgress() {
   progress.value = {};
+  seenIntro.value = [];
   for (const k of Object.keys(drafts)) delete drafts[k];
   save(KEYS.drafts, null);
   save(KEYS.sandbox, null);

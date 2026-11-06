@@ -57,6 +57,9 @@ export const uz = {
     cycle: "Bunday ulab bo'lmaydi: signal o'ziga qaytib keladi.",
     sameKind: "Chiqishni kirishga ulang: bitta sim manbadan qabul qiluvchiga boradi.",
     rowsOk: "Barcha qatorlar to'g'ri — endi tekshiring!",
+    newGate: 'Yangi element',
+    newGates: 'Yangi elementlar',
+    gotIt: 'Tushunarli',
   },
 
   success: {

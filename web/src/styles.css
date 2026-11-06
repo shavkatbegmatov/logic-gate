@@ -992,6 +992,52 @@ input[type='text']:focus {
   pointer-events: none;
 }
 
+/* ── Yangi element kartasi ────────────────────────────── */
+.intro-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--copper);
+}
+
+.intro-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.intro-gate + .intro-gate {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.intro-gate .gate-icon .gate-body,
+.intro-gate .gate-icon .gate-back {
+  stroke: var(--on);
+}
+
+.intro-name {
+  font-size: 20px;
+}
+
+.intro-name b {
+  font-family: var(--mono);
+  color: var(--on);
+}
+
+.intro-truth {
+  width: auto;
+  min-width: 160px;
+  margin-top: 4px;
+}
+
+.intro-truth tbody tr {
+  cursor: default;
+}
+
 /* ── Elementlar tavsifi ───────────────────────────────── */
 .gate-list h2 {
   margin: 0 0 8px;

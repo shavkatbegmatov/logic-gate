@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
+import { GateIntro } from '../components/GateIntro';
 import { GateList } from '../components/GateList';
 import { JoinForm } from '../components/JoinForm';
 import { Palette } from '../components/Palette';
@@ -12,7 +13,7 @@ import { showToast } from '../components/Toast';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, Modal, Stars, TopBar } from '../components/ui';
 import { t } from '../i18n';
-import { chapterOf, chapters, levelById, levelNumber, levels } from '../levels';
+import { chapterOf, chapters, levelById, levelNumber, levels, newGates } from '../levels';
 import { go } from '../router';
 import { check, expected, type SimError } from '../sim/sim';
 import { emptyCircuit, type Level } from '../sim/types';
@@ -20,10 +21,12 @@ import {
   chapterUnlocked,
   getDraft,
   levelUnlocked,
+  markIntroSeen,
   nextLevel,
   profile,
   progress,
   recordSolve,
+  seenIntro,
   setDraft,
   solvedCount,
   totalStars,
@@ -61,6 +64,8 @@ function Play({ level }: { level: Level }) {
   const showHint = useSignal(false);
   const showSide = useSignal(false);
   const result = useSignal<Result | null>(null);
+  // Daraja yangi element bilan tanishtirsa — bir martalik karta.
+  const intro = useSignal(newGates(level).filter((g) => !seenIntro.value.includes(g)));
 
   useMemo(() => {
     editor.load(level, getDraft(level.id) ?? progress.value[level.id]?.circuit ?? emptyCircuit(), outputColumn(level.goal));
@@ -183,6 +188,16 @@ function Play({ level }: { level: Level }) {
           </button>
         </div>
       </div>
+
+      {intro.value.length > 0 && (
+        <GateIntro
+          gates={intro.value}
+          onClose={() => {
+            markIntroSeen(intro.value);
+            intro.value = [];
+          }}
+        />
+      )}
 
       {result.value && (
         <SuccessModal
