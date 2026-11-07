@@ -48,6 +48,13 @@ export class Editor {
    * y o'ngga yo'naladi. Sxema koordinatalari o'zgarmaydi, shuning uchun bir sxema ikkala holatda ham ishlaydi.
    */
   readonly vertical = signal(false);
+  /**
+   * Tekshiruv animatsiyasi: signal to'lqinining qadami (null — hammasi ko'rinadi).
+   * Chuqurligi d bo'lgan manba 2d-qadamda, undan chiqqan simlar 2d+1-qadamda yonadi.
+   */
+  readonly wave = signal<number | null>(null);
+  /** Tekshiruv ketmoqda — sxemani o'zgartirib bo'lmaydi. */
+  readonly busy = signal(false);
 
   readonly layout = computed<Layout>(() => layout(this.spec.value, this.outX.value));
   readonly compiled = computed(() => compile(this.spec.value, this.circuit.value));

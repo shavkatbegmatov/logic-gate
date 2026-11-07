@@ -172,6 +172,24 @@ export function evaluate(c: Compiled, bits: number[]): Evaluation {
   return { values, outputs };
 }
 
+/**
+ * Manbalar chuqurligi: kirishlar 0, element — o'z kirishlariga ulangan eng chuqur manba + 1.
+ * Tekshiruv animatsiyasida signal shu tartibda "oqadi".
+ */
+export function depths(c: Compiled): Map<string, number> {
+  const d = new Map<string, number>();
+  c.spec.inputs.forEach((name) => d.set(`in:${name}`, 0));
+  for (const g of c.order) {
+    let m = 0;
+    for (let i = 0; i < GATE_ARITY[g.type]; i++) {
+      const src = c.drivers.get(`${g.id}:${i}`);
+      if (src !== undefined) m = Math.max(m, d.get(src) ?? 0);
+    }
+    d.set(g.id, m + 1);
+  }
+  return d;
+}
+
 /** Har bir qator uchun chiqishlar: qatorlar[r][i]. */
 export function truthTable(c: Compiled): (number | null)[][] {
   const n = c.spec.inputs.length;

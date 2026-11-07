@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import pack from '../../../levels/levels.json';
 import solutions from '../../../levels/solutions.json';
-import { check, compile, evaluate, starsFor, truthTable, validate, wouldCycle } from './sim';
+import { check, compile, depths, evaluate, starsFor, truthTable, validate, wouldCycle } from './sim';
 import type { Circuit, LevelPack, Spec } from './types';
 
 const levels = (pack as unknown as LevelPack).levels;
@@ -137,5 +137,28 @@ describe('wouldCycle', () => {
   it('oldinga ulash sikl emas', () => {
     expect(wouldCycle(c, 'in:A', 'a:0')).toBe(false);
     expect(wouldCycle(c, 'b', 'out:Q')).toBe(false);
+  });
+});
+
+describe('depths', () => {
+  it('kirishlar 0, element — eng chuqur kirishi + 1; ulanmagan kirish 0 hisoblanadi', () => {
+    const c: Circuit = {
+      gates: [
+        { id: 'o', type: 'OR', x: 0, y: 0 },
+        { id: 'n', type: 'NOT', x: 0, y: 0 },
+        { id: 'a', type: 'AND', x: 0, y: 0 },
+        { id: 'z', type: 'AND', x: 0, y: 0 },
+      ],
+      wires: [
+        { from: 'n', to: 'o:0' },
+        { from: 'in:B', to: 'o:1' },
+        { from: 'in:A', to: 'n:0' },
+        { from: 'o', to: 'a:0' },
+        { from: 'in:A', to: 'a:1' },
+        { from: 'a', to: 'out:Q' },
+      ],
+    };
+    const d = depths(compile(spec, c));
+    expect(Object.fromEntries(d)).toEqual({ 'in:A': 0, 'in:B': 0, n: 1, o: 2, a: 3, z: 1 });
   });
 });

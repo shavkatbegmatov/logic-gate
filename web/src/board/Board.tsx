@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { sfx } from '../audio';
 import { showToast } from '../components/Toast';
 import { t } from '../i18n';
+import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
 import { GATE_H, GATE_W, inputPortY, isSourcePort, portPoint, wirePath, type Point } from './geometry';
@@ -130,6 +131,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
 
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (editor.busy.value) return;
     capture(svgRef.current!, e.pointerId);
     const p = local(e);
     pointers.current.set(e.pointerId, p);
@@ -269,6 +271,13 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
   // Ulanayotgan port turiga mos keladigan portlar yoritiladi.
   const targetClass = active ? (isSourcePort(active) ? 'want-sink' : 'want-src') : '';
 
+  // Tekshiruv to'lqini: manba (extra=0) yoki undan chiqqan sim (extra=1) shu qadamda yetib kelganmi.
+  const wave = editor.wave.value;
+  const depth = wave === null ? null : depths(editor.compiled.value);
+  const stepOf = (src: string, extra: number) => 2 * (depth?.get(src) ?? 0) + extra;
+  const reached = (src: string, extra: number) => wave === null || stepOf(src, extra) <= wave;
+  const drivers = editor.compiled.value.drivers;
+
   let deleteAt: Point | null = null;
   if (sel?.kind === 'gate') {
     const g = gmap.get(sel.id);
@@ -281,14 +290,21 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     const b = portPoint(w.to, gmap, lay);
     if (!a || !b) return null;
     const d = wirePath(a, b);
-    const on = values.get(w.from) === 1;
+    const live = reached(w.from, 1);
+    const on = live && values.get(w.from) === 1;
+    const front = wave !== null && stepOf(w.from, 1) === wave;
     const selected = sel?.kind === 'wire' && sel.index === i;
     if (selected) {
       // Simmetrik boshqaruv nuqtalari tufayli Bezier o'rtasi aynan a va b ning o'rtasi.
       deleteAt = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + (vertical ? 14 : -14) };
     }
     return (
-      <g key={`${w.from}>${w.to}`} class={`wire${on ? ' on' : ''}${selected ? ' sel' : ''}`} data-kind="wire" data-index={i}>
+      <g
+        key={`${w.from}>${w.to}`}
+        class={`wire${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
+        data-kind="wire"
+        data-index={i}
+      >
         <path class="wire-hit" d={d} />
         {on && <path class="wire-glow" d={d} />}
         <path class="wire-line" d={d} />
@@ -346,12 +362,13 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
           <g class="wires">{wireEls}</g>
 
           {gates.map((g) => {
-            const on = values.get(g.id) === 1;
+            const live = reached(g.id, 0);
+            const on = live && values.get(g.id) === 1;
             const selected = sel?.kind === 'gate' && sel.id === g.id;
             return (
               <g
                 key={g.id}
-                class={`gate${on ? ' on' : ''}${selected ? ' sel' : ''}${highlight === g.id ? ' err' : ''}`}
+                class={`gate${on ? ' on' : ''}${selected ? ' sel' : ''}${highlight === g.id ? ' err' : ''}${live ? '' : ' idle'}`}
                 transform={`translate(${g.x},${g.y})`}
               >
                 <g data-kind="gate" data-id={g.id}>
@@ -385,7 +402,9 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
 
           {spec.outputs.map((name, i) => {
             const p = lay.outputs.get(name)!;
-            const v = outputs[i];
+            // Signal hali yetib kelmagan chiqish bo'sh ko'rinadi.
+            const src = drivers.get(`out:${name}`);
+            const v = src === undefined || reached(src, 2) ? outputs[i] : null;
             const exp = expected?.[i];
             // Ulanmagan chiqish neytral ko'rinadi — o'yin boshida hammasi qizil bo'lmasin.
             const state = exp === undefined || v === null ? '' : v === exp ? ' good' : ' bad';

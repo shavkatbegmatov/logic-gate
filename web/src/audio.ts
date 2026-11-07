@@ -47,4 +47,6 @@ export const sfx = {
   success: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, { type: 'triangle', gain: 0.07, delay: i * 0.09 })),
   star: (i: number) => tone(880 + i * 220, 0.18, { type: 'sine', gain: 0.06 }),
   click: () => tone(700, 0.03, { type: 'sine', gain: 0.03 }),
+  /** Tekshiruvda to'g'ri chiqqan qator: har qatorda biroz balandroq. */
+  tick: (i: number) => tone(520 * 2 ** (Math.min(i, 24) / 24), 0.05, { type: 'sine', gain: 0.035 }),
 };

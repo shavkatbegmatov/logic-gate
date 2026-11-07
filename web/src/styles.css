@@ -1553,10 +1553,10 @@ input[type='text']:focus {
   border-radius: 50%;
   background: var(--copper);
   box-shadow: 0 0 10px var(--copper);
-  animation: blink 1.6s ease-in-out infinite;
+  animation: dot-blink 1.6s ease-in-out infinite;
 }
 
-@keyframes blink {
+@keyframes dot-blink {
   50% {
     opacity: 0.35;
   }
@@ -1604,4 +1604,136 @@ input[type='text']:focus {
 .board-table .stars-cell {
   color: var(--gold);
   letter-spacing: 1px;
+}
+
+/* ── Tekshiruv animatsiyasi ────────────────────────────── */
+.check-strip {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 24px);
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(11, 25, 19, 0.96);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  animation: fade-in 0.15s ease;
+}
+
+.check-label {
+  font: 600 13px var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.check-strip.done {
+  border-color: var(--good);
+}
+
+.check-strip.done .check-label {
+  color: var(--good);
+  font-size: 16px;
+}
+
+.check-strip.bad {
+  border-color: var(--bad);
+}
+
+.check-strip.bad .check-label {
+  color: var(--bad);
+}
+
+.check-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.check-cells i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--off);
+}
+
+.check-cells.tiny i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.check-cells i.cur {
+  background: var(--sel);
+  box-shadow: 0 0 8px var(--sel);
+}
+
+.check-cells i.ok {
+  background: var(--good);
+}
+
+.check-cells i.bad {
+  background: var(--bad);
+  box-shadow: 0 0 8px var(--bad);
+}
+
+/* Tekshiruv paytida maydonga bosish animatsiyani tugatadi; sxemani o'zgartirib bo'lmaydi. */
+.skip-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.play.checking .palette,
+.play.checking .topbar-actions,
+.play.checking .table-toggle {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.wire.idle .wire-line {
+  opacity: 0.5;
+}
+
+.gate.idle .gate-shape {
+  opacity: 0.65;
+}
+
+.gate-body {
+  transition: fill 0.12s, stroke 0.12s;
+}
+
+.wire.front.on .wire-glow {
+  animation: surge 0.3s ease-out;
+}
+
+@keyframes surge {
+  from {
+    opacity: 0.75;
+    stroke-width: 15;
+  }
+}
+
+@media (max-width: 820px) {
+  .stage.has-check .task-strip {
+    visibility: hidden;
+  }
+
+  /* Telefonda vazifa qatori o'rnida. */
+  .check-strip {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    max-width: none;
+    min-height: 46px;
+  }
 }
