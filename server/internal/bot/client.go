@@ -136,6 +136,7 @@ type Update struct {
 	UpdateID      int64          `json:"update_id"`
 	Message       *Message       `json:"message"`
 	CallbackQuery *CallbackQuery `json:"callback_query"`
+	InlineQuery   *InlineQuery   `json:"inline_query"`
 }
 
 type WebApp struct {
@@ -174,7 +175,7 @@ func (c *Client) DeleteWebhook(ctx context.Context) error {
 func (c *Client) GetUpdates(ctx context.Context, offset int64, timeout int) ([]Update, error) {
 	var raw []json.RawMessage
 	err := c.call(ctx, "getUpdates", map[string]any{
-		"offset": offset, "timeout": timeout, "allowed_updates": []string{"message", "callback_query"},
+		"offset": offset, "timeout": timeout, "allowed_updates": []string{"message", "callback_query", "inline_query"},
 	}, &raw)
 	if err != nil {
 		return nil, err

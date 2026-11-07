@@ -195,7 +195,11 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 		if v := os.Getenv("LG_TELEGRAM_ADMIN"); v != "" && cfg.Admin == 0 {
 			log.Warn("LG_TELEGRAM_ADMIN raqam emas — zaxira nusxa va /stats o'chirilgan", "value", v)
 		}
+		// Server xatolari (ERROR log) admin'ga Telegram orqali ham boradi.
+		alerts := bot.NewAlerts()
+		log = slog.New(alerts.Wrap(log.Handler()))
 		tgBot = bot.New(cfg, st, daily, log)
+		tgBot.SetAlerts(alerts)
 		opts.Telegram = tgBot
 	}
 	var handler http.Handler = api.New(st, pack, daily, log, opts).Handler()

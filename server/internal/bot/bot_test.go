@@ -415,3 +415,80 @@ func TestLateReminderHourAndConfirmThrottle(t *testing.T) {
 		t.Fatalf("30 s dan keyin: %d", n)
 	}
 }
+
+func TestInlineShare(t *testing.T) {
+	b, fake, st := setup(t)
+	ctx := context.Background()
+	b.Handle(ctx, Update{InlineQuery: &InlineQuery{ID: "iq1", From: User{ID: 42}}})
+	ans := fake.take("answerInlineQuery")
+	if len(ans) != 1 {
+		t.Fatalf("javob: %+v", ans)
+	}
+	raw, _ := json.Marshal(ans[0].Params["results"])
+	var res []InlineResult
+	json.Unmarshal(raw, &res)
+	if len(res) != 2 || !strings.HasPrefix(res[0].ID, "daily-") || res[1].ID != "invite" {
+		t.Fatalf("natijalar: %+v", res)
+	}
+	if !strings.Contains(res[0].InputMessageContent.MessageText, "Kunlik boshqotirma #1") ||
+		res[0].ReplyMarkup.InlineKeyboard[0][0].URL != "https://t.me/LogicGateUzBot/play?startapp=daily" ||
+		res[1].ReplyMarkup.InlineKeyboard[0][0].URL != "https://t.me/LogicGateUzBot/play" {
+		t.Fatalf("kartalar: %+v", res)
+	}
+
+	// O'yinga bog'langan va bugun yechgan — natijasi bilan.
+	st.CreatePlayer(ctx, "p1", []byte("p1"), "Ali")
+	st.SetRemind(ctx, 42, "uz", false)
+	st.LinkChat(ctx, 42, "p1")
+	st.SaveDaily(ctx, "p1", levels.DayOf(b.now()), store.Solution{Gates: 4, Stars: 3, Circuit: "{}", SolvedAt: b.now()})
+	b.Handle(ctx, Update{InlineQuery: &InlineQuery{ID: "iq2", From: User{ID: 42}}})
+	raw, _ = json.Marshal(fake.take("answerInlineQuery")[1].Params["results"])
+	json.Unmarshal(raw, &res)
+	if !strings.Contains(res[0].InputMessageContent.MessageText, "★★★ — 4 ta element") {
+		t.Fatalf("natija bilan: %q", res[0].InputMessageContent.MessageText)
+	}
+}
+
+func TestWeeklyReportAndAlerts(t *testing.T) {
+	b, fake, st := setup(t)
+	ctx := context.Background()
+	st.CreatePlayer(ctx, "p1", []byte("p1"), "Ali")
+	if err := b.SendWeeklyReport(ctx); err != nil {
+		t.Fatal(err)
+	}
+	msgs := fake.take("sendMessage")
+	if len(msgs) != 1 || num(msgs[0].Params["chat_id"]) != 99 || !strings.Contains(msgs[0].Params["text"].(string), "O'yinchilar: 1 (yangi: 1)") {
+		t.Fatalf("hisobot: %+v", msgs)
+	}
+
+	// Dushanba 10:00 dan keyin — hozir; yuborilgan bo'lsa — keyingi dushanba; yakshanba — ertaga.
+	mon := time.Date(2026, 11, 9, 11, 0, 0, 0, levels.Tashkent)
+	b.now = func() time.Time { return mon }
+	st.SetMeta(ctx, metaReportDay, "")
+	if got := b.nextReport(ctx); got != 0 {
+		t.Fatalf("dushanba 11:00: %v", got)
+	}
+	st.SetMeta(ctx, metaReportDay, strconv.Itoa(levels.DayOf(mon)))
+	if got := b.nextReport(ctx); got != 7*24*time.Hour-time.Hour {
+		t.Fatalf("yuborilgandan keyin: %v", got)
+	}
+	sun := time.Date(2026, 11, 8, 22, 0, 0, 0, levels.Tashkent)
+	b.now = func() time.Time { return sun }
+	if got := b.nextReport(ctx); got != 12*time.Hour {
+		t.Fatalf("yakshanba 22:00: %v", got)
+	}
+
+	// Xatolar: ikkitasi bitta xabarda, keyin hisob nolga tushadi.
+	alerts := NewAlerts()
+	b.SetAlerts(alerts)
+	logger := slog.New(alerts.Wrap(slog.NewTextHandler(io.Discard, nil)))
+	logger.Error("birinchi", "err", "a")
+	logger.With("k", "v").Error("ikkinchi", "err", "b")
+	logger.Warn("ogohlantirish emas")
+	b.FlushAlerts(ctx)
+	b.FlushAlerts(ctx)
+	got := fake.take("sendMessage")
+	if len(got) != 2 || !strings.Contains(got[1].Params["text"].(string), "2 ta xato") || !strings.Contains(got[1].Params["text"].(string), "ikkinchi err=b") {
+		t.Fatalf("ogohlantirish: %+v", got[1:])
+	}
+}

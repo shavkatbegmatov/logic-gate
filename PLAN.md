@@ -132,6 +132,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 12. **M11 — Telegram Mini App (bajarildi, @LogicGateUzBot):** Telegram ichida SDK, orqaga tugma, tebranish, `startapp` havolalar, profil kodi Telegram bulutida, Telegram'da ulashish.
 13. **M12 — Bot serverda (bajarildi; token Coolify'da):** /start, kunlik eslatma (o'yin ichidan ham), zaxira nusxa admin'ga Telegram orqali, /stats.
 14. **M13 — Xotira kuni (bajarildi):** har yakshanba kunlik masala D-trigger bilan (isbotlangan minimum), bot eslatmasida «xotira kuni».
+15. **M14 — Bot: inline rejim va admin kuzatuvi (bajarildi; inline — BotFather /setinline):** istalgan suhbatda bugungi masala/taklif kartasi, haftalik hisobot, xato ogohlantirishlari.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 

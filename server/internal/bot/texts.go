@@ -18,29 +18,49 @@ type texts struct {
 	Solvers        string // %d kishi
 	First          string
 	Help           string
-	ID             string // %d
-	Tiers          [6]string
-	Commands       []Command
+	// Inline rejim (istalgan suhbatda @bot).
+	MemoryDay        string
+	ShareDailyTitle  string // #%d
+	ShareDailyDesc   string // daraja nomi
+	ShareDaily       string // #%d, daraja nomi
+	ShareMine        string // yulduzlar, element soni
+	ShareDailyMine   string // #%d, yulduzlar, element soni
+	ShareInviteTitle string
+	ShareInviteDesc  string
+	ShareInvite      string
+	ID               string // %d
+	Tiers            [6]string
+	Commands         []Command
 }
 
 var msgs = map[string]texts{
 	"uz": {
 		Welcome: "Salom! Bu — Logic Gate: mantiqiy elementlardan sxema yig'ib, boshqotirmalarni yechadigan o'yin.\n\n" +
 			"36 ta daraja, har kuni yangi masala, reyting va do'stlar uchun masalalar. Boshlash uchun «O'ynash» ni bosing.",
-		Play:           "🎮 O'ynash",
-		RemindOn:       "🔔 Har kuni eslatish",
-		RemindOff:      "🔕 Eslatmani o'chirish",
-		SwitchLang:     "🇷🇺 Русский",
-		RemindEnabled:  "Kunlik eslatma yoqildi: har kuni soat %d:00 da (Toshkent) bugungi masala haqida xabar beraman. Masalani yechgan kuningiz yozmayman.",
-		RemindDisabled: "Kunlik eslatma o'chirildi. Qayta yoqish — /eslatma.",
-		CallbackOn:     "Eslatma yoqildi ✅",
-		CallbackOff:    "Eslatma o'chirildi",
-		Daily:          "📅 Kunlik boshqotirma #%d tayyor — %s.",
-		DailySeq:       "🧠 Kunlik boshqotirma #%d tayyor — bugun xotira kuni: D-trigger kerak!",
-		Solve:          "🧩 Yechish",
-		Streak:         "🔥 Seriyangiz: %d kun — bugun ham yeching!",
-		Solvers:        "Bugun %d kishi yechdi.",
-		First:          "Birinchilardan bo'ling!",
+		Play:             "🎮 O'ynash",
+		RemindOn:         "🔔 Har kuni eslatish",
+		RemindOff:        "🔕 Eslatmani o'chirish",
+		SwitchLang:       "🇷🇺 Русский",
+		RemindEnabled:    "Kunlik eslatma yoqildi: har kuni soat %d:00 da (Toshkent) bugungi masala haqida xabar beraman. Masalani yechgan kuningiz yozmayman.",
+		RemindDisabled:   "Kunlik eslatma o'chirildi. Qayta yoqish — /eslatma.",
+		CallbackOn:       "Eslatma yoqildi ✅",
+		CallbackOff:      "Eslatma o'chirildi",
+		Daily:            "📅 Kunlik boshqotirma #%d tayyor — %s.",
+		DailySeq:         "🧠 Kunlik boshqotirma #%d tayyor — bugun xotira kuni: D-trigger kerak!",
+		Solve:            "🧩 Yechish",
+		Streak:           "🔥 Seriyangiz: %d kun — bugun ham yeching!",
+		Solvers:          "Bugun %d kishi yechdi.",
+		First:            "Birinchilardan bo'ling!",
+		MemoryDay:        "xotira kuni (D-trigger)",
+		ShareDailyTitle:  "📅 Kunlik boshqotirma #%d",
+		ShareDailyDesc:   "Bugungi masalani yuborish — %s",
+		ShareDaily:       "🧩 Logic Gate · Kunlik boshqotirma #%d — %s.\nKim kamroq element bilan yechadi?",
+		ShareMine:        "Natijangiz bilan: %s · %d element",
+		ShareDailyMine:   "🧩 Logic Gate · Kunlik boshqotirma #%d\nMen yechdim: %s — %d ta element. Sen-chi?",
+		ShareInviteTitle: "🎮 Logic Gate'ga taklif",
+		ShareInviteDesc:  "Mantiqiy sxemalar o'yini: 36 daraja, kunlik masala",
+		ShareInvite: "🎮 Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin.\n" +
+			"36 daraja, har kuni yangi masala va reyting. Telegram ichida, bepul!",
 		Help: "Logic Gate — mantiqiy sxemalar o'yini.\n\n" +
 			"/start — o'yinni ochish\n/eslatma — kunlik eslatmani yoqish yoki o'chirish\n/til — Русский язык\n/id — Telegram ID'ingiz",
 		ID:    "Telegram ID'ingiz: %d",
@@ -56,20 +76,30 @@ var msgs = map[string]texts{
 	"ru": {
 		Welcome: "Привет! Это Logic Gate — игра-головоломка: собирайте схемы из логических элементов.\n\n" +
 			"36 уровней, новая задача каждый день, рейтинг и задачи для друзей. Чтобы начать, нажмите «Играть».",
-		Play:           "🎮 Играть",
-		RemindOn:       "🔔 Напоминать каждый день",
-		RemindOff:      "🔕 Выключить напоминание",
-		SwitchLang:     "🇺🇿 O'zbekcha",
-		RemindEnabled:  "Ежедневное напоминание включено: каждый день в %d:00 (по Ташкенту) напишу о новой задаче. В день, когда вы её решили, не пишу.",
-		RemindDisabled: "Ежедневное напоминание выключено. Включить снова — /eslatma.",
-		CallbackOn:     "Напоминание включено ✅",
-		CallbackOff:    "Напоминание выключено",
-		Daily:          "📅 Задача дня #%d готова — %s.",
-		DailySeq:       "🧠 Задача дня #%d готова — сегодня день памяти: нужен D-триггер!",
-		Solve:          "🧩 Решать",
-		Streak:         "🔥 Ваша серия: %d дн. — решите и сегодня!",
-		Solvers:        "Сегодня решили: %d.",
-		First:          "Будьте среди первых!",
+		Play:             "🎮 Играть",
+		RemindOn:         "🔔 Напоминать каждый день",
+		RemindOff:        "🔕 Выключить напоминание",
+		SwitchLang:       "🇺🇿 O'zbekcha",
+		RemindEnabled:    "Ежедневное напоминание включено: каждый день в %d:00 (по Ташкенту) напишу о новой задаче. В день, когда вы её решили, не пишу.",
+		RemindDisabled:   "Ежедневное напоминание выключено. Включить снова — /eslatma.",
+		CallbackOn:       "Напоминание включено ✅",
+		CallbackOff:      "Напоминание выключено",
+		Daily:            "📅 Задача дня #%d готова — %s.",
+		DailySeq:         "🧠 Задача дня #%d готова — сегодня день памяти: нужен D-триггер!",
+		Solve:            "🧩 Решать",
+		Streak:           "🔥 Ваша серия: %d дн. — решите и сегодня!",
+		Solvers:          "Сегодня решили: %d.",
+		First:            "Будьте среди первых!",
+		MemoryDay:        "день памяти (D-триггер)",
+		ShareDailyTitle:  "📅 Задача дня #%d",
+		ShareDailyDesc:   "Отправить сегодняшнюю задачу — %s",
+		ShareDaily:       "🧩 Logic Gate · Задача дня #%d — %s.\nКто решит меньшим числом элементов?",
+		ShareMine:        "С вашим результатом: %s · %d эл.",
+		ShareDailyMine:   "🧩 Logic Gate · Задача дня #%d\nЯ решил: %s — %d эл. А ты?",
+		ShareInviteTitle: "🎮 Пригласить в Logic Gate",
+		ShareInviteDesc:  "Игра про логические схемы: 36 уровней, задача дня",
+		ShareInvite: "🎮 Logic Gate — игра-головоломка: собирай схемы из логических элементов.\n" +
+			"36 уровней, новая задача каждый день и рейтинг. Прямо в Telegram, бесплатно!",
 		Help: "Logic Gate — игра про логические схемы.\n\n" +
 			"/start — открыть игру\n/eslatma — включить или выключить ежедневное напоминание\n/til — o'zbek tili\n/id — ваш Telegram ID",
 		ID:    "Ваш Telegram ID: %d",

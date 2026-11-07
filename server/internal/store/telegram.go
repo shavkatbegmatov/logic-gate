@@ -132,3 +132,27 @@ func (s *Store) SetMeta(ctx context.Context, key, value string) error {
 		`INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value`, key, value)
 	return err
 }
+
+// Weekly — haftalik hisobot uchun ko'rsatkichlar (oxirgi 7 kun, bugun bilan).
+type Weekly struct {
+	Players, NewPlayers, Active     int
+	DailySolves, DailySolvers       int
+	LevelSolves, Chats, Subscribers int
+}
+
+func (s *Store) Weekly(ctx context.Context, today int, now time.Time) (Weekly, error) {
+	var w Weekly
+	since := now.Add(-7 * 24 * time.Hour).Unix()
+	err := s.db.QueryRowContext(ctx, `SELECT
+		(SELECT COUNT(*) FROM players),
+		(SELECT COUNT(*) FROM players WHERE created_at >= ?),
+		(SELECT COUNT(*) FROM players WHERE last_seen_at >= ?),
+		(SELECT COUNT(*) FROM daily_solutions WHERE day > ?),
+		(SELECT COUNT(DISTINCT player_id) FROM daily_solutions WHERE day > ?),
+		(SELECT COUNT(*) FROM solutions WHERE solved_at >= ?),
+		(SELECT COUNT(*) FROM tg_chats WHERE blocked = 0),
+		(SELECT COUNT(*) FROM tg_chats WHERE blocked = 0 AND remind = 1)`,
+		since, since, today-7, today-7, since).
+		Scan(&w.Players, &w.NewPlayers, &w.Active, &w.DailySolves, &w.DailySolvers, &w.LevelSolves, &w.Chats, &w.Subscribers)
+	return w, err
+}

@@ -38,6 +38,8 @@ type Bot struct {
 
 	confirmMu sync.Mutex
 	confirmed map[int64]time.Time // o'yin ichidan eslatma tasdig'i oxirgi marta qachon yuborilgan
+
+	alerts *Alerts // server xatolari (SetAlerts); nil — ogohlantirish o'chirilgan
 }
 
 func New(cfg Config, st *store.Store, daily *levels.Daily, log *slog.Logger) *Bot {
@@ -81,13 +83,16 @@ func (b *Bot) Run(ctx context.Context) {
 		}
 	}
 	b.log.Info("telegram bot ishga tushdi", "bot", b.username, "remindHour", b.cfg.RemindHour)
-	reminders := make(chan struct{})
-	go func() {
-		defer close(reminders)
-		b.remindLoop(ctx)
-	}()
+	var wg sync.WaitGroup
+	for _, loop := range []func(context.Context){b.remindLoop, b.reportLoop, b.alertLoop} {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			loop(ctx)
+		}()
+	}
 	b.poll(ctx)
-	<-reminders
+	wg.Wait()
 }
 
 func sleep(ctx context.Context, d time.Duration) bool {
@@ -149,6 +154,8 @@ func (b *Bot) Handle(ctx context.Context, u Update) {
 		b.onMessage(ctx, u.Message)
 	case u.CallbackQuery != nil:
 		b.onCallback(ctx, u.CallbackQuery)
+	case u.InlineQuery != nil:
+		b.onInline(ctx, u.InlineQuery)
 	}
 }
 
@@ -316,7 +323,11 @@ func (b *Bot) appLink(param string) string {
 	if b.username == "" {
 		return b.cfg.Site + "/#/" + param
 	}
-	return fmt.Sprintf("https://t.me/%s/%s?startapp=%s", b.username, b.cfg.App, param)
+	link := fmt.Sprintf("https://t.me/%s/%s", b.username, b.cfg.App)
+	if param != "" {
+		link += "?startapp=" + param
+	}
+	return link
 }
 
 func (b *Bot) sendRemindStatus(ctx context.Context, chat int64, lang string, on bool) error {
