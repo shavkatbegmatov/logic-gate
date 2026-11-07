@@ -80,5 +80,7 @@ func (b *Bot) onInline(ctx context.Context, q *InlineQuery) {
 	})
 	if err := b.tg.AnswerInlineQuery(ctx, q.ID, results); err != nil {
 		b.log.Warn("telegram inline", "err", err)
+		return
 	}
+	b.log.Info("telegram inline so'rovga javob berildi", "results", len(results))
 }
