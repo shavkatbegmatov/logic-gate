@@ -1,6 +1,7 @@
 import { copyText } from '../clipboard';
 import { t } from '../i18n';
-import { fullShareText, telegramShareUrl } from '../share';
+import { fullShareText, telegramShareUrl, tgAppLink } from '../share';
+import { inTelegram, openTelegramLink } from '../telegram';
 import { showToast } from './Toast';
 import { Icon } from './ui';
 
@@ -9,8 +10,9 @@ import { Icon } from './ui';
  * faqat HTTPS'da bor — u bo'lsa, Telegram havolasi o'rniga o'sha ishlatiladi.
  */
 export function ShareButtons({ text, label, path = '' }: { text: string; label?: string; path?: string }) {
-  const url = `${location.origin}/${path}`;
-  const native = window.isSecureContext && typeof navigator.share === 'function';
+  // Telegram ichida do'st ham o'yinni Telegram ichida ochsin (Mini App havolasi sozlangan bo'lsa).
+  const url = (inTelegram && tgAppLink(path)) || `${location.origin}/${path}`;
+  const native = !inTelegram && window.isSecureContext && typeof navigator.share === 'function';
 
   const copy = async () => {
     const full = fullShareText(url, text);
@@ -26,7 +28,13 @@ export function ShareButtons({ text, label, path = '' }: { text: string; label?:
           <Icon name="share" /> {label ?? t.share.native}
         </button>
       ) : (
-        <a class="btn share-main tg" href={telegramShareUrl(url, text)} target="_blank" rel="noopener noreferrer">
+        <a
+          class="btn share-main tg"
+          href={telegramShareUrl(url, text)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => openTelegramLink(telegramShareUrl(url, text)) && e.preventDefault()}
+        >
           <Icon name="telegram" /> {label ?? t.share.telegram}
         </a>
       )}

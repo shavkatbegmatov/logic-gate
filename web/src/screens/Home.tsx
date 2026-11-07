@@ -8,6 +8,8 @@ import { levels, MAX_STARS } from '../levels';
 import { go } from '../router';
 import { continueLevel, profile, solvedCount, totalStars } from '../state';
 import { hasProgress, moveUrl, onOldHost, siteHost } from '../migrate';
+import { TG_APP_URL } from '../share';
+import { inTelegram } from '../telegram';
 import { LangSwitch } from './Settings';
 
 export function Home() {
@@ -47,6 +49,11 @@ export function Home() {
           </button>
         </nav>
         <ShareButtons text={t.share.inviteText} label={t.share.invite} />
+        {TG_APP_URL && !inTelegram && (
+          <a class="btn tg play-tg" href={TG_APP_URL} target="_blank" rel="noopener noreferrer">
+            <Icon name="telegram" /> {t.telegram.play}
+          </a>
+        )}
         <LangSwitch />
         {!profile.value && started && (
           <div class="card">

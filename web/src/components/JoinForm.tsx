@@ -1,12 +1,21 @@
 import { useSignal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import { t } from '../i18n';
 import { createProfile, errorText } from '../sync';
+import { sdk, suggestedNickname } from '../telegram';
 
 /** Taxallus kiritib reytingga qo'shilish shakli. */
 export function JoinForm({ compact = false, onJoined }: { compact?: boolean; onJoined?: () => void }) {
   const name = useSignal('');
   const busy = useSignal(false);
   const error = useSignal('');
+
+  // Telegram ichida — ism oldindan yozilgan bo'ladi (o'zgartirsa bo'ladi).
+  useEffect(() => {
+    void sdk.then(() => {
+      if (!name.value) name.value = suggestedNickname();
+    });
+  }, []);
 
   const submit = async (e: Event) => {
     e.preventDefault();

@@ -96,6 +96,11 @@ export const uz = {
     offline: 'Natija qurilmada saqlandi. Server bilan aloqa tiklanganda yuboriladi.',
   },
 
+  telegram: {
+    play: "Telegram'da o'ynash",
+    restored: (name: string) => `Telegram orqali profil tiklandi: ${name}`,
+  },
+
   share: {
     telegram: "Telegram'da ulashish",
     native: 'Ulashish',
@@ -412,6 +417,11 @@ export const ru: typeof uz = {
     nextLocked: (need: number) => `Следующий раздел откроется при ${need} ★`,
     allDone: 'Поздравляем! Вы прошли все уровни.',
     offline: 'Результат сохранён на устройстве. Он отправится, когда появится связь с сервером.',
+  },
+
+  telegram: {
+    play: 'Играть в Telegram',
+    restored: (name: string) => `Профиль восстановлен через Telegram: ${name}`,
   },
 
   share: {

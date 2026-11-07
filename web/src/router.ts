@@ -41,3 +41,9 @@ addEventListener('hashchange', () => {
 export function go(path: string) {
   location.hash = path ? `#/${path}` : '#/';
 }
+
+/** Joriy hashni tarixga yangi yozuv qo'shmasdan almashtiradi. */
+export function replaceRoute(path: string) {
+  history.replaceState(null, '', `${location.pathname}${location.search}#/${path}`);
+  route.value = parse(location.hash);
+}

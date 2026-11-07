@@ -2023,3 +2023,9 @@ input[type='text']:focus {
     bottom: 8px;
   }
 }
+
+/* Saytdan Telegram Mini App'ga o'tish (bosh sahifa). */
+.home .play-tg {
+  width: 100%;
+  margin-top: 8px;
+}

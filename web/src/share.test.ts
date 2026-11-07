@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fullShareText, levelShareText, telegramShareUrl } from './share';
+import { fullShareText, levelShareText, telegramShareUrl, tgAppLink } from './share';
+import { startRoute } from './telegram';
 
 describe('ulashish', () => {
   const text = levelShareText({ number: 15, title: 'Multipleksor', stars: 2, gates: 5, goal: 4 });
@@ -18,5 +19,25 @@ describe('ulashish', () => {
 
   it('nusxalash matni havola bilan tugaydi', () => {
     expect(fullShareText('http://example.uz/', 'salom')).toBe('salom\nhttp://example.uz/');
+  });
+});
+
+describe('Telegram Mini App havolalari', () => {
+  const app = 'https://t.me/LogicGateBot/play';
+
+  it('sahifa startapp parametriga aylanadi va Telegram ichida shu sahifa ochiladi', () => {
+    expect(tgAppLink('', app)).toBe(app);
+    expect(tgAppLink('#/daily', app)).toBe(`${app}?startapp=daily`);
+    const code = 'eyJ0IjoiWE9SIn0_-Ab';
+    expect(tgAppLink(`#/p/${code}`, app)).toBe(`${app}?startapp=p_${code}`);
+    expect(startRoute('daily')).toBe('daily');
+    expect(startRoute(`p_${code}`)).toBe(`p/${code}`);
+    expect(startRoute('nomalum')).toBe('');
+    expect(startRoute(null)).toBe('');
+  });
+
+  it("Telegram ruxsat bermaydigan parametr — oddiy ilova havolasi; sozlanmagan — bo'sh", () => {
+    expect(tgAppLink(`#/p/${'a'.repeat(600)}`, app)).toBe(app);
+    expect(tgAppLink('#/daily', '')).toBe('');
   });
 });

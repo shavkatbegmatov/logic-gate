@@ -13,11 +13,13 @@ import (
 )
 
 // CSP va boshqa xavfsizlik sarlavhalari deploy/nginx.conf dagi bilan bir xil.
+// telegram.org — Mini App SDK (faqat Telegram ichida yuklanadi); web.telegram.org — Telegram'ning
+// veb-versiyasi Mini App'ni iframe ichida ochadi. Boshqa saytlar o'yinni iframe'ga ola olmaydi
+// (frame-ancestors X-Frame-Options o'rnini bosadi, shuning uchun u olib tashlandi).
 var securityHeaders = map[string]string{
 	"X-Content-Type-Options":  "nosniff",
-	"X-Frame-Options":         "DENY",
 	"Referrer-Policy":         "strict-origin-when-cross-origin",
-	"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+	"Content-Security-Policy": "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors https://web.telegram.org; base-uri 'self'; form-action 'self'",
 }
 
 func init() {

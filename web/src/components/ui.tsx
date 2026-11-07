@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
 import { t } from '../i18n';
+import { registerBack } from '../telegram';
 
 export function Stars({ n, max = 3, size = 'md' }: { n: number; max?: number; size?: 'sm' | 'md' | 'lg' }) {
   return (
@@ -36,6 +37,11 @@ export function TopBar({ title, sub, onBack, children }: {
   onBack?: () => void;
   children?: ComponentChildren;
 }) {
+  // Telegram ichida sarlavhadagi orqaga tugmasi shu amalni bajaradi.
+  const back = useRef(onBack);
+  back.current = onBack;
+  const hasBack = !!onBack;
+  useEffect(() => (hasBack ? registerBack(() => back.current?.()) : undefined), [hasBack]);
   return (
     <header class="topbar">
       {onBack && (

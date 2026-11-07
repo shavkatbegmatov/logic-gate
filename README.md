@@ -320,6 +320,27 @@ Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavj
 - Server (`sim.CheckSeq`) xuddi shu tekshiruvni qayta bajaradi; noto'g'ri javobda `{"error":"wrong_answer","trace":[…]}`.
 - Qum qutida ham D-trigger va takt bor; xotirali sxemadan do'stlar masalasi hozircha yaratilmaydi (havola faqat haqiqat jadvalini saqlaydi).
 
+## Telegram Mini App
+
+O'yin Telegram ichida bot orqali ochiladi. Server tomonida hech narsa kerak emas: bot tokeni serverga qo'yilmaydi va o'yin uni ishlatmaydi.
+
+- Telegram SDK (`telegram.org/js/telegram-web-app.js`) faqat Telegram ichida yuklanadi (`web/src/telegram.ts`) — oddiy saytga tashqi skript qo'shilmaydi.
+- `t.me/<bot>/<app>?startapp=daily` — kunlik masala, `startapp=p_<kod>` — do'stlar masalasi (`web/src/telegram-app.ts`).
+- Telegram sarlavhasidagi orqaga tugmasi har ekranning "orqaga" amalini bajaradi; asosiy amallar tebranish bilan; maydonda sudrash ilovani yopib yubormaydi (vertikal surish o'chirilgan).
+- Profil kodi Telegram bulutida (CloudStorage — shu bot va shu foydalanuvchi uchun shaxsiy): boshqa qurilmadagi Telegram'da o'yin ochilsa, profil va natijalar o'zi tiklanadi. Taxallus Telegram'dagi ismdan taklif qilinadi.
+- Ulashish Telegram'ning o'z oynasida; `VITE_TG_APP_URL` sozlangan bo'lsa, havola Mini App'ga (do'st ham Telegram ichida ochadi), saytning bosh sahifasida esa "Telegram'da o'ynash" tugmasi chiqadi.
+- CSP: `script-src` da `https://telegram.org`, `frame-ancestors https://web.telegram.org` (Telegram'ning veb-versiyasi Mini App'ni iframe'da ochadi). Boshqa saytlar o'yinni iframe'ga ola olmaydi.
+
+### Botni sozlash (bir marta, @BotFather da)
+
+1. `/newbot` → nom `Logic Gate`, username (masalan `LogicGateUzBot`). Bot tokenini hech kimga bermang — o'yinga u kerak emas.
+2. `/newapp` → botni tanlang → nom, qisqa tavsif, rasm — `deploy/telegram/app-640x360.png`, GIF — `/empty`, URL — `https://logic.noesis.uz`, qisqa nom (masalan `play`). Natija: `https://t.me/LogicGateUzBot/play`.
+3. `/setmenubutton` → botni tanlang → URL `https://logic.noesis.uz`, matn `O'ynash` — bot suhbatida doimiy tugma.
+4. Ixtiyoriy: `/setuserpic` — `web/public/icons/icon-512.png`; `/setdescription`, `/setabouttext`.
+5. `web/.env` da `VITE_TG_APP_URL=https://t.me/LogicGateUzBot/play`, commit va push.
+
+Rasm `deploy/telegram/app-640x360.png` va `web/public/og.png` — `web/scripts/og.html` dan.
+
 ## Tillar
 
 O'zbekcha (standart) va ruscha. Til bosh sahifadagi va sozlamalardagi tugma bilan almashtiriladi, `lg.settings.v1` da saqlanadi. Interfeys matnlari — `web/src/i18n.ts` (`ru: typeof uz`, shuning uchun kalit tushib qolsa TypeScript xato beradi). Darajalar va bo'limlar tarjimasi — `levels/i18n.ru.mjs`; `node levels/build.mjs` ularni `levels.json` ga `i18n.ru` sifatida qo'shadi va har bir daraja tarjima qilinganini tekshiradi. Server faqat xato kodlarini qaytaradi, matnlar mijozda.

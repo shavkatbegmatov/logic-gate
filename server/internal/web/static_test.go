@@ -93,6 +93,12 @@ func TestStatic(t *testing.T) {
 		t.Errorf("sw.js sarlavhalari: %v", rec.Header())
 	}
 
+	// Telegram Mini App: SDK skripti va Telegram Web iframe'i ruxsat etilgan, boshqa saytlar — yo'q.
+	csp := get(h, "/", "").Header().Get("Content-Security-Policy")
+	if !strings.Contains(csp, "script-src 'self' https://telegram.org;") || !strings.Contains(csp, "frame-ancestors https://web.telegram.org;") {
+		t.Errorf("CSP: %s", csp)
+	}
+
 	req := httptest.NewRequest("POST", "/", nil)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
