@@ -72,6 +72,18 @@
           "description": "Последовательностные схемы: D-триггер запоминает один бит — теперь схема помнит прошлое."
         }
       }
+    },
+    {
+      "id": "automata",
+      "title": "Avtomatlar",
+      "description": "Xotirali sxemalar amalda: tugma, turniket, hisoblagich va bitma-bit qo'shuvchi.",
+      "unlockStars": 64,
+      "i18n": {
+        "ru": {
+          "title": "Автоматы",
+          "description": "Схемы с памятью на практике: кнопка, турникет, счётчик и последовательный сумматор."
+        }
+      }
     }
   ],
   "levels": [
@@ -1768,6 +1780,493 @@
           "title": "Кодовый замок",
           "task": "Q = 1, если за последние три такта A был 1, 0, 1 (сейчас 1, на прошлом такте 0, ещё раньше 1). В начале прошлые значения равны 0.",
           "hint": "Храните два последних значения A в двух D-триггерах подряд — это сдвиговый регистр."
+        }
+      }
+    },
+    {
+      "id": "a1",
+      "chapter": "automata",
+      "title": "Birinchi bosish",
+      "task": "Q = 1 faqat A birinchi marta 1 bo'lgan taktda bo'lsin. Undan keyin A qanday bo'lmasin, Q = 0.",
+      "hint": "D-trigger «A hech bo'lmasa bir marta 1 bo'lganmi» belgisini saqlasin: keyingi qiymat — A YOKI belgi. Q = 1 bo'ladigan yagona takt — belgi hali 0, lekin «A YOKI belgi» allaqachon 1. Bu ikki signal qachon farq qiladi?",
+      "inputs": [
+        "A"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "DFF",
+        "NOT",
+        "AND",
+        "OR",
+        "XOR"
+      ],
+      "goal": 3,
+      "seq": {
+        "next": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "out": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0",
+            "0"
+          ]
+        ],
+        "example": [
+          0,
+          0,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          0,
+          0
+        ]
+      },
+      "hints": {
+        "gates": {
+          "DFF": 1,
+          "OR": 1,
+          "XOR": 1
+        },
+        "first": [
+          "DFF"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Первое нажатие",
+          "task": "Q = 1 только на такте, когда A впервые стал равен 1. После этого, каким бы ни был A, Q = 0.",
+          "hint": "Пусть D-триггер хранит признак «A хотя бы раз был 1»: следующее значение — A ИЛИ признак. Q = 1 ровно на том такте, когда признак ещё 0, а «A ИЛИ признак» уже 1. Когда эти два сигнала различаются?"
+        }
+      }
+    },
+    {
+      "id": "a2",
+      "chapter": "automata",
+      "title": "Navbatchi",
+      "task": "A = 1 bo'lgan taktlarda signal navbat bilan chiqsin: birinchi marta X = 1, keyingi safar Y = 1, so'ng yana X va hokazo. A = 0 bo'lsa, X = Y = 0 va navbat o'zgarmaydi.",
+      "hint": "Navbat kimdaligini D-trigger saqlaydi: A = 1 bo'lgan har taktdan keyin u almashadi — xuddi «Almashtirgich». Y = A VA navbat Y da. X uchun triggerning keyingi qiymatidan foydalanib ko'ring.",
+      "inputs": [
+        "A"
+      ],
+      "outputs": [
+        "X",
+        "Y"
+      ],
+      "gates": [
+        "DFF",
+        "NOT",
+        "AND",
+        "OR",
+        "XOR"
+      ],
+      "goal": 4,
+      "seq": {
+        "next": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "out": [
+          [
+            "00",
+            "10"
+          ],
+          [
+            "00",
+            "01"
+          ]
+        ],
+        "example": [
+          1,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0,
+          1
+        ]
+      },
+      "hints": {
+        "gates": {
+          "DFF": 1,
+          "XOR": 1,
+          "AND": 2
+        },
+        "first": [
+          "DFF"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Дежурный",
+          "task": "На тактах с A = 1 сигнал выходит по очереди: в первый раз X = 1, в следующий — Y = 1, потом снова X и так далее. При A = 0 X = Y = 0, и очередь не меняется.",
+          "hint": "Чья очередь, хранит D-триггер: после каждого такта с A = 1 она меняется — как в «Переключателе». Y = A И очередь у Y. Для X попробуйте использовать следующее значение триггера."
+        }
+      }
+    },
+    {
+      "id": "a3",
+      "chapter": "automata",
+      "title": "Turniket",
+      "task": "C — tanga tashlandi, P — kimdir itaryapti. Tanga tashlangan taktdan keyin turniket ochiladi. Ochiq turniket itarilsa, O = 1 (odam o'tdi) va u yana yopiladi. Tanga va itarish bir taktda kelsa, tanga ustun: turniket ochiq qoladi. Boshida yopiq.",
+      "hint": "Ochiq yoki yopiqligini D-trigger saqlaydi. O = ochiq VA P. Keyingi holat: C YOKI (ochiq VA P emas). «Ochiq VA P emas» ni O dan foydalanib bitta element bilan olish mumkin.",
+      "inputs": [
+        "C",
+        "P"
+      ],
+      "outputs": [
+        "O"
+      ],
+      "gates": [
+        "DFF",
+        "NOT",
+        "AND",
+        "OR",
+        "XOR"
+      ],
+      "goal": 4,
+      "seq": {
+        "next": [
+          [
+            0,
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "out": [
+          [
+            "0",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "1"
+          ]
+        ],
+        "example": [
+          1,
+          2,
+          0,
+          1,
+          1,
+          2,
+          3,
+          1,
+          0
+        ]
+      },
+      "hints": {
+        "gates": {
+          "AND": 1,
+          "XOR": 1,
+          "OR": 1,
+          "DFF": 1
+        },
+        "first": [
+          "DFF"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Турникет",
+          "task": "C — брошена монета, P — кто-то толкает. После такта с монетой турникет открывается. Если открытый турникет толкнуть, O = 1 (человек прошёл), и он снова закрывается. Если монета и толчок пришли на одном такте, монета важнее: турникет остаётся открытым. В начале закрыт.",
+          "hint": "Открыт или закрыт — хранит D-триггер. O = открыт И P. Следующее состояние: C ИЛИ (открыт И НЕ P). «Открыт И НЕ P» можно получить из O одним элементом."
+        }
+      }
+    },
+    {
+      "id": "a4",
+      "chapter": "automata",
+      "title": "Tugmali chiroq",
+      "task": "A — tugma. Tugma bosilgan paytda (A 0 dan 1 ga o'tganda) chiroq Q keyingi taktdan teskarisiga o'zgarsin: yonsa — o'chsin, o'chsa — yonsin. Tugmani bosib turish chiroqni qayta almashtirmaydi. Boshida chiroq o'chiq, A = 0 deb hisoblanadi.",
+      "hint": "Bu «Front» va «Almashtirgich»ning birikmasi: biri tugma bosilgan paytni topadi, ikkinchisi shu paytda chiroqni almashtiradi.",
+      "inputs": [
+        "A"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "DFF",
+        "NOT",
+        "AND",
+        "OR",
+        "XOR"
+      ],
+      "goal": 5,
+      "seq": {
+        "next": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            0,
+            3
+          ]
+        ],
+        "out": [
+          [
+            "0",
+            "0"
+          ],
+          [
+            "1",
+            "1"
+          ],
+          [
+            "1",
+            "1"
+          ],
+          [
+            "0",
+            "0"
+          ]
+        ],
+        "example": [
+          0,
+          1,
+          1,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          1
+        ]
+      },
+      "hints": {
+        "gates": {
+          "DFF": 2,
+          "NOT": 1,
+          "AND": 1,
+          "XOR": 1
+        },
+        "first": [
+          "DFF",
+          "A"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Лампа с кнопкой",
+          "task": "A — кнопка. В момент нажатия (A переходит из 0 в 1) лампа Q со следующего такта меняет состояние: горела — гаснет, не горела — загорается. Удержание кнопки лампу больше не переключает. В начале лампа выключена, A считается равным 0.",
+          "hint": "Это сочетание «Фронта» и «Переключателя»: один находит момент нажатия, другой в этот момент переключает лампу."
+        }
+      }
+    },
+    {
+      "id": "a5",
+      "chapter": "automata",
+      "title": "Yuqoriga-pastga",
+      "task": "Ikki bitli son Q1 Q0 har taktdan keyin o'zgarsin: U = 1 bo'lsa — bittaga oshsin, U = 0 bo'lsa — bittaga kamaysin. 11 dan keyin 00 keladi, 00 dan pastga — 11. Boshida 00.",
+      "hint": "Q0 har taktda almashadi. Q1 esa oshishda Q0 = 1 bo'lganda, kamayishda Q0 = 0 bo'lganda almashadi. Q1 ning keyingi qiymati — Q1, U va Q0 ning XOR lari bilan ifodalanadi.",
+      "inputs": [
+        "U"
+      ],
+      "outputs": [
+        "Q1",
+        "Q0"
+      ],
+      "gates": [
+        "DFF",
+        "NOT",
+        "AND",
+        "OR",
+        "XOR"
+      ],
+      "goal": 5,
+      "seq": {
+        "next": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            2,
+            1
+          ]
+        ],
+        "out": [
+          [
+            "00",
+            "00"
+          ],
+          [
+            "11",
+            "11"
+          ],
+          [
+            "01",
+            "01"
+          ],
+          [
+            "10",
+            "10"
+          ]
+        ],
+        "example": [
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          1
+        ]
+      },
+      "hints": {
+        "gates": {
+          "DFF": 2,
+          "NOT": 1,
+          "XOR": 2
+        },
+        "first": [
+          "DFF"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Вверх-вниз",
+          "task": "Двухбитное число Q1 Q0 меняется после каждого такта: при U = 1 увеличивается на 1, при U = 0 уменьшается на 1. После 11 идёт 00, ниже 00 — 11. В начале 00.",
+          "hint": "Q0 меняется на каждом такте. Q1 меняется при счёте вверх, когда Q0 = 1, а при счёте вниз — когда Q0 = 0. Следующее Q1 выражается через XOR от Q1, U и Q0."
+        }
+      }
+    },
+    {
+      "id": "a6",
+      "chapter": "automata",
+      "title": "Ketma-ket qo'shuvchi",
+      "task": "Ikki son bitma-bit, kichik bitdan boshlab keladi: har taktda A va B — navbatdagi bitlar. S — yig'indining shu biti bo'lsin, elda qolgani (ko'chirma) keyingi taktdagi bitlarga qo'shiladi. Boshida ko'chirma 0.",
+      "hint": "Bu — to'liq summator va uning ko'chirmasini saqlaydigan bitta D-trigger: ko'chirma chiqishi triggerga, trigger esa summatorning uchinchi kirishiga ulanadi.",
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "outputs": [
+        "S"
+      ],
+      "gates": [
+        "DFF",
+        "NOT",
+        "AND",
+        "OR",
+        "XOR"
+      ],
+      "goal": 6,
+      "seq": {
+        "next": [
+          [
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            1,
+            1
+          ]
+        ],
+        "out": [
+          [
+            "0",
+            "1",
+            "1",
+            "0"
+          ],
+          [
+            "1",
+            "0",
+            "0",
+            "1"
+          ]
+        ],
+        "example": [
+          1,
+          3,
+          3,
+          0,
+          2,
+          3,
+          0,
+          1
+        ]
+      },
+      "hints": {
+        "gates": {
+          "XOR": 2,
+          "AND": 2,
+          "OR": 1,
+          "DFF": 1
+        },
+        "first": [
+          "XOR",
+          "A",
+          "B"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Последовательный сумматор",
+          "task": "Два числа приходят побитно, начиная с младшего бита: на каждом такте A и B — очередные биты. S — соответствующий бит суммы, а перенос прибавляется к битам следующего такта. В начале перенос 0.",
+          "hint": "Это полный сумматор и один D-триггер, хранящий его перенос: выход переноса — на триггер, а триггер — на третий вход сумматора."
         }
       }
     }

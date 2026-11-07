@@ -119,7 +119,7 @@ export const uz = {
       `Logic Gate · ${num}-daraja «${title}»
 ${stars} — ${gates} ta element (maqsad: ${goal})
 Sen ham yechib ko'r!`,
-    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 36 daraja, bepul!",
+    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 42 daraja, bepul!",
   },
 
   hints: {
@@ -456,7 +456,7 @@ export const ru: typeof uz = {
     copyManual: 'Скопируйте текст:',
     level: (num: number, title: string, stars: string, gates: number, goal: number) =>
       `Logic Gate · уровень ${num} «${title}»\n${stars} — ${gates} эл. (цель: ${goal})\nПопробуй и ты!`,
-    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 36 уровней, бесплатно!',
+    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 42 уровня, бесплатно!',
   },
 
   hints: {

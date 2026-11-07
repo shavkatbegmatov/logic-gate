@@ -1,5 +1,5 @@
 // Ketma-ket darajalarda maqsad haqiqatan eng kam element soni ekanini to'liq sanash bilan isbotlaydi.
-// Ishga tushirish: node levels/seq-min.mjs   (bir necha soniya)
+// Ishga tushirish: node levels/seq-min.mjs   (taxminan bir daqiqa — eng uzog'i a6)
 //
 // Har qanday sxema = k ta D-trigger + m ta kombinatsion element. Triggerlar chiqishi — qo'shimcha
 // o'zgaruvchilar, shuning uchun elementlar (kirishlar + triggerlar) ustidagi funksiyalarni hisoblaydi.

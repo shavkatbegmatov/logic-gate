@@ -21,21 +21,29 @@ export const OPS = {
 export function search(level, m, k, gatesN) {
   const n = level.inputs.length;
   const V = n + k;
-  if (V > 5) throw new Error(`${level.id}: ${V} o'zgaruvchi — 32 bitdan oshadi`);
+  if (V > 7) throw new Error(`${level.id}: ${V} o'zgaruvchi — 128 bitdan oshadi`);
   const size = 1 << V;
-  const mask = size === 32 ? 0xffffffff : (1 << size) - 1;
+  // Haqiqat jadvali: V ≤ 5 da bitta 32 bitli son, aks holda 32 bitli so'zlar massivi (barchasi to'la).
+  const W = size >> 5;
+  const wide = W > 1;
+  const mask = size >= 32 ? 0xffffffff : (1 << size) - 1;
   const norm = (x) => (x & mask) >>> 0;
+  const op = wide
+    ? (type, a, b) => a.map((w, i) => OPS[type](w, b[i]) >>> 0)
+    : (type, a, b) => norm(OPS[type](a, b));
+  const key = wide ? (x) => x.join() : (x) => x;
+  const bit = wide ? (x, p) => (x[p >>> 5] >>> (p & 31)) & 1 : (x, p) => (x >>> p) & 1;
   // Haqiqat jadvalida p = qator · 2^k + holat; qator — kirishlar (birinchisi katta bit), holat — triggerlar.
   const vars = [];
   for (let v = 0; v < V; v++) {
-    let tt = 0;
+    const tt = new Array(Math.max(1, W)).fill(0);
     for (let p = 0; p < size; p++) {
       const row = p >> k;
       const st = p & ((1 << k) - 1);
-      const bit = v < n ? (row >> (n - 1 - v)) & 1 : (st >> (v - n)) & 1;
-      if (bit) tt |= 1 << p;
+      const on = v < n ? (row >> (n - 1 - v)) & 1 : (st >> (v - n)) & 1;
+      if (on) tt[p >>> 5] |= 1 << (p & 31);
     }
-    vars.push(norm(tt));
+    vars.push(wide ? tt.map((w) => w >>> 0) : norm(tt[0]));
   }
   const types = level.gates.filter((g) => g !== 'DFF');
   const outs = level.outputs.length;
@@ -49,9 +57,9 @@ export function search(level, m, k, gatesN) {
       const [st, s] = queue[qi];
       for (let r = 0; r < rows; r++) {
         const p = r * (1 << k) + st;
-        for (let j = 0; j < outs; j++) if (((sig[outIdx[j]] >>> p) & 1) !== want[s][r][j]) return false;
+        for (let j = 0; j < outs; j++) if (bit(sig[outIdx[j]], p) !== want[s][r][j]) return false;
         let ns = 0;
-        for (let i = 0; i < k; i++) ns |= ((sig[dIdx[i]] >>> p) & 1) << i;
+        for (let i = 0; i < k; i++) ns |= bit(sig[dIdx[i]], p) << i;
         const key = ns * m.next.length + m.next[s][r];
         if (!seen.has(key)) {
           seen.add(key);
@@ -84,13 +92,13 @@ export function search(level, m, k, gatesN) {
       if (idx) found = { gates: stack.map(([t, a, b]) => [t, a, b]), outputs: idx.slice(0, outs), dffInputs: idx.slice(outs) };
       return;
     }
-    const have = new Set(sig);
+    const have = new Set(sig.map(key));
     for (const type of types) {
       const unary = type === 'NOT';
       for (let b = 0; b < sig.length; b++) {
         for (let a = unary ? b : 0; a <= b; a++) {
-          const v = norm(OPS[type](sig[a], sig[b]));
-          if (have.has(v)) continue;
+          const v = op(type, sig[a], sig[b]);
+          if (have.has(key(v))) continue;
           sig.push(v);
           stack.push([type, a, b]);
           rec(depth + 1);

@@ -2,7 +2,7 @@
 
 Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqotirmalarni yechadigan brauzer o'yini.
 
-- 30 ta daraja, 5 ta bo'lim: asoslardan 2 bitli ko'paytirgichgacha.
+- 42 ta daraja, 7 ta bo'lim: asoslardan 2 bitli ko'paytirgich, xotira (D-trigger) va avtomatlargacha.
 - Jonli simulyatsiya: simlar 1/0 holatiga qarab yonadi, haqiqat jadvali har bir o'zgarishda yangilanadi.
 - Element sonini tejagan o'yinchiga 3 ★. Keyingi bo'limlar yulduzlar bilan ochiladi.
 - Ro'yxatdan o'tmasdan o'ynash mumkin. Taxallus kiritilsa, natijalar reytingga qo'shiladi, progress esa tiklash kodi orqali boshqa qurilmaga o'tkaziladi.
@@ -111,7 +111,7 @@ Darajalar `levels/source.mjs` da: har bir daraja uchun maqsad funksiyasi (`fn`),
 node levels/build.mjs
 ```
 
-Ketma-ket (xotirali) darajada `fn` o'rniga `init` + `step(holat, ...kirishlar) → [keyingi holat, chiqishlar]` va vaqt diagrammasi namunasi (`example`) yoziladi; build ulardan eng kichik avtomatni quradi (`seq` maydoni). Maqsad haqiqatan minimum ekanini `node levels/seq-min.mjs` to'liq sanash bilan tekshiradi (bir necha soniya).
+Ketma-ket (xotirali) darajada `fn` o'rniga `init` + `step(holat, ...kirishlar) → [keyingi holat, chiqishlar]` va vaqt diagrammasi namunasi (`example`) yoziladi; build ulardan eng kichik avtomatni quradi (`seq` maydoni). Maqsad haqiqatan minimum ekanini `node levels/seq-min.mjs` to'liq sanash bilan tekshiradi (taxminan bir daqiqa).
 
 Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. Bosqichli maslahat uchun yechimdan faqat elementlar tarkibi va kirishlarga ulangan birinchi element olinadi (`hints`); yechimning o'zi `levels.json` ga tushmaydi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
 
@@ -320,6 +320,8 @@ Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavj
 - **Tekshiruv** sxemani kerakli avtomat bilan har qanday kirishlar ketma-ketligida solishtiradi: ikkalasi boshlang'ich holatdan birga, erishiladigan har bir juft holat bo'yicha kenglik bo'yicha yuradi (≤ 8 trigger, ya'ni ≤ 256 holat). Farq bo'lsa, uni ko'rsatadigan eng qisqa ketma-ketlik taktma-takt o'ynab ko'rsatiladi; to'g'ri bo'lsa — namuna.
 - Server (`sim.CheckSeq`) xuddi shu tekshiruvni qayta bajaradi; noto'g'ri javobda `{"error":"wrong_answer","trace":[…]}`.
 - Qum qutida ham D-trigger va takt bor. Xotirali sxemadan do'stlar masalasi ham yaratiladi: havolada eng kichik avtomat (`s: { q, y }` — keyingi holatlar va chiqishlar), ko'pi bilan 16 holat va 128 katakcha (Telegram `startapp` 512 belgiga sig'sin). Vaqt diagrammasi namunasi havolaga yozilmaydi — avtomatdan bir xil tarzda hosil qilinadi (`exampleFor`).
+
+7-bo'lim «Avtomatlar» (64 ★ dan ochiladi) — xotirali sxemalar amalda: birinchi bosish, navbatchi (impulslarni navbat bilan ikki chiqishga), turniket, tugmali chiroq (front + almashtirgich), yuqoriga-pastga hisoblagich va ketma-ket (bitma-bit) qo'shuvchi. Hammasining maqsadi `seq-min.mjs` da isbotlangan; qo'shuvchi uchun (2 kirish + 5 gacha trigger) qidiruv 7 o'zgaruvchigacha — 128 bitli jadval (32 bitli so'zlar massivi) bilan ishlaydi.
 
 ## Telegram Mini App
 

@@ -28,8 +28,8 @@ func TestReferenceSolutions(t *testing.T) {
 	if err := json.Unmarshal(raw, &sols); err != nil {
 		t.Fatal(err)
 	}
-	if len(pack.Levels) != 36 {
-		t.Fatalf("36 ta daraja kutilgan, %d bor", len(pack.Levels))
+	if len(pack.Levels) != 42 {
+		t.Fatalf("42 ta daraja kutilgan, %d bor", len(pack.Levels))
 	}
 	for _, l := range pack.Levels {
 		var (

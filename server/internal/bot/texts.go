@@ -36,7 +36,7 @@ type texts struct {
 var msgs = map[string]texts{
 	"uz": {
 		Welcome: "Salom! Bu — Logic Gate: mantiqiy elementlardan sxema yig'ib, boshqotirmalarni yechadigan o'yin.\n\n" +
-			"36 ta daraja, har kuni yangi masala, reyting va do'stlar uchun masalalar. Boshlash uchun «O'ynash» ni bosing.",
+			"42 ta daraja, har kuni yangi masala, reyting va do'stlar uchun masalalar. Boshlash uchun «O'ynash» ni bosing.",
 		Play:             "🎮 O'ynash",
 		RemindOn:         "🔔 Har kuni eslatish",
 		RemindOff:        "🔕 Eslatmani o'chirish",
@@ -58,9 +58,9 @@ var msgs = map[string]texts{
 		ShareMine:        "Natijangiz bilan: %s · %d element",
 		ShareDailyMine:   "🧩 Logic Gate · Kunlik boshqotirma #%d\nMen yechdim: %s — %d ta element. Sen-chi?",
 		ShareInviteTitle: "🎮 Logic Gate'ga taklif",
-		ShareInviteDesc:  "Mantiqiy sxemalar o'yini: 36 daraja, kunlik masala",
+		ShareInviteDesc:  "Mantiqiy sxemalar o'yini: 42 daraja, kunlik masala",
 		ShareInvite: "🎮 Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin.\n" +
-			"36 daraja, har kuni yangi masala va reyting. Telegram ichida, bepul!",
+			"42 daraja, har kuni yangi masala va reyting. Telegram ichida, bepul!",
 		Help: "Logic Gate — mantiqiy sxemalar o'yini.\n\n" +
 			"/start — o'yinni ochish\n/eslatma — kunlik eslatmani yoqish yoki o'chirish\n/til — Русский язык\n/id — Telegram ID'ingiz",
 		ID:    "Telegram ID'ingiz: %d",
@@ -75,7 +75,7 @@ var msgs = map[string]texts{
 	},
 	"ru": {
 		Welcome: "Привет! Это Logic Gate — игра-головоломка: собирайте схемы из логических элементов.\n\n" +
-			"36 уровней, новая задача каждый день, рейтинг и задачи для друзей. Чтобы начать, нажмите «Играть».",
+			"42 уровня, новая задача каждый день, рейтинг и задачи для друзей. Чтобы начать, нажмите «Играть».",
 		Play:             "🎮 Играть",
 		RemindOn:         "🔔 Напоминать каждый день",
 		RemindOff:        "🔕 Выключить напоминание",
@@ -97,9 +97,9 @@ var msgs = map[string]texts{
 		ShareMine:        "С вашим результатом: %s · %d эл.",
 		ShareDailyMine:   "🧩 Logic Gate · Задача дня #%d\nЯ решил: %s — %d эл. А ты?",
 		ShareInviteTitle: "🎮 Пригласить в Logic Gate",
-		ShareInviteDesc:  "Игра про логические схемы: 36 уровней, задача дня",
+		ShareInviteDesc:  "Игра про логические схемы: 42 уровня, задача дня",
 		ShareInvite: "🎮 Logic Gate — игра-головоломка: собирай схемы из логических элементов.\n" +
-			"36 уровней, новая задача каждый день и рейтинг. Прямо в Telegram, бесплатно!",
+			"42 уровня, новая задача каждый день и рейтинг. Прямо в Telegram, бесплатно!",
 		Help: "Logic Gate — игра про логические схемы.\n\n" +
 			"/start — открыть игру\n/eslatma — включить или выключить ежедневное напоминание\n/til — o'zbek tili\n/id — ваш Telegram ID",
 		ID:    "Ваш Telegram ID: %d",

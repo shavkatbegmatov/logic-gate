@@ -133,6 +133,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 13. **M12 — Bot serverda (bajarildi; token Coolify'da):** /start, kunlik eslatma (o'yin ichidan ham), zaxira nusxa admin'ga Telegram orqali, /stats.
 14. **M13 — Xotira kuni (bajarildi):** har yakshanba kunlik masala D-trigger bilan (isbotlangan minimum), bot eslatmasida «xotira kuni».
 15. **M14 — Bot: inline rejim va admin kuzatuvi (bajarildi; inline — BotFather /setinline):** istalgan suhbatda bugungi masala/taklif kartasi, haftalik hisobot, xato ogohlantirishlari.
+16. **M15 — Avtomatlar (bajarildi):** 7-bo'lim, 6 ta daraja (birinchi bosish, navbatchi, turniket, tugmali chiroq, yuqoriga-pastga, ketma-ket qo'shuvchi), hammasi isbotlangan minimum bilan; jami 42 daraja.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 

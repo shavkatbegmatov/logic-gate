@@ -31,7 +31,7 @@ describe('yutuqlar', () => {
     const s = { ...empty, progress: solved(levels.map((l) => l.id)) };
     const got = doneIds(s);
     for (const id of ['first', 'stars-half', 'stars-all', 'independent', 'nand-master']) expect(got).toContain(id);
-    expect(got.filter((id) => id.startsWith('chapter-'))).toHaveLength(6);
+    expect(got.filter((id) => id.startsWith('chapter-'))).toHaveLength(7);
   });
 
   it('maslahat ishlatilgan darajalar «Mustaqil» ga hisoblanmaydi', () => {
