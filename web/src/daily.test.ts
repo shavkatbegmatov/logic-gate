@@ -106,4 +106,3 @@ describe('xotira kuni (yakshanba)', () => {
     expect(n).toBeGreaterThan(100);
   });
 });
-
