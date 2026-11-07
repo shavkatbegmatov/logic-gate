@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { sfx } from '../audio';
 import { showToast } from '../components/Toast';
 import { t } from '../i18n';
+import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
@@ -337,6 +338,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     );
 
   const driven = new Set(wires.map((w) => w.to));
+  const states = stateNames({ gates, wires });
   const usedSources = new Set(wires.map((w) => w.from));
 
   return (
@@ -374,7 +376,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                 <g data-kind="gate" data-id={g.id}>
                   <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
                   <GateShape type={g.type} />
-                  {label('gate-label', g.type === 'NOT' ? 28 : g.type === 'DFF' ? 36 : 32, GATE_H / 2, g.type)}
+                  {g.type === 'DFF' ? (
+                    <>
+                      {/* Vertikal rejimda (telefon) ham ekranda ustma-ust: DFF tepada, q1 pastda. */}
+                      {label('gate-label', 36, GATE_H / 2 - 6, g.type, 29, GATE_H / 2)}
+                      {label('gate-sub', 36, GATE_H / 2 + 9, states.get(g.id), 45, GATE_H / 2)}
+                    </>
+                  ) : (
+                    label('gate-label', g.type === 'NOT' ? 28 : 32, GATE_H / 2, g.type)
+                  )}
                 </g>
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
                   port(`${g.id}:${i}`, 0, inputPortY(g, i), false, driven.has(`${g.id}:${i}`), false),

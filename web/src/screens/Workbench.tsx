@@ -8,6 +8,7 @@ import { GateList } from '../components/GateList';
 import { HintPanel } from '../components/HintPanel';
 import { Palette } from '../components/Palette';
 import { showToast } from '../components/Toast';
+import { Formula } from '../components/Formula';
 import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, TopBar } from '../components/ui';
@@ -378,6 +379,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
             />
           )}
           {allOk && <p class="all-ok">{seq ? t.play.seqOk : t.play.rowsOk}</p>}
+          <Formula editor={editor} outputs={level.outputs} />
           <GateList gates={level.gates} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}

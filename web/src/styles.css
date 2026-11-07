@@ -1067,6 +1067,62 @@ input[type='text']:focus {
   cursor: default;
 }
 
+/* ── Formula ──────────────────────────────────────────── */
+.formula h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.formula-lines {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  font: 14px/1.5 var(--mono);
+  overflow-x: auto;
+}
+
+.f-line {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.f-name {
+  color: var(--on);
+  font-weight: 700;
+}
+
+.f-line.tmp .f-name {
+  color: var(--muted);
+}
+
+.f-line.next .f-name {
+  color: var(--copper);
+}
+
+.f-eq {
+  color: var(--muted);
+}
+
+.formula-notes {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.gate-sub {
+  font: 700 10px var(--mono);
+  fill: var(--copper);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
 /* ── Elementlar tavsifi ───────────────────────────────── */
 .gate-list h2 {
   margin: 0 0 8px;

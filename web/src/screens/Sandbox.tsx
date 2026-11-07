@@ -7,6 +7,7 @@ import { GateList } from '../components/GateList';
 import { ShareButtons } from '../components/ShareButtons';
 import { encodePuzzle, LIMITS, markCreated, puzzleFromCircuit, type CreateError } from '../custom';
 import { Palette } from '../components/Palette';
+import { Formula } from '../components/Formula';
 import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, Modal, TopBar } from '../components/ui';
@@ -103,6 +104,7 @@ export function Sandbox() {
               note={editor.history.value.length ? undefined : t.play.liveHint}
             />
           )}
+          <Formula editor={editor} outputs={spec.outputs} />
           <GateList gates={ALL_GATE_TYPES} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}

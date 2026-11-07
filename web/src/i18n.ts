@@ -37,6 +37,11 @@ export const uz = {
   },
 
   play: {
+    formula: 'Formula',
+    formulaEmpty: "Elementlarni ulang — sxemaning formulasi shu yerda paydo bo'ladi.",
+    formulaLegend: '¬ EMAS, ∧ VA, ∨ YOKI, ⊕ XOR',
+    formulaTmp: "t1 — bir necha joyga ulangan element",
+    formulaNext: "q1 — D-trigger, q1⁺ — uning keyingi taktdagi qiymati",
     goal: (n: number) => `Maqsad: ${n} element`,
     used: (n: number) => `Ishlatildi: ${n}`,
     check: 'Tekshirish',
@@ -399,6 +404,11 @@ export const ru: typeof uz = {
   },
 
   play: {
+    formula: 'Формула',
+    formulaEmpty: 'Соедините элементы — здесь появится формула схемы.',
+    formulaLegend: '¬ НЕ, ∧ И, ∨ ИЛИ, ⊕ XOR',
+    formulaTmp: 't1 — элемент, подключённый в нескольких местах',
+    formulaNext: 'q1 — D-триггер, q1⁺ — его значение на следующем такте',
     goal: (n: number) => `Цель: ${n} эл.`,
     used: (n: number) => `Использовано: ${n}`,
     check: 'Проверить',
