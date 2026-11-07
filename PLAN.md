@@ -124,3 +124,12 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 5. **M4 — Backend:** o'yinchi, progress sinxronlash, server tekshiruvi, reyting.
 6. **M5 — Sayqal:** o'quv qo'llanma (1-daraja), ovoz, animatsiyalar, mobil moslashuv.
 7. **M6 — Deploy va hisobot:** deploy fayllari, `README.md`, RAM va bundle o'lchovi, brauzerda to'liq o'ynab tekshirish.
+8. **M7 — Joylash va o'sish (bajarildi):** Coolify + GitHub Actions avto-deploy, kunlik zaxira, taxallus moderatsiyasi, telefonda vertikal maydon, yangi element kartalari, Open Graph, ulashish.
+9. **M8 — Qaytib kelish uchun sabablar (bajarildi):** kunlik boshqotirma (isbotlangan minimum, kunlik reyting, seriya), tekshiruv animatsiyasi, bosqichli maslahat, do'stlar masalasi (havolada), 17 ta yutuq, rus tili.
+
+### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
+
+- O'z domeni va HTTPS — "Небезопасно" belgisi yo'qoladi, telefonning ulashish menyusi va kodni nusxalash ishlaydi, PWA (o'rnatiladigan ilova) mumkin bo'ladi.
+- Telegram Mini App — bot tokeni kerak.
+- Zaxira nusxalarni serverdan tashqariga avtomatik ko'chirish — qayerga (Google Drive, S3 va h.k.) va kirish ma'lumotlari kerak.
+- Ketma-ket sxemalar (trigger, hisoblagich) — simulyatorga vaqt qo'shiladigan katta bo'lim.
