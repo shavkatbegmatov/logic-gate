@@ -79,6 +79,20 @@ export const uz = {
     offline: 'Natija qurilmada saqlandi. Server bilan aloqa tiklanganda yuboriladi.',
   },
 
+  share: {
+    telegram: "Telegram'da ulashish",
+    native: 'Ulashish',
+    invite: "Do'stlarni taklif qilish",
+    copy: 'Matnni nusxalash',
+    copied: "Matn nusxalandi — xohlagan joyga joylang.",
+    copyManual: "Matnni nusxalab oling:",
+    level: (num: number, title: string, stars: string, gates: number, goal: number) =>
+      `Logic Gate · ${num}-daraja «${title}»
+${stars} — ${gates} ta element (maqsad: ${goal})
+Sen ham yechib ko'r!`,
+    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 30 daraja, bepul!",
+  },
+
   sandbox: {
     title: 'Qum quti',
     text: "Istalgan sxemani erkin yig'ing va uning haqiqat jadvalini kuzating.",

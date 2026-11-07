@@ -1,4 +1,5 @@
 import { JoinForm } from '../components/JoinForm';
+import { ShareButtons } from '../components/ShareButtons';
 import { t } from '../i18n';
 import { levels, MAX_STARS } from '../levels';
 import { go } from '../router';
@@ -35,6 +36,7 @@ export function Home() {
             </button>
           </div>
         </nav>
+        <ShareButtons text={t.share.inviteText} label={t.share.invite} />
         {!profile.value && started && (
           <div class="card">
             <JoinForm />

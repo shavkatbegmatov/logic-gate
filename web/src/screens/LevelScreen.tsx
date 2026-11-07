@@ -8,6 +8,7 @@ import { outputColumn } from '../board/geometry';
 import { GateIntro } from '../components/GateIntro';
 import { GateList } from '../components/GateList';
 import { JoinForm } from '../components/JoinForm';
+import { ShareButtons } from '../components/ShareButtons';
 import { Palette } from '../components/Palette';
 import { showToast } from '../components/Toast';
 import { TruthTable } from '../components/TruthTable';
@@ -15,6 +16,7 @@ import { Icon, Modal, Stars, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { chapterOf, chapters, levelById, levelNumber, levels, newGates } from '../levels';
 import { go } from '../router';
+import { levelShareText } from '../share';
 import { check, expected, type SimError } from '../sim/sim';
 import { emptyCircuit, type Level } from '../sim/types';
 import {
@@ -292,6 +294,16 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
           </>
         )}
       </div>
+
+      <ShareButtons
+        text={levelShareText({
+          number: levelNumber(level),
+          title: level.title,
+          stars: result.stars,
+          gates: result.gates,
+          goal: level.goal,
+        })}
+      />
 
       {solvedCount.value === levels.length && <p class="good">{t.success.allDone}</p>}
       {next && !nextOpen && nextChapter && !chapterUnlocked(nextChapter) && (

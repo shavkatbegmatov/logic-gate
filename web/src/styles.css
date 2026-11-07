@@ -182,6 +182,35 @@ h3 {
   cursor: default;
 }
 
+a.btn {
+  text-decoration: none;
+}
+
+.share {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.home .share {
+  width: 100%;
+  margin-top: 0;
+}
+
+.home .share .share-main {
+  flex: 1;
+}
+
+.btn.tg {
+  border-color: #2aabee;
+  color: #9ad9ff;
+}
+
+.btn.tg:hover {
+  border-color: #6cc8ff;
+}
+
 .btn.primary {
   background: linear-gradient(#1f8f5c, #13683f);
   border-color: var(--on);

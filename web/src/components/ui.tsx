@@ -65,6 +65,8 @@ const ICONS = {
   sound: 'M4 9v6h4l5 4V5L8 9H4ZM16 9a4 4 0 0 1 0 6',
   mute: 'M4 9v6h4l5 4V5L8 9H4ZM17 9l4 6M21 9l-4 6',
   copy: 'M8 8h11v11H8zM5 16V5h11',
+  share: 'M4 13v7h16v-7M12 3v12M7 8l5-5 5 5',
+  telegram: 'M21 4 3 11.5l6 2.2L18 7l-7 8 .3 5 3.2-3.6 4.5 3.6z',
 } as const;
 
 export function Icon({ name }: { name: keyof typeof ICONS }) {
