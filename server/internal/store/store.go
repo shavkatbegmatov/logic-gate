@@ -48,6 +48,21 @@ var migrations = []string{
 	) WITHOUT ROWID;
 	CREATE INDEX daily_rank ON daily_solutions(day, gate_count, solved_at);
 	CREATE INDEX daily_player ON daily_solutions(player_id, day);`,
+	// Telegram bot: shaxsiy chatlar (chat_id = foydalanuvchi id) va kalit-qiymat yozuvlari.
+	`CREATE TABLE tg_chats (
+		chat_id    INTEGER PRIMARY KEY,
+		lang       TEXT NOT NULL DEFAULT 'uz',
+		remind     INTEGER NOT NULL DEFAULT 0,
+		player_id  TEXT REFERENCES players(id) ON DELETE SET NULL,
+		blocked    INTEGER NOT NULL DEFAULT 0,
+		created_at INTEGER NOT NULL,
+		updated_at INTEGER NOT NULL
+	);
+	CREATE INDEX tg_chats_remind ON tg_chats(remind, blocked);
+	CREATE TABLE meta (
+		key   TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	) WITHOUT ROWID;`,
 }
 
 type Store struct {

@@ -24,6 +24,7 @@ export interface TgWebApp {
   setBackgroundColor(color: string): void;
   setBottomBarColor?(color: string): void;
   openTelegramLink(url: string): void;
+  requestWriteAccess?(cb: (granted: boolean) => void): void;
   BackButton: { show(): void; hide(): void; onClick(cb: () => void): void };
   HapticFeedback: {
     impactOccurred(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
@@ -133,6 +134,18 @@ export function openTelegramLink(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** Bot foydalanuvchiga yozishi uchun ruxsat (Telegram o'z oynasida so'raydi; berilgan bo'lsa — darhol true). */
+export function requestWriteAccess(): Promise<boolean> {
+  if (!app || !app.isVersionAtLeast('6.9') || !app.requestWriteAccess) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    try {
+      app!.requestWriteAccess!((granted) => resolve(granted));
+    } catch {
+      resolve(true);
+    }
+  });
 }
 
 /** Telegram'dagi foydalanuvchi ismidan taxallus taklifi (server baribir tekshiradi). */

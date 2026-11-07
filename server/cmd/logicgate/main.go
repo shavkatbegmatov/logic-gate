@@ -31,6 +31,7 @@ import (
 	"logicgate/levels"
 	"logicgate/server/internal/api"
 	"logicgate/server/internal/backup"
+	"logicgate/server/internal/bot"
 	"logicgate/server/internal/store"
 	"logicgate/server/internal/web"
 )
@@ -111,6 +112,18 @@ func backupConfig() backup.Config {
 	}
 }
 
+func botConfig() bot.Config {
+	admin, _ := strconv.ParseInt(os.Getenv("LG_TELEGRAM_ADMIN"), 10, 64)
+	return bot.Config{
+		Token:      strings.TrimSpace(os.Getenv("LG_TELEGRAM_TOKEN")),
+		API:        os.Getenv("LG_TELEGRAM_API"),
+		Admin:      admin,
+		Site:       strings.TrimRight(env("LG_SITE_URL", "https://logic.noesis.uz"), "/"),
+		App:        env("LG_TELEGRAM_APP", "play"),
+		RemindHour: envInt("LG_REMIND_HOUR", 9) % 24,
+	}
+}
+
 func envInt(key string, def int) int {
 	if n, err := strconv.Atoi(os.Getenv(key)); err == nil && n >= 0 {
 		return n
@@ -173,6 +186,15 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	defer st.Close()
 
 	opts := api.Options{TrustPrivateProxies: os.Getenv("LG_TRUST_PROXY") == "private", Version: version}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Telegram bot — LG_TELEGRAM_TOKEN o'rnatilgan bo'lsa. Token faqat muhitdan o'qiladi va log'ga yozilmaydi.
+	var tgBot *bot.Bot
+	if cfg := botConfig(); cfg.Token != "" {
+		tgBot = bot.New(cfg, st, daily, log)
+		opts.Telegram = tgBot
+	}
 	var handler http.Handler = api.New(st, pack, daily, log, opts).Handler()
 	if staticDir != "" {
 		handler = withStatic(handler, staticDir)
@@ -188,11 +210,21 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 		MaxHeaderBytes:    16 << 10,
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	bots := make(chan struct{})
+	if tgBot != nil {
+		go func() {
+			defer close(bots)
+			tgBot.Run(ctx)
+		}()
+	} else {
+		close(bots)
+	}
 
 	backups := make(chan struct{})
 	if cfg := backupConfig(); cfg.Dir != "" {
+		if tgBot != nil {
+			cfg.Notify = tgBot.SendBackup
+		}
 		go func() {
 			defer close(backups)
 			backup.Run(ctx, st, cfg, log)
@@ -206,6 +238,7 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	defer func() {
 		stop()
 		<-backups
+		<-bots
 	}()
 
 	errc := make(chan error, 1)

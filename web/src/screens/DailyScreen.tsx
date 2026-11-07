@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { JoinForm } from '../components/JoinForm';
+import { RemindToggle } from '../components/RemindToggle';
 import { ShareButtons } from '../components/ShareButtons';
 import { Modal, Stars, TopBar } from '../components/ui';
 import {
@@ -168,6 +169,7 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
 
       <ShareButtons text={dailyShareText(info, best.gates, best.stars, streak.value)} path="#/daily" />
       <p class="muted small">{t.daily.next(untilNext(info.nextAt))}</p>
+      <RemindToggle compact />
 
       <div class="modal-actions">
         <button class="btn" onClick={onAgain}>

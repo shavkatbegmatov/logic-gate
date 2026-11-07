@@ -2029,3 +2029,24 @@ input[type='text']:focus {
   width: 100%;
   margin-top: 8px;
 }
+
+/* Telegram: kunlik eslatma tugmasi. */
+.remind {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+
+.remind.compact {
+  margin-top: 4px;
+}
+
+.remind p {
+  margin: 0;
+}
+
+.remind-btn.on {
+  border-color: var(--line);
+  color: var(--muted);
+}

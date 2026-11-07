@@ -49,6 +49,8 @@ type Options struct {
 	Version string
 	// Now — joriy vaqt (testlarda kunni almashtirish uchun); nil bo'lsa time.Now.
 	Now func() time.Time
+	// Telegram — bot o'rnatilgan bo'lsa (o'yin ichidan kunlik eslatma); nil — o'chirilgan.
+	Telegram Telegram
 }
 
 func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logger, opts Options) *Server {
@@ -85,6 +87,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/daily", s.getDaily)
 	mux.HandleFunc("POST /api/daily/{day}/solve", s.authed(s.solveDaily))
 	mux.HandleFunc("GET /api/daily/{day}/leaderboard", s.dailyLeaderboard)
+	mux.HandleFunc("POST /api/telegram/remind", s.telegramRemind)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, "not_found")
 	})

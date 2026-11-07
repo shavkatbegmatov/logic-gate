@@ -98,6 +98,13 @@ export const uz = {
 
   telegram: {
     play: "Telegram'da o'ynash",
+    remindOn: '🔔 Har kuni eslatish',
+    remindOff: "🔕 Eslatmani o'chirish",
+    remindText: 'Har kuni ertalab bot bugungi masala haqida yozadi. Yechgan kuningiz yozmaydi.',
+    remindEnabled: 'Eslatma yoqildi: har kuni ertalab bot bugungi masala haqida yozadi.',
+    remindDisabled: "Eslatma o'chirildi.",
+    remindDenied: 'Bot sizga yozishi uchun ruxsat kerak.',
+    remindBlocked: 'Bot sizga yoza olmadi: @LogicGateUzBot ni ochib, /start bosing.',
     restored: (name: string) => `Telegram orqali profil tiklandi: ${name}`,
   },
 
@@ -426,6 +433,13 @@ export const ru: typeof uz = {
 
   telegram: {
     play: 'Играть в Telegram',
+    remindOn: '🔔 Напоминать каждый день',
+    remindOff: '🔕 Выключить напоминание',
+    remindText: 'Каждое утро бот напишет о задаче дня. В день, когда вы её решили, не пишет.',
+    remindEnabled: 'Напоминание включено: каждое утро бот напишет о задаче дня.',
+    remindDisabled: 'Напоминание выключено.',
+    remindDenied: 'Нужно разрешить боту писать вам.',
+    remindBlocked: 'Бот не смог вам написать: откройте @LogicGateUzBot и нажмите /start.',
     restored: (name: string) => `Профиль восстановлен через Telegram: ${name}`,
   },
 

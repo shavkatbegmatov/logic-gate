@@ -2,6 +2,7 @@ import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import { copyText, selectContents } from '../clipboard';
 import { JoinForm } from '../components/JoinForm';
+import { RemindToggle } from '../components/RemindToggle';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { LANGS, t } from '../i18n';
@@ -128,6 +129,8 @@ export function Settings() {
               <LangSwitch />
             </div>
           </section>
+
+          <RemindToggle card />
 
           <section class="card">
             <div class="row between">

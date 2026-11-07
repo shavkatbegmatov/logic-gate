@@ -26,6 +26,8 @@ type Config struct {
 	Dir  string // nusxalar papkasi; bo'sh bo'lsa zaxira o'chirilgan
 	Keep int    // nechta oxirgi nusxa saqlanadi
 	Hour int    // kunlik nusxa vaqti, UTC soati (0–23)
+	// Notify — nusxa yozilgandan keyin (masalan, Telegram'ga yuborish — serverdan tashqaridagi nusxa).
+	Notify func(ctx context.Context, path string)
 }
 
 // Once bazaning gzip qilingan nusxasini dir ga yozadi va eng yangi keep tasidan boshqasini o'chiradi.
@@ -139,6 +141,9 @@ func Run(ctx context.Context, st *store.Store, cfg Config, log *slog.Logger) {
 			return
 		}
 		log.Info("zaxira nusxa olindi", "file", path)
+		if cfg.Notify != nil {
+			cfg.Notify(ctx, path)
+		}
 	}
 	if needsCatchUp(cfg.Dir, time.Now()) {
 		select {

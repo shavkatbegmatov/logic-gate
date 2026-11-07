@@ -130,8 +130,8 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 10. **M9 — Domen va HTTPS (bajarildi):** https://logic.noesis.uz, eski manzildan natijalarni ko'chirish, PWA, oflayn rejim.
 11. **M10 — Xotira (bajarildi):** D-trigger, takt, vaqt diagrammasi, avtomat bilan tekshiruv va eng qisqa qarshi misol; 6 ta yangi daraja (kechikish, front, almashtirgich, xotira katakchasi, hisoblagich, kod qulfi).
 12. **M11 — Telegram Mini App (bajarildi, @LogicGateUzBot):** Telegram ichida SDK, orqaga tugma, tebranish, `startapp` havolalar, profil kodi Telegram bulutida, Telegram'da ulashish.
+13. **M12 — Bot serverda (bajarildi; token Coolify'da):** /start, kunlik eslatma (o'yin ichidan ham), zaxira nusxa admin'ga Telegram orqali, /stats.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 
 - Telegram orqali kirish (initData imzosini serverda tekshirish) — bot tokeni serverda kerak bo'ladi; hozircha CloudStorage yetarli.
-- Zaxira nusxalarni serverdan tashqariga avtomatik ko'chirish — qayerga (Google Drive, S3 va h.k.) va kirish ma'lumotlari kerak.

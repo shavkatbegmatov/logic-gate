@@ -341,6 +341,26 @@ O'yin Telegram ichida bot orqali ochiladi. Server tomonida hech narsa kerak emas
 
 Hozirgi bot: [@LogicGateUzBot](https://t.me/LogicGateUzBot), Mini App — https://t.me/LogicGateUzBot/play (2026-11-07).
 
+### Bot serverda (kunlik eslatma va zaxira nusxa)
+
+Server bot tokeni bilan ishga tushsa (`server/internal/bot`), bot:
+
+- `/start` ga salomlashuv va «O'ynash» (Mini App) hamda «Har kuni eslatish» tugmalari bilan javob beradi; `/eslatma` — yoqish/o'chirish, `/id` — Telegram ID, `/help`;
+- har kuni `LG_REMIND_HOUR` da (Toshkent, standart 9:00) eslatma yoqqanlarga bugungi masala haqida yozadi — bugun yechganlarga yozmaydi, o'yinga bog'langanlarga seriyasini aytadi; server o'chiq bo'lib qolsa, 21:00 gacha kechikib yuboradi;
+- kunlik zaxira nusxani admin'ga fayl qilib yuboradi (serverdan tashqaridagi nusxa) va admin'ga `/stats` ni ko'rsatadi;
+- o'yin ichida (Telegram'da) kunlik masala yechilgan oynada va sozlamalarda «🔔 Har kuni eslatish» tugmasi: Telegram'dan ruxsat so'raladi, server `initData` imzosini token bilan tekshiradi (`POST /api/telegram/remind`).
+
+Yangilanishlar long polling bilan olinadi — webhook manzili kerak emas. Token faqat muhitdan o'qiladi; Bot API xatolarida u `***` bilan almashtiriladi.
+
+| O'zgaruvchi | Ma'nosi |
+|---|---|
+| `LG_TELEGRAM_TOKEN` | @BotFather bergan token. Bo'sh bo'lsa bot o'chiq, o'yinda eslatma tugmasi ko'rinmaydi |
+| `LG_TELEGRAM_ADMIN` | Zaxira nusxa va `/stats` oladigan Telegram ID (botga `/id` yozib bilish mumkin) |
+| `LG_REMIND_HOUR` | Eslatma soati, Toshkent vaqti (standart 9) |
+| `LG_SITE_URL`, `LG_TELEGRAM_APP` | Mini App manzili (`https://logic.noesis.uz`) va qisqa nomi (`play`) |
+
+Coolify: ilova → **Environment Variables** → `LG_TELEGRAM_TOKEN` (va `LG_TELEGRAM_ADMIN`) qo'shing → **Redeploy**. Tokenni hech qayerga (chat, repozitoriy, skrinshot) yozmang.
+
 Rasm `deploy/telegram/app-640x360.png` va `web/public/og.png` — `web/scripts/og.html` dan.
 
 ## Tillar
