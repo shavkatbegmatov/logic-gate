@@ -53,6 +53,21 @@ func (s *Server) getDaily(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusNotFound, "no_daily")
 		return
 	}
+	s.writeDaily(w, r, day, p)
+}
+
+// getDailyDay — arxivdagi (o'tgan) kun masalasi xuddi shu ko'rinishda. Kelajak kunlari 404 —
+// masalani oldindan ko'rib bo'lmaydi.
+func (s *Server) getDailyDay(w http.ResponseWriter, r *http.Request) {
+	day, p, ok := s.dayParam(w, r)
+	if !ok {
+		return
+	}
+	s.writeDaily(w, r, day, p)
+}
+
+func (s *Server) writeDaily(w http.ResponseWriter, r *http.Request, day int, p *levels.Puzzle) {
+	today := s.today()
 	solvers, bestGates, err := s.store.DailyStats(r.Context(), day)
 	if err != nil {
 		s.internal(w, err)
@@ -68,6 +83,8 @@ func (s *Server) getDaily(w http.ResponseWriter, r *http.Request) {
 		"bestGates": bestGates,
 		"me":        nil,
 		"streak":    0,
+		// Natija hali qabul qilinadimi (bugun va kecha — seriya va reytingga); qolganlari — faqat mashq.
+		"open": day >= today-1,
 	}
 	if me := s.optionalPlayer(r); me != nil {
 		if e, err := s.store.DailyRank(r.Context(), day, me.ID); err == nil {
@@ -76,7 +93,7 @@ func (s *Server) getDaily(w http.ResponseWriter, r *http.Request) {
 			s.internal(w, err)
 			return
 		}
-		if resp["streak"], err = s.store.DailyStreak(r.Context(), me.ID, day); err != nil {
+		if resp["streak"], err = s.store.DailyStreak(r.Context(), me.ID, today); err != nil {
 			s.internal(w, err)
 			return
 		}
@@ -157,6 +174,65 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		"streak":      streak,
 		"todaySolved": todaySolved,
 	})
+}
+
+// archiveDays — arxiv ro'yxatidagi eng ko'p kun.
+const archiveDays = 366
+
+type archiveResultJSON struct {
+	Gates int `json:"gates"`
+	Stars int `json:"stars"`
+}
+
+type archiveDayJSON struct {
+	Day       int                `json:"day"`
+	Number    int                `json:"number"`
+	Date      string             `json:"date"`
+	Tier      int                `json:"tier"`
+	Seq       bool               `json:"seq,omitempty"`
+	Goal      int                `json:"goal"`
+	Solvers   int                `json:"solvers"`
+	BestGates int                `json:"bestGates"`
+	Me        *archiveResultJSON `json:"me"`
+	Open      bool               `json:"open,omitempty"`
+}
+
+// dailyArchive — o'tgan kunlar ro'yxati (yangisi birinchi): masala turi, statistika va o'yinchi natijasi.
+func (s *Server) dailyArchive(w http.ResponseWriter, r *http.Request) {
+	today := s.today()
+	from := max(s.daily.FirstDay(), today-archiveDays)
+	to := today - 1
+	days := []archiveDayJSON{}
+	if from <= to {
+		stats, err := s.store.DailyStatsRange(r.Context(), from, to)
+		if err != nil {
+			s.internal(w, err)
+			return
+		}
+		mine := map[int]store.Solution{}
+		if me := s.optionalPlayer(r); me != nil {
+			if mine, err = s.store.PlayerDailies(r.Context(), me.ID, from, to); err != nil {
+				s.internal(w, err)
+				return
+			}
+		}
+		for day := to; day >= from; day-- {
+			p, ok := s.daily.For(day)
+			if !ok {
+				continue
+			}
+			d := archiveDayJSON{
+				Day: day, Number: s.daily.Number(day), Date: levels.DayStart(day).Format(time.DateOnly),
+				Tier: p.Tier, Seq: p.Seq != nil, Goal: p.Goal,
+				Solvers: stats[day].Solvers, BestGates: stats[day].BestGates, Open: day >= today-1,
+			}
+			if m, ok := mine[day]; ok {
+				d.Me = &archiveResultJSON{Gates: m.Gates, Stars: m.Stars}
+			}
+			days = append(days, d)
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"today": today, "days": days})
 }
 
 func (s *Server) dailyLeaderboard(w http.ResponseWriter, r *http.Request) {

@@ -99,6 +99,22 @@ export interface DailyInfo {
   bestGates: number;
   me: { rank: number; gates: number; stars: number } | null;
   streak: number;
+  /** Natija hali qabul qilinadimi (bugun va kecha); false — arxivdagi yopiq kun, faqat mashq. */
+  open?: boolean;
+}
+
+/** Arxivdagi kun (yangisi birinchi). */
+export interface ArchiveDay {
+  day: number;
+  number: number;
+  date: string;
+  tier: number;
+  seq?: boolean;
+  goal: number;
+  solvers: number;
+  bestGates: number;
+  me: { gates: number; stars: number } | null;
+  open?: boolean;
 }
 
 export interface DailySolveResult {
@@ -133,6 +149,8 @@ export const api = {
   levelStats: (levelId: string) => request<LevelStats>('GET', `/levels/${encodeURIComponent(levelId)}/stats`),
   leaderboard: () => request<{ top: LeaderEntry[]; me: LeaderEntry | null }>('GET', '/leaderboard'),
   daily: () => request<DailyInfo>('GET', '/daily'),
+  dailyDay: (day: number) => request<DailyInfo>('GET', `/daily/${day}`),
+  dailyArchive: () => request<{ today: number; days: ArchiveDay[] }>('GET', '/daily/archive'),
   /** Telegram ichida: kunlik eslatma holati (on yo'q) yoki uni o'zgartirish. Profil bo'lsa, chat unga bog'lanadi. */
   telegramRemind: (initData: string, on?: boolean, lang?: string) =>
     request<{ remind: boolean }>('POST', '/telegram/remind', on === undefined ? { initData } : { initData, on, lang }),

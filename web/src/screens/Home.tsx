@@ -26,6 +26,9 @@ export function Home() {
           <span>{t.home.solved(solvedCount.value, levels.length)}</span>
         </div>
         <DailyCard />
+        <button class="btn ghost small archive-link" onClick={() => go('archive')}>
+          {t.daily.archiveLink}
+        </button>
         <nav class="menu">
           <button class="btn primary big" onClick={() => go(`level/${continueLevel().id}`)} autoFocus>
             {started ? t.home.continue : t.home.play}

@@ -398,6 +398,52 @@ func (s *Store) DailyStats(ctx context.Context, day int) (solvers, bestGates int
 	return solvers, int(best.Int64), err
 }
 
+// DayStats — bir kun masalasi bo'yicha: yechganlar soni va eng kam element.
+type DayStats struct {
+	Solvers   int
+	BestGates int
+}
+
+// DailyStatsRange — [from, to] kunlar statistikasi; hech kim yechmagan kun ro'yxatda bo'lmaydi.
+func (s *Store) DailyStatsRange(ctx context.Context, from, to int) (map[int]DayStats, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT day, COUNT(*), MIN(gate_count) FROM daily_solutions WHERE day BETWEEN ? AND ? GROUP BY day`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[int]DayStats{}
+	for rows.Next() {
+		var day int
+		var st DayStats
+		if err := rows.Scan(&day, &st.Solvers, &st.BestGates); err != nil {
+			return nil, err
+		}
+		out[day] = st
+	}
+	return out, rows.Err()
+}
+
+// PlayerDailies — o'yinchining [from, to] kunlardagi natijalari (har kun uchun eng yaxshisi saqlanadi).
+func (s *Store) PlayerDailies(ctx context.Context, playerID string, from, to int) (map[int]Solution, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT day, gate_count, stars FROM daily_solutions WHERE player_id = ? AND day BETWEEN ? AND ?`, playerID, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[int]Solution{}
+	for rows.Next() {
+		var day int
+		var sol Solution
+		if err := rows.Scan(&day, &sol.Gates, &sol.Stars); err != nil {
+			return nil, err
+		}
+		out[day] = sol
+	}
+	return out, rows.Err()
+}
+
 const dailyRanked = `WITH r AS (
 	SELECT player_id, gate_count, stars, solved_at,
 	       ROW_NUMBER() OVER (ORDER BY gate_count, solved_at, player_id) AS rank

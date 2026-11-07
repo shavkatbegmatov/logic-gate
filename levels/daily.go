@@ -84,6 +84,9 @@ func DayStart(day int) time.Time {
 // Number — masalaning tartib raqami (birinchi kun — 1); 0 dan kichik bo'lsa, masala hali yo'q.
 func (d *Daily) Number(day int) int { return day - d.startDay + 1 }
 
+// FirstDay — birinchi masala kuni.
+func (d *Daily) FirstDay() int { return d.startDay }
+
 // For kun uchun masalani qaytaradi. Ro'yxat tugagach, masalalar boshidan takrorlanadi.
 func (d *Daily) For(day int) (*Puzzle, bool) {
 	n := d.Number(day)

@@ -195,3 +195,65 @@ func TestDailyMemoryDay(t *testing.T) {
 		t.Fatalf("to'g'ri yechim: %d %v", status, out)
 	}
 }
+
+func TestDailyArchive(t *testing.T) {
+	e := newEnv(t)
+	sols := dailySolutions(t)
+
+	// Birinchi kunda arxiv bo'sh.
+	e.at(0)
+	status, out := e.do("GET", "/api/daily/archive", "", nil)
+	if status != 200 || len(out["days"].([]any)) != 0 {
+		t.Fatalf("bo'sh arxiv: %d %v", status, out)
+	}
+
+	alice := e.player("Alice")
+	first := e.firstDay()
+	if status, out := e.do("POST", fmt.Sprintf("/api/daily/%d/solve", first), alice, map[string]any{"circuit": sols[0]}); status != 200 {
+		t.Fatalf("yechim: %d %v", status, out)
+	}
+
+	today := e.at(3)
+	status, out = e.do("GET", "/api/daily/archive", alice, nil)
+	days := out["days"].([]any)
+	if status != 200 || len(days) != 3 || int(out["today"].(float64)) != today {
+		t.Fatalf("arxiv: %d %v", status, out)
+	}
+	newest, oldest := days[0].(map[string]any), days[2].(map[string]any)
+	if int(newest["day"].(float64)) != today-1 || newest["open"] != true || newest["me"] != nil {
+		t.Fatalf("kecha: %v", newest)
+	}
+	me, _ := oldest["me"].(map[string]any)
+	if int(oldest["day"].(float64)) != first || oldest["number"].(float64) != 1 || oldest["open"] != nil ||
+		oldest["solvers"].(float64) != 1 || me == nil || me["stars"].(float64) != 3 {
+		t.Fatalf("birinchi kun: %v", oldest)
+	}
+	// Tokensiz — o'yinchi natijasi yo'q, statistika bor.
+	_, out = e.do("GET", "/api/daily/archive", "", nil)
+	if d := out["days"].([]any)[2].(map[string]any); d["me"] != nil || d["solvers"].(float64) != 1 {
+		t.Fatalf("anonim: %v", d)
+	}
+
+	// O'tgan kun masalasi — xuddi bugungidek, lekin yopiq; seriya bugungi kun bo'yicha.
+	status, out = e.do("GET", fmt.Sprintf("/api/daily/%d", first), alice, nil)
+	if status != 200 || int(out["day"].(float64)) != first || out["open"] != false || out["me"] == nil ||
+		out["puzzle"] == nil || out["streak"].(float64) != 0 {
+		t.Fatalf("o'tgan kun: %d %v", status, out)
+	}
+	if status, out = e.do("GET", fmt.Sprintf("/api/daily/%d", today-1), "", nil); status != 200 || out["open"] != true {
+		t.Fatalf("kecha: %d %v", status, out)
+	}
+	if status, out = e.do("GET", "/api/daily/today", "", nil); status != 200 || int(out["day"].(float64)) != today {
+		t.Fatalf("today: %d %v", status, out)
+	}
+	// Kelajak va boshlanishdan oldingi kunlar ko'rinmaydi.
+	for _, day := range []int{today + 1, first - 1} {
+		if status, _ := e.do("GET", fmt.Sprintf("/api/daily/%d", day), "", nil); status != 404 {
+			t.Fatalf("%d-kun: %d", day, status)
+		}
+	}
+	// Yopiq kunga yechim qabul qilinmaydi (mashq faqat mijozda).
+	if status, _ := e.do("POST", fmt.Sprintf("/api/daily/%d/solve", first), alice, map[string]any{"circuit": sols[0]}); status != 409 {
+		t.Fatalf("yopiq kun: %d", status)
+	}
+}

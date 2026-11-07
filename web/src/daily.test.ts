@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DailyInfo } from './api';
-import { dailyShareText, dayLabel, dayOf, puzzleLevel, streakFrom } from './daily';
+import { bestFor, dailyHistory, dailyShareText, dayLabel, dayOf, puzzleLevel, recordPractice, streak, streakFrom, today } from './daily';
+import { getDraft, pruneDailyDrafts, setDraft } from './state';
 import { hintSteps } from './hints';
 import { check } from './sim/sim';
 import dailyPack from '../../levels/daily.json';
@@ -104,5 +105,28 @@ describe('xotira kuni (yakshanba)', () => {
       expect(check(level, sols[i]), `${i + 1}-masala`).toEqual({ ok: true, gates: p.goal, stars: 3 });
     });
     expect(n).toBeGreaterThan(100);
+  });
+});
+
+describe('arxiv', () => {
+  it('yopiq kun mashqi seriya va kunlik tarixga kirmaydi; eng yaxshi natija tanlanadi', () => {
+    const day = today() - 5;
+    const before = streak.value;
+    expect(recordPractice(day, 5, 2).improved).toBe(true);
+    expect(recordPractice(day, 6, 1)).toMatchObject({ improved: false, prev: { gates: 5 } });
+    expect(dailyHistory.value[day]).toBeUndefined();
+    expect(streak.value).toBe(before);
+    expect(bestFor(day)).toEqual({ gates: 5, stars: 2 });
+    expect(bestFor(day, { gates: 4, stars: 3 })).toEqual({ gates: 4, stars: 3 });
+    expect(bestFor(day - 1)).toBeUndefined();
+  });
+
+  it("eski kunlar qoralamalaridan ochilayotgani va oxirgi uchtasi qoladi", () => {
+    const now = today();
+    const c: Circuit = { gates: [], wires: [] };
+    for (const d of [10, 9, 8, 7, 6, 1, 0]) setDraft(`daily-${now - d}`, c);
+    pruneDailyDrafts(now, `daily-${now - 10}`);
+    const kept = [10, 9, 8, 7, 6, 1, 0].filter((d) => getDraft(`daily-${now - d}`));
+    expect(kept).toEqual([10, 8, 7, 6, 1, 0]);
   });
 });

@@ -85,6 +85,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/levels/{id}/stats", s.levelStats)
 	mux.HandleFunc("GET /api/leaderboard", s.leaderboard)
 	mux.HandleFunc("GET /api/daily", s.getDaily)
+	mux.HandleFunc("GET /api/daily/archive", s.dailyArchive)
+	mux.HandleFunc("GET /api/daily/{day}", s.getDailyDay)
 	mux.HandleFunc("POST /api/daily/{day}/solve", s.authed(s.solveDaily))
 	mux.HandleFunc("GET /api/daily/{day}/leaderboard", s.dailyLeaderboard)
 	mux.HandleFunc("POST /api/telegram/remind", s.telegramRemind)

@@ -309,6 +309,7 @@ Har kuni (Toshkent vaqti bilan yarim tunda) yangi masala: 3 kirish, 1–2 chiqis
 - **Yakshanba — xotira kuni** (2026-11-15 dan): masala D-trigger bilan, vaqt diagrammasi namunasi bilan (1–2 kirish, eng kichik avtomat 2–4 holat, maqsad 3–4 element). Masala — kichik tasodifiy sxemaning avtomati; maqsad `levels/seqsearch.mjs` qidiruvi bilan isbotlangan minimum (barcha kirishlar ishlatilishi shart). Oddiy kunlar masalalari asosiy generatsiyadan keyin, alohida urug' bilan almashtiriladi — boshqa kunlar o'zgarmaydi. Bot yakshanba eslatmasida buni aytadi.
 - **Reyting** — kamroq element, teng bo'lsa kim oldin topgan. Kechagi masala ham qabul qilinadi (yarim tundan oldin oflayn yechilgan natija keyin yetib kelishi uchun).
 - **Seriya** — ketma-ket yechilgan kunlar; bugun hali yechilmagan bo'lsa ham kechagacha saqlanadi.
+- **Arxiv** (`#/archive`, bosh sahifadagi «O'tgan kunlar masalalari»): o'tgan kunlar ro'yxati — yechganlar soni, eng kam yechim va o'yinchining natijasi (`GET /api/daily/archive`). Kun masalasi `GET /api/daily/{day}` bilan olinadi — faqat bugungacha, kelajak kunlari 404. Kechagi masala hali ochiq (reyting va seriyaga kiradi); undan oldingilari — mashq: natija faqat qurilmada (`lg.dailyPractice.v1`), serverga yuborilmaydi, seriya va yutuqlarga kirmaydi.
 
 Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavjud kunlar o'zgarmaydi). Tanlash qoidalarini o'zgartirmang — o'tgan kunlarning masalalari ham o'zgarib ketadi.
 

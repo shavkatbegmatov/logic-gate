@@ -8,7 +8,7 @@ import { profile } from './state';
 import { load, save } from './storage';
 import { exampleFor } from './sim/sim';
 
-const KEYS = { history: 'lg.daily.v1', puzzle: 'lg.dailyPuzzle.v1' };
+const KEYS = { history: 'lg.daily.v1', puzzle: 'lg.dailyPuzzle.v1', practice: 'lg.dailyPractice.v1' };
 const HISTORY_DAYS = 400;
 
 export interface DailyResult {
@@ -22,6 +22,31 @@ export interface DailyResult {
 /** Kun raqami (Toshkent bo'yicha 1970-01-01 dan beri) → eng yaxshi natija. */
 export const dailyHistory = signal<Record<string, DailyResult>>(load(KEYS.history, {}));
 effect(() => save(KEYS.history, dailyHistory.value));
+
+/** Arxivdagi yopiq kunlar mashqi: seriya, reyting va yutuqlarga kirmaydi (alohida saqlanadi). */
+export interface PracticeResult {
+  gates: number;
+  stars: number;
+  at: number;
+}
+
+export const practiceHistory = signal<Record<string, PracticeResult>>(load(KEYS.practice, {}));
+effect(() => save(KEYS.practice, practiceHistory.value));
+
+export function recordPractice(day: number, gates: number, stars: number) {
+  const prev = practiceHistory.value[day];
+  const improved = !prev || gates < prev.gates;
+  if (improved) practiceHistory.value = { ...practiceHistory.value, [day]: { gates, stars, at: Date.now() } };
+  return { improved, prev };
+}
+
+/** Kun bo'yicha eng yaxshi natija: shu qurilmada (kunlik yoki mashq) yoki server bilgan. */
+export function bestFor(day: number, server?: { gates: number; stars: number } | null) {
+  const all = [dailyHistory.value[day], practiceHistory.value[day], server ?? undefined];
+  let best: { gates: number; stars: number } | undefined;
+  for (const r of all) if (r && (!best || r.gates < best.gates)) best = { gates: r.gates, stars: r.stars };
+  return best;
+}
 
 /** Server aytgan seriya (boshqa qurilmadagi natijalarni ham hisobga oladi); includesToday — bugungisi ichidami. */
 export const serverStreak = signal<{ day: number; streak: number; includesToday: boolean } | null>(null);
@@ -133,6 +158,13 @@ export async function fetchDaily(): Promise<DailyInfo> {
   }
 }
 
+/** Arxivdagi kun masalasi (internet kerak; keshlanmaydi). */
+export async function fetchDailyDay(day: number): Promise<DailyInfo> {
+  const info = await api.dailyDay(day);
+  if (info.me) mergeServerResult(info.day, info.me.gates, info.me.stars);
+  return info;
+}
+
 // Boshqa qurilmada yaxshiroq yechilgan bo'lsa: sxemasi yo'q, lekin natija tarixda ko'rinadi.
 function mergeServerResult(day: number, gates: number, stars: number) {
   const local = dailyHistory.value[day];
@@ -177,6 +209,7 @@ export async function syncDaily() {
 
 export function resetDaily() {
   dailyHistory.value = {};
+  practiceHistory.value = {};
   serverStreak.value = null;
   save(KEYS.puzzle, null);
 }

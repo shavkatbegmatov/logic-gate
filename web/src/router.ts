@@ -7,7 +7,8 @@ export type Route =
   | { name: 'level'; id: string }
   | { name: 'sandbox' }
   | { name: 'leaderboard'; tab: 'overall' | 'daily' }
-  | { name: 'daily' }
+  | { name: 'daily'; day?: number }
+  | { name: 'archive' }
   | { name: 'achievements' }
   | { name: 'custom'; code: string }
   | { name: 'settings' };
@@ -15,9 +16,11 @@ export type Route =
 function parse(hash: string): Route {
   const [name, arg] = hash.replace(/^#\/?/, '').split('/');
   switch (name) {
+    case 'daily':
+      return arg && /^\d+$/.test(arg) ? { name, day: Number(arg) } : { name };
     case 'levels':
     case 'sandbox':
-    case 'daily':
+    case 'archive':
     case 'achievements':
     case 'settings':
       return { name };

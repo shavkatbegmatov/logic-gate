@@ -114,26 +114,25 @@ export function setDraft(levelId: string, circuit: Circuit) {
   saveLater(KEYS.drafts, drafts);
 }
 
-/** Eski kunlik masalalar qoralamalarini o'chiradi (faqat bugungi va kechagisi qoladi). */
-export function pruneDailyDrafts(today: number) {
-  let changed = false;
-  for (const k of Object.keys(drafts)) {
-    const m = /^daily-(\d+)$/.exec(k);
-    if (m && Number(m[1]) < today - 1) {
-      delete drafts[k];
-      changed = true;
-    }
-  }
-  if (changed) saveLater(KEYS.drafts, drafts);
-  let hintsChanged = false;
-  for (const k of Object.keys(hintSteps)) {
-    const m = /^daily-(\d+)$/.exec(k);
-    if (m && Number(m[1]) < today - 1) {
-      delete hintSteps[k];
-      hintsChanged = true;
-    }
-  }
-  if (hintsChanged) saveLater(KEYS.hints, hintSteps);
+const KEEP_OLD_DAILY = 3;
+
+/**
+ * Eski kunlik masalalar qoralamalari va maslahatlarini o'chiradi: bugungi, kechagi, ochilayotgan (keep)
+ * va arxivdan oxirgi ishlatilgan 3 tasi qoladi.
+ */
+export function pruneDailyDrafts(today: number, keep?: string) {
+  const prune = (store: Record<string, unknown>) => {
+    const old = Object.keys(store).filter((k) => {
+      const m = /^daily-(\d+)$/.exec(k);
+      return m && Number(m[1]) < today - 1 && k !== keep;
+    });
+    // Qoralamalarda tartib = oxirgi foydalanish tartibi (setDraft kalitni oxiriga o'tkazadi).
+    const drop = old.slice(0, Math.max(0, old.length - KEEP_OLD_DAILY));
+    for (const k of drop) delete store[k];
+    return drop.length > 0;
+  };
+  if (prune(drafts)) saveLater(KEYS.drafts, drafts);
+  if (prune(hintSteps)) saveLater(KEYS.hints, hintSteps);
 }
 
 // Har bir daraja uchun ochilgan maslahatlar soni.

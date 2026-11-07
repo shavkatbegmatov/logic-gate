@@ -14,10 +14,14 @@ import {
   dailyShareText,
   dayLabel,
   fetchDaily,
+  fetchDailyDay,
+  practiceHistory,
   puzzleLevel,
   recordDaily,
+  recordPractice,
   streak,
   submitDaily,
+  today,
 } from '../daily';
 import { t } from '../i18n';
 import { go } from '../router';
@@ -34,14 +38,17 @@ interface Result {
   server?: DailySolveResult | null;
 }
 
-export function DailyScreen() {
+/** day — arxivdagi kun (yo'q bo'lsa — bugungi masala). */
+export function DailyScreen({ day }: { day?: number }) {
   const info = useSignal<DailyInfo | null>(null);
   const failed = useSignal(false);
+  const past = day !== undefined && day < today();
+  const back = () => go(past ? 'archive' : '');
 
   const load = async () => {
     failed.value = false;
     try {
-      info.value = await fetchDaily();
+      info.value = past ? await fetchDailyDay(day) : await fetchDaily();
     } catch {
       failed.value = true;
     }
@@ -51,15 +58,15 @@ export function DailyScreen() {
     load();
   }, []);
 
-  if (info.value) return <DailyPlay key={info.value.day} info={info.value} />;
+  if (info.value) return <DailyPlay key={info.value.day} info={info.value} onBack={back} />;
   return (
     <div class="screen">
-      <TopBar title={t.daily.title} onBack={() => go('')} />
+      <TopBar title={t.daily.title} onBack={back} />
       <div class="scroll">
         <div class="narrow">
           {failed.value ? (
             <div class="card">
-              <p>{t.daily.offline}</p>
+              <p>{past ? t.daily.archiveOffline : t.daily.offline}</p>
               <button class="btn" onClick={load}>
                 {t.retry}
               </button>
@@ -73,15 +80,17 @@ export function DailyScreen() {
   );
 }
 
-function DailyPlay({ info }: { info: DailyInfo }) {
+function DailyPlay({ info, onBack }: { info: DailyInfo; onBack: () => void }) {
   const level = useMemo(() => puzzleLevel(info), [info.day]);
   const editor = useMemo(() => new Editor(), []);
   const result = useSignal<Result | null>(null);
   // Xotira kunida D-trigger hali tanish bo'lmasa — darajalardagidek tanishtiruv kartasi.
   const intro = useSignal(level.gates.filter((g) => !seenIntro.value.includes(g)));
+  // Arxivdagi yopiq kun: natija faqat shu qurilmada, seriya va reytingga kirmaydi.
+  const practice = info.open === false;
 
   useMemo(() => {
-    pruneDailyDrafts(info.day);
+    pruneDailyDrafts(today(), level.id);
     // Boshqa qurilmada yechilgan natijaning sxemasi bu yerda yo'q — u holda bo'sh maydon.
     const best = dailyHistory.value[info.day]?.circuit;
     editor.load(level, getDraft(level.id) ?? (best?.gates.length ? best : emptyCircuit()), outputColumn(level.goal));
@@ -89,6 +98,11 @@ function DailyPlay({ info }: { info: DailyInfo }) {
   }, [level]);
 
   const onSolved = async ({ circuit, gates, stars }: Solved) => {
+    if (practice) {
+      const { improved, prev } = recordPractice(info.day, gates, stars);
+      result.value = { stars, gates, improved, prevGates: prev?.gates, server: null };
+      return;
+    }
     const { improved, prev } = recordDaily(info.day, circuit, gates, stars);
     const base: Result = { stars, gates, improved, prevGates: prev?.gates };
     result.value = base;
@@ -101,8 +115,11 @@ function DailyPlay({ info }: { info: DailyInfo }) {
       level={level}
       editor={editor}
       title={t.daily.title}
-      sub={t.daily.sub(info.number, dayLabel(info.day), t.daily.tiers[info.puzzle.tier] ?? '')}
-      onBack={() => go('')}
+      sub={
+        t.daily.sub(info.number, dayLabel(info.day), t.daily.tiers[info.puzzle.tier] ?? '') +
+        (practice ? ` · ${t.daily.practiceTag}` : '')
+      }
+      onBack={onBack}
       onSolved={onSolved}
     >
       {intro.value.length > 0 && (
@@ -114,7 +131,10 @@ function DailyPlay({ info }: { info: DailyInfo }) {
           }}
         />
       )}
-      {result.value && (
+      {result.value && practice && (
+        <PracticeSuccess info={info} level={level} result={result.value} onAgain={() => (result.value = null)} />
+      )}
+      {result.value && !practice && (
         <DailySuccess
           info={info}
           level={level}
@@ -145,6 +165,8 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
   const server = result.server;
   // Natija oynasida eng yaxshi natija ulashiladi (yomonroq urinish rekordni yashirmasin).
   const best = dailyHistory.value[info.day] ?? result;
+  // Arxivdan ochilgan kechagi masala: hali qabul qilinadi, lekin matnlar «bugungi» emas.
+  const past = info.day < today();
 
   useEffect(() => {
     for (let i = 0; i < result.stars; i++) setTimeout(() => sfx.star(i), 350 + i * 180);
@@ -152,7 +174,7 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
 
   return (
     <Modal onClose={onAgain}>
-      <h2 class="success-title">{t.daily.solved}</h2>
+      <h2 class="success-title">{past ? t.daily.solvedPast : t.daily.solved}</h2>
       <Stars n={result.stars} size="lg" />
       <p>{t.success.gates(result.gates, level.goal)}</p>
       {result.stars < 3 && <p class="muted">{t.success.tryFewer(level.goal)}</p>}
@@ -167,8 +189,16 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
             <p class="muted">{t.success.offline}</p>
           ) : (
             <>
-              <p>{server.best.rank === 1 ? t.daily.first : t.daily.rank(server.best.rank, server.solvers)}</p>
-              {server.best.gates > server.bestGates && <p class="muted">{t.daily.best(server.bestGates)}</p>}
+              <p>
+                {server.best.rank === 1
+                  ? past
+                    ? t.daily.firstPast
+                    : t.daily.first
+                  : (past ? t.daily.rankPast : t.daily.rank)(server.best.rank, server.solvers)}
+              </p>
+              {server.best.gates > server.bestGates && (
+                <p class="muted">{(past ? t.daily.bestPast : t.daily.best)(server.bestGates)}</p>
+              )}
             </>
           )
         ) : (
@@ -180,15 +210,52 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
       </div>
 
       <ShareButtons text={dailyShareText(info, best.gates, best.stars, streak.value)} path="#/daily" />
-      <p class="muted small">{t.daily.next(untilNext(info.nextAt))}</p>
+      {!past && <p class="muted small">{t.daily.next(untilNext(info.nextAt))}</p>}
       <RemindToggle compact />
 
       <div class="modal-actions">
         <button class="btn" onClick={onAgain}>
           {t.success.again}
         </button>
-        <button class="btn primary" onClick={() => go('leaderboard/daily')} autoFocus>
-          {t.daily.toBoard}
+        {past ? (
+          <button class="btn primary" onClick={() => go('archive')} autoFocus>
+            {t.daily.toArchive}
+          </button>
+        ) : (
+          <button class="btn primary" onClick={() => go('leaderboard/daily')} autoFocus>
+            {t.daily.toBoard}
+          </button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Arxivdagi yopiq kun yechilganda: natija va o'sha kungi statistika, ulashish va reytingsiz. */
+function PracticeSuccess({ info, level, result, onAgain }: { info: DailyInfo; level: Level; result: Result; onAgain: () => void }) {
+  const best = practiceHistory.value[info.day];
+
+  useEffect(() => {
+    for (let i = 0; i < result.stars; i++) setTimeout(() => sfx.star(i), 350 + i * 180);
+  }, []);
+
+  return (
+    <Modal onClose={onAgain}>
+      <h2 class="success-title">{t.daily.solvedPast}</h2>
+      <Stars n={result.stars} size="lg" />
+      <p>{t.success.gates(result.gates, level.goal)}</p>
+      {result.stars < 3 && <p class="muted">{t.success.tryFewer(level.goal)}</p>}
+      {result.improved && result.prevGates !== undefined && <p class="good">{t.success.improved}</p>}
+      {!result.improved && best && <p class="muted">{t.daily.practiceBest(best.gates)}</p>}
+      {info.solvers > 0 && <p class="muted">{t.daily.thatDay(info.solvers, info.bestGates)}</p>}
+      <p class="muted small">{t.daily.practice}</p>
+
+      <div class="modal-actions">
+        <button class="btn" onClick={onAgain}>
+          {t.success.again}
+        </button>
+        <button class="btn primary" onClick={() => go('archive')} autoFocus>
+          {t.daily.toArchive}
         </button>
       </div>
     </Modal>
