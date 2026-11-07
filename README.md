@@ -115,7 +115,7 @@ Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini
 
 ## Coolify orqali joylash (Docker)
 
-**Hozirgi joylash:** http://logic-gate.170.168.6.82.sslip.io — Coolify'da `logic-gate` loyihasi (production). Yangi versiyani chiqarish: `main` ga push qilish kifoya — GitHub Actions testlarni o'tkazadi, image'ni yig'adi, Coolify'ni chaqiradi va sayt `/api/version` da yangi commit'ni qaytarguncha kutadi. Yangi versiya ko'rinmasa (serverdan ghcr.io ga ulanishlarning bir qismi uziladi va image tortilmay qoladi), Coolify har ~80 soniyada qayta chaqiriladi — jami 4 martagacha; ~7 daqiqada ham bo'lmasa, workflow xato bilan tugaydi. Mantiq: `.github/scripts/deploy-coolify.sh`.
+**Hozirgi joylash:** https://logic.noesis.uz — Coolify'da `logic-gate` loyihasi (production). Eski manzil http://logic-gate.170.168.6.82.sslip.io ham ishlaydi: natijasi yo'q tashrifchi yangi manzilga o'tkaziladi, natijasi borlarga ularni olib o'tish tugmasi chiqadi (`web/src/migrate.ts`). Yangi versiyani chiqarish: `main` ga push qilish kifoya — GitHub Actions testlarni o'tkazadi, image'ni yig'adi, Coolify'ni chaqiradi va sayt `/api/version` da yangi commit'ni qaytarguncha kutadi. Yangi versiya ko'rinmasa (serverdan ghcr.io ga ulanishlarning bir qismi uziladi va image tortilmay qoladi), Coolify har ~80 soniyada qayta chaqiriladi — jami 4 martagacha; ~7 daqiqada ham bo'lmasa, workflow xato bilan tugaydi. Mantiq: `.github/scripts/deploy-coolify.sh`.
 
 Serverda Coolify ishlayotgan bo'lsa (80/443 portlari Traefik'da), o'yin boshqa loyihalar kabi Docker image sifatida joylanadi. **Bunday serverda `deploy/setup.sh` ni ishga tushirmang:** u Nginx o'rnatib, firewall'ni yoqadi.
 
@@ -137,6 +137,9 @@ Avtomatik yangilash uchun repozitoriy Secrets'ida `COOLIFY_WEBHOOK` (ilovaning D
 1. Coolify → ilova → **Domains**: yangi domen (`https://` — Let's Encrypt avtomatik).
 2. `web/.env` dagi `VITE_SITE_URL` — Telegram/Open Graph havola rasmi to'liq manzil talab qiladi.
 3. GitHub repozitoriy **Variables** → `LOGIC_GATE_URL` — deploy'dan keyingi tekshiruv shu manzilga boradi.
+4. Eski manzilni Coolify'da qoldiring — eski havolalar ishlashda davom etadi, `migrate.ts` foydalanuvchilarni yangi manzilga olib o'tadi.
+
+DNS: domenlar eskiz.uz da (ns1/ns2.eskiz.uz), `logic.noesis.uz` — A yozuv `170.168.6.82`. Coolify `https://` domen qo'shganda `www.` variantini ham avtomatik qo'shadi — unga DNS yozuvi bo'lmasa, uni o'chiring (aks holda Let's Encrypt sertifikati olinmasligi mumkin).
 
 Havola rasmi `web/public/og.png` (1200×630) `web/scripts/og.html` dan olingan skrinshot.
 

@@ -63,5 +63,5 @@ jobs:
         env:
           COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          SITE_URL: ${{ vars.LOGIC_GATE_URL || 'http://logic-gate.170.168.6.82.sslip.io' }}
+          SITE_URL: ${{ vars.LOGIC_GATE_URL || 'https://logic.noesis.uz' }}
         run: bash .github/scripts/deploy-coolify.sh
