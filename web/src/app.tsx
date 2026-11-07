@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { Toast } from './components/Toast';
 import { route } from './router';
+import { CustomScreen } from './screens/CustomScreen';
 import { DailyScreen } from './screens/DailyScreen';
 import { Home } from './screens/Home';
 import { Leaderboard } from './screens/Leaderboard';
@@ -28,6 +29,7 @@ export function App() {
       {r.name === 'sandbox' && <Sandbox />}
       {r.name === 'leaderboard' && <Leaderboard tab={r.tab} />}
       {r.name === 'daily' && <DailyScreen />}
+      {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}
       {r.name === 'settings' && <Settings />}
       <Toast />
     </>

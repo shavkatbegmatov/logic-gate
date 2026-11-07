@@ -1761,3 +1761,9 @@ input[type='text']:focus {
   color: var(--good);
   font-size: 13px;
 }
+
+/* ── Do'stlar masalasi ─────────────────────────────────── */
+.modal .text-input {
+  width: 100%;
+  margin: 12px 0 4px;
+}

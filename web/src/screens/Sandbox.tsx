@@ -1,16 +1,18 @@
 import { useSignal } from '@preact/signals';
-import { useMemo } from 'preact/hooks';
+import { useMemo, useRef } from 'preact/hooks';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { GateList } from '../components/GateList';
+import { ShareButtons } from '../components/ShareButtons';
+import { encodePuzzle, LIMITS, markCreated, puzzleFromCircuit, type CreateError } from '../custom';
 import { Palette } from '../components/Palette';
 import { TruthTable } from '../components/TruthTable';
-import { Icon, TopBar } from '../components/ui';
+import { Icon, Modal, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
 import { GATE_TYPES, type Circuit, type Spec } from '../sim/types';
-import { KEYS } from '../state';
+import { KEYS, profile } from '../state';
 import { load, saveLater } from '../storage';
 import { ZoomTools } from './Workbench';
 import { useEditorKeys } from './useEditorKeys';
@@ -45,6 +47,7 @@ export function Sandbox() {
   }, []);
   useEditorKeys(editor);
   const showSide = useSignal(false);
+  const creating = useSignal(false);
 
   const spec = editor.spec.value;
   const resize = (di: number, dout: number) => {
@@ -95,13 +98,88 @@ export function Sandbox() {
       </div>
       <div class="play-bottom">
         <Palette editor={editor} gates={GATE_TYPES} />
-        <div class="actions mobile-only">
+        <div class="actions">
           <button class="btn table-toggle" onClick={() => (showSide.value = !showSide.value)}>
             <Icon name="table" /> {t.play.table}
           </button>
+          <button class="btn primary" onClick={() => (creating.value = true)}>
+            <Icon name="share" /> {t.custom.create}
+          </button>
         </div>
       </div>
+      {creating.value && <CreateModal editor={editor} onClose={() => (creating.value = false)} />}
     </div>
+  );
+}
+
+function createError(err: CreateError): string {
+  if (err.code === 'empty') return t.custom.empty;
+  if (err.code === 'unconnected_output' && err.ref) return t.unconnectedOutput(err.ref);
+  return t.errors[err.code];
+}
+
+/** Qum qutidagi sxemadan masala yaratib, havolasini ulashish. */
+function CreateModal({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+  const title = useSignal('');
+  const counted = useRef(false);
+  const res = puzzleFromCircuit(editor.spec.value, editor.circuit.value, {
+    title: title.value,
+    by: profile.value?.nickname ?? '',
+  });
+  if (!res.ok) {
+    return (
+      <Modal onClose={onClose}>
+        <h2>{t.custom.createTitle}</h2>
+        <p>{createError(res.error)}</p>
+        <div class="modal-actions">
+          <button class="btn primary" onClick={onClose} autoFocus>
+            {t.close}
+          </button>
+        </div>
+      </Modal>
+    );
+  }
+  const p = res.puzzle;
+  const code = encodePuzzle(p);
+  // Bir oynada necha marta ulashilsa ham, bitta masala yaratilgan hisoblanadi.
+  const mark = () => {
+    if (!counted.current) {
+      counted.current = true;
+      markCreated();
+    }
+  };
+  return (
+    <Modal onClose={onClose}>
+      <h2>{t.custom.createTitle}</h2>
+      <p class="muted">{t.custom.createText}</p>
+      <input
+        class="text-input"
+        type="text"
+        maxLength={LIMITS.title}
+        placeholder={t.custom.titlePlaceholder}
+        value={title.value}
+        onInput={(e) => (title.value = (e.currentTarget as HTMLInputElement).value)}
+        aria-label={t.custom.titlePlaceholder}
+      />
+      <p class="muted small">{t.custom.summary(p.inputs.length, p.outputs.length, p.goal, p.gates.join(', '))}</p>
+      <div onClickCapture={mark}>
+        <ShareButtons text={t.custom.shareText(p.title, p.goal)} path={`#/p/${code}`} />
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onClick={onClose}>
+          {t.close}
+        </button>
+        <button
+          class="btn primary"
+          onClick={() => {
+            mark();
+            go(`p/${code}`);
+          }}
+        >
+          {t.custom.try}
+        </button>
+      </div>
+    </Modal>
   );
 }
 

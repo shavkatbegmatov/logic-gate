@@ -142,9 +142,40 @@ ${stars} — ${gates} ta element (minimum: ${goal})${streak > 1 ? `\n🔥 ${stre
 Sen ham yechib ko'r!`,
   },
 
+  custom: {
+    create: 'Masala qilish',
+    createTitle: "Do'stlarga masala",
+    createText:
+      "Sxemangizning haqiqat jadvali masala bo'ladi. Do'stingiz uni sizdan kamroq element bilan yecha oladimi?",
+    titlePlaceholder: 'Masala nomi (ixtiyoriy)',
+    summary: (ins: number, outs: number, goal: number, gates: string) =>
+      `${ins} kirish, ${outs} chiqish · maqsad: ${goal} element · ${gates}`,
+    try: "O'zim sinab ko'raman",
+    empty: "Avval maydonga element qo'yib, barcha chiqishlarni ulang.",
+    shareText: (title: string, goal: number) =>
+      `Logic Gate · ${title ? `«${title}» ` : ''}masala
+Men buni ${goal} ta element bilan yig'dim. Sen-chi?`,
+    untitled: "Do'stdan masala",
+    sub: "Do'stdan masala",
+    by: (name: string) => `Muallif: ${name}`,
+    task: (outputs: string[], goal: number) =>
+      `Jadvaldagi ${listOf(outputs)} ${outputs.length === 1 ? 'ustunini' : 'ustunlarini'} hosil qiling. Muallif ${goal} ta element ishlatgan.`,
+    hint: "Jadvalga qarang: chiqish qaysi qatorlarda 1 bo'lyapti va bu qatorlarda kirishlar nimasi bilan o'xshash?",
+    bad: "Havola noto'g'ri yoki buzilgan. Masalani yuborgan do'stingizdan qayta so'rang.",
+    solved: 'Masala yechildi!',
+    gates: (n: number, goal: number) => `Elementlar: ${n} (muallif: ${goal})`,
+    beatAuthor: "Muallifdan ham kam element — zo'r!",
+    resultText: (title: string, stars: string, gates: number, goal: number) =>
+      `Logic Gate · ${title ? `«${title}»` : "do'st masalasi"}
+${stars} — ${gates} ta element (muallif: ${goal})
+Sen ham urinib ko'r!`,
+    makeOwn: "O'z masalamni yarataman",
+    toHome: 'Bosh sahifa',
+  },
+
   sandbox: {
     title: 'Qum quti',
-    text: "Istalgan sxemani erkin yig'ing va uning haqiqat jadvalini kuzating.",
+    text: "Istalgan sxemani erkin yig'ing va uning haqiqat jadvalini kuzating. Tayyor sxemani «Masala qilish» bilan do'stlarga yuboring.",
     inputs: 'Kirishlar',
     outputs: 'Chiqishlar',
   },
@@ -232,5 +263,10 @@ Sen ham yechib ko'r!`,
     XNOR: { name: 'Tenglik', text: 'Kirishlar bir xil bo\'lsa, 1.' },
   } satisfies Record<GateType, { name: string; text: string }>,
 };
+
+/** "A", "A va B", "A, B va C". */
+function listOf(items: string[]): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} va ${items[items.length - 1]}`;
+}
 
 export const t = uz;

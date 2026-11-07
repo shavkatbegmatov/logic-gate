@@ -6,6 +6,7 @@ import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
+import { resetCustom } from '../custom';
 import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
 import { errorText, renameProfile, restoreProfile } from '../sync';
@@ -44,6 +45,7 @@ export function Settings() {
     if (!confirm(p ? t.settings.resetConfirmProfile : t.settings.resetConfirm)) return;
     resetLocalProgress();
     resetDaily();
+    resetCustom();
     // Profil qolsa, keyingi ochilishda serverdagi natijalar qaytib kelardi — qurilma to'liq tozalanadi.
     profile.value = null;
     nick.value = '';
