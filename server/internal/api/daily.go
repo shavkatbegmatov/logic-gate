@@ -136,16 +136,27 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		s.internal(w, err)
 		return
 	}
+	// Mijoz seriyaga bugungi lokal natijani qo'shish kerakmi, shundan biladi.
+	todaySolved := day == today
+	if !todaySolved {
+		if _, err := s.store.DailyRank(r.Context(), today, player.ID); err == nil {
+			todaySolved = true
+		} else if !errors.Is(err, store.ErrNotFound) {
+			s.internal(w, err)
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"ok":        true,
-		"day":       day,
-		"gates":     gates,
-		"stars":     sim.Stars(p.Goal, gates),
-		"improved":  improved,
-		"best":      dailyMeJSON{Rank: best.Rank, Gates: best.Gates, Stars: best.Stars},
-		"solvers":   solvers,
-		"bestGates": bestGates,
-		"streak":    streak,
+		"ok":          true,
+		"day":         day,
+		"gates":       gates,
+		"stars":       sim.Stars(p.Goal, gates),
+		"improved":    improved,
+		"best":        dailyMeJSON{Rank: best.Rank, Gates: best.Gates, Stars: best.Stars},
+		"solvers":     solvers,
+		"bestGates":   bestGates,
+		"streak":      streak,
+		"todaySolved": todaySolved,
 	})
 }
 

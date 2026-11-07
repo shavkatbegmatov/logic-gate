@@ -2,7 +2,7 @@ import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon } from '../components/ui';
 import { states } from '../achievements';
-import { dailyHistory, streak, today } from '../daily';
+import { dailyHistory, streak, todaySig } from '../daily';
 import { t } from '../i18n';
 import { levels, MAX_STARS } from '../levels';
 import { go } from '../router';
@@ -57,7 +57,7 @@ export function Home() {
 }
 
 function DailyCard() {
-  const done = dailyHistory.value[today()];
+  const done = dailyHistory.value[todaySig.value];
   const days = streak.value;
   return (
     <button class={`daily-card${done ? ' done' : ''}`} onClick={() => go('daily')}>

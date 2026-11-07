@@ -117,12 +117,14 @@ func TestDailyStreak(t *testing.T) {
 	e := newEnv(t)
 	sols := dailySolutions(t)
 	code := e.player("Streaker")
+	var lastTodaySolved bool
 	solve := func(n int) float64 {
 		day := e.firstDay() + n
 		status, out := e.do("POST", fmt.Sprintf("/api/daily/%d/solve", day), code, map[string]any{"circuit": sols[n]})
 		if status != 200 {
 			t.Fatalf("%d-kun: %d %v", n, status, out)
 		}
+		lastTodaySolved = out["todaySolved"].(bool)
 		return out["streak"].(float64)
 	}
 	streak := func() float64 {
@@ -150,8 +152,18 @@ func TestDailyStreak(t *testing.T) {
 	if s := solve(2); s != 3 {
 		t.Fatalf("kechagi masala: seriya %v", s)
 	}
+	if lastTodaySolved {
+		t.Fatal("bugun hali yechilmagan, todaySolved false bo'lishi kerak")
+	}
 	if s := solve(3); s != 4 {
 		t.Fatalf("bugungi masala: seriya %v", s)
+	}
+	if !lastTodaySolved {
+		t.Fatal("bugungi masala yechildi, todaySolved true bo'lishi kerak")
+	}
+	// Bugungisidan keyin kechagini qayta yuborish: seriya bugunni ham o'z ichiga oladi.
+	if s := solve(2); s != 4 || !lastTodaySolved {
+		t.Fatalf("kechagini qayta yuborish: seriya %v, todaySolved %v", s, lastTodaySolved)
 	}
 	// Ikki kun o'tsa — seriya uziladi.
 	e.at(6)

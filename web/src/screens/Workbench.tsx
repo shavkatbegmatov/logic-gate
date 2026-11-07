@@ -130,7 +130,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
         editor.wave.value = null;
         rows[r] = r === wrong ? 'bad' : 'ok';
         show();
-        if (r !== wrong) sfx.tick(r);
+        if (r !== wrong && !me.dead) sfx.tick(r);
         if (!me.skip) await sleep(time.hold);
       }
       if (me.skip && !me.dead) {

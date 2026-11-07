@@ -137,6 +137,12 @@ export function puzzleFromCircuit(
   circuit: Circuit,
   meta: { title: string; by: string },
 ): { ok: true; puzzle: CustomPuzzle } | { ok: false; error: CreateError } {
+  // Chiqishlarga yetib bormaydigan (ortiqcha) elementlar tashlab yuboriladi: aks holda maqsad
+  // sun'iy oshib, maslahat ham ortiqcha elementdan boshlanib qolardi.
+  if (!circuit.gates.length) return { ok: false, error: { code: 'empty' } };
+  const loose = spec.outputs.find((o) => !circuit.wires.some((w) => w.to === `out:${o}`));
+  if (loose) return { ok: false, error: { code: 'unconnected_output', ref: loose } };
+  circuit = liveCircuit(circuit);
   if (!circuit.gates.length) return { ok: false, error: { code: 'empty' } };
   const err = validate(spec, circuit);
   if (err) return { ok: false, error: err };
@@ -161,6 +167,27 @@ export function puzzleFromCircuit(
       target,
       hints: { gates: counts, first: [first.type, ...srcs] },
     },
+  };
+}
+
+/** Faqat chiqishlarga (bevosita yoki boshqa elementlar orqali) ulangan elementlar va ularning simlari. */
+export function liveCircuit(circuit: Circuit): Circuit {
+  const driver = new Map(circuit.wires.map((w) => [w.to, w.from]));
+  const live = new Set<string>();
+  const stack = circuit.wires.filter((w) => w.to.startsWith('out:')).map((w) => w.from);
+  while (stack.length) {
+    const src = stack.pop()!;
+    if (src.startsWith('in:') || live.has(src)) continue;
+    live.add(src);
+    for (const i of [0, 1]) {
+      const from = driver.get(`${src}:${i}`);
+      if (from) stack.push(from);
+    }
+  }
+  const sinkLive = (to: string) => to.startsWith('out:') || live.has(to.slice(0, to.lastIndexOf(':')));
+  return {
+    gates: circuit.gates.filter((g) => live.has(g.id)),
+    wires: circuit.wires.filter((w) => sinkLive(w.to)),
   };
 }
 

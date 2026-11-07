@@ -108,6 +108,8 @@ export interface DailySolveResult {
   solvers: number;
   bestGates: number;
   streak: number;
+  /** Seriya bugungi kunni ham o'z ichiga oladimi (bugun yechilganmi). */
+  todaySolved?: boolean;
 }
 
 export interface DailyEntry {

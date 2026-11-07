@@ -102,8 +102,15 @@ export function getDraft(levelId: string): Circuit | undefined {
   return drafts[levelId];
 }
 
+const MAX_CUSTOM_DRAFTS = 40;
+
 export function setDraft(levelId: string, circuit: Circuit) {
+  // Kalit oxiriga o'tadi: obyekt tartibi = oxirgi foydalanish tartibi.
+  delete drafts[levelId];
   drafts[levelId] = circuit;
+  // Do'stlar masalalari cheksiz ko'payishi mumkin — eng eskilari o'chiriladi.
+  const custom = Object.keys(drafts).filter((k) => k.startsWith('custom-'));
+  for (const k of custom.slice(0, Math.max(0, custom.length - MAX_CUSTOM_DRAFTS))) delete drafts[k];
   saveLater(KEYS.drafts, drafts);
 }
 
@@ -118,10 +125,15 @@ export function pruneDailyDrafts(today: number) {
     }
   }
   if (changed) saveLater(KEYS.drafts, drafts);
+  let hintsChanged = false;
   for (const k of Object.keys(hintSteps)) {
     const m = /^daily-(\d+)$/.exec(k);
-    if (m && Number(m[1]) < today - 1) delete hintSteps[k];
+    if (m && Number(m[1]) < today - 1) {
+      delete hintSteps[k];
+      hintsChanged = true;
+    }
   }
+  if (hintsChanged) saveLater(KEYS.hints, hintSteps);
 }
 
 // Har bir daraja uchun ochilgan maslahatlar soni.

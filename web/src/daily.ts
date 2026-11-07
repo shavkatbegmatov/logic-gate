@@ -32,6 +32,23 @@ export function dayOf(ms: number): number {
 
 export const today = () => dayOf(Date.now());
 
+/** Joriy kun signal sifatida: yarim tunda va sahifaga qaytilganda yangilanadi (seriya va karta uchun). */
+export const todaySig = signal(today());
+if (typeof window !== 'undefined') {
+  const tick = () => {
+    if (todaySig.value !== today()) todaySig.value = today();
+  };
+  const schedule = () => {
+    const nextStart = (today() + 1) * 86400000 - 5 * 3600 * 1000;
+    setTimeout(() => {
+      tick();
+      schedule();
+    }, Math.max(1000, nextStart - Date.now() + 1000));
+  };
+  schedule();
+  addEventListener('visibilitychange', () => document.visibilityState === 'visible' && tick());
+}
+
 /** Kun boshlanishidan (Toshkent yarim tunidan) beri yoki oldin — sana matni: "7-noyabr". */
 export function dayLabel(day: number): string {
   const d = new Date(day * 86400000);
@@ -51,7 +68,7 @@ export function streakFrom(days: number[], now: number): number {
 }
 
 export const streak = computed(() => {
-  const now = today();
+  const now = todaySig.value;
   const local = streakFrom(Object.keys(dailyHistory.value).map(Number), now);
   const s = serverStreak.value;
   if (!s || s.day !== now) return local;
@@ -124,16 +141,20 @@ function mergeServerResult(day: number, gates: number, stars: number) {
   }
 }
 
-/** Natijani serverga yuboradi. Profil yoki aloqa bo'lmasa — null (natija lokal saqlangan). */
-export async function submitDaily(day: number, circuit: Circuit): Promise<DailySolveResult | null> {
+/**
+ * Kun natijasini serverga yuboradi: har doim qurilmadagi eng yaxshi sxema (yo'q bo'lsa — fallback).
+ * Server eng yaxshisini bilgandagina "yuborilgan" deb belgilanadi — yomonroq urinish rekordni yashirmaydi.
+ * Profil yoki aloqa bo'lmasa — null (natija lokal saqlangan).
+ */
+export async function submitDaily(day: number, fallback?: Circuit): Promise<DailySolveResult | null> {
   if (!profile.value) return null;
+  const local = dailyHistory.value[day];
+  const circuit = local?.circuit.gates.length ? local.circuit : fallback;
+  if (!circuit) return null;
   try {
     const res = await api.solveDaily(day, circuit);
-    markDailySynced(day);
-    const now = today();
-    const prev = serverStreak.value;
-    const includesToday = day === now || (prev?.day === now && prev.includesToday);
-    serverStreak.value = { day: now, streak: res.streak, includesToday };
+    if (!local || res.best.gates <= local.gates) markDailySynced(day);
+    serverStreak.value = { day: todaySig.value, streak: res.streak, includesToday: !!res.todaySolved };
     return res;
   } catch (e) {
     // Server rad etsa (kun yopilgan), qayta-qayta yubormaslik uchun belgilanadi.

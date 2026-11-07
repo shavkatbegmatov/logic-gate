@@ -42,6 +42,26 @@ describe("do'stlar masalasi", () => {
     expect(res).toMatchObject({ ok: false, error: { code: 'unconnected_output' } });
   });
 
+  it("chiqishga ta'sir qilmaydigan elementlar maqsad va maslahatga kirmaydi", () => {
+    // Ortiqcha NOT A (hech qayerga ulanmagan) va ulanmagan kirishli ortiqcha OR.
+    const messy: Circuit = {
+      gates: [
+        { id: 'g9', type: 'NOT', x: 0, y: 0 },
+        { id: 'g8', type: 'OR', x: 0, y: 0 },
+        ...circuit.gates,
+      ],
+      wires: [{ from: 'in:A', to: 'g9:0' }, ...circuit.wires],
+    };
+    const res = puzzleFromCircuit(spec, messy, { title: '', by: '' });
+    if (!res.ok) throw new Error(res.error.code);
+    expect(res.puzzle.goal).toBe(2);
+    expect(res.puzzle.gates).toEqual(['AND', 'XOR']);
+    expect(res.puzzle.hints).toEqual({ gates: { XOR: 1, AND: 1 }, first: ['XOR', 'A', 'B'] });
+    // Faqat ortiqcha elementlar bo'lsa — bo'sh masala.
+    const onlyJunk: Circuit = { gates: messy.gates.slice(0, 1), wires: [{ from: 'in:A', to: 'g9:0' }, { from: 'in:B', to: 'out:Q1' }] };
+    expect(puzzleFromCircuit(spec, onlyJunk, { title: '', by: '' })).toEqual({ ok: false, error: { code: 'empty' } });
+  });
+
   it("kodlash va o'qish — o'zbekcha nom bilan ham bir xil", () => {
     const p = make("G'alati sxema — o'yla!", 'Shavkat');
     const code = encodePuzzle(p);

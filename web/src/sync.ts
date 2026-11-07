@@ -71,12 +71,16 @@ async function doSync() {
   }
 }
 
-/** Yechimni serverga yuboradi. Profil yo'q bo'lsa yoki aloqa bo'lmasa, null qaytaradi. */
-export async function submitSolve(levelId: string, circuit: Circuit): Promise<SolveResult | null> {
+/**
+ * Daraja natijasini serverga yuboradi: har doim qurilmadagi eng yaxshi sxema (yo'q bo'lsa — fallback).
+ * Server eng yaxshisini bilgandagina "yuborilgan" deb belgilanadi. Profil yoki aloqa bo'lmasa — null.
+ */
+export async function submitSolve(levelId: string, fallback: Circuit): Promise<SolveResult | null> {
   if (!profile.value) return null;
+  const local = progress.value[levelId];
   try {
-    const res = await api.solve(levelId, circuit);
-    markSynced(levelId);
+    const res = await api.solve(levelId, local?.circuit ?? fallback);
+    if (!local || res.best.gates <= local.gates) markSynced(levelId);
     return res;
   } catch {
     return null;
