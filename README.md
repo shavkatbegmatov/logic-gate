@@ -111,7 +111,7 @@ Darajalar `levels/source.mjs` da: har bir daraja uchun maqsad funksiyasi (`fn`),
 node levels/build.mjs
 ```
 
-Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
+Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. Bosqichli maslahat uchun yechimdan faqat elementlar tarkibi va kirishlarga ulangan birinchi element olinadi (`hints`); yechimning o'zi `levels.json` ga tushmaydi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
 
 ## Coolify orqali joylash (Docker)
 

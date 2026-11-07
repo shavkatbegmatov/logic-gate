@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DailyInfo } from './api';
-import { dailyShareText, dayLabel, dayOf, hintText, puzzleLevel, streakFrom } from './daily';
+import { dailyShareText, dayLabel, dayOf, puzzleLevel, streakFrom } from './daily';
+import { hintSteps } from './hints';
 import { check } from './sim/sim';
 
 const info: DailyInfo = {
@@ -61,8 +62,11 @@ describe('kunlik boshqotirma', () => {
   });
 
   it('maslahat va ulashish matni', () => {
-    expect(hintText(info.puzzle)).toBe('Eng kam yechimda: 1 × AND, 1 × OR. Boshlanishi: A va B → AND.');
-    expect(hintText({ ...info.puzzle, hint: { gates: { NAND: 4 }, first: ['NAND', 'A', 'A'] } })).toContain('A → NAND');
+    expect(hintSteps(puzzleLevel(info)).map((s) => s.text)).toEqual([
+      "Jadvalda Q = 1 bo'lgan qatorlarga qarang: ularda kirishlar nimasi bilan o'xshash?",
+      '3 ★ yechim tarkibi: 1 × AND, 1 × OR.',
+      'Boshlang: A va B ni AND ga ulang.',
+    ]);
     expect(dailyShareText(info, 3, 2, 1)).toBe(
       "Logic Gate · Kunlik boshqotirma #2 (8-noyabr)\n★★☆ — 3 ta element (minimum: 2)\nSen ham yechib ko'r!",
     );

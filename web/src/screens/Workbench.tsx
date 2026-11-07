@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Board } from '../board/Board';
 import type { Editor } from '../board/editor';
 import { GateList } from '../components/GateList';
+import { HintPanel } from '../components/HintPanel';
 import { Palette } from '../components/Palette';
 import { showToast } from '../components/Toast';
 import { TruthTable } from '../components/TruthTable';
@@ -66,7 +67,6 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   /** Oynalar (natija, tanishtiruv). */
   children?: ComponentChildren;
 }) {
-  const showHint = useSignal(false);
   const showSide = useSignal(false);
   /** Tekshiruv qatorlari holati; null — tekshiruv ko'rsatilmayapti. */
   const rowStates = useSignal<RowState[] | null>(null);
@@ -246,10 +246,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
               <span>{t.play.goal(level.goal)}</span>
               <span class={used && used <= level.goal ? 'good' : ''}>{t.play.used(used)}</span>
             </div>
-            <button class="btn ghost small" onClick={() => (showHint.value = !showHint.value)}>
-              <Icon name="hint" /> {t.play.hint}
-            </button>
-            {showHint.value && <p class="hint">{level.hint}</p>}
+            <HintPanel level={level} editor={editor} onPlaced={() => (showSide.value = false)} />
           </section>
           <TruthTable
             inputs={level.inputs}

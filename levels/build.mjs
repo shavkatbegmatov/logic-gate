@@ -98,6 +98,16 @@ function evalSolution(level) {
   return Object.fromEntries(level.outputs.map((name, i) => [name, cols[i].join('')]));
 }
 
+// Bosqichli maslahat: 3 ★ yechim tarkibi va kirishlarga to'g'ridan-to'g'ri ulangan birinchi element.
+// To'liq yechim brauzerga yuborilmaydi — faqat shu ikki ishora.
+function hintsFor(level) {
+  const gates = {};
+  for (const [type] of Object.values(level.sol.g)) gates[type] = (gates[type] ?? 0) + 1;
+  const first = Object.values(level.sol.g).find(([, ...srcs]) => srcs.every((s) => level.inputs.includes(s)));
+  if (!first) fail(level.id, "kirishlarga ulangan element yo'q");
+  return { gates, first };
+}
+
 const ids = new Set();
 const chapterIds = new Set(chapters.map((c) => c.id));
 const outLevels = [];
@@ -117,7 +127,7 @@ for (const level of levels) {
   }
 
   const { fn, sol, ...rest } = level;
-  outLevels.push({ ...rest, target });
+  outLevels.push({ ...rest, target, hints: hintsFor(level) });
   solutions[level.id] = toCircuit(level);
 }
 

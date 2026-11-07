@@ -10,6 +10,7 @@ const KEYS = {
   drafts: 'lg.drafts.v1',
   sandbox: 'lg.sandbox.v1',
   intro: 'lg.intro.v1',
+  hints: 'lg.hints.v1',
 };
 export { KEYS };
 
@@ -114,6 +115,22 @@ export function pruneDailyDrafts(today: number) {
     }
   }
   if (changed) saveLater(KEYS.drafts, drafts);
+  for (const k of Object.keys(hintSteps)) {
+    const m = /^daily-(\d+)$/.exec(k);
+    if (m && Number(m[1]) < today - 1) delete hintSteps[k];
+  }
+}
+
+// Har bir daraja uchun ochilgan maslahatlar soni.
+const hintSteps: Record<string, number> = load(KEYS.hints, {});
+
+export function hintStep(levelId: string): number {
+  return hintSteps[levelId] ?? 0;
+}
+
+export function setHintStep(levelId: string, n: number) {
+  hintSteps[levelId] = n;
+  saveLater(KEYS.hints, hintSteps);
 }
 
 export function markIntroSeen(types: string[]) {
@@ -124,7 +141,9 @@ export function resetLocalProgress() {
   progress.value = {};
   seenIntro.value = [];
   for (const k of Object.keys(drafts)) delete drafts[k];
+  for (const k of Object.keys(hintSteps)) delete hintSteps[k];
   save(KEYS.drafts, null);
+  save(KEYS.hints, null);
   save(KEYS.sandbox, null);
 }
 

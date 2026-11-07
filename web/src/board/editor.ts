@@ -141,8 +141,8 @@ export class Editor {
     return `g${max + 1}`;
   }
 
-  /** Elementni markazi (x, y) nuqtada bo'ladigan qilib qo'shadi; joy band bo'lsa pastroqqa suradi. */
-  addGate(type: GateType, cx: number, cy: number) {
+  /** Markazi (cx, cy) bo'lgan bo'sh joy; band bo'lsa pastroqqa, keyin o'ngga suriladi. */
+  private freeSpot(cx: number, cy: number) {
     let x = snap(cx - GATE_W / 2);
     let y = snap(cy - GATE_H / 2);
     const busy = (x: number, y: number) =>
@@ -154,10 +154,33 @@ export class Editor {
         y = snap(cy - GATE_H / 2);
       }
     }
-    const gate = { id: this.nextId(), type, x, y };
+    return { x, y };
+  }
+
+  /** Elementni markazi (x, y) nuqtada bo'ladigan qilib qo'shadi; joy band bo'lsa pastroqqa suradi. */
+  addGate(type: GateType, cx: number, cy: number) {
+    const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy) };
     this.commit({ ...this.circuit.value, gates: [...this.circuit.value.gates, gate] });
     this.selection.value = { kind: 'gate', id: gate.id };
     sfx.place();
+  }
+
+  /**
+   * Elementni kirishlarga ulangan holda kirishlar yoniga qo'yadi (maslahat uchun).
+   * Element va simlar bitta qadam: bir marta "bekor qilish" ularni birga olib tashlaydi.
+   */
+  placeGate(type: GateType, sources: string[]): string {
+    const lay = this.layout.value;
+    const pts = sources.map((s) => lay.inputs.get(s)).filter((p) => p !== undefined);
+    const cx = (pts.length ? Math.max(...pts.map((p) => p.x)) : 0) + 150;
+    const cy = pts.length ? pts.reduce((sum, p) => sum + p.y, 0) / pts.length : 0;
+    const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy) };
+    const c = this.circuit.value;
+    const wires = sources.slice(0, GATE_ARITY[type]).map((s, i) => ({ from: `in:${s}`, to: `${gate.id}:${i}` }));
+    this.commit({ gates: [...c.gates, gate], wires: [...c.wires, ...wires] });
+    this.selection.value = { kind: 'gate', id: gate.id };
+    sfx.place();
+    return gate.id;
   }
 
   /** Ekrandagi ko'rinish markaziga element qo'shish. */

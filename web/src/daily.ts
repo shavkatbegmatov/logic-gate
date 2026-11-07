@@ -1,9 +1,9 @@
 // Kunlik boshqotirma: serverdan bugungi masala, lokal natijalar tarixi va seriya.
 // Masalalar faqat serverda (oldindan ko'rib qo'yib bo'lmaydi); bugungisi oflayn davom ettirish uchun keshlanadi.
 import { computed, effect, signal } from '@preact/signals';
-import { api, ApiError, type DailyInfo, type DailyPuzzle, type DailySolveResult } from './api';
+import { api, ApiError, type DailyInfo, type DailySolveResult } from './api';
 import { t } from './i18n';
-import type { Circuit, GateType, Level } from './sim/types';
+import type { Circuit, Level } from './sim/types';
 import { profile } from './state';
 import { load, save } from './storage';
 
@@ -84,19 +84,14 @@ export function puzzleLevel(info: DailyInfo): Level {
     chapter: 'daily',
     title: t.daily.title,
     task: t.daily.task(p.outputs),
-    hint: hintText(p),
+    hint: t.daily.strategy(p.outputs.length),
+    hints: p.hint,
     inputs: p.inputs,
     outputs: p.outputs,
     gates: p.gates,
     goal: p.goal,
     target: p.target,
   };
-}
-
-export function hintText(p: DailyPuzzle): string {
-  const parts = Object.entries(p.hint.gates).map(([g, n]) => `${n} × ${g}`);
-  const [type, ...srcs] = p.hint.first;
-  return t.daily.hint(parts.join(', '), type as GateType, srcs);
 }
 
 export function dailyShareText(info: DailyInfo, gates: number, stars: number, streakDays: number): string {

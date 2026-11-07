@@ -18,16 +18,31 @@ export function save(key: string, value: unknown): void {
   }
 }
 
-const timers = new Map<string, ReturnType<typeof setTimeout>>();
+const timers = new Map<string, { timer: ReturnType<typeof setTimeout>; value: unknown }>();
 
 /** Tez-tez o'zgaradigan qiymatlar (qoralamalar) uchun kechiktirilgan saqlash. */
 export function saveLater(key: string, value: unknown, ms = 400): void {
-  clearTimeout(timers.get(key));
-  timers.set(
-    key,
-    setTimeout(() => {
+  clearTimeout(timers.get(key)?.timer);
+  timers.set(key, {
+    value,
+    timer: setTimeout(() => {
       timers.delete(key);
       save(key, value);
     }, ms),
-  );
+  });
+}
+
+/** Kutilayotgan barcha yozuvlarni darhol saqlaydi. */
+export function flushSaves(): void {
+  for (const [key, { timer, value }] of timers) {
+    clearTimeout(timer);
+    save(key, value);
+  }
+  timers.clear();
+}
+
+// Sahifa yopilsa, yangilansa yoki telefonda boshqa ilovaga o'tilsa — oxirgi o'zgarish yo'qolmasin.
+if (typeof addEventListener === 'function') {
+  addEventListener('pagehide', flushSaves);
+  addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flushSaves());
 }

@@ -49,6 +49,8 @@ export interface Level extends Spec {
   goal: number;
   /** Har bir chiqish uchun 2^n uzunlikdagi "0"/"1" qatori. */
   target: Record<string, string>;
+  /** Bosqichli maslahat: 3 ★ yechim tarkibi va kirishlarga ulangan birinchi element [tur, manba...]. */
+  hints?: { gates: Record<string, number>; first: string[] };
 }
 
 export interface Chapter {

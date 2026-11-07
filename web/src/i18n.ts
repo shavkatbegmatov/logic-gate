@@ -41,7 +41,6 @@ export const uz = {
     checking: 'Tekshirilmoqda',
     skip: "O'tkazib yuborish",
     rowLabel: (r: number) => `${r + 1}-qator`,
-    hint: 'Maslahat',
     table: 'Jadval',
     task: 'Vazifa',
     undo: 'Bekor qilish',
@@ -96,6 +95,20 @@ Sen ham yechib ko'r!`,
     inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 30 daraja, bepul!",
   },
 
+  hints: {
+    show: 'Maslahat',
+    next: (n: number, total: number) => `Keyingi maslahat (${n}/${total})`,
+    gates: (parts: string) => `3 ★ yechim tarkibi: ${parts}.`,
+    first: (type: GateType, srcs: string[]) =>
+      srcs.length === 1
+        ? `Boshlang: ${srcs[0]} ni ${type} ga ulang.`
+        : srcs[0] === srcs[1]
+          ? `Boshlang: ${srcs[0]} ni ${type} ning ikkala kirishiga ulang.`
+          : `Boshlang: ${srcs[0]} va ${srcs[1]} ni ${type} ga ulang.`,
+    place: "Maydonga qo'yish",
+    placed: 'Maydonda bor',
+  },
+
   daily: {
     title: 'Kunlik boshqotirma',
     home: 'Kunlik boshqotirma',
@@ -108,8 +121,10 @@ Sen ham yechib ko'r!`,
       outputs.length === 1
         ? `Jadvaldagi ${outputs[0]} ustunini eng kam element bilan hosil qiling.`
         : `Jadvaldagi ${outputs.join(' va ')} ustunlarini eng kam element bilan hosil qiling.`,
-    hint: (parts: string, type: GateType, srcs: string[]) =>
-      `Eng kam yechimda: ${parts}. Boshlanishi: ${srcs.length === 1 || srcs[0] === srcs[1] ? `${srcs[0]} → ${type}` : `${srcs[0]} va ${srcs[1]} → ${type}`}.`,
+    strategy: (outputs: number) =>
+      outputs === 1
+        ? "Jadvalda Q = 1 bo'lgan qatorlarga qarang: ularda kirishlar nimasi bilan o'xshash?"
+        : "Avval har bir chiqishni alohida o'ylang, keyin ikkalasiga umumiy qismni toping — shunda element tejaladi.",
     date: (day: number, month: number) =>
       `${day}-${['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'][month]}`,
     solved: 'Bugungi masala yechildi!',

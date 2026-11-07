@@ -1737,3 +1737,27 @@ input[type='text']:focus {
     min-height: 46px;
   }
 }
+
+/* ── Bosqichli maslahat ────────────────────────────────── */
+.hints {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.hints .hint {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.side .task .hints .hint p {
+  margin: 0;
+}
+
+.hint-done {
+  color: var(--good);
+  font-size: 13px;
+}
