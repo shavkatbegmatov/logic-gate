@@ -3,13 +3,14 @@ import { useEffect, useMemo } from 'preact/hooks';
 import { sfx } from '../audio';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
+import { GateIntro } from '../components/GateIntro';
 import { ShareButtons } from '../components/ShareButtons';
 import { Modal, Stars, TopBar } from '../components/ui';
 import { customLevel, customStore, decodePuzzle, recordCustom, type CustomPuzzle } from '../custom';
 import { t } from '../i18n';
 import { go } from '../router';
 import { emptyCircuit, type Level } from '../sim/types';
-import { getDraft, setDraft } from '../state';
+import { getDraft, markIntroSeen, seenIntro, setDraft } from '../state';
 import { Workbench, type Solved } from './Workbench';
 
 interface Result {
@@ -46,6 +47,8 @@ function Play({ puzzle, code }: { puzzle: CustomPuzzle; code: string }) {
   const level = useMemo(() => customLevel(puzzle, code), [code]);
   const editor = useMemo(() => new Editor(), []);
   const result = useSignal<Result | null>(null);
+  // Do'st masalasida hali tanish bo'lmagan element (masalan, D-trigger) bo'lsa — darajalardagidek karta.
+  const intro = useSignal(level.gates.filter((g) => !seenIntro.value.includes(g)));
 
   useMemo(() => {
     editor.load(level, getDraft(level.id) ?? emptyCircuit(), outputColumn(level.goal));
@@ -66,6 +69,15 @@ function Play({ puzzle, code }: { puzzle: CustomPuzzle; code: string }) {
       onBack={() => go('')}
       onSolved={onSolved}
     >
+      {intro.value.length > 0 && (
+        <GateIntro
+          gates={intro.value}
+          onClose={() => {
+            markIntroSeen(intro.value);
+            intro.value = [];
+          }}
+        />
+      )}
       {result.value && <Success level={level} code={code} result={result.value} onAgain={() => (result.value = null)} />}
     </Workbench>
   );

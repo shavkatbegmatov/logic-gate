@@ -174,7 +174,9 @@ Sen ham yechib ko'r!`,
       `${ins} kirish, ${outs} chiqish · maqsad: ${goal} element · ${gates}`,
     try: "O'zim sinab ko'raman",
     empty: "Avval maydonga element qo'yib, barcha chiqishlarni ulang.",
-    sequential: "Xotirali (D-triggerli) sxemadan hozircha masala yaratib bo'lmaydi.",
+    tooComplex: "Sxemaning xatti-harakati havolaga sig'maydi (holatlar juda ko'p). Kamroq trigger yoki kirish ishlating.",
+    createTextSeq:
+      "Sxemangizning vaqt bo'yicha xatti-harakati masala bo'ladi. Do'stingiz uni sizdan kamroq element bilan yig'a oladimi?",
     shareText: (title: string, goal: number) =>
       `Logic Gate · ${title ? `«${title}» ` : ''}masala
 Men buni ${goal} ta element bilan yig'dim. Sen-chi?`,
@@ -184,6 +186,9 @@ Men buni ${goal} ta element bilan yig'dim. Sen-chi?`,
     task: (outputs: string[], goal: number) =>
       `Jadvaldagi ${listOf(outputs, 'va')} ${outputs.length === 1 ? 'ustunini' : 'ustunlarini'} hosil qiling. Muallif ${goal} ta element ishlatgan.`,
     hint: "Jadvalga qarang: chiqish qaysi qatorlarda 1 bo'lyapti va bu qatorlarda kirishlar nimasi bilan o'xshash?",
+    taskSeq: (outputs: string[], goal: number) =>
+      `Namunadagidek ishlaydigan xotirali sxema yig'ing: ${listOf(outputs, 'va')} vaqt diagrammasidagidek bo'lsin. Muallif ${goal} ta element ishlatgan.`,
+    hintSeq: "Diagrammaga qarang: chiqish oldingi taktlardagi kirishlarga qanday bog'liq? Nimani eslab qolish kerak?",
     bad: "Havola noto'g'ri yoki buzilgan. Masalani yuborgan do'stingizdan qayta so'rang.",
     solved: 'Masala yechildi!',
     gates: (n: number, goal: number) => `Elementlar: ${n} (muallif: ${goal})`,
@@ -494,7 +499,8 @@ export const ru: typeof uz = {
       `входов: ${ins}, выходов: ${outs} · цель: ${goal} эл. · ${gates}`,
     try: 'Попробовать самому',
     empty: 'Сначала поставьте элементы на поле и подключите все выходы.',
-    sequential: 'Из схемы с памятью (D-триггерами) пока нельзя сделать задачу.',
+    tooComplex: 'Поведение схемы не помещается в ссылку (слишком много состояний). Используйте меньше триггеров или входов.',
+    createTextSeq: 'Задачей станет поведение вашей схемы во времени. Сможет ли друг собрать её из меньшего числа элементов?',
     shareText: (title: string, goal: number) =>
       `Logic Gate · задача${title ? ` «${title}»` : ''}\nЯ собрал её из ${goal} эл. А ты?`,
     untitled: 'Задача от друга',
@@ -503,6 +509,9 @@ export const ru: typeof uz = {
     task: (outputs: string[], goal: number) =>
       `Получите ${outputs.length === 1 ? 'столбец' : 'столбцы'} ${listOf(outputs, 'и')} из таблицы. Автор использовал ${goal} эл.`,
     hint: 'Посмотрите на таблицу: в каких строках выход равен 1 и чем похожи в них входы?',
+    taskSeq: (outputs: string[], goal: number) =>
+      `Соберите схему с памятью, которая работает как в примере: ${listOf(outputs, 'и')} — как на временной диаграмме. Автор использовал ${goal} эл.`,
+    hintSeq: 'Посмотрите на диаграмму: как выход зависит от входов на прошлых тактах? Что нужно запомнить?',
     bad: 'Ссылка неверна или повреждена. Попросите друга отправить задачу ещё раз.',
     solved: 'Задача решена!',
     gates: (n: number, goal: number) => `Элементов: ${n} (у автора: ${goal})`,

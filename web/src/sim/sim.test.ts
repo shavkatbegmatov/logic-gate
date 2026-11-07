@@ -7,6 +7,8 @@ import {
   counterexample,
   depths,
   evaluate,
+  exampleFor,
+  machineOf,
   machineOut,
   machineReplay,
   replay,
@@ -260,5 +262,25 @@ describe('D-trigger', () => {
     const c = compile(spec, { gates: [g], wires: [w, { from: 'd', to: 'out:Q' }] });
     expect(truthTable(c)).toEqual([[0], [0]]);
     expect(truthTable(c, replay(c, [1]))).toEqual([[1], [1]]);
+  });
+});
+
+describe('sxemadan avtomat', () => {
+  it("har bir xotira darajasining yechimidan qurilgan avtomat — darajaning o'zi (kanonik shakl bir xil)", () => {
+    for (const level of levels.filter((l) => l.seq)) {
+      const m = machineOf(compile(level, sols[level.id]));
+      expect({ id: level.id, ...m }).toEqual({ id: level.id, next: level.seq!.next, out: level.seq!.out });
+    }
+  });
+
+  it("namuna bir xil avtomat uchun bir xil va hamma holatlardan o'tadi", () => {
+    const s6 = lvl('s6').seq!;
+    const ex = exampleFor(s6);
+    expect(ex).toEqual(exampleFor({ next: s6.next, out: s6.out }));
+    expect(ex).toHaveLength(10);
+    const seen = new Set([0]);
+    let s = 0;
+    for (const r of ex) seen.add((s = s6.next[s][r]));
+    expect(seen.size).toBe(s6.next.length);
   });
 });

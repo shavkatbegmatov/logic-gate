@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { customId, customLevel, decodePuzzle, encodePuzzle, puzzleFromCircuit, type CustomPuzzle } from './custom';
 import { hintSteps } from './hints';
 import { check } from './sim/sim';
-import { GATE_TYPES, type Circuit, type Spec } from './sim/types';
+import { ALL_GATE_TYPES, GATE_TYPES, type Circuit, type Spec } from './sim/types';
 
 const spec: Spec = { inputs: ['A', 'B', 'C'], outputs: ['Q1'], gates: GATE_TYPES };
 
@@ -140,5 +140,75 @@ describe("do'stlar masalasi", () => {
     expect(customId(a)).toBe(customId(a));
     expect(customId(a)).not.toBe(customId(b));
     expect(customId(a)).toMatch(/^custom-[0-9a-z]+$/);
+  });
+});
+
+describe("xotirali do'stlar masalasi", () => {
+  const seqSpec: Spec = { inputs: ['A'], outputs: ['Q1'], gates: ALL_GATE_TYPES };
+  // Almashtirgich: A = 1 bo'lgan taktdan keyin Q1 teskarisiga o'zgaradi.
+  const toggle: Circuit = {
+    gates: [
+      { id: 'x', type: 'XOR', x: 0, y: 0 },
+      { id: 'd', type: 'DFF', x: 0, y: 0 },
+    ],
+    wires: [
+      { from: 'in:A', to: 'x:0' },
+      { from: 'd', to: 'x:1' },
+      { from: 'x', to: 'd:0' },
+      { from: 'd', to: 'out:Q1' },
+    ],
+  };
+  const delay: Circuit = {
+    gates: [{ id: 'd', type: 'DFF', x: 0, y: 0 }],
+    wires: [
+      { from: 'in:A', to: 'd:0' },
+      { from: 'd', to: 'out:Q1' },
+    ],
+  };
+
+  it("sxemadan avtomat, havola va qayta o'qish; muallif yechimi 3 ★, boshqa sxema — qarshi misol", () => {
+    const res = puzzleFromCircuit(seqSpec, toggle, { title: 'Almashtirgich', by: 'Ali' });
+    if (!res.ok) throw new Error(res.error.code);
+    const p = res.puzzle;
+    expect(p.target).toBeUndefined();
+    expect(p.seq).toEqual({ next: [[0, 1], [1, 0]], out: [['0', '0'], ['1', '1']] });
+    expect(p.gates).toEqual(['XOR', 'DFF']);
+    expect(p.hints).toEqual({ gates: { XOR: 1, DFF: 1 }, first: ['DFF'] });
+    const code = encodePuzzle(p);
+    expect(decodePuzzle(code)).toEqual(p);
+    const level = customLevel(decodePuzzle(code)!, code);
+    expect(level.seq?.example).toHaveLength(10);
+    expect(check(level, toggle)).toEqual({ ok: true, gates: 2, stars: 3 });
+    expect(check(level, delay)).toEqual({ ok: false, trace: [1, 0, 0] });
+    expect(level.task).toBe("Namunadagidek ishlaydigan xotirali sxema yig'ing: Q1 vaqt diagrammasidagidek bo'lsin. Muallif 2 ta element ishlatgan.");
+    expect(hintSteps(level)[2].text).toBe("Boshlang: maydonga DFF qo'ying.");
+  });
+
+  it("holatlari juda ko'p sxema havolaga sig'maydi", () => {
+    // 5 ta trigger siljitish registri: 32 holat > 16.
+    const gates = Array.from({ length: 5 }, (_, i) => ({ id: `d${i}`, type: 'DFF' as const, x: 0, y: 0 }));
+    const wires = gates.map((g, i) => ({ from: i ? `d${i - 1}` : 'in:A', to: `${g.id}:0` }));
+    // Chiqish hamma triggerlarga bog'liq bo'lsin (aks holda kichraytirishda holatlar birlashadi).
+    const xs = Array.from({ length: 4 }, (_, i) => ({ id: `x${i}`, type: 'XOR' as const, x: 0, y: 0 }));
+    const xw = xs.flatMap((x, i) => [
+      { from: i ? `x${i - 1}` : 'd0', to: `${x.id}:0` },
+      { from: `d${i + 1}`, to: `${x.id}:1` },
+    ]);
+    const res = puzzleFromCircuit(seqSpec, { gates: [...gates, ...xs], wires: [...wires, ...xw, { from: 'x3', to: 'out:Q1' }] }, { title: '', by: '' });
+    expect(res).toEqual({ ok: false, error: { code: 'too_complex' } });
+  });
+
+  it('buzilgan xotirali havolalar rad etiladi', () => {
+    const enc = (d: unknown) => btoa(JSON.stringify(d)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const good = { v: 1, i: ['A'], o: ['Q1'], g: (1 << 3) | (1 << 7), n: 2, s: { q: '0110', y: '0011' } };
+    expect(decodePuzzle(enc(good))?.seq).toEqual({ next: [[0, 1], [1, 0]], out: [['0', '0'], ['1', '1']] });
+    expect(decodePuzzle(enc({ ...good, g: 1 << 3 }))).toBeNull(); // DFF ruxsat etilmagan
+    expect(decodePuzzle(enc({ ...good, s: { q: '0120', y: '0011' } }))).toBeNull(); // yo'q holat
+    expect(decodePuzzle(enc({ ...good, s: { q: '011', y: '001' } }))).toBeNull(); // qatorlarga bo'linmaydi
+    expect(decodePuzzle(enc({ ...good, s: { q: '0110', y: '0021' } }))).toBeNull(); // 1 chiqish — faqat 0/1
+    expect(decodePuzzle(enc({ ...good, s: { q: '0'.repeat(160), y: '0'.repeat(160) } }))).toBeNull(); // juda katta
+    // Kombinatsion masalada DFF bo'lishi mumkin emas.
+    const comb = { v: 1, i: ['A'], o: ['Q1'], g: 1 | (1 << 7), n: 1, x: ['1'] };
+    expect(decodePuzzle(enc(comb))).toBeNull();
   });
 });

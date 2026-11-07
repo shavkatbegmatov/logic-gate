@@ -127,7 +127,7 @@ export function Sandbox() {
 
 function createError(err: CreateError): string {
   if (err.code === 'empty') return t.custom.empty;
-  if (err.code === 'sequential') return t.custom.sequential;
+  if (err.code === 'too_complex') return t.custom.tooComplex;
   if (err.code === 'unconnected_output' && err.ref) return t.unconnectedOutput(err.ref);
   return t.errors[err.code];
 }
@@ -165,7 +165,7 @@ function CreateModal({ editor, onClose }: { editor: Editor; onClose: () => void 
   return (
     <Modal onClose={onClose}>
       <h2>{t.custom.createTitle}</h2>
-      <p class="muted">{t.custom.createText}</p>
+      <p class="muted">{p.seq ? t.custom.createTextSeq : t.custom.createText}</p>
       <input
         class="text-input"
         type="text"

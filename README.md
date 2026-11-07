@@ -318,7 +318,7 @@ Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavj
 - **Vazifa** haqiqat jadvali o'rniga vaqt diagrammasi namunasi bilan beriladi; panelda «Sizning sxemangiz» — bosilgan taktlar va kutilgan qiymatlar.
 - **Tekshiruv** sxemani kerakli avtomat bilan har qanday kirishlar ketma-ketligida solishtiradi: ikkalasi boshlang'ich holatdan birga, erishiladigan har bir juft holat bo'yicha kenglik bo'yicha yuradi (≤ 8 trigger, ya'ni ≤ 256 holat). Farq bo'lsa, uni ko'rsatadigan eng qisqa ketma-ketlik taktma-takt o'ynab ko'rsatiladi; to'g'ri bo'lsa — namuna.
 - Server (`sim.CheckSeq`) xuddi shu tekshiruvni qayta bajaradi; noto'g'ri javobda `{"error":"wrong_answer","trace":[…]}`.
-- Qum qutida ham D-trigger va takt bor; xotirali sxemadan do'stlar masalasi hozircha yaratilmaydi (havola faqat haqiqat jadvalini saqlaydi).
+- Qum qutida ham D-trigger va takt bor. Xotirali sxemadan do'stlar masalasi ham yaratiladi: havolada eng kichik avtomat (`s: { q, y }` — keyingi holatlar va chiqishlar), ko'pi bilan 16 holat va 128 katakcha (Telegram `startapp` 512 belgiga sig'sin). Vaqt diagrammasi namunasi havolaga yozilmaydi — avtomatdan bir xil tarzda hosil qilinadi (`exampleFor`).
 
 ## Telegram Mini App
 

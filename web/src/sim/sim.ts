@@ -251,6 +251,88 @@ export function machineOut(m: Machine, s: number, r: number): number[] {
 }
 
 /**
+ * Bir xil ishlaydigan holatlarni birlashtiradi (Moore algoritmi) va holatlarni boshlang'ichdan kenglik
+ * bo'yicha raqamlaydi — natija yagona (kanonik). levels/machine.mjs dagi bilan aynan bir xil: daraja
+ * avtomati va shu darajaning yechimidan qurilgan avtomat tengligi testlarda tekshiriladi.
+ */
+export function minimizeMachine(m: Machine): Machine {
+  const { next, out } = m;
+  let cls = out.map((o) => o.join());
+  for (;;) {
+    const ids = new Map<string, string>();
+    const refined = cls.map((c, i) => {
+      const sig = `${c}|${next[i].map((j) => cls[j]).join()}`;
+      if (!ids.has(sig)) ids.set(sig, String(ids.size));
+      return ids.get(sig)!;
+    });
+    if (new Set(refined).size === new Set(cls).size) break;
+    cls = refined;
+  }
+  const order = new Map<string, number>([[cls[0], 0]]);
+  const reps = [0];
+  for (let i = 0; i < reps.length; i++) {
+    for (const j of next[reps[i]]) {
+      if (!order.has(cls[j])) {
+        order.set(cls[j], reps.length);
+        reps.push(j);
+      }
+    }
+  }
+  return { next: reps.map((i) => next[i].map((j) => order.get(cls[j])!)), out: reps.map((i) => out[i]) };
+}
+
+/** Sxemaning xatti-harakati — eng kichik avtomat (boshlang'ich holat: barcha triggerlar 0). */
+export function machineOf(c: Compiled): Machine {
+  const n = c.spec.inputs.length;
+  const dffs = c.order.filter((g) => g.type === 'DFF');
+  const toState = (mask: number): State => new Map(dffs.map((g, i) => [g.id, (mask >> i) & 1]));
+  const toMask = (st: State) => dffs.reduce((mask, g, i) => mask | ((st.get(g.id) ?? 0) << i), 0);
+  const ids = new Map<number, number>([[0, 0]]);
+  const masks = [0];
+  const next: number[][] = [];
+  const out: string[][] = [];
+  for (let i = 0; i < masks.length; i++) {
+    const st = toState(masks[i]);
+    next.push([]);
+    out.push([]);
+    for (let r = 0; r < 1 << n; r++) {
+      const ev = evaluate(c, rowBits(n, r), st);
+      const nm = toMask(nextState(c, ev.values));
+      if (!ids.has(nm)) {
+        ids.set(nm, masks.length);
+        masks.push(nm);
+      }
+      next[i].push(ids.get(nm)!);
+      out[i].push(ev.outputs.map((v) => (v ? '1' : '0')).join(''));
+    }
+  }
+  return minimizeMachine({ next, out });
+}
+
+/**
+ * Vaqt diagrammasi uchun namuna: har qadamda joriy holatdan hali o'tilmagan o'tish tanlanadi
+ * (avtomatning turli tomonlari ko'rinsin). Bir avtomat uchun har doim bir xil.
+ */
+export function exampleFor(m: Machine, length = 10): number[] {
+  const rows = m.next[0].length;
+  const used = new Set<number>();
+  const seq: number[] = [];
+  let s = 0;
+  for (let i = 0; i < length; i++) {
+    let r = -1;
+    for (let k = 0; k < rows && r < 0; k++) {
+      const cand = (k + i) % rows;
+      if (!used.has(s * rows + cand)) r = cand;
+    }
+    if (r < 0) r = (i * 5 + 1) % rows;
+    used.add(s * rows + r);
+    seq.push(r);
+    s = m.next[s][r];
+  }
+  return seq;
+}
+
+/**
  * Sxema avtomat bilan har qanday kirishlar ketma-ketligida bir xil ishlaydimi. Ikkalasi birga,
  * boshlang'ich holatdan kenglik bo'yicha (BFS) yuradi — har bir erishiladigan juft holat bir marta.
  * Farq bo'lsa, uni ko'rsatadigan eng qisqa ketma-ketlik (qatorlar) qaytadi: oxirgi taktda chiqish
