@@ -12,7 +12,7 @@ import { go } from '../router';
 import { GATE_TYPES, type Circuit, type Spec } from '../sim/types';
 import { KEYS } from '../state';
 import { load, saveLater } from '../storage';
-import { ZoomTools } from './LevelScreen';
+import { ZoomTools } from './Workbench';
 import { useEditorKeys } from './useEditorKeys';
 
 const INPUT_NAMES = ['A', 'B', 'C', 'D', 'E'];

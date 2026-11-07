@@ -1,4 +1,4 @@
-import type { Circuit } from './sim/types';
+import type { Circuit, GateType } from './sim/types';
 import { profile } from './state';
 
 export class ApiError extends Error {
@@ -75,6 +75,49 @@ export interface LeaderEntry {
   me?: boolean;
 }
 
+export interface DailyPuzzle {
+  tier: number;
+  inputs: string[];
+  outputs: string[];
+  gates: GateType[];
+  goal: number;
+  target: Record<string, string>;
+  hint: { gates: Record<string, number>; first: string[] };
+}
+
+export interface DailyInfo {
+  day: number;
+  number: number;
+  date: string;
+  /** Keyingi masala vaqti (Unix soniya). */
+  nextAt: number;
+  puzzle: DailyPuzzle;
+  solvers: number;
+  bestGates: number;
+  me: { rank: number; gates: number; stars: number } | null;
+  streak: number;
+}
+
+export interface DailySolveResult {
+  ok: true;
+  day: number;
+  gates: number;
+  stars: number;
+  improved: boolean;
+  best: { rank: number; gates: number; stars: number };
+  solvers: number;
+  bestGates: number;
+  streak: number;
+}
+
+export interface DailyEntry {
+  rank: number;
+  nickname: string;
+  gates: number;
+  stars: number;
+  me?: boolean;
+}
+
 export const api = {
   createPlayer: (nickname: string) => request<PlayerInfo>('POST', '/players', { nickname }),
   me: (code?: string) => request<PlayerInfo>('GET', '/me', undefined, code),
@@ -84,4 +127,8 @@ export const api = {
     request<SolveResult>('POST', `/levels/${encodeURIComponent(levelId)}/solve`, { circuit }),
   levelStats: (levelId: string) => request<LevelStats>('GET', `/levels/${encodeURIComponent(levelId)}/stats`),
   leaderboard: () => request<{ top: LeaderEntry[]; me: LeaderEntry | null }>('GET', '/leaderboard'),
+  daily: () => request<DailyInfo>('GET', '/daily'),
+  solveDaily: (day: number, circuit: Circuit) => request<DailySolveResult>('POST', `/daily/${day}/solve`, { circuit }),
+  dailyLeaderboard: (day: number | 'today') =>
+    request<{ day: number; number: number; top: DailyEntry[]; me: DailyEntry | null }>('GET', `/daily/${day}/leaderboard`),
 };

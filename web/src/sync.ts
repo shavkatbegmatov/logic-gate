@@ -1,5 +1,6 @@
 // Lokal progress va server o'rtasidagi sinxronlash. O'yin serversiz ham to'liq ishlaydi.
 import { api, ApiError, type SolveResult } from './api';
+import { syncDaily } from './daily';
 import { t } from './i18n';
 import { levelById } from './levels';
 import { markSynced, profile, progress } from './state';
@@ -37,7 +38,9 @@ let syncing: Promise<void> | null = null;
 /** Serverdagi yaxshiroq natijalarni oladi va yuborilmagan lokal natijalarni jo'natadi. */
 export function syncProgress(): Promise<void> {
   if (!profile.value) return Promise.resolve();
-  syncing ??= doSync().finally(() => (syncing = null));
+  syncing ??= doSync()
+    .then(syncDaily)
+    .finally(() => (syncing = null));
   return syncing;
 }
 

@@ -36,6 +36,18 @@ var migrations = []string{
 		PRIMARY KEY (player_id, level_id)
 	) WITHOUT ROWID;
 	CREATE INDEX solutions_level ON solutions(level_id, gate_count, solved_at);`,
+	// Kunlik boshqotirma: day — Toshkent vaqti bo'yicha 1970-01-01 dan beri kunlar.
+	`CREATE TABLE daily_solutions (
+		day        INTEGER NOT NULL,
+		player_id  TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+		gate_count INTEGER NOT NULL,
+		stars      INTEGER NOT NULL,
+		circuit    TEXT NOT NULL,
+		solved_at  INTEGER NOT NULL,
+		PRIMARY KEY (day, player_id)
+	) WITHOUT ROWID;
+	CREATE INDEX daily_rank ON daily_solutions(day, gate_count, solved_at);
+	CREATE INDEX daily_player ON daily_solutions(player_id, day);`,
 }
 
 type Store struct {
@@ -328,4 +340,115 @@ func (s *Store) Backup(ctx context.Context, dest string) error {
 	}
 	_, err := s.db.ExecContext(ctx, `VACUUM INTO ?`, dest)
 	return err
+}
+
+// ── Kunlik boshqotirma ─────────────────────────────────────────
+
+type DailyEntry struct {
+	Rank     int
+	PlayerID string
+	Nickname string
+	Gates    int
+	Stars    int
+	SolvedAt time.Time
+}
+
+// SaveDaily kunlik yechimni saqlaydi, agar u avvalgisidan kamroq elementli bo'lsa.
+// Teng natijalarda vaqt saqlanib qoladi: reytingda birinchi topgan yuqorida turadi.
+func (s *Store) SaveDaily(ctx context.Context, playerID string, day int, sol Solution) (best DailyEntry, improved bool, err error) {
+	res, err := s.db.ExecContext(ctx,
+		`INSERT INTO daily_solutions (day, player_id, gate_count, stars, circuit, solved_at)
+		 VALUES (?, ?, ?, ?, ?, ?)
+		 ON CONFLICT (day, player_id) DO UPDATE SET
+		   gate_count = excluded.gate_count, stars = excluded.stars,
+		   circuit = excluded.circuit, solved_at = excluded.solved_at
+		 WHERE excluded.gate_count < daily_solutions.gate_count`,
+		day, playerID, sol.Gates, sol.Stars, sol.Circuit, time.Now().Unix())
+	if err != nil {
+		return best, false, err
+	}
+	n, _ := res.RowsAffected()
+	e, err := s.DailyRank(ctx, day, playerID)
+	if err != nil {
+		return best, false, err
+	}
+	return *e, n > 0, nil
+}
+
+// DailyStats — kun masalasini nechta o'yinchi yechgan va eng kam element soni (0 — hali hech kim).
+func (s *Store) DailyStats(ctx context.Context, day int) (solvers, bestGates int, err error) {
+	var best sql.NullInt64
+	err = s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*), MIN(gate_count) FROM daily_solutions WHERE day = ?`, day).Scan(&solvers, &best)
+	return solvers, int(best.Int64), err
+}
+
+const dailyRanked = `WITH r AS (
+	SELECT player_id, gate_count, stars, solved_at,
+	       ROW_NUMBER() OVER (ORDER BY gate_count, solved_at, player_id) AS rank
+	FROM daily_solutions WHERE day = ?
+)`
+
+func (s *Store) DailyLeaderboard(ctx context.Context, day, limit int) ([]DailyEntry, error) {
+	rows, err := s.db.QueryContext(ctx, dailyRanked+`
+		SELECT r.rank, r.player_id, p.nickname, r.gate_count, r.stars, r.solved_at
+		FROM r JOIN players p ON p.id = r.player_id ORDER BY r.rank LIMIT ?`, day, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []DailyEntry
+	for rows.Next() {
+		var e DailyEntry
+		var at int64
+		if err := rows.Scan(&e.Rank, &e.PlayerID, &e.Nickname, &e.Gates, &e.Stars, &at); err != nil {
+			return nil, err
+		}
+		e.SolvedAt = time.Unix(at, 0)
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
+// DailyRank — o'yinchining shu kungi natijasi va o'rni; yechmagan bo'lsa ErrNotFound.
+func (s *Store) DailyRank(ctx context.Context, day int, playerID string) (*DailyEntry, error) {
+	var e DailyEntry
+	var at int64
+	err := s.db.QueryRowContext(ctx, dailyRanked+`
+		SELECT r.rank, r.player_id, p.nickname, r.gate_count, r.stars, r.solved_at
+		FROM r JOIN players p ON p.id = r.player_id WHERE r.player_id = ?`, day, playerID).
+		Scan(&e.Rank, &e.PlayerID, &e.Nickname, &e.Gates, &e.Stars, &at)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	e.SolvedAt = time.Unix(at, 0)
+	return &e, err
+}
+
+// DailyStreak — today yoki kechagi kundan orqaga uzluksiz yechilgan kunlar soni.
+// Bugun hali yechilmagan bo'lsa ham kechagacha bo'lgan seriya saqlanadi.
+func (s *Store) DailyStreak(ctx context.Context, playerID string, today int) (int, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT day FROM daily_solutions WHERE player_id = ? AND day <= ? ORDER BY day DESC LIMIT 1000`,
+		playerID, today)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	streak, want := 0, today
+	for rows.Next() {
+		var day int
+		if err := rows.Scan(&day); err != nil {
+			return 0, err
+		}
+		if streak == 0 && day == today-1 {
+			want = today - 1
+		}
+		if day != want {
+			break
+		}
+		streak++
+		want--
+	}
+	return streak, rows.Err()
 }

@@ -1,5 +1,7 @@
 import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
+import { Icon } from '../components/ui';
+import { dailyHistory, streak, today } from '../daily';
 import { t } from '../i18n';
 import { levels, MAX_STARS } from '../levels';
 import { go } from '../router';
@@ -17,6 +19,7 @@ export function Home() {
           <span>{t.home.stars(totalStars.value, MAX_STARS)}</span>
           <span>{t.home.solved(solvedCount.value, levels.length)}</span>
         </div>
+        <DailyCard />
         <nav class="menu">
           <button class="btn primary big" onClick={() => go(`level/${continueLevel().id}`)} autoFocus>
             {started ? t.home.continue : t.home.play}
@@ -44,6 +47,24 @@ export function Home() {
         )}
       </div>
     </div>
+  );
+}
+
+function DailyCard() {
+  const done = dailyHistory.value[today()];
+  const days = streak.value;
+  return (
+    <button class={`daily-card${done ? ' done' : ''}`} onClick={() => go('daily')}>
+      <Icon name="calendar" />
+      <span class="daily-text">
+        <strong>{t.daily.home}</strong>
+        <span class="muted">
+          {done ? t.daily.homeDone('★'.repeat(done.stars) + '☆'.repeat(3 - done.stars), done.gates) : t.daily.homeNew}
+        </span>
+        {days > 0 && <span class="streak">{t.daily.streak(days)}</span>}
+      </span>
+      {!done && <span class="dot" aria-hidden="true" />}
+    </button>
   );
 }
 

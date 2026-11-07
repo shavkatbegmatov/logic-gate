@@ -93,6 +93,37 @@ Sen ham yechib ko'r!`,
     inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 30 daraja, bepul!",
   },
 
+  daily: {
+    title: 'Kunlik boshqotirma',
+    home: 'Kunlik boshqotirma',
+    homeNew: 'Bugungi masala kutmoqda',
+    homeDone: (stars: string, gates: number) => `Bugun yechildi: ${stars} · ${gates} element`,
+    streak: (n: number) => `🔥 ${n} kun ketma-ket`,
+    sub: (num: number, date: string, tier: string) => `#${num} · ${date} · ${tier}`,
+    tiers: ['', 'Oson', 'Yengil', "O'rtacha", 'Qiyin', 'Juda qiyin'],
+    task: (outputs: string[]) =>
+      outputs.length === 1
+        ? `Jadvaldagi ${outputs[0]} ustunini eng kam element bilan hosil qiling.`
+        : `Jadvaldagi ${outputs.join(' va ')} ustunlarini eng kam element bilan hosil qiling.`,
+    hint: (parts: string, type: GateType, srcs: string[]) =>
+      `Eng kam yechimda: ${parts}. Boshlanishi: ${srcs.length === 1 || srcs[0] === srcs[1] ? `${srcs[0]} → ${type}` : `${srcs[0]} va ${srcs[1]} → ${type}`}.`,
+    date: (day: number, month: number) =>
+      `${day}-${['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'][month]}`,
+    solved: 'Bugungi masala yechildi!',
+    rank: (rank: number, solvers: number) => `Bugungi reytingda: ${rank}-o'rin (${solvers} kishidan)`,
+    best: (gates: number) => `Bugungi eng kam yechim: ${gates} element`,
+    first: "Bugungi reytingda 1-o'rindasiz!",
+    next: (time: string) => `Keyingi masala ${time}dan keyin`,
+    hours: (h: number, m: number) => (h ? `${h} soat ${m} daqiqa` : `${m} daqiqa`),
+    toBoard: 'Bugungi reyting',
+    offline: "Bugungi masalani yuklab bo'lmadi. Kunlik boshqotirma uchun internet kerak.",
+    joinHint: "Bugungi reytingda qatnashish uchun taxallus kiriting:",
+    share: (num: number, date: string, stars: string, gates: number, goal: number, streak: number) =>
+      `Logic Gate · Kunlik boshqotirma #${num} (${date})
+${stars} — ${gates} ta element (minimum: ${goal})${streak > 1 ? `\n🔥 ${streak} kun ketma-ket` : ''}
+Sen ham yechib ko'r!`,
+  },
+
   sandbox: {
     title: 'Qum quti',
     text: "Istalgan sxemani erkin yig'ing va uning haqiqat jadvalini kuzating.",
@@ -102,6 +133,10 @@ Sen ham yechib ko'r!`,
 
   leaderboard: {
     title: 'Reyting',
+    overall: 'Umumiy',
+    today: 'Bugun',
+    gates: 'Element',
+    dailyEmpty: "Bugungi masalani hali hech kim yechmagan. Birinchi bo'ling!",
     rank: '#',
     player: "O'yinchi",
     stars: '★',

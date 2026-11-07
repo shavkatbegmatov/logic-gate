@@ -27,6 +27,8 @@ const (
 type Server struct {
 	store  *store.Store
 	pack   *levels.Pack
+	daily  *levels.Daily
+	now    func() time.Time
 	log    *slog.Logger
 	opts   Options
 	api    *limiter // umumiy so'rovlar
@@ -45,12 +47,20 @@ type Options struct {
 	TrustPrivateProxies bool
 	// Version /api/version da qaytariladi: CI deploy'dan keyin yangi versiya ishga tushganini tekshiradi.
 	Version string
+	// Now — joriy vaqt (testlarda kunni almashtirish uchun); nil bo'lsa time.Now.
+	Now func() time.Time
 }
 
-func New(st *store.Store, pack *levels.Pack, log *slog.Logger, opts Options) *Server {
+func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logger, opts Options) *Server {
+	now := opts.Now
+	if now == nil {
+		now = time.Now
+	}
 	return &Server{
 		store:  st,
 		pack:   pack,
+		daily:  daily,
+		now:    now,
 		log:    log,
 		opts:   opts,
 		api:    newLimiter(10, 40),
@@ -72,6 +82,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/levels/{id}/solve", s.authed(s.solve))
 	mux.HandleFunc("GET /api/levels/{id}/stats", s.levelStats)
 	mux.HandleFunc("GET /api/leaderboard", s.leaderboard)
+	mux.HandleFunc("GET /api/daily", s.getDaily)
+	mux.HandleFunc("POST /api/daily/{day}/solve", s.authed(s.solveDaily))
+	mux.HandleFunc("GET /api/daily/{day}/leaderboard", s.dailyLeaderboard)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, "not_found")
 	})
@@ -140,6 +153,23 @@ func (s *Server) authed(h http.HandlerFunc) http.HandlerFunc {
 }
 
 func playerFrom(r *http.Request) *store.Player { return r.Context().Value(ctxKey{}).(*store.Player) }
+
+// optionalPlayer — token ixtiyoriy bo'lgan so'rovlar uchun: noto'g'ri yoki yo'q bo'lsa nil.
+func (s *Server) optionalPlayer(r *http.Request) *store.Player {
+	token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if !ok {
+		return nil
+	}
+	code := normalizeCode(token)
+	if code == "" {
+		return nil
+	}
+	p, err := s.store.PlayerByToken(r.Context(), hashCode(code))
+	if err != nil {
+		return nil
+	}
+	return p
+}
 
 func decode(w http.ResponseWriter, r *http.Request, v any) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBody)
@@ -364,12 +394,8 @@ func (s *Server) leaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 	// Token ixtiyoriy: bo'lsa, o'yinchining o'rni ham qaytariladi.
 	var meID string
-	if token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
-		if code := normalizeCode(token); code != "" {
-			if p, err := s.store.PlayerByToken(r.Context(), hashCode(code)); err == nil {
-				meID = p.ID
-			}
-		}
+	if p := s.optionalPlayer(r); p != nil {
+		meID = p.ID
 	}
 	out := make([]entryJSON, 0, len(top))
 	for _, e := range top {

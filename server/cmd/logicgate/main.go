@@ -162,6 +162,10 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	if err != nil {
 		return err
 	}
+	daily, err := levels.LoadDaily()
+	if err != nil {
+		return err
+	}
 	st, err := store.Open(dbPath)
 	if err != nil {
 		return err
@@ -169,7 +173,7 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	defer st.Close()
 
 	opts := api.Options{TrustPrivateProxies: os.Getenv("LG_TRUST_PROXY") == "private", Version: version}
-	var handler http.Handler = api.New(st, pack, log, opts).Handler()
+	var handler http.Handler = api.New(st, pack, daily, log, opts).Handler()
 	if staticDir != "" {
 		handler = withStatic(handler, staticDir)
 	}

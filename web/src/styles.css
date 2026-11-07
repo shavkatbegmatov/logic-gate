@@ -1500,3 +1500,108 @@ input[type='text']:focus {
     transition: none !important;
   }
 }
+
+/* ── Kunlik boshqotirma ────────────────────────────────── */
+.daily-card {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--copper);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(232, 180, 90, 0.12), rgba(232, 180, 90, 0.03));
+  text-align: left;
+  cursor: pointer;
+}
+
+.daily-card:hover {
+  background: linear-gradient(135deg, rgba(232, 180, 90, 0.2), rgba(232, 180, 90, 0.05));
+}
+
+.daily-card.done {
+  border-color: var(--line);
+  background: var(--bg2);
+}
+
+.daily-card > .icon {
+  flex-shrink: 0;
+  color: var(--copper);
+}
+
+.daily-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.daily-text strong {
+  color: var(--copper);
+}
+
+.daily-text .muted {
+  font-size: 13px;
+}
+
+.daily-card .dot {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--copper);
+  box-shadow: 0 0 10px var(--copper);
+  animation: blink 1.6s ease-in-out infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.streak {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.modal .streak {
+  font-size: 15px;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg2);
+}
+
+.tabs button {
+  padding: 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tabs button.on {
+  background: var(--panel);
+  color: var(--on);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.board-table .stars-cell {
+  color: var(--gold);
+  letter-spacing: 1px;
+}

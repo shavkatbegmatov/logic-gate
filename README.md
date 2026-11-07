@@ -41,6 +41,7 @@ Nginx sarfi o'lchanmagan: odatda 1 ta worker bilan 5–10 MB. systemd unit'da `M
 
 ```
 levels/          darajalar: source.mjs (manba) → build.mjs → levels.json (+ solutions.json testlar uchun)
+                 kunlik boshqotirma: daily.mjs → daily.json (+ daily-solutions.json testlar uchun)
 server/          Go backend
   cmd/logicgate/   main.go: server, `backup`, `version` buyruqlari
   internal/sim/    sxemani tekshirish (web/src/sim/sim.ts bilan bir xil qoidalar)
@@ -294,6 +295,17 @@ chown logicgate:logicgate /var/lib/logicgate/logicgate.db
 systemctl start logicgate
 ```
 
+## Kunlik boshqotirma
+
+Har kuni (Toshkent vaqti bilan yarim tunda) yangi masala: 3 kirish, 1–2 chiqish, ba'zan faqat NAND/NOR yoki NOT/AND/OR. Masalalar `node levels/daily.mjs` bilan oldindan yaratiladi (`levels/daily.json`, 728 kun ≈ 2 yil, keyin boshidan takrorlanadi) va faqat serverda turadi — brauzer kodida kelajakdagi masalalar yo'q.
+
+- **Maqsad — isbotlangan minimum.** Generator berilgan elementlar bilan barcha sxemalarni to'liq sanab chiqadi (simmetriyalar qisqartiriladi, ~7 s), shuning uchun "maqsad"dan kam element bilan yechib bo'lmaydi.
+- **Qiyinlik hafta kuniga bog'liq:** dushanba — oson, shanba — eng qiyin.
+- **Reyting** — kamroq element, teng bo'lsa kim oldin topgan. Kechagi masala ham qabul qilinadi (yarim tundan oldin oflayn yechilgan natija keyin yetib kelishi uchun).
+- **Seriya** — ketma-ket yechilgan kunlar; bugun hali yechilmagan bo'lsa ham kechagacha saqlanadi.
+
+Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavjud kunlar o'zgarmaydi). Tanlash qoidalarini o'zgartirmang — o'tgan kunlarning masalalari ham o'zgarib ketadi.
+
 ## API
 
 | Metod | Yo'l | Vazifa |
@@ -305,6 +317,9 @@ systemctl start logicgate
 | POST | `/api/levels/{id}/solve` | `{circuit}` — server sxemani tekshiradi va saqlaydi |
 | GET | `/api/levels/{id}/stats` | yechganlar soni va eng kam element |
 | GET | `/api/leaderboard` | top-50 (token bo'lsa, o'yinchining o'rni ham) |
+| GET | `/api/daily` | bugungi masala, statistika; token bo'lsa — o'yinchi natijasi va seriyasi |
+| POST | `/api/daily/{day}/solve` | `{circuit}` — kunlik yechim (faqat bugungi va kechagi kun) |
+| GET | `/api/daily/{day}/leaderboard` | kun reytingi, top-50 (`{day}` = `today` ham bo'ladi) |
 | GET | `/healthz` | holat tekshiruvi |
 
 Cheklovlar: Go'da IP bo'yicha 10 so'rov/s (40 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (5 tagacha), noto'g'ri tiklash kodi — 5 soniyada 1 ta; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim.

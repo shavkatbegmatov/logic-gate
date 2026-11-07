@@ -8,8 +8,8 @@ import { Icon } from './ui';
  * Telegram orqali ulashish + matnni nusxalash. Telefonning o'z ulashish menyusi (navigator.share)
  * faqat HTTPS'da bor — u bo'lsa, Telegram havolasi o'rniga o'sha ishlatiladi.
  */
-export function ShareButtons({ text, label }: { text: string; label?: string }) {
-  const url = `${location.origin}/`;
+export function ShareButtons({ text, label, path = '' }: { text: string; label?: string; path?: string }) {
+  const url = `${location.origin}/${path}`;
   const native = window.isSecureContext && typeof navigator.share === 'function';
 
   const copy = async () => {

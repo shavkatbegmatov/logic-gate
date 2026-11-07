@@ -9,7 +9,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"logicgate/levels"
 	"logicgate/server/internal/sim"
@@ -17,10 +19,15 @@ import (
 )
 
 type testEnv struct {
-	t   *testing.T
-	srv *httptest.Server
-	api *Server
+	t     *testing.T
+	srv   *httptest.Server
+	api   *Server
+	daily *levels.Daily
+	clock atomic.Int64 // Unix vaqt; 0 — haqiqiy soat
 }
+
+// setNow server soatini o'rnatadi (kunlik boshqotirma testlari uchun).
+func (e *testEnv) setNow(t time.Time) { e.clock.Store(t.Unix()) }
 
 func newEnv(t *testing.T) *testEnv {
 	t.Helper()
@@ -33,10 +40,21 @@ func newEnv(t *testing.T) *testEnv {
 	if err != nil {
 		t.Fatal(err)
 	}
-	a := New(st, pack, slog.New(slog.NewTextHandler(io.Discard, nil)), Options{Version: "test-sha"})
-	srv := httptest.NewServer(a.Handler())
-	t.Cleanup(srv.Close)
-	return &testEnv{t: t, srv: srv, api: a}
+	daily, err := levels.LoadDaily()
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := &testEnv{t: t, daily: daily}
+	now := func() time.Time {
+		if u := env.clock.Load(); u != 0 {
+			return time.Unix(u, 0)
+		}
+		return time.Now()
+	}
+	env.api = New(st, pack, daily, slog.New(slog.NewTextHandler(io.Discard, nil)), Options{Version: "test-sha", Now: now})
+	env.srv = httptest.NewServer(env.api.Handler())
+	t.Cleanup(env.srv.Close)
+	return env
 }
 
 func (e *testEnv) do(method, path, code string, body any) (int, map[string]any) {

@@ -103,6 +103,19 @@ export function setDraft(levelId: string, circuit: Circuit) {
   saveLater(KEYS.drafts, drafts);
 }
 
+/** Eski kunlik masalalar qoralamalarini o'chiradi (faqat bugungi va kechagisi qoladi). */
+export function pruneDailyDrafts(today: number) {
+  let changed = false;
+  for (const k of Object.keys(drafts)) {
+    const m = /^daily-(\d+)$/.exec(k);
+    if (m && Number(m[1]) < today - 1) {
+      delete drafts[k];
+      changed = true;
+    }
+  }
+  if (changed) saveLater(KEYS.drafts, drafts);
+}
+
 export function markIntroSeen(types: string[]) {
   seenIntro.value = [...new Set([...seenIntro.value, ...types])];
 }

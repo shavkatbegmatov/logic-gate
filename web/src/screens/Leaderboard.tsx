@@ -1,25 +1,34 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
-import { api, type LeaderEntry } from '../api';
+import { api, type DailyEntry, type LeaderEntry } from '../api';
 import { JoinForm } from '../components/JoinForm';
 import { TopBar } from '../components/ui';
+import { syncDaily } from '../daily';
 import { t } from '../i18n';
 import { go } from '../router';
 import { profile } from '../state';
 import { syncProgress } from '../sync';
 
-type Data = { top: LeaderEntry[]; me: LeaderEntry | null };
+type Tab = 'overall' | 'daily';
+type Overall = { top: LeaderEntry[]; me: LeaderEntry | null };
+type Daily = { top: DailyEntry[]; me: DailyEntry | null };
 
-export function Leaderboard() {
-  const data = useSignal<Data | null>(null);
+export function Leaderboard({ tab }: { tab: Tab }) {
+  const overall = useSignal<Overall | null>(null);
+  const daily = useSignal<Daily | null>(null);
   const failed = useSignal(false);
 
   const fetchData = async () => {
     failed.value = false;
     try {
       // Avval yuborilmagan natijalar jo'natiladi, keyin reyting olinadi.
-      await syncProgress().catch(() => {});
-      data.value = await api.leaderboard();
+      if (tab === 'overall') {
+        await syncProgress().catch(() => {});
+        overall.value = await api.leaderboard();
+      } else {
+        await syncDaily().catch(() => {});
+        daily.value = await api.dailyLeaderboard('today');
+      }
     } catch {
       failed.value = true;
     }
@@ -27,14 +36,22 @@ export function Leaderboard() {
 
   useEffect(() => {
     fetchData();
-  }, [profile.value?.id]);
+  }, [profile.value?.id, tab]);
 
-  const d = data.value;
+  const data = tab === 'overall' ? overall.value : daily.value;
   return (
     <div class="screen leaderboard">
       <TopBar title={t.leaderboard.title} onBack={() => go('')} />
       <div class="scroll">
         <div class="narrow">
+          <div class="tabs" role="tablist">
+            <button role="tab" aria-selected={tab === 'overall'} class={tab === 'overall' ? 'on' : ''} onClick={() => go('leaderboard')}>
+              {t.leaderboard.overall}
+            </button>
+            <button role="tab" aria-selected={tab === 'daily'} class={tab === 'daily' ? 'on' : ''} onClick={() => go('leaderboard/daily')}>
+              {t.leaderboard.today}
+            </button>
+          </div>
           {!profile.value && (
             <div class="card">
               <p class="muted">{t.leaderboard.notJoined}</p>
@@ -48,40 +65,88 @@ export function Leaderboard() {
                 {t.retry}
               </button>
             </div>
-          ) : !d ? (
+          ) : !data ? (
             <p class="muted center">{t.loading}</p>
-          ) : !d.top.length ? (
-            <p class="muted center">{t.leaderboard.empty}</p>
+          ) : !data.top.length ? (
+            <div class="center">
+              <p class="muted">{tab === 'overall' ? t.leaderboard.empty : t.leaderboard.dailyEmpty}</p>
+              {tab === 'daily' && (
+                <button class="btn primary" onClick={() => go('daily')}>
+                  {t.daily.home}
+                </button>
+              )}
+            </div>
           ) : (
             <>
-              {d.me && !d.top.some((e) => e.me) && <p class="good center">{t.leaderboard.yourRank(d.me.rank)}</p>}
-              <table class="board-table">
-                <thead>
-                  <tr>
-                    <th>{t.leaderboard.rank}</th>
-                    <th class="left">{t.leaderboard.player}</th>
-                    <th>{t.leaderboard.stars}</th>
-                    <th>{t.leaderboard.solved}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.top.map((e) => (
-                    <tr key={e.rank} class={`${e.me ? 'me' : ''}${e.rank <= 3 ? ` top${e.rank}` : ''}`}>
-                      <td>{e.rank}</td>
-                      <td class="left">
-                        {e.nickname}
-                        {e.me && <span class="badge">{t.leaderboard.you}</span>}
-                      </td>
-                      <td>{e.stars}</td>
-                      <td>{e.solved}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {data.me && !data.top.some((e) => e.me) && <p class="good center">{t.leaderboard.yourRank(data.me.rank)}</p>}
+              {tab === 'overall' ? <OverallTable rows={overall.value!.top} /> : <DailyTable rows={daily.value!.top} />}
             </>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function rowClass(e: { me?: boolean; rank: number }) {
+  return `${e.me ? 'me' : ''}${e.rank <= 3 ? ` top${e.rank}` : ''}`;
+}
+
+function Name({ e }: { e: { nickname: string; me?: boolean } }) {
+  return (
+    <td class="left">
+      {e.nickname}
+      {e.me && <span class="badge">{t.leaderboard.you}</span>}
+    </td>
+  );
+}
+
+function OverallTable({ rows }: { rows: LeaderEntry[] }) {
+  return (
+    <table class="board-table">
+      <thead>
+        <tr>
+          <th>{t.leaderboard.rank}</th>
+          <th class="left">{t.leaderboard.player}</th>
+          <th>{t.leaderboard.stars}</th>
+          <th>{t.leaderboard.solved}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((e) => (
+          <tr key={e.rank} class={rowClass(e)}>
+            <td>{e.rank}</td>
+            <Name e={e} />
+            <td>{e.stars}</td>
+            <td>{e.solved}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function DailyTable({ rows }: { rows: DailyEntry[] }) {
+  return (
+    <table class="board-table">
+      <thead>
+        <tr>
+          <th>{t.leaderboard.rank}</th>
+          <th class="left">{t.leaderboard.player}</th>
+          <th>{t.leaderboard.gates}</th>
+          <th>{t.leaderboard.stars}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((e) => (
+          <tr key={e.rank} class={rowClass(e)}>
+            <td>{e.rank}</td>
+            <Name e={e} />
+            <td>{e.gates}</td>
+            <td class="stars-cell">{'★'.repeat(e.stars)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { Toast } from './components/Toast';
 import { route } from './router';
+import { DailyScreen } from './screens/DailyScreen';
 import { Home } from './screens/Home';
 import { Leaderboard } from './screens/Leaderboard';
 import { LevelScreen } from './screens/LevelScreen';
@@ -25,7 +26,8 @@ export function App() {
       {r.name === 'levels' && <LevelsScreen />}
       {r.name === 'level' && <LevelScreen id={r.id} />}
       {r.name === 'sandbox' && <Sandbox />}
-      {r.name === 'leaderboard' && <Leaderboard />}
+      {r.name === 'leaderboard' && <Leaderboard tab={r.tab} />}
+      {r.name === 'daily' && <DailyScreen />}
       {r.name === 'settings' && <Settings />}
       <Toast />
     </>

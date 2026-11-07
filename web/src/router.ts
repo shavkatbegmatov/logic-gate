@@ -6,7 +6,8 @@ export type Route =
   | { name: 'levels' }
   | { name: 'level'; id: string }
   | { name: 'sandbox' }
-  | { name: 'leaderboard' }
+  | { name: 'leaderboard'; tab: 'overall' | 'daily' }
+  | { name: 'daily' }
   | { name: 'settings' };
 
 function parse(hash: string): Route {
@@ -14,9 +15,11 @@ function parse(hash: string): Route {
   switch (name) {
     case 'levels':
     case 'sandbox':
-    case 'leaderboard':
+    case 'daily':
     case 'settings':
       return { name };
+    case 'leaderboard':
+      return { name, tab: arg === 'daily' ? 'daily' : 'overall' };
     case 'level':
       return arg ? { name: 'level', id: decodeURIComponent(arg) } : { name: 'levels' };
     default:
