@@ -112,6 +112,8 @@ export function merge(key: string, mine: unknown, theirs: unknown): unknown {
       return { solved: mergeBest(a.solved ?? {}, b.solved ?? {}), created: Math.max(a.created ?? 0, b.created ?? 0) };
     }
     case 'lg.achievements.v1':
+    case 'lg.settings.v1':
+      // Yangi manzildagi qiymat ustun; unda yo'q maydonlar (masalan, tanlangan til) eskisidan olinadi.
       return isObj(theirs) && isObj(mine) ? { ...theirs, ...mine } : mine;
     case 'lg.intro.v1':
       return Array.isArray(mine) && Array.isArray(theirs) ? [...new Set([...mine, ...theirs])] : mine;

@@ -68,6 +68,8 @@ describe("eski manzildan ko'chish", () => {
       created: 2,
     });
     expect(merge('lg.achievements.v1', { first: 2 }, { first: 1, creator: 1 })).toEqual({ first: 2, creator: 1 });
+    // Yangi manzil birinchi ochilishda sozlamalarni tilsiz saqlaydi — eski manzildagi til yo'qolmasin.
+    expect(merge('lg.settings.v1', { sound: true }, { sound: false, lang: 'ru' })).toEqual({ sound: true, lang: 'ru' });
   });
 
   it('buzilgan kod hech narsani buzmaydi', () => {
