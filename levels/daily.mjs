@@ -9,6 +9,7 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { circuitOfWitness, exampleFor, hintOfWitness, machineOfWitness, search } from './seqsearch.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -236,9 +237,105 @@ for (let i = 0; i < COUNT; i++) {
   solutions.push(toCircuit(pick.sol, outputs, fns));
 }
 
+// ── Xotira kuni (yakshanba) ───────────────────────────────────
+// Oddiy masalalar yuqorida o'zgarishsiz yaratiladi (urug' va tartib o'sha) — so'ng SEQ_FROM dan boshlab
+// yakshanbalar xotirali (D-triggerli) masalaga almashtiriladi. Undan oldingi kunlar o'zgarmaydi.
+// Masala — kichik tasodifiy sxemaning eng kichik avtomati; maqsad — to'liq qidiruv bilan isbotlangan
+// eng kam element soni (seqsearch.mjs, darajalar minimumi bilan bir xil usul).
+const SEQ_FROM = 8; // 2026-11-15 — birinchi xotira kuni
+const SEQ_SEED = 0x5e9d;
+const SEQ_GATES = ['NOT', 'AND', 'OR', 'XOR'];
+
+/** Har bir kirish biror holatda chiqishga yoki keyingi holatga ta'sir qiladimi (ortiqcha kirish bo'lmasin). */
+function allInputsMatter(mach, n) {
+  for (let k = 0; k < n; k++) {
+    const flip = 1 << (n - 1 - k);
+    const matters = mach.next.some((row, s) =>
+      row.some((_, r) => mach.next[s][r] !== mach.next[s][r ^ flip] || mach.out[s][r] !== mach.out[s][r ^ flip]),
+    );
+    if (!matters) return false;
+  }
+  return true;
+}
+
+// Nomzodlar: maqsadi 3 va 4 bo'lganlar alohida yig'iladi — ikkalasi ham yetarli bo'lsin.
+const SEQ_WANT = { 3: 60, 4: 50 };
+
+function seqCandidates() {
+  const rnd = mulberry32(SEQ_SEED);
+  const pick = (n) => Math.floor(rnd() * n);
+  const seen = new Set();
+  const out = [];
+  const have = { 3: 0, 4: 0 };
+  for (let attempt = 0; attempt < 60000 && (have[3] < SEQ_WANT[3] || have[4] < SEQ_WANT[4]); attempt++) {
+    const inputs = rnd() < 0.4 ? ['A'] : ['A', 'B'];
+    const n = inputs.length;
+    // Jami ≤ 4: minimum isboti uchun qidiruv ≤ 3 element bilan, ya'ni ≤ 5 o'zgaruvchi (32 bitli jadval).
+    const total = rnd() < 0.25 ? 3 : 4;
+    const k = 1 + pick(2);
+    const m = total - k;
+    const gates = [];
+    for (let i = 0; i < m; i++) gates.push([SEQ_GATES[pick(4)], pick(n + k + i), pick(n + k + i)]);
+    const S = n + k + m;
+    const w = { gates, outputs: [m && rnd() < 0.7 ? S - 1 : pick(S)], dffInputs: Array.from({ length: k }, () => pick(S)) };
+    const mach = machineOfWitness(inputs, ['Q'], k, w);
+    if (mach.next.length < 2 || mach.next.length > 4) continue;
+    const key = n + JSON.stringify(mach);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    // Kirishga bog'liq bo'lsin va namunada chiqish ham 0, ham 1 bo'lsin.
+    const dependsOnInput = [...mach.out, ...mach.next].some((row) => new Set(row).size > 1);
+    let st = 0;
+    const shown = new Set();
+    for (const r of exampleFor(mach)) {
+      shown.add(mach.out[st][r]);
+      st = mach.next[st][r];
+    }
+    if (!dependsOnInput || shown.size < 2 || !allInputsMatter(mach, n)) continue;
+    // Eng kam element soni: kichik jami sonlardan boshlab qidiriladi; topilmasa — generator sxemasining o'zi.
+    const minK = Math.ceil(Math.log2(mach.next.length));
+    let best = null;
+    for (let t = minK; t < total && !best; t++) {
+      for (let kk = minK; kk <= t && !best; kk++) {
+        const res = search({ id: 'kunlik', inputs, outputs: ['Q'], gates: SEQ_GATES }, mach, kk, t - kk);
+        if (res) best = { goal: t, k: kk, w: res };
+      }
+    }
+    const sol = best ?? { goal: total, k, w };
+    if (!(sol.goal in have) || have[sol.goal] >= SEQ_WANT[sol.goal]) continue;
+    have[sol.goal]++;
+    out.push({ inputs, machine: mach, ...sol });
+  }
+  return out;
+}
+
+const seqPool = seqCandidates();
+const seqRand = mulberry32(SEQ_SEED + 1);
+let seqLeft = [];
+let seqDays = 0;
+for (let i = SEQ_FROM; i < COUNT; i++) {
+  if ((startDay + i + 4) % 7 !== 0) continue;
+  if (!seqLeft.length) seqLeft = seqPool.slice();
+  const c = seqLeft.splice(Math.floor(seqRand() * seqLeft.length), 1)[0];
+  puzzles[i] = {
+    tier: c.goal <= 3 ? 2 : 3,
+    inputs: c.inputs,
+    outputs: ['Q'],
+    gates: ['DFF', ...SEQ_GATES],
+    goal: c.goal,
+    seq: c.machine,
+    hint: hintOfWitness(c.inputs, c.k, c.w),
+  };
+  solutions[i] = circuitOfWitness(c.inputs, ['Q'], c.k, c.w);
+  seqDays++;
+}
+
 writeFileSync(join(here, 'daily.json'), JSON.stringify({ version: 1, start: START, puzzles }) + '\n');
 writeFileSync(join(here, 'daily-solutions.json'), JSON.stringify(solutions) + '\n');
 const byTier = {};
 for (const p of puzzles) byTier[p.tier] = (byTier[p.tier] ?? 0) + 1;
 console.log(`${puzzles.length} ta kunlik masala yozildi (${Date.now() - t0} ms). Qiyinlik bo'yicha: ${JSON.stringify(byTier)}`);
 for (const [k, p] of pools) console.log(`  ${k}: ${p.all.length} nomzod`);
+const goals = {};
+for (const c of seqPool) goals[c.goal] = (goals[c.goal] ?? 0) + 1;
+console.log(`  xotira kunlari: ${seqDays}, nomzodlar: ${seqPool.length}, maqsad bo'yicha: ${JSON.stringify(goals)}`);

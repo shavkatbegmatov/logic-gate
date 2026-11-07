@@ -171,3 +171,27 @@ func TestDailyStreak(t *testing.T) {
 		t.Fatalf("ikki kundan keyin seriya %v", s)
 	}
 }
+
+// Xotira kuni (2026-11-15 — 9-kun): masala avtomat bilan beriladi va server uni avtomat bilan tekshiradi.
+func TestDailyMemoryDay(t *testing.T) {
+	e := newEnv(t)
+	sols := dailySolutions(t)
+	day := e.at(8)
+	code := e.player("Ali")
+
+	status, out := e.do("GET", "/api/daily", "", nil)
+	p, _ := out["puzzle"].(map[string]any)
+	if status != 200 || p["seq"] == nil || p["target"] != nil {
+		t.Fatalf("xotira kuni masalasi: %d %v", status, out)
+	}
+	// Noto'g'ri sxema (to'g'ridan-to'g'ri sim) — eng qisqa qarshi misol qaytadi.
+	wrongCircuit := sim.Circuit{Wires: []sim.Wire{{From: "in:A", To: "out:Q"}}}
+	status, out = e.do("POST", fmt.Sprintf("/api/daily/%d/solve", day), code, map[string]any{"circuit": wrongCircuit})
+	if trace, _ := out["trace"].([]any); status != 422 || out["error"] != "wrong_answer" || len(trace) == 0 {
+		t.Fatalf("noto'g'ri yechim: %d %v", status, out)
+	}
+	status, out = e.do("POST", fmt.Sprintf("/api/daily/%d/solve", day), code, map[string]any{"circuit": sols[8]})
+	if status != 200 || out["stars"].(float64) != 3 {
+		t.Fatalf("to'g'ri yechim: %d %v", status, out)
+	}
+}

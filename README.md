@@ -306,6 +306,7 @@ Har kuni (Toshkent vaqti bilan yarim tunda) yangi masala: 3 kirish, 1–2 chiqis
 
 - **Maqsad — isbotlangan minimum.** Generator berilgan elementlar bilan barcha sxemalarni to'liq sanab chiqadi (simmetriyalar qisqartiriladi, ~7 s), shuning uchun "maqsad"dan kam element bilan yechib bo'lmaydi.
 - **Qiyinlik hafta kuniga bog'liq:** dushanba — oson, shanba — eng qiyin.
+- **Yakshanba — xotira kuni** (2026-11-15 dan): masala D-trigger bilan, vaqt diagrammasi namunasi bilan (1–2 kirish, eng kichik avtomat 2–4 holat, maqsad 3–4 element). Masala — kichik tasodifiy sxemaning avtomati; maqsad `levels/seqsearch.mjs` qidiruvi bilan isbotlangan minimum (barcha kirishlar ishlatilishi shart). Oddiy kunlar masalalari asosiy generatsiyadan keyin, alohida urug' bilan almashtiriladi — boshqa kunlar o'zgarmaydi. Bot yakshanba eslatmasida buni aytadi.
 - **Reyting** — kamroq element, teng bo'lsa kim oldin topgan. Kechagi masala ham qabul qilinadi (yarim tundan oldin oflayn yechilgan natija keyin yetib kelishi uchun).
 - **Seriya** — ketma-ket yechilgan kunlar; bugun hali yechilmagan bo'lsa ham kechagacha saqlanadi.
 

@@ -169,12 +169,29 @@ func (c *Client) DeleteWebhook(ctx context.Context) error {
 	return c.call(ctx, "deleteWebhook", map[string]any{"drop_pending_updates": false}, nil)
 }
 
+// GetUpdates — yangilanishlar. Har biri alohida o'qiladi: tushunilmaganining faqat raqami qoladi
+// (u o'tkazib yuboriladi), aks holda bitta buzilgan yangilanish botni bir joyda aylantirib qo'yardi.
 func (c *Client) GetUpdates(ctx context.Context, offset int64, timeout int) ([]Update, error) {
-	var ups []Update
+	var raw []json.RawMessage
 	err := c.call(ctx, "getUpdates", map[string]any{
 		"offset": offset, "timeout": timeout, "allowed_updates": []string{"message", "callback_query"},
-	}, &ups)
-	return ups, err
+	}, &raw)
+	if err != nil {
+		return nil, err
+	}
+	ups := make([]Update, 0, len(raw))
+	for _, r := range raw {
+		var u Update
+		if err := json.Unmarshal(r, &u); err != nil {
+			var id struct {
+				UpdateID int64 `json:"update_id"`
+			}
+			json.Unmarshal(r, &id)
+			u = Update{UpdateID: id.UpdateID}
+		}
+		ups = append(ups, u)
+	}
+	return ups, nil
 }
 
 func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, kb *Keyboard) (Message, error) {

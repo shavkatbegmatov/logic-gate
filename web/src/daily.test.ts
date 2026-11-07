@@ -3,6 +3,9 @@ import type { DailyInfo } from './api';
 import { dailyShareText, dayLabel, dayOf, puzzleLevel, streakFrom } from './daily';
 import { hintSteps } from './hints';
 import { check } from './sim/sim';
+import dailyPack from '../../levels/daily.json';
+import dailySolutions from '../../levels/daily-solutions.json';
+import type { Circuit } from './sim/types';
 
 const info: DailyInfo = {
   day: dayOf(Date.parse('2026-11-08T12:00:00Z')),
@@ -73,3 +76,34 @@ describe('kunlik boshqotirma', () => {
     expect(dailyShareText(info, 2, 3, 5)).toContain('\n🔥 5 kun ketma-ket\n');
   });
 });
+
+describe('xotira kuni (yakshanba)', () => {
+  const puzzles = (dailyPack as unknown as { puzzles: DailyInfo['puzzle'][] }).puzzles;
+  const sols = dailySolutions as unknown as Circuit[];
+
+  it("yakshanba masalasi — avtomat, namuna, D-trigger; mos yozuvdagi yechim 3 ★", () => {
+    // 2026-11-15 — 9-kun, birinchi xotira kuni; 8-noyabr (bugungi yakshanba) o'zgarmagan.
+    expect(puzzles[1].seq).toBeUndefined();
+    const p = puzzles[8];
+    expect(p.seq).toBeDefined();
+    expect(p.gates).toContain('DFF');
+    const level = puzzleLevel({ ...info, day: info.day + 7, number: 9, puzzle: p });
+    expect(level.seq?.example).toHaveLength(10);
+    expect(level.task).toContain('xotira kuni');
+    expect(check(level, sols[8])).toEqual({ ok: true, gates: p.goal, stars: 3 });
+    const steps = hintSteps(level);
+    expect(steps).toHaveLength(3);
+  });
+
+  it("har bir xotira kuni yechimi 3 ★ (o'yin tekshiruvi bilan)", () => {
+    let n = 0;
+    puzzles.forEach((p, i) => {
+      if (!p.seq) return;
+      n++;
+      const level = puzzleLevel({ ...info, puzzle: p });
+      expect(check(level, sols[i]), `${i + 1}-masala`).toEqual({ ok: true, gates: p.goal, stars: 3 });
+    });
+    expect(n).toBeGreaterThan(100);
+  });
+});
+

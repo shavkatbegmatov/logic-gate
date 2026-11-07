@@ -27,8 +27,10 @@ type Puzzle struct {
 	Outputs []string          `json:"outputs"`
 	Gates   []string          `json:"gates"`
 	Goal    int               `json:"goal"`
-	Target  map[string]string `json:"target"`
-	Hint    DailyHint         `json:"hint"`
+	Target  map[string]string `json:"target,omitempty"`
+	// Seq — xotira kuni (yakshanba): jadval o'rniga kerakli avtomat (namunani o'yin o'zi quradi).
+	Seq  *Seq      `json:"seq,omitempty"`
+	Hint DailyHint `json:"hint"`
 }
 
 type Daily struct {
@@ -53,6 +55,12 @@ func LoadDaily() (*Daily, error) {
 	d.startDay = DayOf(start)
 	for i, p := range d.Puzzles {
 		rows := 1 << len(p.Inputs)
+		if p.Seq != nil {
+			if err := p.Seq.check(rows, len(p.Outputs)); err != nil {
+				return nil, fmt.Errorf("daily.json: %d-masala: %w", i+1, err)
+			}
+			continue
+		}
 		for _, o := range p.Outputs {
 			if len(p.Target[o]) != rows {
 				return nil, fmt.Errorf("daily.json: %d-masala %s jadvali %d emas", i+1, o, rows)

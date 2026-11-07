@@ -270,7 +270,7 @@ func TestNextReminder(t *testing.T) {
 		{8, false, time.Hour},       // hali vaqti kelmagan
 		{10, false, 0},              // kechikkan — hozir
 		{10, true, 23 * time.Hour},  // bugun yuborilgan — ertaga
-		{22, false, 11 * time.Hour}, // juda kech — ertaga
+		{22, false, 11 * time.Hour}, // 9:00 + 12 soatdan kech — ertaga
 	}
 	for _, c := range cases {
 		now := base.Add(time.Duration(c.hour) * time.Hour)
@@ -326,7 +326,7 @@ func TestVerifyInitData(t *testing.T) {
 	if _, _, err := VerifyInitData(tampered, testToken, now); err == nil {
 		t.Fatal("o'zgartirilgan ma'lumot qabul qilindi")
 	}
-	old := sign(testToken, vals(now.Add(-8*24*time.Hour)))
+	old := sign(testToken, vals(now.Add(-49*time.Hour)))
 	if _, _, err := VerifyInitData(old, testToken, now); err == nil {
 		t.Fatal("eskirgan ma'lumot qabul qilindi")
 	}
@@ -390,5 +390,28 @@ func TestCallbackFromRawJSON(t *testing.T) {
 	edits = fake.take("editMessageReplyMarkup")
 	if len(edits) != 2 || num(edits[1].Params["message_id"]) != 78 || keyboard(t, edits[1])[1][0]["callback_data"] != "remind:on" {
 		t.Fatalf("tugmalarsiz xabar: %+v", edits)
+	}
+}
+
+// Eslatma soati kech bo'lsa ham (masalan, 21:00) yuboriladi; tasdiq xabari tez-tez yuborilmaydi.
+func TestLateReminderHourAndConfirmThrottle(t *testing.T) {
+	b, fake, st := setup(t)
+	ctx := context.Background()
+	b.cfg.RemindHour = 21
+	now := time.Date(2026, 11, 8, 21, 30, 0, 0, levels.Tashkent)
+	b.now = func() time.Time { return now }
+	st.SetMeta(ctx, metaRemindDay, "")
+	if got := b.nextReminder(ctx); got != 0 {
+		t.Fatalf("21:30 da kutish: %v", got)
+	}
+	b.RemindChanged(ctx, 7, "uz", true)
+	b.RemindChanged(ctx, 7, "uz", false)
+	if n := len(fake.take("sendMessage")); n != 1 {
+		t.Fatalf("30 s ichida %d ta tasdiq", n)
+	}
+	now = now.Add(31 * time.Second)
+	b.RemindChanged(ctx, 7, "uz", true)
+	if n := len(fake.take("sendMessage")); n != 2 {
+		t.Fatalf("30 s dan keyin: %d", n)
 	}
 }

@@ -150,6 +150,10 @@ Sen ham yechib ko'r!`,
       outputs.length === 1
         ? `Jadvaldagi ${outputs[0]} ustunini eng kam element bilan hosil qiling.`
         : `Jadvaldagi ${outputs.join(' va ')} ustunlarini eng kam element bilan hosil qiling.`,
+    taskSeq: (outputs: string[]) =>
+      `Bugun — xotira kuni: ${outputs.join(' va ')} vaqt diagrammasidagi namunadek bo'lsin. Eng kam element bilan yig'ing.`,
+    strategySeq:
+      "Diagrammaga qarang: chiqish faqat hozirgi kirishgami yoki oldingi taktlarga ham bog'liqmi? Nimani eslab qolish kerakligini toping — o'shani D-trigger saqlaydi.",
     strategy: (outputs: number): string =>
       outputs === 1
         ? "Jadvalda Q = 1 bo'lgan qatorlarga qarang: ularda kirishlar nimasi bilan o'xshash?"
@@ -483,6 +487,10 @@ export const ru: typeof uz = {
       outputs.length === 1
         ? `Получите столбец ${outputs[0]} из таблицы наименьшим числом элементов.`
         : `Получите столбцы ${outputs.join(' и ')} из таблицы наименьшим числом элементов.`,
+    taskSeq: (outputs: string[]) =>
+      `Сегодня день памяти: ${outputs.join(' и ')} — как в примере на временной диаграмме. Соберите наименьшим числом элементов.`,
+    strategySeq:
+      'Посмотрите на диаграмму: зависит ли выход только от текущего входа или и от прошлых тактов? Найдите, что нужно запомнить, — это хранит D-триггер.',
     strategy: (outputs: number) =>
       outputs === 1
         ? 'Посмотрите на строки, где Q = 1: чем похожи в них входы?'

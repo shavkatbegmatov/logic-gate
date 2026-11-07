@@ -4,6 +4,7 @@ import type { DailyInfo, DailySolveResult } from '../api';
 import { sfx } from '../audio';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
+import { GateIntro } from '../components/GateIntro';
 import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { ShareButtons } from '../components/ShareButtons';
@@ -21,7 +22,7 @@ import {
 import { t } from '../i18n';
 import { go } from '../router';
 import { emptyCircuit, type Level } from '../sim/types';
-import { getDraft, profile, pruneDailyDrafts, setDraft } from '../state';
+import { getDraft, markIntroSeen, profile, pruneDailyDrafts, seenIntro, setDraft } from '../state';
 import { Workbench, type Solved } from './Workbench';
 
 interface Result {
@@ -76,6 +77,8 @@ function DailyPlay({ info }: { info: DailyInfo }) {
   const level = useMemo(() => puzzleLevel(info), [info.day]);
   const editor = useMemo(() => new Editor(), []);
   const result = useSignal<Result | null>(null);
+  // Xotira kunida D-trigger hali tanish bo'lmasa — darajalardagidek tanishtiruv kartasi.
+  const intro = useSignal(level.gates.filter((g) => !seenIntro.value.includes(g)));
 
   useMemo(() => {
     pruneDailyDrafts(info.day);
@@ -102,6 +105,15 @@ function DailyPlay({ info }: { info: DailyInfo }) {
       onBack={() => go('')}
       onSolved={onSolved}
     >
+      {intro.value.length > 0 && (
+        <GateIntro
+          gates={intro.value}
+          onClose={() => {
+            markIntroSeen(intro.value);
+            intro.value = [];
+          }}
+        />
+      )}
       {result.value && (
         <DailySuccess
           info={info}

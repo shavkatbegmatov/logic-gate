@@ -15,8 +15,8 @@ import (
 
 var ErrInitData = errors.New("telegram initData yaroqsiz")
 
-// initDataTTL — Mini App ma'lumoti shu muddatgacha qabul qilinadi (ilova uzoq ochiq turishi mumkin).
-const initDataTTL = 7 * 24 * time.Hour
+// initDataTTL — Mini App ma'lumoti shu muddatgacha qabul qilinadi (ilova qayta ochilganda yangilanadi).
+const initDataTTL = 48 * time.Hour
 
 // VerifyInitData Mini App'ning Telegram.WebApp.initData satrini bot tokeni bilan tekshiradi:
 // secret = HMAC-SHA256("WebAppData", token), hash = HMAC-SHA256(secret, "k=v\n…" — hash'dan boshqa

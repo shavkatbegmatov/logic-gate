@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"logicgate/levels"
@@ -34,6 +35,9 @@ type Bot struct {
 	username string
 	// pause — xabarlar orasidagi tanaffus (Telegram cheklovi ~30 xabar/s); testlarda 0.
 	pause time.Duration
+
+	confirmMu sync.Mutex
+	confirmed map[int64]time.Time // o'yin ichidan eslatma tasdig'i oxirgi marta qachon yuborilgan
 }
 
 func New(cfg Config, st *store.Store, daily *levels.Daily, log *slog.Logger) *Bot {
@@ -46,8 +50,8 @@ func New(cfg Config, st *store.Store, daily *levels.Daily, log *slog.Logger) *Bo
 const (
 	metaOffset    = "tg_offset"
 	metaRemindDay = "tg_remind_day"
-	// Eslatma kechikib qolsa (server o'chiq bo'lgan), shu soatdan keyin o'sha kuni yuborilmaydi.
-	remindLateHour = 21
+	// Eslatma kechikib qolsa (server o'chiq bo'lgan), belgilangan soatdan shuncha vaqt o'tgach yuborilmaydi.
+	remindLate = 12 * time.Hour
 )
 
 // Run bot ishini boshlaydi va ctx bekor qilinguncha davom etadi: getMe, buyruqlar menyusi,
@@ -77,8 +81,13 @@ func (b *Bot) Run(ctx context.Context) {
 		}
 	}
 	b.log.Info("telegram bot ishga tushdi", "bot", b.username, "remindHour", b.cfg.RemindHour)
-	go b.remindLoop(ctx)
+	reminders := make(chan struct{})
+	go func() {
+		defer close(reminders)
+		b.remindLoop(ctx)
+	}()
 	b.poll(ctx)
+	<-reminders
 }
 
 func sleep(ctx context.Context, d time.Duration) bool {
@@ -127,8 +136,14 @@ func (b *Bot) poll(ctx context.Context) {
 	}
 }
 
-// Handle bitta yangilanishni qayta ishlaydi (faqat shaxsiy chatlar).
+// Handle bitta yangilanishni qayta ishlaydi (faqat shaxsiy chatlar). Kutilmagan xato (panic) serverni
+// yiqitmaydi va o'sha yangilanish qayta-qayta ishlanmaydi.
 func (b *Bot) Handle(ctx context.Context, u Update) {
+	defer func() {
+		if r := recover(); r != nil {
+			b.log.Error("telegram update", "id", u.UpdateID, "panic", fmt.Sprint(r))
+		}
+	}()
 	switch {
 	case u.Message != nil && u.Message.Chat.Type == "private" && u.Message.From != nil:
 		b.onMessage(ctx, u.Message)
@@ -320,8 +335,24 @@ func (b *Bot) VerifyInitData(initData string) (int64, string, error) {
 }
 
 // RemindChanged o'yin ichidan eslatma yoqilganda/o'chirilganda foydalanuvchiga xabar yuboradi.
-// blocked — bot foydalanuvchiga yoza olmaydi (botni bloklagan yoki ruxsat bermagan).
+// blocked — bot foydalanuvchiga yoza olmaydi (botni bloklagan yoki ruxsat bermagan). Bir chatga 30 s da
+// ko'pi bilan bitta xabar; Telegram javobi 5 s dan oshmaydi (o'yin so'rovi kutib qolmasin).
 func (b *Bot) RemindChanged(ctx context.Context, chat int64, lang string, on bool) (blocked bool, err error) {
+	now := b.now()
+	b.confirmMu.Lock()
+	if b.confirmed == nil || len(b.confirmed) > 10000 {
+		b.confirmed = map[int64]time.Time{}
+	}
+	last, seen := b.confirmed[chat]
+	if !seen || now.Sub(last) >= 30*time.Second {
+		b.confirmed[chat] = now
+	}
+	b.confirmMu.Unlock()
+	if seen && now.Sub(last) < 30*time.Second {
+		return false, nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	err = b.sendRemindStatus(ctx, chat, lang, on)
 	if Blocked(err) {
 		b.st.SetBlocked(ctx, chat)
@@ -342,7 +373,7 @@ func (b *Bot) nextReminder(ctx context.Context) time.Duration {
 		if now.Before(at) {
 			return at.Sub(now)
 		}
-		if now.Hour() < remindLateHour {
+		if now.Before(at.Add(remindLate)) {
 			return 0
 		}
 	}
@@ -369,9 +400,6 @@ func (b *Bot) remindLoop(ctx context.Context) {
 // Kuniga bir marta (yuborilgan kun bazada belgilanadi).
 func (b *Bot) SendReminders(ctx context.Context) error {
 	day := levels.DayOf(b.now())
-	if err := b.st.SetMeta(ctx, metaRemindDay, strconv.Itoa(day)); err != nil {
-		return err
-	}
 	p, ok := b.daily.For(day)
 	if !ok {
 		return errors.New("bugungi masala yo'q")
@@ -384,6 +412,10 @@ func (b *Bot) SendReminders(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// Yuborishdan oldin belgilanadi: yarmida to'xtasa ham, qayta ishga tushganda ikkinchi marta yozilmaydi.
+	if err := b.st.SetMeta(ctx, metaRemindDay, strconv.Itoa(day)); err != nil {
+		return err
+	}
 	sent, failed := 0, 0
 	for _, c := range targets {
 		tx := t(c.Lang)
@@ -392,6 +424,9 @@ func (b *Bot) SendReminders(ctx context.Context) error {
 			tier = tx.Tiers[p.Tier]
 		}
 		text := fmt.Sprintf(tx.Daily, b.daily.Number(day), tier) + "\n"
+		if p.Seq != nil {
+			text = fmt.Sprintf(tx.DailySeq, b.daily.Number(day)) + "\n"
+		}
 		streak := 0
 		if c.PlayerID != "" {
 			streak, _ = b.st.DailyStreak(ctx, c.PlayerID, day)

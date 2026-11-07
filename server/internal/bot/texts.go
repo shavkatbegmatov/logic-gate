@@ -12,6 +12,7 @@ type texts struct {
 	CallbackOn     string
 	CallbackOff    string
 	Daily          string // #%d, daraja nomi
+	DailySeq       string // #%d — xotira kuni (D-trigger)
 	Solve          string
 	Streak         string // %d kun
 	Solvers        string // %d kishi
@@ -35,6 +36,7 @@ var msgs = map[string]texts{
 		CallbackOn:     "Eslatma yoqildi ✅",
 		CallbackOff:    "Eslatma o'chirildi",
 		Daily:          "📅 Kunlik boshqotirma #%d tayyor — %s.",
+		DailySeq:       "🧠 Kunlik boshqotirma #%d tayyor — bugun xotira kuni: D-trigger kerak!",
 		Solve:          "🧩 Yechish",
 		Streak:         "🔥 Seriyangiz: %d kun — bugun ham yeching!",
 		Solvers:        "Bugun %d kishi yechdi.",
@@ -63,6 +65,7 @@ var msgs = map[string]texts{
 		CallbackOn:     "Напоминание включено ✅",
 		CallbackOff:    "Напоминание выключено",
 		Daily:          "📅 Задача дня #%d готова — %s.",
+		DailySeq:       "🧠 Задача дня #%d готова — сегодня день памяти: нужен D-триггер!",
 		Solve:          "🧩 Решать",
 		Streak:         "🔥 Ваша серия: %d дн. — решите и сегодня!",
 		Solvers:        "Сегодня решили: %d.",

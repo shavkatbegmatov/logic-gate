@@ -101,14 +101,13 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &req) {
 		return
 	}
-	spec := sim.Spec{Inputs: p.Inputs, Outputs: p.Outputs, Gates: p.Gates}
-	gates, wrong, simErr := sim.Check(spec, p.Target, req.Circuit)
+	gates, simErr, wrong := checkPuzzle(p, req.Circuit)
 	if simErr != nil {
 		writeJSON(w, http.StatusUnprocessableEntity, simErr)
 		return
 	}
-	if len(wrong) > 0 {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": "wrong_answer", "wrongRows": wrong})
+	if wrong != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, wrong)
 		return
 	}
 	if req.Circuit.Gates == nil {
@@ -186,4 +185,24 @@ func (s *Server) dailyLeaderboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// checkPuzzle — kunlik masala yechimini tekshiradi: oddiy kunda jadval, xotira kunida avtomat bilan.
+// wrong — noto'g'ri javob tavsifi (xato qatorlar yoki eng qisqa qarshi misol).
+func checkPuzzle(p *levels.Puzzle, c sim.Circuit) (gates int, simErr *sim.Error, wrong map[string]any) {
+	spec := sim.Spec{Inputs: p.Inputs, Outputs: p.Outputs, Gates: p.Gates}
+	if p.Seq != nil {
+		var trace []int
+		gates, trace, simErr = sim.CheckSeq(spec, sim.Machine{Next: p.Seq.Next, Out: p.Seq.Out}, c)
+		if trace != nil {
+			wrong = map[string]any{"error": "wrong_answer", "trace": trace}
+		}
+		return gates, simErr, wrong
+	}
+	var rows []int
+	gates, rows, simErr = sim.Check(spec, p.Target, c)
+	if len(rows) > 0 {
+		wrong = map[string]any{"error": "wrong_answer", "wrongRows": rows}
+	}
+	return gates, simErr, wrong
 }

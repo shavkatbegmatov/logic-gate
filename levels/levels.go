@@ -36,7 +36,7 @@ type Level struct {
 type Seq struct {
 	Next    [][]int    `json:"next"`
 	Out     [][]string `json:"out"`
-	Example []int      `json:"example"`
+	Example []int      `json:"example,omitempty"`
 }
 
 type Pack struct {

@@ -42,7 +42,9 @@ func TestDailyCycle(t *testing.T) {
 		t.Fatal("takrorlanish noto'g'ri")
 	}
 	for i, p := range d.Puzzles {
-		if p.Tier < 1 || p.Tier > 5 || p.Goal < 3 || len(p.Hint.Gates) == 0 || len(p.Hint.First) < 2 {
+		// Xotira kunida maslahat bo'sh D-triggerdan boshlanishi mumkin (hamma narsa u orqali aylanadi).
+		firstOK := len(p.Hint.First) >= 2 || (p.Seq != nil && len(p.Hint.First) == 1 && p.Hint.First[0] == "DFF")
+		if p.Tier < 1 || p.Tier > 5 || p.Goal < 3 || len(p.Hint.Gates) == 0 || !firstOK {
 			t.Errorf("%d-masala: %+v", i+1, p)
 		}
 	}

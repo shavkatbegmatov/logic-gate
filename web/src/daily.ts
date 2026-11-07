@@ -6,6 +6,7 @@ import { t } from './i18n';
 import type { Circuit, Level } from './sim/types';
 import { profile } from './state';
 import { load, save } from './storage';
+import { exampleFor } from './sim/sim';
 
 const KEYS = { history: 'lg.daily.v1', puzzle: 'lg.dailyPuzzle.v1' };
 const HISTORY_DAYS = 400;
@@ -100,14 +101,15 @@ export function puzzleLevel(info: DailyInfo): Level {
     id: `daily-${info.day}`,
     chapter: 'daily',
     title: t.daily.title,
-    task: t.daily.task(p.outputs),
-    hint: t.daily.strategy(p.outputs.length),
+    task: p.seq ? t.daily.taskSeq(p.outputs) : t.daily.task(p.outputs),
+    hint: p.seq ? t.daily.strategySeq : t.daily.strategy(p.outputs.length),
     hints: p.hint,
     inputs: p.inputs,
     outputs: p.outputs,
     gates: p.gates,
     goal: p.goal,
     target: p.target,
+    seq: p.seq && { ...p.seq, example: exampleFor(p.seq) },
   };
 }
 

@@ -131,6 +131,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 11. **M10 — Xotira (bajarildi):** D-trigger, takt, vaqt diagrammasi, avtomat bilan tekshiruv va eng qisqa qarshi misol; 6 ta yangi daraja (kechikish, front, almashtirgich, xotira katakchasi, hisoblagich, kod qulfi).
 12. **M11 — Telegram Mini App (bajarildi, @LogicGateUzBot):** Telegram ichida SDK, orqaga tugma, tebranish, `startapp` havolalar, profil kodi Telegram bulutida, Telegram'da ulashish.
 13. **M12 — Bot serverda (bajarildi; token Coolify'da):** /start, kunlik eslatma (o'yin ichidan ham), zaxira nusxa admin'ga Telegram orqali, /stats.
+14. **M13 — Xotira kuni (bajarildi):** har yakshanba kunlik masala D-trigger bilan (isbotlangan minimum), bot eslatmasida «xotira kuni».
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 

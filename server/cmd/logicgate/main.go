@@ -192,6 +192,9 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	// Telegram bot — LG_TELEGRAM_TOKEN o'rnatilgan bo'lsa. Token faqat muhitdan o'qiladi va log'ga yozilmaydi.
 	var tgBot *bot.Bot
 	if cfg := botConfig(); cfg.Token != "" {
+		if v := os.Getenv("LG_TELEGRAM_ADMIN"); v != "" && cfg.Admin == 0 {
+			log.Warn("LG_TELEGRAM_ADMIN raqam emas — zaxira nusxa va /stats o'chirilgan", "value", v)
+		}
 		tgBot = bot.New(cfg, st, daily, log)
 		opts.Telegram = tgBot
 	}

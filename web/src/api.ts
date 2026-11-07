@@ -1,4 +1,4 @@
-import type { Circuit, GateType } from './sim/types';
+import type { Circuit, GateType, Machine } from './sim/types';
 import { profile } from './state';
 
 export class ApiError extends Error {
@@ -81,7 +81,10 @@ export interface DailyPuzzle {
   outputs: string[];
   gates: GateType[];
   goal: number;
-  target: Record<string, string>;
+  /** Oddiy kun: haqiqat jadvali. */
+  target?: Record<string, string>;
+  /** Xotira kuni (yakshanba): kerakli avtomat; namunani o'yin o'zi quradi. */
+  seq?: Machine;
   hint: { gates: Record<string, number>; first: string[] };
 }
 
