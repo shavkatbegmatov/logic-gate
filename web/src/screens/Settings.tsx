@@ -4,7 +4,7 @@ import { copyText, selectContents } from '../clipboard';
 import { JoinForm } from '../components/JoinForm';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
-import { t } from '../i18n';
+import { LANGS, t } from '../i18n';
 import { go } from '../router';
 import { resetAchievements } from '../achievements';
 import { resetCustom } from '../custom';
@@ -124,6 +124,13 @@ export function Settings() {
 
           <section class="card">
             <div class="row between">
+              <span>{t.language}</span>
+              <LangSwitch />
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="row between">
               <span>{t.settings.sound}</span>
               <button
                 class={`btn toggle${settings.value.sound ? ' on' : ''}`}
@@ -148,6 +155,26 @@ export function Settings() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Til tanlash: har bir til o'z nomi bilan ko'rsatiladi. */
+export function LangSwitch() {
+  const current = settings.value.lang ?? 'uz';
+  return (
+    <div class="lang-switch" role="group" aria-label={t.language}>
+      {LANGS.map((l) => (
+        <button
+          key={l.id}
+          class={l.id === current ? 'on' : ''}
+          aria-pressed={l.id === current}
+          lang={l.id}
+          onClick={() => (settings.value = { ...settings.value, lang: l.id })}
+        >
+          {l.name}
+        </button>
+      ))}
     </div>
   );
 }

@@ -17,8 +17,8 @@ export function Achievements() {
                 {a.icon}
               </span>
               <div class="ach-body">
-                <strong>{a.title}</strong>
-                <span class="muted">{a.text}</span>
+                <strong>{a.title()}</strong>
+                <span class="muted">{a.text()}</span>
                 {!done && max > 1 && (
                   <span class="ach-progress" role="progressbar" aria-valuenow={n} aria-valuemax={max}>
                     <i style={{ width: `${(n / max) * 100}%` }} />

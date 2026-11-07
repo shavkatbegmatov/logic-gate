@@ -1,4 +1,5 @@
 import { computed, effect, signal } from '@preact/signals';
+import { setLang, type Lang } from './i18n';
 import { chapterLevels, chapterOf, chapters, levelById, levels } from './levels';
 import type { Chapter, Circuit, Level } from './sim/types';
 import { load, save, saveLater } from './storage';
@@ -31,6 +32,7 @@ export interface Profile {
 
 export interface Settings {
   sound: boolean;
+  lang?: Lang;
 }
 
 export const progress = signal<Record<string, LevelProgress>>(load(KEYS.progress, {}));
@@ -44,6 +46,7 @@ effect(() => save(KEYS.progress, progress.value));
 effect(() => save(KEYS.intro, seenIntro.value));
 effect(() => save(KEYS.profile, profile.value));
 effect(() => save(KEYS.settings, settings.value));
+effect(() => setLang(settings.value.lang ?? 'uz'));
 
 export const totalStars = computed(() =>
   Object.entries(progress.value).reduce((sum, [id, p]) => sum + (levelById(id) ? p.stars : 0), 0),

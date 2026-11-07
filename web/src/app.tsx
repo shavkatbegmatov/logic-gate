@@ -1,5 +1,7 @@
+import { Fragment } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { Toast } from './components/Toast';
+import { lang } from './i18n';
 import { route } from './router';
 import './achievements';
 import { Achievements } from './screens/Achievements';
@@ -23,8 +25,9 @@ export function App() {
   }, []);
 
   const r = route.value;
+  // Til almashganda butun daraxt qayta quriladi — keshlangan matnlar ham yangilanadi.
   return (
-    <>
+    <Fragment key={lang.value}>
       {r.name === 'home' && <Home />}
       {r.name === 'levels' && <LevelsScreen />}
       {r.name === 'level' && <LevelScreen id={r.id} />}
@@ -35,6 +38,6 @@ export function App() {
       {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}
       {r.name === 'settings' && <Settings />}
       <Toast />
-    </>
+    </Fragment>
   );
 }

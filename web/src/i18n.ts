@@ -1,10 +1,12 @@
-// Interfeys matnlari. Yangi til qo'shish uchun shu tuzilmadagi obyekt yarating va `t` ni almashtiring.
+// Interfeys matnlari. Til `setLang` bilan almashtiriladi; yangi til — `typeof uz` tuzilmasidagi obyekt.
+import { signal } from '@preact/signals';
 import type { ErrorCode } from './sim/sim';
 import type { GateType } from './sim/types';
 
 export const uz = {
   appName: 'Logic Gate',
   tagline: "Mantiqiy elementlardan sxema yig'ing",
+  language: 'Til',
   back: 'Orqaga',
   close: 'Yopish',
   cancel: 'Bekor qilish',
@@ -121,7 +123,7 @@ Sen ham yechib ko'r!`,
       outputs.length === 1
         ? `Jadvaldagi ${outputs[0]} ustunini eng kam element bilan hosil qiling.`
         : `Jadvaldagi ${outputs.join(' va ')} ustunlarini eng kam element bilan hosil qiling.`,
-    strategy: (outputs: number) =>
+    strategy: (outputs: number): string =>
       outputs === 1
         ? "Jadvalda Q = 1 bo'lgan qatorlarga qarang: ularda kirishlar nimasi bilan o'xshash?"
         : "Avval har bir chiqishni alohida o'ylang, keyin ikkalasiga umumiy qismni toping — shunda element tejaladi.",
@@ -159,7 +161,7 @@ Men buni ${goal} ta element bilan yig'dim. Sen-chi?`,
     sub: "Do'stdan masala",
     by: (name: string) => `Muallif: ${name}`,
     task: (outputs: string[], goal: number) =>
-      `Jadvaldagi ${listOf(outputs)} ${outputs.length === 1 ? 'ustunini' : 'ustunlarini'} hosil qiling. Muallif ${goal} ta element ishlatgan.`,
+      `Jadvaldagi ${listOf(outputs, 'va')} ${outputs.length === 1 ? 'ustunini' : 'ustunlarini'} hosil qiling. Muallif ${goal} ta element ishlatgan.`,
     hint: "Jadvalga qarang: chiqish qaysi qatorlarda 1 bo'lyapti va bu qatorlarda kirishlar nimasi bilan o'xshash?",
     bad: "Havola noto'g'ri yoki buzilgan. Masalani yuborgan do'stingizdan qayta so'rang.",
     solved: 'Masala yechildi!',
@@ -287,9 +289,323 @@ Sen ham urinib ko'r!`,
   } satisfies Record<GateType, { name: string; text: string }>,
 };
 
-/** "A", "A va B", "A, B va C". */
-function listOf(items: string[]): string {
-  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} va ${items[items.length - 1]}`;
+
+export const ru: typeof uz = {
+  appName: 'Logic Gate',
+  tagline: 'Собирайте схемы из логических элементов',
+  language: 'Язык',
+  back: 'Назад',
+  close: 'Закрыть',
+  cancel: 'Отмена',
+  save: 'Сохранить',
+  retry: 'Повторить',
+  loading: 'Загрузка…',
+
+  home: {
+    play: 'Играть',
+    continue: 'Продолжить',
+    levels: 'Уровни',
+    sandbox: 'Песочница',
+    leaderboard: 'Рейтинг',
+    settings: 'Настройки',
+    stars: (n: number, max: number) => `${n} / ${max} ★`,
+    solved: (n: number, max: number) => `${n} / ${max} ур.`,
+    joinTitle: 'Участвуйте в рейтинге',
+    joinText: 'Введите никнейм — ваши результаты попадут в рейтинг. Регистрация не нужна.',
+    nicknamePlaceholder: 'Ваш никнейм',
+    join: 'Участвовать',
+    hello: (name: string) => `Привет, ${name}!`,
+  },
+
+  chapters: {
+    title: 'Уровни',
+    locked: (need: number, have: number) => `Откроется при ${need} ★ (у вас ${have} ★)`,
+    chapterStars: (n: number, max: number) => `${n} / ${max} ★`,
+  },
+
+  play: {
+    goal: (n: number) => `Цель: ${n} эл.`,
+    used: (n: number) => `Использовано: ${n}`,
+    check: 'Проверить',
+    checking: 'Проверка',
+    skip: 'Пропустить',
+    rowLabel: (r: number) => `Строка ${r + 1}`,
+    table: 'Таблица',
+    task: 'Задание',
+    undo: 'Отменить',
+    redo: 'Повторить',
+    clear: 'Очистить',
+    clearConfirm: 'Удалить все элементы с поля?',
+    fit: 'Показать всё',
+    zoomIn: 'Увеличить',
+    zoomOut: 'Уменьшить',
+    remove: 'Удалить',
+    expected: 'Нужно',
+    got: 'У вас',
+    inputs: 'Входы',
+    outputs: 'Выходы',
+    allowed: 'Элементы',
+    cycle: 'Так соединить нельзя: сигнал вернётся сам в себя.',
+    sameKind: 'Соедините выход со входом: провод идёт от источника к приёмнику.',
+    rowsOk: 'Все строки верны — проверяйте!',
+    newGate: 'Новый элемент',
+    newGates: 'Новые элементы',
+    gotIt: 'Понятно',
+  },
+
+  success: {
+    title: 'Уровень пройден!',
+    gates: (n: number, goal: number) => `Элементов: ${n} (цель: ${goal})`,
+    tryFewer: (goal: number) => `Для 3 ★ используйте не больше ${goal} эл.`,
+    improved: 'Новый личный рекорд!',
+    record: (gates: number, names: string) => `Лучший результат: ${gates} эл. — ${names}`,
+    beatRecord: 'Это решение с наименьшим числом элементов!',
+    joinHint: 'Чтобы попасть в рейтинг, введите никнейм:',
+    solvers: (n: number) => `Этот уровень прошли: ${n}`,
+    next: 'Следующий уровень',
+    again: 'Улучшить',
+    toLevels: 'Уровни',
+    nextLocked: (need: number) => `Следующий раздел откроется при ${need} ★`,
+    allDone: 'Поздравляем! Вы прошли все уровни.',
+    offline: 'Результат сохранён на устройстве. Он отправится, когда появится связь с сервером.',
+  },
+
+  share: {
+    telegram: 'Поделиться в Telegram',
+    native: 'Поделиться',
+    invite: 'Пригласить друзей',
+    copy: 'Скопировать текст',
+    copied: 'Текст скопирован — вставьте его куда угодно.',
+    copyManual: 'Скопируйте текст:',
+    level: (num: number, title: string, stars: string, gates: number, goal: number) =>
+      `Logic Gate · уровень ${num} «${title}»\n${stars} — ${gates} эл. (цель: ${goal})\nПопробуй и ты!`,
+    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 30 уровней, бесплатно!',
+  },
+
+  hints: {
+    show: 'Подсказка',
+    next: (n: number, total: number) => `Следующая подсказка (${n}/${total})`,
+    gates: (parts: string) => `Решение на 3 ★: ${parts}.`,
+    first: (type: GateType, srcs: string[]) =>
+      srcs.length === 1
+        ? `Начните так: подайте ${srcs[0]} на ${type}.`
+        : srcs[0] === srcs[1]
+          ? `Начните так: подайте ${srcs[0]} на оба входа ${type}.`
+          : `Начните так: подайте ${srcs[0]} и ${srcs[1]} на ${type}.`,
+    place: 'Поставить на поле',
+    placed: 'Уже на поле',
+  },
+
+  daily: {
+    title: 'Задача дня',
+    home: 'Задача дня',
+    homeNew: 'Сегодняшняя задача ждёт',
+    homeDone: (stars: string, gates: number) => `Сегодня решено: ${stars} · ${gates} эл.`,
+    streak: (n: number) => `🔥 ${n} ${plural(n, 'день', 'дня', 'дней')} подряд`,
+    sub: (num: number, date: string, tier: string) => `#${num} · ${date} · ${tier}`,
+    tiers: ['', 'Легко', 'Несложно', 'Средне', 'Сложно', 'Очень сложно'],
+    task: (outputs: string[]) =>
+      outputs.length === 1
+        ? `Получите столбец ${outputs[0]} из таблицы наименьшим числом элементов.`
+        : `Получите столбцы ${outputs.join(' и ')} из таблицы наименьшим числом элементов.`,
+    strategy: (outputs: number) =>
+      outputs === 1
+        ? 'Посмотрите на строки, где Q = 1: чем похожи в них входы?'
+        : 'Сначала продумайте каждый выход отдельно, затем найдите общую часть — так вы сэкономите элементы.',
+    date: (day: number, month: number) =>
+      `${day} ${['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][month]}`,
+    solved: 'Задача дня решена!',
+    rank: (rank: number, solvers: number) => `В рейтинге дня: ${rank}-е место (из ${solvers})`,
+    best: (gates: number) => `Лучшее решение дня: ${gates} эл.`,
+    first: 'Вы на 1-м месте в рейтинге дня!',
+    next: (time: string) => `Следующая задача через ${time}`,
+    hours: (h: number, m: number) => (h ? `${h} ч ${m} мин` : `${m} мин`),
+    toBoard: 'Рейтинг дня',
+    offline: 'Не удалось загрузить задачу дня. Для неё нужен интернет.',
+    joinHint: 'Чтобы попасть в рейтинг дня, введите никнейм:',
+    share: (num: number, date: string, stars: string, gates: number, goal: number, streak: number) =>
+      `Logic Gate · Задача дня #${num} (${date})\n${stars} — ${gates} эл. (минимум: ${goal})` +
+      (streak > 1 ? `\n🔥 ${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд` : '') +
+      '\nПопробуй и ты!',
+  },
+
+  custom: {
+    create: 'Сделать задачу',
+    createTitle: 'Задача для друзей',
+    createText: 'Таблица истинности вашей схемы станет задачей. Сможет ли друг решить её меньшим числом элементов?',
+    titlePlaceholder: 'Название задачи (необязательно)',
+    summary: (ins: number, outs: number, goal: number, gates: string) =>
+      `входов: ${ins}, выходов: ${outs} · цель: ${goal} эл. · ${gates}`,
+    try: 'Попробовать самому',
+    empty: 'Сначала поставьте элементы на поле и подключите все выходы.',
+    shareText: (title: string, goal: number) =>
+      `Logic Gate · задача${title ? ` «${title}»` : ''}\nЯ собрал её из ${goal} эл. А ты?`,
+    untitled: 'Задача от друга',
+    sub: 'Задача от друга',
+    by: (name: string) => `Автор: ${name}`,
+    task: (outputs: string[], goal: number) =>
+      `Получите ${outputs.length === 1 ? 'столбец' : 'столбцы'} ${listOf(outputs, 'и')} из таблицы. Автор использовал ${goal} эл.`,
+    hint: 'Посмотрите на таблицу: в каких строках выход равен 1 и чем похожи в них входы?',
+    bad: 'Ссылка неверна или повреждена. Попросите друга отправить задачу ещё раз.',
+    solved: 'Задача решена!',
+    gates: (n: number, goal: number) => `Элементов: ${n} (у автора: ${goal})`,
+    beatAuthor: 'Меньше, чем у автора — отлично!',
+    resultText: (title: string, stars: string, gates: number, goal: number) =>
+      `Logic Gate · ${title ? `«${title}»` : 'задача друга'}\n${stars} — ${gates} эл. (у автора: ${goal})\nПопробуй и ты!`,
+    makeOwn: 'Создать свою задачу',
+    toHome: 'На главную',
+  },
+
+  achievements: {
+    title: 'Достижения',
+    home: (n: number, max: number) => `Достижения ${n}/${max}`,
+    summary: (n: number, max: number) => `открыто ${n} из ${max}`,
+    unlocked: (names: string[]) =>
+      names.length === 1 ? `Новое достижение: ${names[0]}` : `Новые достижения: ${names.join(', ')}`,
+    first: { title: 'Первый шаг', text: 'Пройдите первый уровень.' },
+    chapter: {
+      title: (name: string) => `«${name}»`,
+      text: (n: number) => `Пройдите все ${n} уровней раздела.`,
+    },
+    starsHalf: (n: number) => ({ title: 'Полпути', text: `Соберите ${n} ★.` }),
+    starsAll: (n: number) => ({ title: 'Безупречно', text: `Соберите все ${n} ★.` }),
+    independent: (n: number) => ({ title: 'Самостоятельный', text: `Пройдите ${n} уровней на 3 ★ без подсказок.` }),
+    nandMaster: { title: 'Мастер NAND', text: 'Пройдите все уровни раздела «Только NAND» на 3 ★.' },
+    dailyFirst: { title: 'Начало дня', text: 'Решите первую задачу дня.' },
+    dailyPerfect: { title: 'Минимум найден', text: 'Решите задачу дня наименьшим числом элементов (3 ★).' },
+    streak: (n: number) => ({
+      title: `${n} ${plural(n, 'день', 'дня', 'дней')} подряд`,
+      text: `Решайте задачу дня ${n} ${plural(n, 'день', 'дня', 'дней')} подряд.`,
+    }),
+    creator: { title: 'Создатель', text: 'Создайте задачу в песочнице и отправьте друзьям.' },
+    friend: { title: 'Дружеский', text: 'Решите задачу, присланную другом.' },
+    beatAuthor: { title: 'Лучше автора', text: 'Решите задачу друга меньшим числом элементов, чем автор.' },
+  },
+
+  sandbox: {
+    title: 'Песочница',
+    text: 'Свободно собирайте любые схемы и смотрите их таблицу истинности. Готовую схему отправьте друзьям через «Сделать задачу».',
+    inputs: 'Входы',
+    outputs: 'Выходы',
+  },
+
+  leaderboard: {
+    title: 'Рейтинг',
+    overall: 'Общий',
+    today: 'Сегодня',
+    gates: 'Эл.',
+    dailyEmpty: 'Сегодняшнюю задачу ещё никто не решил. Будьте первым!',
+    rank: '#',
+    player: 'Игрок',
+    stars: '★',
+    solved: 'Уровни',
+    empty: 'Ещё никто не прошёл ни одного уровня. Будьте первым!',
+    you: 'Вы',
+    yourRank: (rank: number) => `Ваше место: ${rank}`,
+    notJoined: 'Чтобы появиться в рейтинге, введите никнейм.',
+    offline: 'Не удалось загрузить рейтинг. Проверьте подключение к интернету.',
+  },
+
+  settings: {
+    title: 'Настройки',
+    profile: 'Профиль',
+    nickname: 'Никнейм',
+    rename: 'Изменить',
+    code: 'Код восстановления',
+    codeText: 'Сохраните этот код: с ним вы восстановите прогресс на другом устройстве. Никому его не передавайте.',
+    copy: 'Копировать',
+    copied: 'Скопировано',
+    copyManual: 'Не удалось скопировать автоматически — код выделен, скопируйте его вручную.',
+    restore: 'Восстановить прогресс',
+    restoreText: 'Введите код восстановления с другого устройства.',
+    restoreButton: 'Восстановить',
+    restored: 'Прогресс восстановлен',
+    badCode: 'Код неверный или не найден.',
+    sound: 'Звуковые эффекты',
+    on: 'Включены',
+    off: 'Выключены',
+    reset: 'Сбросить прогресс',
+    resetText: 'Все результаты и черновики на устройстве будут удалены.',
+    resetTextProfile:
+      'Результаты, черновики и профиль на устройстве будут удалены. Результаты на сервере сохранятся — их можно вернуть кодом восстановления, поэтому сначала сохраните код.',
+    resetConfirm: 'Точно удалить прогресс на устройстве?',
+    resetConfirmProfile:
+      'Удалить прогресс и профиль на устройстве? Для возврата понадобится код восстановления — вы его сохранили?',
+    resetDone: 'Прогресс на устройстве удалён.',
+    about: 'О программе',
+    version: (v: string) => `Версия ${v}`,
+  },
+
+  tutorial: [
+    'Нажмите на элемент NOT в палитре внизу или перетащите его на поле.',
+    'Протяните провод от точки справа от входа A к левой точке NOT. Можно и просто нажать на обе точки по очереди.',
+    'Теперь соедините выходную точку справа от NOT с Q.',
+    'Нажимайте на A, чтобы переключать 0 и 1, затем нажмите «Проверить».',
+  ],
+
+  errors: {
+    too_many_gates: 'Слишком много элементов (не больше 64).',
+    too_many_wires: 'Слишком много проводов.',
+    bad_gate: 'В схеме ошибка. Удалите элемент и поставьте заново.',
+    dup_gate: 'В схеме ошибка. Удалите элемент и поставьте заново.',
+    gate_not_allowed: 'На этом уровне такой элемент использовать нельзя.',
+    bad_wire: 'В схеме неверный провод.',
+    sink_taken: 'К одному входу подключается только один провод.',
+    cycle: 'В схеме цикл: сигнал возвращается сам в себя.',
+    unconnected_input: 'Вход отмеченного элемента не подключён.',
+    unconnected_output: 'Выход не подключён.',
+  },
+  unconnectedOutput: (name: string) => `Выход ${name} не подключён.`,
+  wrongRows: (n: number) =>
+    `Неверно в ${n} ${plural(n, 'строке', 'строках', 'строках')}. Посмотрите на красные строки в таблице.`,
+  network: 'Нет связи с сервером.',
+  badNickname: 'Никнейм — 2–20 символов: буквы, цифры, пробел, _ - .',
+  nicknameNotAllowed: 'Этот никнейм использовать нельзя. Выберите другой.',
+  rateLimited: 'Слишком много попыток. Попробуйте чуть позже.',
+
+  gates: {
+    NOT: { name: 'НЕ', text: 'Меняет вход на противоположный: 0 → 1, 1 → 0.' },
+    AND: { name: 'И', text: '1, если оба входа равны 1.' },
+    OR: { name: 'ИЛИ', text: '1, если хотя бы один вход равен 1.' },
+    XOR: { name: 'Искл. ИЛИ', text: '1, если входы разные.' },
+    NAND: { name: 'И-НЕ', text: 'Отрицание AND.' },
+    NOR: { name: 'ИЛИ-НЕ', text: 'Отрицание OR.' },
+    XNOR: { name: 'Равенство', text: '1, если входы одинаковые.' },
+  },
+};
+
+/** "A", "A va B", "A, B va C" (ruschada — "и"). */
+function listOf(items: string[], and: string): string {
+  return items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} ${and} ${items[items.length - 1]}`;
 }
 
-export const t = uz;
+/** Ruscha ko'plik shakli: 1 день, 2 дня, 5 дней. */
+function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
+const dicts = { uz, ru };
+export type Lang = keyof typeof dicts;
+export const LANGS: { id: Lang; name: string }[] = [
+  { id: 'uz', name: "O'zbekcha" },
+  { id: 'ru', name: 'Русский' },
+];
+
+/** Joriy til lug'ati. `export let` — import qilgan modullar har doim joriy qiymatni ko'radi. */
+export let t: typeof uz = uz;
+export const lang = signal<Lang>('uz');
+
+export function setLang(l: Lang) {
+  const next: Lang = l in dicts ? l : 'uz';
+  t = dicts[next];
+  try {
+    document.documentElement.lang = next;
+  } catch {
+    // Testlarda document yo'q.
+  }
+  lang.value = next;
+}

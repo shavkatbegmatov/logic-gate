@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { levels, MAX_STARS } from '../levels';
 import { go } from '../router';
 import { continueLevel, profile, solvedCount, totalStars } from '../state';
+import { LangSwitch } from './Settings';
 
 export function Home() {
   const started = solvedCount.value > 0;
@@ -44,6 +45,7 @@ export function Home() {
           </button>
         </nav>
         <ShareButtons text={t.share.inviteText} label={t.share.invite} />
+        <LangSwitch />
         {!profile.value && started && (
           <div class="card">
             <JoinForm />

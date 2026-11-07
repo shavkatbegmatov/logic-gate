@@ -51,6 +51,8 @@ export interface Level extends Spec {
   target: Record<string, string>;
   /** Bosqichli maslahat: 3 ★ yechim tarkibi va kirishlarga ulangan birinchi element [tur, manba...]. */
   hints?: { gates: Record<string, number>; first: string[] };
+  /** Boshqa tillardagi matnlar (masalan, ru). */
+  i18n?: Record<string, { title: string; task: string; hint: string }>;
 }
 
 export interface Chapter {
@@ -58,6 +60,7 @@ export interface Chapter {
   title: string;
   description: string;
   unlockStars: number;
+  i18n?: Record<string, { title: string; description: string }>;
 }
 
 export interface LevelPack {

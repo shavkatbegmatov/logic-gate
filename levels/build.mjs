@@ -3,6 +3,7 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import * as ru from './i18n.ru.mjs';
 import { chapters, levels } from './source.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -127,7 +128,9 @@ for (const level of levels) {
   }
 
   const { fn, sol, ...rest } = level;
-  outLevels.push({ ...rest, target, hints: hintsFor(level) });
+  const tr = ru.levels[level.id];
+  if (!tr?.title || !tr.task || !tr.hint) fail(level.id, "ruscha tarjima yo'q");
+  outLevels.push({ ...rest, target, hints: hintsFor(level), i18n: { ru: tr } });
   solutions[level.id] = toCircuit(level);
 }
 
@@ -136,7 +139,18 @@ if (errors.length) {
   process.exit(1);
 }
 
-const data = { version: 1, chapters, levels: outLevels };
+const outChapters = chapters.map((ch) => {
+  const tr = ru.chapters[ch.id];
+  if (!tr?.title || !tr.description) fail(ch.id, "bo'lim uchun ruscha tarjima yo'q");
+  return { ...ch, i18n: { ru: tr } };
+});
+for (const id of Object.keys(ru.levels)) if (!ids.has(id)) fail(id, "tarjimada ortiqcha daraja");
+if (errors.length) {
+  console.error('Tarjimalarda xatolar:\n' + errors.map((e) => '  - ' + e).join('\n'));
+  process.exit(1);
+}
+
+const data = { version: 1, chapters: outChapters, levels: outLevels };
 writeFileSync(join(here, 'levels.json'), JSON.stringify(data, null, 2) + '\n');
 writeFileSync(join(here, 'solutions.json'), JSON.stringify(solutions, null, 2) + '\n');
 console.log(`${outLevels.length} ta daraja, ${chapters.length} ta bo'lim yozildi.`);

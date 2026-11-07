@@ -306,6 +306,10 @@ Har kuni (Toshkent vaqti bilan yarim tunda) yangi masala: 3 kirish, 1–2 chiqis
 
 Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavjud kunlar o'zgarmaydi). Tanlash qoidalarini o'zgartirmang — o'tgan kunlarning masalalari ham o'zgarib ketadi.
 
+## Tillar
+
+O'zbekcha (standart) va ruscha. Til bosh sahifadagi va sozlamalardagi tugma bilan almashtiriladi, `lg.settings.v1` da saqlanadi. Interfeys matnlari — `web/src/i18n.ts` (`ru: typeof uz`, shuning uchun kalit tushib qolsa TypeScript xato beradi). Darajalar va bo'limlar tarjimasi — `levels/i18n.ru.mjs`; `node levels/build.mjs` ularni `levels.json` ga `i18n.ru` sifatida qo'shadi va har bir daraja tarjima qilinganini tekshiradi. Server faqat xato kodlarini qaytaradi, matnlar mijozda.
+
 ## Do'stlar masalasi
 
 Qum qutida yig'ilgan sxemadan «Masala qilish» masala yaratadi: uning haqiqat jadvali — vazifa, muallif ishlatgan elementlar soni — maqsad, ruxsat etilgan elementlar — muallif ishlatganlari. Masala butunlay havolaning o'zida (`#/p/<kod>`, ~150 belgi): ixcham JSON → base64url. Server va baza ishtirok etmaydi; natijalar faqat qurilmada (`lg.custom.v1`). Havola o'qilganda qat'iy tekshiriladi, buzilgan bo'lsa xabar chiqadi.

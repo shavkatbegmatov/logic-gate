@@ -11,7 +11,7 @@ describe('yutuqlar', () => {
   it("id lar takrorlanmaydi va hammasining matni bor", () => {
     const ids = ACHIEVEMENTS.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const a of ACHIEVEMENTS) expect(a.title && a.text && a.icon, a.id).toBeTruthy();
+    for (const a of ACHIEVEMENTS) expect(a.title() && a.text() && a.icon, a.id).toBeTruthy();
   });
 
   it("yangi o'yinchida hech qaysi yutuq ochilmagan", () => {
