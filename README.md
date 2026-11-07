@@ -339,6 +339,8 @@ O'yin Telegram ichida bot orqali ochiladi. Server tomonida hech narsa kerak emas
 4. Ixtiyoriy: `/setuserpic` — `web/public/icons/icon-512.png`; `/setdescription`, `/setabouttext`.
 5. `web/.env` da `VITE_TG_APP_URL=https://t.me/LogicGateUzBot/play`, commit va push.
 
+Hozirgi bot: [@LogicGateUzBot](https://t.me/LogicGateUzBot), Mini App — https://t.me/LogicGateUzBot/play (2026-11-07).
+
 Rasm `deploy/telegram/app-640x360.png` va `web/public/og.png` — `web/scripts/og.html` dan.
 
 ## Tillar
