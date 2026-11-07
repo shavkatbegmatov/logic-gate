@@ -111,6 +111,8 @@ Darajalar `levels/source.mjs` da: har bir daraja uchun maqsad funksiyasi (`fn`),
 node levels/build.mjs
 ```
 
+Ketma-ket (xotirali) darajada `fn` o'rniga `init` + `step(holat, ...kirishlar) → [keyingi holat, chiqishlar]` va vaqt diagrammasi namunasi (`example`) yoziladi; build ulardan eng kichik avtomatni quradi (`seq` maydoni). Maqsad haqiqatan minimum ekanini `node levels/seq-min.mjs` to'liq sanash bilan tekshiradi (bir necha soniya).
+
 Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. Bosqichli maslahat uchun yechimdan faqat elementlar tarkibi va kirishlarga ulangan birinchi element olinadi (`hints`); yechimning o'zi `levels.json` ga tushmaydi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
 
 ## Coolify orqali joylash (Docker)
@@ -308,6 +310,15 @@ Har kuni (Toshkent vaqti bilan yarim tunda) yangi masala: 3 kirish, 1–2 chiqis
 - **Seriya** — ketma-ket yechilgan kunlar; bugun hali yechilmagan bo'lsa ham kechagacha saqlanadi.
 
 Masalalar ro'yxatini uzaytirish uchun `daily.mjs` dagi `COUNT` ni oshiring (mavjud kunlar o'zgarmaydi). Tanlash qoidalarini o'zgartirmang — o'tgan kunlarning masalalari ham o'zgarib ketadi.
+
+## Xotira (ketma-ket sxemalar)
+
+6-bo'lim «Xotira» (52 ★ dan ochiladi) yangi element — D-trigger (`DFF`) bilan. Uning chiqishi — saqlangan bit (boshida 0); «Takt» tugmasi (yoki `T`) bosilganda har bir trigger kirishidagi qiymatni eslab qoladi. Trigger orqali o'tgan aylana sikl hisoblanmaydi, triggersiz aylana — sikl.
+
+- **Vazifa** haqiqat jadvali o'rniga vaqt diagrammasi namunasi bilan beriladi; panelda «Sizning sxemangiz» — bosilgan taktlar va kutilgan qiymatlar.
+- **Tekshiruv** sxemani kerakli avtomat bilan har qanday kirishlar ketma-ketligida solishtiradi: ikkalasi boshlang'ich holatdan birga, erishiladigan har bir juft holat bo'yicha kenglik bo'yicha yuradi (≤ 8 trigger, ya'ni ≤ 256 holat). Farq bo'lsa, uni ko'rsatadigan eng qisqa ketma-ketlik taktma-takt o'ynab ko'rsatiladi; to'g'ri bo'lsa — namuna.
+- Server (`sim.CheckSeq`) xuddi shu tekshiruvni qayta bajaradi; noto'g'ri javobda `{"error":"wrong_answer","trace":[…]}`.
+- Qum qutida ham D-trigger va takt bor; xotirali sxemadan do'stlar masalasi hozircha yaratilmaydi (havola faqat haqiqat jadvalini saqlaydi).
 
 ## Tillar
 

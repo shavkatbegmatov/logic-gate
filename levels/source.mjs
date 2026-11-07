@@ -4,6 +4,13 @@
 // sol    — mos yozuvdagi yechim: { g: { nom: [tur, manba1, manba2?] }, out: { Chiqish: manba } }.
 //          Manba — kirish nomi (katta harf) yoki element nomi (kichik harf).
 // goal   — "maqsad" element soni; build sol dagi elementlar soniga tengligini tekshiradi.
+//
+// Ketma-ket masala (xotira bilan) fn o'rniga:
+// init   — boshlang'ich holat (istalgan JSON qiymat);
+// step   — (holat, ...kirish bitlari) → [keyingi holat, chiqishlar]: shu taktdagi chiqishlar va keyingi holat;
+// example — vaqt diagrammasidagi namuna: har takt kirishlari ("0110…" yoki ['10', '01', …]).
+// sol da D-trigger: ['DFF', manba] — uning chiqishi orqali o'tgan aylana sikl hisoblanmaydi.
+// build avtomatni kichraytiradi va sol unga har qanday ketma-ketlikda mos kelishini tekshiradi.
 
 export const chapters = [
   {
@@ -35,6 +42,12 @@ export const chapters = [
     title: 'Murakkab masalalar',
     description: "Ko'p bitli sxemalar va mohirlik sinovi.",
     unlockStars: 40,
+  },
+  {
+    id: 'memory',
+    title: 'Xotira',
+    description: "Ketma-ket sxemalar: D-trigger bitta bitni eslab qoladi — sxema endi o'tmishni ham biladi.",
+    unlockStars: 52,
   },
 ];
 
@@ -551,6 +564,116 @@ export const levels = [
         p2: ['XOR', 'd', 'e'],
       },
       out: { P3: 'e', P2: 'p2', P1: 'p1', P0: 'p0' },
+    },
+  },
+  // ── 6. Xotira ──────────────────────────────────────────────
+  {
+    id: 's1',
+    chapter: 'memory',
+    title: 'Kechikish',
+    task: "Q bir takt oldingi A ni ko'rsatsin. Boshida Q = 0.",
+    hint: "D-trigger (DFF) kirishidagi qiymatni eslab qoladi va keyingi taktda chiqaradi. A ni DFF ga, DFF ni Q ga ulang, so'ng A ni o'zgartirib «Takt» ni bosib ko'ring.",
+    inputs: ['A'],
+    outputs: ['Q'],
+    gates: ['DFF'],
+    goal: 1,
+    init: 0,
+    step: (s, A) => [A, [s]],
+    example: '1101001',
+    sol: { g: { d: ['DFF', 'A'] }, out: { Q: 'd' } },
+  },
+  {
+    id: 's2',
+    chapter: 'memory',
+    title: 'Front',
+    task: "Q = 1 faqat A 0 dan 1 ga o'tgan taktda bo'lsin: hozir A = 1, oldingi taktda esa A = 0 edi. Birinchi taktdan oldin A = 0 deb hisoblanadi.",
+    hint: 'Oldingi A ni D-trigger eslab qoladi. Kerak: hozirgi A = 1 VA oldingi A = 0.',
+    inputs: ['A'],
+    outputs: ['Q'],
+    gates: ['DFF', 'NOT', 'AND', 'OR'],
+    goal: 3,
+    init: 0,
+    step: (s, A) => [A, [A & not(s)]],
+    example: '0110111001',
+    sol: { g: { d: ['DFF', 'A'], n: ['NOT', 'd'], q: ['AND', 'A', 'n'] }, out: { Q: 'q' } },
+  },
+  {
+    id: 's3',
+    chapter: 'memory',
+    title: 'Almashtirgich',
+    task: "T = 1 bo'lgan har bir taktdan keyin Q teskarisiga o'zgarsin (0 → 1, 1 → 0); T = 0 bo'lsa, Q o'zgarmasin. Boshida Q = 0.",
+    hint: "Q ni D-trigger saqlaydi, uning kirishiga keyingi qiymat beriladi: T = 1 bo'lsa — Q ning teskarisi, T = 0 bo'lsa — Q ning o'zi. Qaysi element shunday ishlaydi?",
+    inputs: ['T'],
+    outputs: ['Q'],
+    gates: ['DFF', 'NOT', 'AND', 'OR', 'XOR'],
+    goal: 2,
+    init: 0,
+    step: (s, T) => [s ^ T, [s]],
+    example: '1011001110',
+    sol: { g: { x: ['XOR', 'T', 'd'], d: ['DFF', 'x'] }, out: { Q: 'd' } },
+  },
+  {
+    id: 's4',
+    chapter: 'memory',
+    title: 'Xotira katakchasi',
+    task: "S = 1 bo'lsa, keyingi taktdan Q = 1 bo'lsin, R = 1 bo'lsa — Q = 0. Ikkalasi 0 bo'lsa, Q o'zgarmaydi; ikkalasi 1 bo'lsa, R ustun. Boshida Q = 0.",
+    hint: "Keyingi Q = 1 bo'ladi, agar R = 0 bo'lsa VA (S = 1 YOKI hozir Q = 1).",
+    inputs: ['S', 'R'],
+    outputs: ['Q'],
+    gates: ['DFF', 'NOT', 'AND', 'OR'],
+    goal: 4,
+    init: 0,
+    step: (s, S, R) => [R ? 0 : S ? 1 : s, [s]],
+    example: ['10', '00', '00', '01', '00', '10', '11', '00'],
+    sol: { g: { o: ['OR', 'S', 'd'], n: ['NOT', 'R'], a: ['AND', 'o', 'n'], d: ['DFF', 'a'] }, out: { Q: 'd' } },
+  },
+  {
+    id: 's5',
+    chapter: 'memory',
+    title: 'Hisoblagich',
+    task: "E = 1 bo'lgan har taktdan keyin ikki bitli son Q1 Q0 bittaga oshsin: 00 → 01 → 10 → 11 → 00. E = 0 bo'lsa, son o'zgarmaydi.",
+    hint: "Har bir bitga bitta D-trigger. Q0 — «almashtirgich»; Q1 esa E = 1 va Q0 = 1 bo'lganda o'zgaradi.",
+    inputs: ['E'],
+    outputs: ['Q1', 'Q0'],
+    gates: ['DFF', 'NOT', 'AND', 'OR', 'XOR'],
+    goal: 5,
+    init: 0,
+    step: (s, E) => [(s + E) & 3, [(s >> 1) & 1, s & 1]],
+    example: '1101111011',
+    sol: {
+      g: {
+        q0: ['DFF', 'n0'],
+        n0: ['XOR', 'E', 'q0'],
+        c: ['AND', 'E', 'q0'],
+        n1: ['XOR', 'q1', 'c'],
+        q1: ['DFF', 'n1'],
+      },
+      out: { Q1: 'q1', Q0: 'q0' },
+    },
+  },
+  {
+    id: 's6',
+    chapter: 'memory',
+    title: 'Kod qulfi',
+    task: "Q = 1 bo'lsin, agar oxirgi uch taktda A: 1, 0, 1 bo'lsa (hozir 1, oldingi taktda 0, undan oldin 1). Boshida oldingi qiymatlar 0.",
+    hint: "A ning oxirgi ikki qiymatini ketma-ket ikkita D-triggerda saqlang — bu siljitish registri.",
+    inputs: ['A'],
+    outputs: ['Q'],
+    gates: ['DFF', 'NOT', 'AND', 'OR'],
+    goal: 5,
+    // Holat: [oldingi A, undan oldingi A].
+    init: [0, 0],
+    step: ([p1, p2], A) => [[A, p1], [A & not(p1) & p2]],
+    example: '1011010110',
+    sol: {
+      g: {
+        d1: ['DFF', 'A'],
+        d2: ['DFF', 'd1'],
+        n: ['NOT', 'd1'],
+        a: ['AND', 'n', 'd2'],
+        q: ['AND', 'A', 'a'],
+      },
+      out: { Q: 'q' },
     },
   },
 ];

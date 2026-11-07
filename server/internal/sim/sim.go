@@ -13,14 +13,17 @@ import (
 const (
 	MaxGates = 64
 	MaxWires = 256
+	// MaxFlipflops — D-triggerlar soni: ketma-ket tekshiruvda holatlar 2^n gacha o'sadi.
+	MaxFlipflops = 8
 	// Koordinatalar uchun chegara: saqlanadigan JSON hajmini cheklaydi.
 	maxCoord = 100000
 )
 
 var gateIDRe = regexp.MustCompile(`^[a-z0-9_]{1,16}$`)
 
+// DFF — D-trigger: kirish D, chiqish Q — saqlangan qiymat; har taktda Q := D.
 var arity = map[string]int{
-	"NOT": 1, "AND": 2, "OR": 2, "XOR": 2, "NAND": 2, "NOR": 2, "XNOR": 2,
+	"NOT": 1, "AND": 2, "OR": 2, "XOR": 2, "NAND": 2, "NOR": 2, "XNOR": 2, "DFF": 1,
 }
 
 type Gate struct {
@@ -74,11 +77,13 @@ func apply(t string, a, b uint8) uint8 {
 	return 0
 }
 
-// compiled — tekshiruvdan o'tgan sxema: elementlar topologik tartibda.
+// compiled — tekshiruvdan o'tgan sxema: elementlar topologik tartibda, D-triggerlar boshida.
 type compiled struct {
 	spec    Spec
 	order   []Gate
 	drivers map[string]string
+	// dffs — D-triggerlar tartibi: holat bitmaskasida i-bit.
+	dffs []string
 }
 
 func isSource(spec Spec, gates map[string]Gate, s string) bool {
@@ -141,6 +146,10 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 	indeg := make(map[string]int, len(gates))
 	users := make(map[string][]string, len(gates))
 	for _, g := range c.Gates {
+		// D-trigger kirishi chiqishiga shu taktda ta'sir qilmaydi — u orqali o'tgan aylana sikl emas.
+		if g.Type == "DFF" {
+			continue
+		}
 		for i := range arity[g.Type] {
 			if src, ok := drivers[fmt.Sprintf("%s:%d", g.ID, i)]; ok {
 				if _, isGate := gates[src]; isGate {
@@ -175,6 +184,15 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 			}
 		}
 	}
+	var dffs []string
+	for _, g := range order {
+		if g.Type == "DFF" {
+			dffs = append(dffs, g.ID)
+		}
+	}
+	if len(dffs) > MaxFlipflops {
+		return nil, &Error{Code: "too_many_flipflops"}
+	}
 
 	for _, g := range c.Gates {
 		for i := range arity[g.Type] {
@@ -188,7 +206,7 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 			return nil, &Error{Code: "unconnected_output", Ref: o}
 		}
 	}
-	return &compiled{spec: spec, order: order, drivers: drivers}, nil
+	return &compiled{spec: spec, order: order, drivers: drivers, dffs: dffs}, nil
 }
 
 // Validate sxemani qat'iy tekshiradi; xato bo'lmasa nil qaytaradi.
@@ -199,12 +217,26 @@ func Validate(spec Spec, c Circuit) *Error {
 
 // row r-qator uchun chiqishlarni hisoblaydi (birinchi kirish — eng katta bit).
 func (c *compiled) row(r int) []uint8 {
+	out, _ := c.step(r, 0)
+	return out
+}
+
+// step — bitta takt: state holatida (i-bit — dffs[i]) r-qator uchun chiqishlar va keyingi holat.
+func (c *compiled) step(r int, state uint64) ([]uint8, uint64) {
 	n := len(c.spec.Inputs)
 	values := make(map[string]uint8, n+len(c.order))
 	for k, name := range c.spec.Inputs {
 		values["in:"+name] = uint8(r>>(n-1-k)) & 1
 	}
+	bit := make(map[string]int, len(c.dffs))
+	for i, id := range c.dffs {
+		bit[id] = i
+		values[id] = uint8(state>>i) & 1
+	}
 	for _, g := range c.order {
+		if g.Type == "DFF" {
+			continue
+		}
 		a := values[c.drivers[g.ID+":0"]]
 		b := values[c.drivers[g.ID+":1"]]
 		values[g.ID] = apply(g.Type, a, b)
@@ -213,7 +245,11 @@ func (c *compiled) row(r int) []uint8 {
 	for i, o := range c.spec.Outputs {
 		out[i] = values[c.drivers["out:"+o]]
 	}
-	return out
+	var next uint64
+	for id, i := range bit {
+		next |= uint64(values[c.drivers[id+":0"]]) << i
+	}
+	return out, next
 }
 
 // Check sxemani tekshiradi va target jadval bilan solishtiradi.
@@ -233,6 +269,58 @@ func Check(spec Spec, target map[string]string, c Circuit) (gates int, wrongRows
 		}
 	}
 	return len(c.Gates), wrongRows, nil
+}
+
+// Machine — ketma-ket masalaning kerakli xatti-harakati (eng kichik Mealy avtomati, boshlanishi 0):
+// Out[holat][qator] — chiqishlar ("01…"), Next[holat][qator] — keyingi holat.
+type Machine struct {
+	Next [][]int
+	Out  [][]string
+}
+
+// CheckSeq sxemani avtomat bilan solishtiradi: ikkalasi boshlang'ich holatdan birga, erishiladigan
+// har bir juft holat bo'yicha kenglik bo'yicha yuradi. Farq bo'lsa, uni ko'rsatadigan eng qisqa
+// kirishlar ketma-ketligi (qatorlar) qaytadi — oxirgi taktda chiqish noto'g'ri.
+func CheckSeq(spec Spec, m Machine, c Circuit) (gates int, trace []int, err *Error) {
+	cc, err := compile(spec, c)
+	if err != nil {
+		return 0, nil, err
+	}
+	type pair struct {
+		state uint64
+		s     int
+	}
+	type edge struct {
+		prev pair
+		row  int
+		root bool
+	}
+	start := pair{0, 0}
+	parent := map[pair]edge{start: {root: true}}
+	queue := []pair{start}
+	rows := 1 << len(spec.Inputs)
+	for qi := 0; qi < len(queue); qi++ {
+		p := queue[qi]
+		for r := range rows {
+			got, nextState := cc.step(r, p.state)
+			want := m.Out[p.s][r]
+			for i := range got {
+				if got[i] != want[i]-'0' {
+					trace = []int{r}
+					for e := parent[p]; !e.root; e = parent[e.prev] {
+						trace = append([]int{e.row}, trace...)
+					}
+					return len(c.Gates), trace, nil
+				}
+			}
+			next := pair{nextState, m.Next[p.s][r]}
+			if _, seen := parent[next]; !seen {
+				parent[next] = edge{prev: p, row: r}
+				queue = append(queue, next)
+			}
+		}
+	}
+	return len(c.Gates), nil, nil
 }
 
 // Stars: element soni ≤ maqsad → 3, ≤ maqsad+2 → 2, aks holda 1.

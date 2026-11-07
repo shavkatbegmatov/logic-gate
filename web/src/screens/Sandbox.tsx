@@ -7,14 +7,15 @@ import { GateList } from '../components/GateList';
 import { ShareButtons } from '../components/ShareButtons';
 import { encodePuzzle, LIMITS, markCreated, puzzleFromCircuit, type CreateError } from '../custom';
 import { Palette } from '../components/Palette';
+import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, Modal, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
-import { GATE_TYPES, type Circuit, type Spec } from '../sim/types';
+import { ALL_GATE_TYPES, type Circuit, type Spec } from '../sim/types';
 import { KEYS, profile } from '../state';
 import { load, saveLater } from '../storage';
-import { ZoomTools } from './Workbench';
+import { ClockTools, ZoomTools } from './Workbench';
 import { useEditorKeys } from './useEditorKeys';
 
 const INPUT_NAMES = ['A', 'B', 'C', 'D', 'E'];
@@ -29,7 +30,7 @@ interface Saved {
 const specFor = (inputs: number, outputs: number): Spec => ({
   inputs: INPUT_NAMES.slice(0, inputs),
   outputs: OUTPUT_NAMES.slice(0, outputs),
-  gates: GATE_TYPES,
+  gates: ALL_GATE_TYPES,
 });
 
 export function Sandbox() {
@@ -45,7 +46,8 @@ export function Sandbox() {
     };
     return ed;
   }, []);
-  useEditorKeys(editor);
+  const hasDff = editor.circuit.value.gates.some((g) => g.type === 'DFF');
+  useEditorKeys(editor, { clock: hasDff });
   const showSide = useSignal(false);
   const creating = useSignal(false);
 
@@ -76,6 +78,7 @@ export function Sandbox() {
         <div class="stage">
           <Board editor={editor} />
           <ZoomTools editor={editor} />
+          {hasDff && <ClockTools editor={editor} />}
         </div>
         <aside class={`side${showSide.value ? ' open' : ''}`}>
           <section class="task">
@@ -90,14 +93,24 @@ export function Sandbox() {
             current={editor.row.value}
             onRow={(r) => editor.setRow(r)}
           />
-          <GateList gates={GATE_TYPES} />
+          {hasDff && (
+            <Timeline
+              title={t.play.yourRun}
+              inputs={spec.inputs}
+              outputs={spec.outputs}
+              steps={traceSteps(editor.compiled.value, [...editor.history.value, editor.row.value])}
+              now
+              note={editor.history.value.length ? undefined : t.play.liveHint}
+            />
+          )}
+          <GateList gates={ALL_GATE_TYPES} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}
           </button>
         </aside>
       </div>
       <div class="play-bottom">
-        <Palette editor={editor} gates={GATE_TYPES} />
+        <Palette editor={editor} gates={ALL_GATE_TYPES} />
         <div class="actions">
           <button class="btn table-toggle" onClick={() => (showSide.value = !showSide.value)}>
             <Icon name="table" /> {t.play.table}
@@ -114,6 +127,7 @@ export function Sandbox() {
 
 function createError(err: CreateError): string {
   if (err.code === 'empty') return t.custom.empty;
+  if (err.code === 'sequential') return t.custom.sequential;
   if (err.code === 'unconnected_output' && err.ref) return t.unconnectedOutput(err.ref);
   return t.errors[err.code];
 }

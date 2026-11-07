@@ -5,6 +5,7 @@ import { GATE_ARITY, type GateType } from '../sim/types';
 
 /** "00→0 01→0 10→0 11→1" ko'rinishidagi qisqa haqiqat jadvali. */
 function truthLine(type: GateType): string {
+  if (type === 'DFF') return `D → Q ${t.play.nextTick}: 0→0  1→1`;
   if (GATE_ARITY[type] === 1) return [0, 1].map((a) => `${a}→${applyGate(type, a, 0)}`).join('  ');
   return [0, 1, 2, 3].map((r) => `${r >> 1}${r & 1}→${applyGate(type, r >> 1, r & 1)}`).join('  ');
 }

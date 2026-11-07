@@ -68,6 +68,9 @@ const ICONS = {
   share: 'M4 13v7h16v-7M12 3v12M7 8l5-5 5 5',
   telegram: 'M21 4 3 11.5l6 2.2L18 7l-7 8 .3 5 3.2-3.6 4.5 3.6z',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5M8 14h3v3H8z',
+  // Takt signali (to'rtburchak to'lqin) va vaqtni boshiga qaytarish.
+  clock: 'M3 17h4V7h5v10h5V7h4',
+  reset: 'M4 4v6h6M4.6 15A8 8 0 1 0 6 6.3L4 10',
 } as const;
 
 export function Icon({ name }: { name: keyof typeof ICONS }) {

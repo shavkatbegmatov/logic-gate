@@ -374,7 +374,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                 <g data-kind="gate" data-id={g.id}>
                   <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
                   <GateShape type={g.type} />
-                  {label('gate-label', g.type === 'NOT' ? 28 : 32, GATE_H / 2, g.type)}
+                  {label('gate-label', g.type === 'NOT' ? 28 : g.type === 'DFF' ? 36 : 32, GATE_H / 2, g.type)}
                 </g>
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
                   port(`${g.id}:${i}`, 0, inputPortY(g, i), false, driven.has(`${g.id}:${i}`), false),

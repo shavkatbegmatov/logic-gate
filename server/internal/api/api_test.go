@@ -199,6 +199,18 @@ func TestSolveAndLeaderboard(t *testing.T) {
 	if status != 200 || out["solvers"].(float64) != 1 || out["bestGates"].(float64) != 4 {
 		t.Fatalf("stats: %d %v", status, out)
 	}
+
+	// Xotira darajasi: to'g'ridan-to'g'ri sim kechikish emas — eng qisqa farq (1-taktda A = 1).
+	status, out = e.do("POST", "/api/levels/s1/solve", ali, map[string]any{
+		"circuit": sim.Circuit{Wires: []sim.Wire{{From: "in:A", To: "out:Q"}}},
+	})
+	if trace, _ := out["trace"].([]any); status != 422 || out["error"] != "wrong_answer" || len(trace) != 1 || trace[0].(float64) != 1 {
+		t.Fatalf("s1 noto'g'ri: %d %v", status, out)
+	}
+	status, out = e.do("POST", "/api/levels/s5/solve", ali, map[string]any{"circuit": sols["s5"]})
+	if status != 200 || out["stars"].(float64) != 3 || out["gates"].(float64) != 5 {
+		t.Fatalf("s5: %d %v", status, out)
+	}
 }
 
 func TestSignupRateLimit(t *testing.T) {

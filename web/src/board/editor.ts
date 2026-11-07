@@ -1,7 +1,7 @@
 // Sxema muharririning holati: sxema, tarix (undo/redo), tanlov, ko'rinish (pan/zoom).
 import { computed, signal } from '@preact/signals';
 import { sfx } from '../audio';
-import { compile, evaluate, rowBits, truthTable, wouldCycle } from '../sim/sim';
+import { compile, evaluate, replay, rowBits, truthTable, wouldCycle } from '../sim/sim';
 import { GATE_ARITY, type Circuit, type GateType, type Spec } from '../sim/types';
 import {
   bounds,
@@ -25,10 +25,14 @@ export interface View {
 export type ConnectResult = 'ok' | 'same' | 'cycle' | 'kind';
 
 const MAX_HISTORY = 100;
+/** Taktlar tarixi chegarasi (holat har o'zgarishda shu tarixdan qayta hisoblanadi). */
+export const MAX_TICKS = 999;
 export const MIN_ZOOM = 0.35;
 export const MAX_ZOOM = 2.5;
 /** O'ng pastdagi zoom tugmalari ustuni kengligi (fit uni chetlab o'tadi). */
 const ZOOM_TOOLS_W = 56;
+/** Chap pastdagi takt tugmalari balandligi (xotirali sxemada fit uni chetlab o'tadi). */
+const CLOCK_TOOLS_H = 60;
 
 export class Editor {
   readonly spec = signal<Spec>({ inputs: [], outputs: [], gates: [] });
@@ -55,11 +59,28 @@ export class Editor {
   readonly wave = signal<number | null>(null);
   /** Tekshiruv ketmoqda — sxemani o'zgartirib bo'lmaydi. */
   readonly busy = signal(false);
+  /**
+   * Xotirali sxema: o'tgan taktlardagi kirishlar qatorlari. Triggerlar holati shundan qayta
+   * hisoblanadi — sxema o'zgarsa ham holat shu kirishlar tarixiga mos bo'lib qoladi.
+   */
+  readonly history = signal<number[]>([]);
 
   readonly layout = computed<Layout>(() => layout(this.spec.value, this.outX.value));
-  readonly compiled = computed(() => compile(this.spec.value, this.circuit.value));
-  readonly evaluation = computed(() => evaluate(this.compiled.value, this.bits.value));
-  readonly table = computed(() => truthTable(this.compiled.value));
+  /**
+   * Sxema tuzilishi (elementlar turi va simlar), joylashuvsiz. Element sudralganda u o'zgarmaydi —
+   * simulyatsiya, triggerlar holati va tekshiruv har kadrda qayta hisoblanmaydi.
+   */
+  readonly topology = computed(() => {
+    const c = this.circuit.value;
+    return JSON.stringify([c.gates.map((g) => [g.id, g.type]), c.wires]);
+  });
+  readonly compiled = computed(() => {
+    void this.topology.value;
+    return compile(this.spec.value, this.circuit.peek());
+  });
+  readonly state = computed(() => replay(this.compiled.value, this.history.value));
+  readonly evaluation = computed(() => evaluate(this.compiled.value, this.bits.value, this.state.value));
+  readonly table = computed(() => truthTable(this.compiled.value, this.state.value));
   readonly row = computed(() => this.bits.value.reduce((r, b) => (r << 1) | b, 0));
 
   /** Board elementining o'lchami (fit va markazga qo'yish uchun). */
@@ -79,6 +100,7 @@ export class Editor {
     this.outX.value = outX;
     this.circuit.value = sanitize(spec, circuit);
     this.bits.value = spec.inputs.map(() => 0);
+    this.history.value = [];
     this.selection.value = null;
     this.pending.value = null;
     this.highlight.value = null;
@@ -92,6 +114,7 @@ export class Editor {
   setSpec(spec: Spec) {
     this.spec.value = spec;
     this.bits.value = spec.inputs.map((_, k) => this.bits.value[k] ?? 0);
+    this.history.value = [];
     this.commit(sanitize(spec, this.circuit.value));
   }
 
@@ -263,6 +286,18 @@ export class Editor {
     this.bits.value = rowBits(this.spec.value.inputs.length, r);
   }
 
+  /** Takt: joriy kirishlar tarixga yoziladi, triggerlar kirishidagi qiymatlarni eslab qoladi. */
+  tick() {
+    if (this.history.value.length >= MAX_TICKS) return;
+    this.history.value = [...this.history.value, this.row.value];
+    sfx.tick(this.history.value.length % 8);
+  }
+
+  /** Vaqtni boshiga qaytarish: barcha triggerlar 0. */
+  resetClock() {
+    this.history.value = [];
+  }
+
   fit() {
     const vertical = this.vertical.value;
     const b = bounds(this.circuit.value, this.layout.value, vertical);
@@ -272,7 +307,8 @@ export class Editor {
     const top = this.insetTop;
     // Gorizontal rejimda chiqishlar o'ngda — zoom tugmalari ularni yopmasin.
     const availW = this.size.w - (vertical ? 0 : ZOOM_TOOLS_W);
-    const availH = this.size.h - top;
+    // Xotirali sxemada chap pastda takt tugmalari — pastki pinlarni yopmasin.
+    const availH = this.size.h - top - (this.spec.value.gates.includes('DFF') ? CLOCK_TOOLS_H : 0);
     const s = Math.max(
       MIN_ZOOM,
       Math.min(1.35, (availW - pad * 2) / (maxA - minA), (availH - pad * 2) / (maxB - minB)),

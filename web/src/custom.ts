@@ -129,7 +129,7 @@ export function decodePuzzle(code: string): CustomPuzzle | null {
 
 // ── Qum qutidan masala ─────────────────────────────────────
 
-export type CreateError = SimError | { code: 'empty' };
+export type CreateError = SimError | { code: 'empty' } | { code: 'sequential' };
 
 /** Sxemadan masala: jadval — sxema natijasi, maqsad — muallif ishlatgan elementlar soni. */
 export function puzzleFromCircuit(
@@ -144,6 +144,8 @@ export function puzzleFromCircuit(
   if (loose) return { ok: false, error: { code: 'unconnected_output', ref: loose } };
   circuit = liveCircuit(circuit);
   if (!circuit.gates.length) return { ok: false, error: { code: 'empty' } };
+  // Masala havolasi haqiqat jadvalini saqlaydi — xotirali sxemaning xatti-harakati unga sig'maydi.
+  if (circuit.gates.some((g) => g.type === 'DFF')) return { ok: false, error: { code: 'sequential' } };
   const err = validate(spec, circuit);
   if (err) return { ok: false, error: err };
   const c = compile(spec, circuit);

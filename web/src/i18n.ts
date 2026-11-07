@@ -64,6 +64,19 @@ export const uz = {
     newGate: 'Yangi element',
     newGates: 'Yangi elementlar',
     gotIt: 'Tushunarli',
+    // Xotira (ketma-ket sxemalar).
+    tick: 'Takt',
+    resetClock: 'Vaqtni boshiga qaytarish',
+    stepLabel: (i: number) => `${i + 1}-takt`,
+    diagram: 'Diagramma',
+    example: 'Namuna',
+    yourRun: 'Sizning sxemangiz',
+    liveHint: "Kirishlarni o'zgartirib, «Takt» ni bosing — har takt shu yerda yoziladi.",
+    now: 'hozir',
+    seqWrong: (step: number, names: string) => `${step}-taktda ${names} noto'g'ri. Diagrammadagi qizil katakchaga qarang.`,
+    seqOk: "Sxema to'g'ri ishlayapti — endi tekshiring!",
+    clockText: "«Takt» tugmasi vaqtni bir qadam oldinga suradi: shu paytda barcha D-triggerlar kirishidagi qiymatni eslab qoladi.",
+    nextTick: 'keyingi taktda',
   },
 
   success: {
@@ -94,7 +107,7 @@ export const uz = {
       `Logic Gate · ${num}-daraja «${title}»
 ${stars} — ${gates} ta element (maqsad: ${goal})
 Sen ham yechib ko'r!`,
-    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 30 daraja, bepul!",
+    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 36 daraja, bepul!",
   },
 
   hints: {
@@ -102,7 +115,9 @@ Sen ham yechib ko'r!`,
     next: (n: number, total: number) => `Keyingi maslahat (${n}/${total})`,
     gates: (parts: string) => `3 ★ yechim tarkibi: ${parts}.`,
     first: (type: GateType, srcs: string[]) =>
-      srcs.length === 1
+      srcs.length === 0
+        ? `Boshlang: maydonga ${type} qo'ying.`
+        : srcs.length === 1
         ? `Boshlang: ${srcs[0]} ni ${type} ga ulang.`
         : srcs[0] === srcs[1]
           ? `Boshlang: ${srcs[0]} ni ${type} ning ikkala kirishiga ulang.`
@@ -154,6 +169,7 @@ Sen ham yechib ko'r!`,
       `${ins} kirish, ${outs} chiqish · maqsad: ${goal} element · ${gates}`,
     try: "O'zim sinab ko'raman",
     empty: "Avval maydonga element qo'yib, barcha chiqishlarni ulang.",
+    sequential: "Xotirali (D-triggerli) sxemadan hozircha masala yaratib bo'lmaydi.",
     shareText: (title: string, goal: number) =>
       `Logic Gate · ${title ? `«${title}» ` : ''}masala
 Men buni ${goal} ta element bilan yig'dim. Sen-chi?`,
@@ -265,6 +281,13 @@ Sen ham urinib ko'r!`,
     "Endi NOT ning o'ngidagi chiqish nuqtasini Q ga ulang.",
     "A ni bosib 0 va 1 qilib ko'ring, keyin «Tekshirish» tugmasini bosing.",
   ],
+  /** Birinchi xotira darajasi uchun o'rgatuvchi qadamlar. */
+  tutorialSeq: [
+    "Palitradan DFF (D-trigger) ni maydonga qo'ying.",
+    'A ni DFF kirishiga, DFF chiqishini Q ga ulang.',
+    "A ni 1 qiling: Q hali 0. Endi «Takt» ni bosing — DFF A ni eslab qoladi va Q = 1 bo'ladi.",
+    "A ni o'zgartirib, yana «Takt» bosib ko'ring. Tayyor bo'lsa — «Tekshirish».",
+  ],
 
   errors: {
     too_many_gates: "Elementlar juda ko'p (ko'pi bilan 64 ta).",
@@ -277,6 +300,7 @@ Sen ham urinib ko'r!`,
     cycle: "Sxemada sikl bor: signal o'ziga qaytib kelyapti.",
     unconnected_input: 'Belgilangan elementning kirishi ulanmagan.',
     unconnected_output: 'Chiqish ulanmagan.',
+    too_many_flipflops: "D-triggerlar juda ko'p (ko'pi bilan 8 ta).",
   } satisfies Record<ErrorCode, string>,
   unconnectedOutput: (name: string) => `${name} chiqishi ulanmagan.`,
   wrongRows: (n: number) => `${n} ta qatorda natija noto'g'ri. Jadvalda qizil qatorlarga qarang.`,
@@ -293,6 +317,7 @@ Sen ham urinib ko'r!`,
     NAND: { name: 'VA-EMAS', text: 'AND ning teskarisi.' },
     NOR: { name: 'YOKI-EMAS', text: 'OR ning teskarisi.' },
     XNOR: { name: 'Tenglik', text: 'Kirishlar bir xil bo\'lsa, 1.' },
+    DFF: { name: 'Xotira', text: "D-trigger: D kirishidagi qiymatni eslab qoladi va keyingi taktda Q da chiqaradi. Boshida 0." },
   } satisfies Record<GateType, { name: string; text: string }>,
 };
 
@@ -358,6 +383,18 @@ export const ru: typeof uz = {
     newGate: 'Новый элемент',
     newGates: 'Новые элементы',
     gotIt: 'Понятно',
+    tick: 'Такт',
+    resetClock: 'Вернуть время к началу',
+    stepLabel: (i: number) => `Такт ${i + 1}`,
+    diagram: 'Диаграмма',
+    example: 'Пример',
+    yourRun: 'Ваша схема',
+    liveHint: 'Меняйте входы и нажимайте «Такт» — каждый такт записывается здесь.',
+    now: 'сейчас',
+    seqWrong: (step: number, names: string) => `На такте ${step} неверно: ${names}. Смотрите красную клетку на диаграмме.`,
+    seqOk: 'Схема работает верно — теперь проверьте!',
+    clockText: 'Кнопка «Такт» продвигает время на один шаг: в этот момент все D-триггеры запоминают значение на входе.',
+    nextTick: 'на следующем такте',
   },
 
   success: {
@@ -386,7 +423,7 @@ export const ru: typeof uz = {
     copyManual: 'Скопируйте текст:',
     level: (num: number, title: string, stars: string, gates: number, goal: number) =>
       `Logic Gate · уровень ${num} «${title}»\n${stars} — ${gates} эл. (цель: ${goal})\nПопробуй и ты!`,
-    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 30 уровней, бесплатно!',
+    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 36 уровней, бесплатно!',
   },
 
   hints: {
@@ -394,7 +431,9 @@ export const ru: typeof uz = {
     next: (n: number, total: number) => `Следующая подсказка (${n}/${total})`,
     gates: (parts: string) => `Решение на 3 ★: ${parts}.`,
     first: (type: GateType, srcs: string[]) =>
-      srcs.length === 1
+      srcs.length === 0
+        ? `Начните так: поставьте на поле ${type}.`
+        : srcs.length === 1
         ? `Начните так: подайте ${srcs[0]} на ${type}.`
         : srcs[0] === srcs[1]
           ? `Начните так: подайте ${srcs[0]} на оба входа ${type}.`
@@ -445,6 +484,7 @@ export const ru: typeof uz = {
       `входов: ${ins}, выходов: ${outs} · цель: ${goal} эл. · ${gates}`,
     try: 'Попробовать самому',
     empty: 'Сначала поставьте элементы на поле и подключите все выходы.',
+    sequential: 'Из схемы с памятью (D-триггерами) пока нельзя сделать задачу.',
     shareText: (title: string, goal: number) =>
       `Logic Gate · задача${title ? ` «${title}»` : ''}\nЯ собрал её из ${goal} эл. А ты?`,
     untitled: 'Задача от друга',
@@ -556,6 +596,12 @@ export const ru: typeof uz = {
     'Теперь соедините выходную точку справа от NOT с Q.',
     'Нажимайте на A, чтобы переключать 0 и 1, затем нажмите «Проверить».',
   ],
+  tutorialSeq: [
+    'Поставьте на поле DFF (D-триггер) из палитры.',
+    'Подайте A на вход DFF, а выход DFF соедините с Q.',
+    'Сделайте A = 1: Q пока 0. Теперь нажмите «Такт» — DFF запомнит A, и Q станет 1.',
+    'Меняйте A и снова нажимайте «Такт». Когда будете готовы — «Проверить».',
+  ],
 
   errors: {
     too_many_gates: 'Слишком много элементов (не больше 64).',
@@ -568,6 +614,7 @@ export const ru: typeof uz = {
     cycle: 'В схеме цикл: сигнал возвращается сам в себя.',
     unconnected_input: 'Вход отмеченного элемента не подключён.',
     unconnected_output: 'Выход не подключён.',
+    too_many_flipflops: 'Слишком много D-триггеров (не больше 8).',
   },
   unconnectedOutput: (name: string) => `Выход ${name} не подключён.`,
   wrongRows: (n: number) =>
@@ -585,6 +632,7 @@ export const ru: typeof uz = {
     NAND: { name: 'И-НЕ', text: 'Отрицание AND.' },
     NOR: { name: 'ИЛИ-НЕ', text: 'Отрицание OR.' },
     XNOR: { name: 'Равенство', text: '1, если входы одинаковые.' },
+    DFF: { name: 'Память', text: 'D-триггер: запоминает значение на входе D и выдаёт его на выходе Q на следующем такте. В начале 0.' },
   },
 };
 

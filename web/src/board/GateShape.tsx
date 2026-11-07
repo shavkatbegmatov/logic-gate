@@ -16,7 +16,7 @@ interface ShapeInfo {
   back?: string;
 }
 
-const SHAPES: Record<GateType, ShapeInfo> = {
+const SHAPES: Record<Exclude<GateType, 'DFF'>, ShapeInfo> = {
   NOT: { body: NOT_BODY, tip: 50, bubble: true },
   AND: { body: AND_BODY, tip: 54, bubble: false },
   NAND: { body: AND_BODY, tip: 54, bubble: true },
@@ -26,7 +26,20 @@ const SHAPES: Record<GateType, ShapeInfo> = {
   XNOR: { body: XOR_BODY, tip: 58, bubble: true, back: XOR_BACK },
 };
 
+/** D-trigger: to'rtburchak, kirish tomonida takt belgisi (uchburchak). Takt hamma triggerlar uchun umumiy. */
+function FlipFlop() {
+  return (
+    <g class="gate-shape">
+      <line class="lead" x1={0} y1={24} x2={14} y2={24} />
+      <line class="lead" x1={58} y1={24} x2={GATE_W} y2={24} />
+      <rect class="gate-body" x={14} y={4} width={44} height={40} rx={5} />
+      <path class="gate-back" d="M14,33 L22,38 L14,43" />
+    </g>
+  );
+}
+
 export function GateShape({ type }: { type: GateType }) {
+  if (type === 'DFF') return <FlipFlop />;
   const s = SHAPES[type];
   const leadStart = s.bubble ? s.tip + 8 : s.tip;
   const one = type === 'NOT';

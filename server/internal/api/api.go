@@ -289,13 +289,31 @@ func (s *Server) solve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	spec := sim.Spec{Inputs: level.Inputs, Outputs: level.Outputs, Gates: level.Gates}
-	gates, wrong, simErr := sim.Check(spec, level.Target, req.Circuit)
+	var (
+		gates  int
+		simErr *sim.Error
+		wrong  map[string]any
+	)
+	if level.Seq != nil {
+		// Ketma-ket masala: sxema kerakli avtomat bilan har qanday kirishlar ketma-ketligida mos kelishi kerak.
+		var trace []int
+		gates, trace, simErr = sim.CheckSeq(spec, sim.Machine{Next: level.Seq.Next, Out: level.Seq.Out}, req.Circuit)
+		if trace != nil {
+			wrong = map[string]any{"error": "wrong_answer", "trace": trace}
+		}
+	} else {
+		var rows []int
+		gates, rows, simErr = sim.Check(spec, level.Target, req.Circuit)
+		if len(rows) > 0 {
+			wrong = map[string]any{"error": "wrong_answer", "wrongRows": rows}
+		}
+	}
 	if simErr != nil {
 		writeJSON(w, http.StatusUnprocessableEntity, simErr)
 		return
 	}
-	if len(wrong) > 0 {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"error": "wrong_answer", "wrongRows": wrong})
+	if wrong != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, wrong)
 		return
 	}
 	// Saqlashdan oldin qayta kodlash: faqat ma'lum maydonlar saqlanadi.

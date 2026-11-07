@@ -1,15 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import pack from '../../../levels/levels.json';
 import solutions from '../../../levels/solutions.json';
-import { check, compile, depths, evaluate, starsFor, truthTable, validate, wouldCycle } from './sim';
-import type { Circuit, LevelPack, Spec } from './types';
+import {
+  check,
+  compile,
+  counterexample,
+  depths,
+  evaluate,
+  machineOut,
+  machineReplay,
+  replay,
+  starsFor,
+  truthTable,
+  validate,
+  wouldCycle,
+} from './sim';
+import type { Circuit, Level, LevelPack, Spec } from './types';
 
 const levels = (pack as unknown as LevelPack).levels;
 const sols = solutions as Record<string, Circuit>;
 
 describe('darajalar', () => {
-  it('30 ta daraja va har birida yechim bor', () => {
-    expect(levels).toHaveLength(30);
+  it('36 ta daraja va har birida yechim bor', () => {
+    expect(levels).toHaveLength(36);
     for (const l of levels) expect(sols[l.id], l.id).toBeDefined();
   });
 
@@ -160,5 +173,92 @@ describe('depths', () => {
     };
     const d = depths(compile(spec, c));
     expect(Object.fromEntries(d)).toEqual({ 'in:A': 0, 'in:B': 0, n: 1, o: 2, a: 3, z: 1 });
+  });
+});
+
+// ── Xotira (D-trigger) ─────────────────────────────────────
+
+const lvl = (id: string) => levels.find((l) => l.id === id)! as Level;
+const dff = (id: string, src: string) => [{ id, type: 'DFF' as const, x: 0, y: 0 }, { from: src, to: `${id}:0` }] as const;
+
+describe('D-trigger', () => {
+  const seqSpec: Spec = { inputs: ['T'], outputs: ['Q'], gates: ['DFF', 'XOR', 'NOT'] };
+  // Almashtirgich: d = DFF(XOR(T, d)) — aylana trigger orqali o'tadi, sikl emas.
+  const toggle: Circuit = {
+    gates: [
+      { id: 'x', type: 'XOR', x: 0, y: 0 },
+      { id: 'd', type: 'DFF', x: 0, y: 0 },
+    ],
+    wires: [
+      { from: 'in:T', to: 'x:0' },
+      { from: 'd', to: 'x:1' },
+      { from: 'x', to: 'd:0' },
+      { from: 'd', to: 'out:Q' },
+    ],
+  };
+
+  it('trigger orqali aylana — sikl emas, triggersiz aylana — sikl', () => {
+    expect(validate(seqSpec, toggle)).toBeNull();
+    expect(wouldCycle({ gates: toggle.gates, wires: toggle.wires.filter((w) => w.to !== 'd:0') }, 'x', 'd:0')).toBe(false);
+    const noDff: Circuit = {
+      gates: [{ id: 'x', type: 'XOR', x: 0, y: 0 }],
+      wires: [{ from: 'in:T', to: 'x:0' }],
+    };
+    expect(wouldCycle(noDff, 'x', 'x:1')).toBe(true);
+  });
+
+  it('takt: holat kirishlar tarixidan hisoblanadi, boshida 0', () => {
+    const c = compile(seqSpec, toggle);
+    expect(evaluate(c, [1]).outputs).toEqual([0]);
+    expect(evaluate(c, [0], replay(c, [1])).outputs).toEqual([1]);
+    expect(evaluate(c, [0], replay(c, [1, 0, 1])).outputs).toEqual([0]);
+    expect(evaluate(c, [0], replay(c, [1, 1, 1])).outputs).toEqual([1]);
+    // Trigger — manba: chuqurligi 0, to'lqin unda ham boshidan yonadi.
+    expect(depths(c).get('d')).toBe(0);
+    expect(depths(c).get('x')).toBe(1);
+  });
+
+  it('s3 (almashtirgich) — avtomat bilan solishtirish', () => {
+    const level = lvl('s3');
+    expect(check(level, toggle)).toEqual({ ok: true, gates: 2, stars: 3 });
+    // XOR o'rniga to'g'ridan-to'g'ri T — bu kechikish, almashtirgich emas.
+    const delay: Circuit = { gates: [{ id: 'd', type: 'DFF', x: 0, y: 0 }], wires: [{ from: 'in:T', to: 'd:0' }, { from: 'd', to: 'out:Q' }] };
+    const res = check(level, delay);
+    expect(res.ok).toBe(false);
+    const trace = 'trace' in res ? res.trace : [];
+    // Eng qisqa farq: T = 1, 0, 0 — 3-taktda kechikish 0 ni (oldingi T), almashtirgich 1 ni ko'rsatadi.
+    expect(trace).toEqual([1, 0, 0]);
+    const seq = level.seq!;
+    const c = compile(level, delay);
+    const last = trace[trace.length - 1];
+    expect(evaluate(c, [last], replay(c, trace.slice(0, -1))).outputs).toEqual([0]);
+    expect(machineOut(seq, machineReplay(seq, trace.slice(0, -1)), last)).toEqual([1]);
+  });
+
+  it('counterexample birinchi taktdagi xatoni ham topadi', () => {
+    const level = lvl('s1');
+    const wire: Circuit = { gates: [], wires: [{ from: 'in:A', to: 'out:Q' }] };
+    // Q = A: birinchi taktda A = 1 bo'lsa, Q 0 bo'lishi kerak edi.
+    expect(counterexample(compile(level, wire), level.seq!)).toEqual([1]);
+  });
+
+  it("8 tadan ortiq trigger — xato (holatlar soni chegaralanadi)", () => {
+    const gates = Array.from({ length: 9 }, (_, i) => ({ id: `d${i}`, type: 'DFF' as const, x: 0, y: 0 }));
+    const wires = gates.map((g) => ({ from: 'in:A', to: `${g.id}:0` }));
+    const spec: Spec = { inputs: ['A'], outputs: ['Q'], gates: ['DFF'] };
+    expect(validate(spec, { gates, wires: [...wires, { from: 'd0', to: 'out:Q' }] })).toEqual({ code: 'too_many_flipflops' });
+  });
+
+  it("kombinatsion darajada DFF ruxsat etilmaydi", () => {
+    const [g, w] = dff('d', 'in:A');
+    expect(validate(lvl('b1'), { gates: [g], wires: [w, { from: 'd', to: 'out:Q' }] })).toEqual({ code: 'gate_not_allowed', ref: 'd' });
+  });
+
+  it('qum qutidagi jadval joriy holatda hisoblanadi', () => {
+    const spec: Spec = { inputs: ['A'], outputs: ['Q'], gates: ['DFF'] };
+    const [g, w] = dff('d', 'in:A');
+    const c = compile(spec, { gates: [g], wires: [w, { from: 'd', to: 'out:Q' }] });
+    expect(truthTable(c)).toEqual([[0], [0]]);
+    expect(truthTable(c, replay(c, [1]))).toEqual([[1], [1]]);
   });
 });

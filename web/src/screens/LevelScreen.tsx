@@ -69,7 +69,9 @@ function Play({ level }: { level: Level }) {
     if (result.value) result.value = { ...base, server };
   };
 
-  const tutorialStep = level.id === 'b1' ? tutorial(editor) : -1;
+  // Birinchi daraja va birinchi xotira darajasi — o'rgatuvchi qadamlar.
+  const tutorialStep = level.id === 'b1' ? tutorial(editor) : level.id === 's1' ? tutorialSeq(editor) : -1;
+  const tutorialText = level.id === 's1' ? t.tutorialSeq : t.tutorial;
 
   return (
     <Workbench
@@ -80,7 +82,7 @@ function Play({ level }: { level: Level }) {
       onBack={() => go('levels')}
       onSolved={onSolved}
       topInset={tutorialStep >= 0 ? 150 : 64}
-      banner={tutorialStep >= 0 && <div class="tutorial">{t.tutorial[tutorialStep]}</div>}
+      banner={tutorialStep >= 0 && <div class="tutorial">{tutorialText[tutorialStep]}</div>}
     >
       {intro.value.length > 0 && (
         <GateIntro
@@ -112,6 +114,17 @@ function tutorial(editor: Editor): number {
   if (!c.gates.length) return 0;
   if (!c.wires.some((w) => w.from === 'in:A' && !w.to.startsWith('out:'))) return 1;
   if (!c.wires.some((w) => w.to === 'out:Q' && w.from !== 'in:A')) return 2;
+  return 3;
+}
+
+function tutorialSeq(editor: Editor): number {
+  const c = editor.circuit.value;
+  const dff = c.gates.find((g) => g.type === 'DFF');
+  if (!dff) return 0;
+  const wired =
+    c.wires.some((w) => w.from === 'in:A' && w.to === `${dff.id}:0`) && c.wires.some((w) => w.from === dff.id && w.to === 'out:Q');
+  if (!wired) return 1;
+  if (!editor.history.value.length) return 2;
   return 3;
 }
 

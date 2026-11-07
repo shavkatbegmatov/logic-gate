@@ -2,6 +2,7 @@ package sim
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"slices"
 	"testing"
@@ -27,11 +28,20 @@ func TestReferenceSolutions(t *testing.T) {
 	if err := json.Unmarshal(raw, &sols); err != nil {
 		t.Fatal(err)
 	}
-	if len(pack.Levels) != 30 {
-		t.Fatalf("30 ta daraja kutilgan, %d bor", len(pack.Levels))
+	if len(pack.Levels) != 36 {
+		t.Fatalf("36 ta daraja kutilgan, %d bor", len(pack.Levels))
 	}
 	for _, l := range pack.Levels {
-		gates, wrong, cerr := Check(specOf(&l), l.Target, sols[l.ID])
+		var (
+			gates int
+			wrong []int
+			cerr  *Error
+		)
+		if l.Seq != nil {
+			gates, wrong, cerr = CheckSeq(specOf(&l), Machine{Next: l.Seq.Next, Out: l.Seq.Out}, sols[l.ID])
+		} else {
+			gates, wrong, cerr = Check(specOf(&l), l.Target, sols[l.ID])
+		}
 		if cerr != nil || len(wrong) > 0 || gates != l.Goal {
 			t.Errorf("%s: err=%v wrong=%v gates=%d goal=%d", l.ID, cerr, wrong, gates, l.Goal)
 		}
@@ -94,5 +104,59 @@ func TestStars(t *testing.T) {
 		if got := Stars(tc[0], tc[1]); got != tc[2] {
 			t.Errorf("Stars(%d,%d)=%d", tc[0], tc[1], got)
 		}
+	}
+}
+
+// D-trigger: u orqali aylana sikl emas; avtomat bilan solishtirish TS dagi bilan bir xil eng qisqa
+// farqni topadi (web/src/sim/sim.test.ts dagi s3 testi).
+func TestSequential(t *testing.T) {
+	pack, err := levels.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s3, _ := pack.Level("s3")
+	spec := specOf(s3)
+	m := Machine{Next: s3.Seq.Next, Out: s3.Seq.Out}
+
+	toggle := Circuit{
+		Gates: []Gate{{ID: "x", Type: "XOR"}, {ID: "d", Type: "DFF"}},
+		Wires: []Wire{{"in:T", "x:0"}, {"d", "x:1"}, {"x", "d:0"}, {"d", "out:Q"}},
+	}
+	if gates, trace, err := CheckSeq(spec, m, toggle); err != nil || trace != nil || gates != 2 {
+		t.Fatalf("almashtirgich: gates=%d trace=%v err=%v", gates, trace, err)
+	}
+
+	delay := Circuit{
+		Gates: []Gate{{ID: "d", Type: "DFF"}},
+		Wires: []Wire{{"in:T", "d:0"}, {"d", "out:Q"}},
+	}
+	if _, trace, err := CheckSeq(spec, m, delay); err != nil || !slices.Equal(trace, []int{1, 0, 0}) {
+		t.Fatalf("kechikish: trace=%v err=%v", trace, err)
+	}
+
+	// Triggersiz aylana — sikl.
+	loop := Circuit{
+		Gates: []Gate{{ID: "x", Type: "XOR"}},
+		Wires: []Wire{{"in:T", "x:0"}, {"x", "x:1"}, {"x", "out:Q"}},
+	}
+	if err := Validate(spec, loop); err == nil || err.Code != "cycle" {
+		t.Fatalf("sikl: %v", err)
+	}
+
+	many := Circuit{Wires: []Wire{{"in:T", "out:Q"}}}
+	for i := range MaxFlipflops + 1 {
+		id := fmt.Sprintf("d%d", i)
+		many.Gates = append(many.Gates, Gate{ID: id, Type: "DFF"})
+		many.Wires = append(many.Wires, Wire{"in:T", id + ":0"})
+	}
+	if err := Validate(spec, many); err == nil || err.Code != "too_many_flipflops" {
+		t.Fatalf("ko'p trigger: %v", err)
+	}
+
+	// Kombinatsion darajada DFF ruxsat etilmaydi.
+	b1, _ := pack.Level("b1")
+	dff := Circuit{Gates: []Gate{{ID: "d", Type: "DFF"}}, Wires: []Wire{{"in:A", "d:0"}, {"d", "out:Q"}}}
+	if err := Validate(specOf(b1), dff); err == nil || err.Code != "gate_not_allowed" {
+		t.Fatalf("b1 da DFF: %v", err)
 	}
 }

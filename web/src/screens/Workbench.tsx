@@ -1,21 +1,25 @@
 import { useSignal } from '@preact/signals';
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { sfx } from '../audio';
 import { Board } from '../board/Board';
-import type { Editor } from '../board/editor';
+import { MAX_TICKS, type Editor } from '../board/editor';
 import { GateList } from '../components/GateList';
 import { HintPanel } from '../components/HintPanel';
 import { Palette } from '../components/Palette';
 import { showToast } from '../components/Toast';
+import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
-import { check, depths, expected, type SimError } from '../sim/sim';
+import { check, depths, expected, machineOut, machineReplay, type SimError } from '../sim/sim';
 import type { Circuit, Level } from '../sim/types';
 import { useEditorKeys } from './useEditorKeys';
 
 type RowState = 'wait' | 'cur' | 'ok' | 'bad';
+
+/** Ketma-ket tekshiruvda ko'pi bilan shuncha takt o'ynab ko'rsatiladi (oxirgilari). */
+const SEQ_WINDOW = 16;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const reducedMotion = () => {
@@ -70,6 +74,8 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   const showSide = useSignal(false);
   /** Tekshiruv qatorlari holati; null — tekshiruv ko'rsatilmayapti. */
   const rowStates = useSignal<RowState[] | null>(null);
+  /** Ketma-ket tekshiruvda birinchi ko'rsatilgan taktning raqami (uzun ketma-ketlikda oxirgilari). */
+  const stripOffset = useSignal(0);
   const solvedRef = useRef(onSolved);
   solvedRef.current = onSolved;
   // Joriy tekshiruv: skip — oxiriga sakrash, dead — ekran yopildi.
@@ -81,7 +87,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     hideTimer.current = setTimeout(() => (rowStates.value = null), 2500);
   };
 
-  useEditorKeys(editor);
+  useEditorKeys(editor, { clock: level.gates.includes('DFF') });
 
   useEffect(
     () => () => {
@@ -146,6 +152,70 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     return !me.dead;
   };
 
+  /**
+   * Ketma-ket masala: qatorlar ketma-ketligi taktma-takt o'ynaladi — har taktda signal oqadi,
+   * keyin takt bosiladi. Xato bo'lsa, oxirgi (xato) taktda to'xtaydi.
+   */
+  const animateSeq = async (trace: number[], wrong: number) => {
+    const me = { skip: false, dead: false };
+    run.current = me;
+    clearTimeout(hideTimer.current);
+    editor.busy.value = true;
+    editor.selection.value = null;
+    editor.pending.value = null;
+    const last = trace.length - 1;
+    // Uzun ketma-ketlikda faqat oxirgi taktlar o'ynaladi (xato shu yerda) — oldingilari darhol.
+    const start = Math.max(0, trace.length - SEQ_WINDOW);
+    stripOffset.value = start;
+    const maxDepth = Math.max(0, ...depths(editor.compiled.value).values());
+    const time = checkTiming(trace.length - start, maxDepth);
+    const steps: RowState[] = Array(trace.length - start).fill('wait');
+    const show = () => (rowStates.value = steps.slice());
+    editor.history.value = trace.slice(0, start);
+    try {
+      for (let i = start; i <= last && !me.skip && !me.dead; i++) {
+        steps[i - start] = 'cur';
+        show();
+        editor.setRow(trace[i]);
+        for (let k = 0; k < time.steps && !me.skip && !me.dead; k += time.stride) {
+          editor.wave.value = k;
+          await sleep(time.step);
+        }
+        editor.wave.value = null;
+        steps[i - start] = i === wrong ? 'bad' : 'ok';
+        show();
+        if (i !== wrong && !me.dead) sfx.tick(i - start);
+        if (!me.skip) await sleep(time.hold);
+        if (i < last && !me.skip && !me.dead) editor.history.value = trace.slice(0, i + 1);
+      }
+      if (me.skip && !me.dead) {
+        for (let i = start; i <= last; i++) steps[i - start] = i === wrong ? 'bad' : 'ok';
+        show();
+      }
+    } finally {
+      editor.wave.value = null;
+      editor.busy.value = false;
+      if (run.current === me) run.current = null;
+    }
+    if (!me.dead) {
+      editor.history.value = trace.slice(0, last);
+      editor.setRow(trace[last]);
+    }
+    return !me.dead;
+  };
+
+  /** Ketma-ket masalada xato: maydon xato taktda turadi, diagrammada qizil katakcha. */
+  const finishSeq = (trace: number[]) => {
+    sfx.error();
+    const seq = level.seq!;
+    const row = trace[trace.length - 1];
+    const want = machineOut(seq, machineReplay(seq, trace.slice(0, -1)), row);
+    const got = editor.evaluation.value.outputs;
+    const names = level.outputs.filter((_, i) => got[i] !== want[i]).join(', ');
+    showSide.value = true;
+    showToast(t.play.seqWrong(trace.length, names), 'error');
+  };
+
   const runCheck = async () => {
     if (run.current) {
       run.current.skip = true;
@@ -162,7 +232,25 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
       showToast(errorMessage(res.error), 'error');
       return;
     }
-    const wrongRows = res.ok ? [] : res.wrongRows;
+    if (level.seq) {
+      const trace = res.ok ? level.seq.example : 'trace' in res ? res.trace : [];
+      const wrong = res.ok ? -1 : trace.length - 1;
+      if (!reducedMotion()) {
+        if (!(await animateSeq(trace, wrong))) return;
+        hideRowsLater();
+      } else if (!res.ok) {
+        editor.history.value = trace.slice(0, -1);
+        editor.setRow(trace[trace.length - 1]);
+      }
+      if (!res.ok) {
+        finishSeq(trace);
+        return;
+      }
+      sfx.success();
+      solvedRef.current({ circuit, gates: res.gates, stars: res.stars });
+      return;
+    }
+    const wrongRows = res.ok ? [] : 'wrongRows' in res ? res.wrongRows : [];
     if (!reducedMotion()) {
       if (!(await animate(1 << level.inputs.length, wrongRows[0] ?? -1))) return;
       hideRowsLater();
@@ -194,7 +282,14 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   const rows = editor.table.value;
   const row = editor.row.value;
   const used = editor.circuit.value.gates.length;
-  const allOk = rows.every((got, r) => expected(level, r).every((v, i) => got[i] === v));
+  const seq = level.seq;
+  const history = editor.history.value;
+  // Ketma-ket masala: to'liq tekshiruv arzon (bir necha holat), shuning uchun har o'zgarishda.
+  const compiled = editor.compiled.value;
+  const seqOk = useMemo(() => !!seq && check(level, editor.circuit.peek()).ok, [level, compiled]);
+  const live = useMemo(() => (seq ? traceSteps(compiled, [...history, row], seq) : []), [seq, compiled, history, row]);
+  const allOk = seq ? seqOk : rows.every((got, r) => expected(level, r).every((v, i) => got[i] === v));
+  const want = seq ? machineOut(seq, machineReplay(seq, history), row) : expected(level, row);
 
   return (
     <div class={`screen play${busy ? ' checking' : ''}`}>
@@ -218,7 +313,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
 
       <div class="play-body">
         <div class={`stage${states ? ' has-check' : ''}`}>
-          <Board editor={editor} expected={expected(level, row)} topInset={topInset} />
+          <Board editor={editor} expected={want} topInset={topInset} />
           <button class="task-strip" onClick={() => (showSide.value = !showSide.value)}>
             <span class="task-text">{level.task}</span>
             <span class={`count${used && used <= level.goal ? ' good' : ''}`}>
@@ -226,7 +321,13 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
             </span>
           </button>
           {banner}
-          {states && <CheckStrip states={states} busy={busy} />}
+          {states && (
+            <CheckStrip
+              states={states}
+              busy={busy}
+              label={seq ? (i) => t.play.stepLabel(i + stripOffset.value) : t.play.rowLabel}
+            />
+          )}
           {busy && (
             <button
               class="skip-layer"
@@ -236,6 +337,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
             />
           )}
           <ZoomTools editor={editor} />
+          {level.gates.includes('DFF') && <ClockTools editor={editor} />}
         </div>
 
         <aside class={`side${showSide.value ? ' open' : ''}`}>
@@ -248,15 +350,34 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
             </div>
             <HintPanel level={level} editor={editor} onPlaced={() => (showSide.value = false)} />
           </section>
-          <TruthTable
-            inputs={level.inputs}
-            outputs={level.outputs}
-            rows={rows}
-            target={level.target}
-            current={row}
-            onRow={(r) => editor.setRow(r)}
-          />
-          {allOk && <p class="all-ok">{t.play.rowsOk}</p>}
+          {seq ? (
+            <>
+              <Timeline
+                title={t.play.example}
+                inputs={level.inputs}
+                outputs={level.outputs}
+                steps={traceSteps(null, seq.example, seq)}
+              />
+              <Timeline
+                title={t.play.yourRun}
+                inputs={level.inputs}
+                outputs={level.outputs}
+                steps={live}
+                now
+                note={history.length ? undefined : t.play.liveHint}
+              />
+            </>
+          ) : (
+            <TruthTable
+              inputs={level.inputs}
+              outputs={level.outputs}
+              rows={rows}
+              target={level.target}
+              current={row}
+              onRow={(r) => editor.setRow(r)}
+            />
+          )}
+          {allOk && <p class="all-ok">{seq ? t.play.seqOk : t.play.rowsOk}</p>}
           <GateList gates={level.gates} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}
@@ -268,7 +389,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
         <Palette editor={editor} gates={level.gates} />
         <div class="actions">
           <button class="btn table-toggle" onClick={() => (showSide.value = !showSide.value)}>
-            <Icon name="table" /> {t.play.table}
+            <Icon name="table" /> {seq ? t.play.diagram : t.play.table}
           </button>
           <button class={`btn primary check${allOk && !busy ? ' pulse' : ''}`} onClick={runCheck}>
             {busy ? t.play.skip : t.play.check}
@@ -281,17 +402,40 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   );
 }
 
-/** Tekshiruv qatorlari: kutmoqda / tekshirilmoqda / to'g'ri / xato. */
-function CheckStrip({ states, busy }: { states: RowState[]; busy: boolean }) {
+/** Tekshiruv qatorlari (ketma-ket masalada — taktlar): kutmoqda / tekshirilmoqda / to'g'ri / xato. */
+function CheckStrip({ states, busy, label: cellLabel }: { states: RowState[]; busy: boolean; label: (i: number) => string }) {
   const label = busy ? t.play.checking : states.includes('bad') ? '✗' : '✓';
   return (
     <div class={`check-strip${busy ? '' : ' done'}${states.includes('bad') ? ' bad' : ''}`} role="status">
       <span class="check-label">{label}</span>
       <span class={`check-cells${states.length > 16 ? ' tiny' : ''}`}>
         {states.map((st, r) => (
-          <i key={r} class={st} title={t.play.rowLabel(r)} />
+          <i key={r} class={st} title={cellLabel(r)} />
         ))}
       </span>
+    </div>
+  );
+}
+
+/** Xotirali sxema: takt (vaqtni bir qadam oldinga) va vaqtni boshiga qaytarish. */
+export function ClockTools({ editor }: { editor: Editor }) {
+  const steps = editor.history.value.length;
+  const busy = editor.busy.value;
+  return (
+    <div class="clock-tools">
+      <button
+        class="icon-btn"
+        onClick={() => editor.resetClock()}
+        disabled={!steps || busy}
+        title={t.play.resetClock}
+        aria-label={t.play.resetClock}
+      >
+        <Icon name="reset" />
+      </button>
+      <button class="btn clock-btn" onClick={() => editor.tick()} disabled={busy || steps >= MAX_TICKS} title={`${t.play.tick} (T)`}>
+        <Icon name="clock" /> {t.play.tick}
+        <span class="clock-count">{steps}</span>
+      </button>
     </div>
   );
 }

@@ -128,9 +128,10 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 9. **M8 — Qaytib kelish uchun sabablar (bajarildi):** kunlik boshqotirma (isbotlangan minimum, kunlik reyting, seriya), tekshiruv animatsiyasi, bosqichli maslahat, do'stlar masalasi (havolada), 17 ta yutuq, rus tili.
 
 10. **M9 — Domen va HTTPS (bajarildi):** https://logic.noesis.uz, eski manzildan natijalarni ko'chirish, PWA, oflayn rejim.
+11. **M10 — Xotira (bajarildi):** D-trigger, takt, vaqt diagrammasi, avtomat bilan tekshiruv va eng qisqa qarshi misol; 6 ta yangi daraja (kechikish, front, almashtirgich, xotira katakchasi, hisoblagich, kod qulfi).
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 
 - Telegram Mini App — bot tokeni kerak.
 - Zaxira nusxalarni serverdan tashqariga avtomatik ko'chirish — qayerga (Google Drive, S3 va h.k.) va kirish ma'lumotlari kerak.
-- Ketma-ket sxemalar (trigger, hisoblagich) — simulyatorga vaqt qo'shiladigan katta bo'lim.
+- Xotirali sxemalardan do'stlar masalasi (havolada avtomat jadvalini saqlash).
