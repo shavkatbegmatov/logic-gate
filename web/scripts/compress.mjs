@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 const dist = new URL('../dist/', import.meta.url).pathname.replace(/^\/(\w:)/, '$1');
-const exts = /\.(js|css|html|svg|json|txt)$/;
+const exts = /\.(js|css|html|svg|json|txt|webmanifest)$/;
 let raw = 0;
 let packed = 0;
 

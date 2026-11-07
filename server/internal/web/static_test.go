@@ -23,6 +23,7 @@ func setup(t *testing.T) string {
 	}
 	write("index.html", "<!doctype html>index")
 	write("assets/app-123.js", "console.log('app')")
+	write("manifest.webmanifest", `{"name":"Logic Gate"}`)
 	f, _ := os.Create(filepath.Join(dir, "assets", "app-123.js.gz"))
 	gz := gzip.NewWriter(f)
 	gz.Write([]byte("console.log('app')"))
@@ -60,6 +61,11 @@ func TestStatic(t *testing.T) {
 	}
 	if !strings.Contains(rec.Header().Get("Cache-Control"), "immutable") {
 		t.Errorf("assets keshlanmaydi: %s", rec.Header().Get("Cache-Control"))
+	}
+
+	// PWA manifest to'g'ri turda (aks holda brauzer uni e'tiborsiz qoldiradi).
+	if rec := get(h, "/manifest.webmanifest", ""); rec.Header().Get("Content-Type") != "application/manifest+json" {
+		t.Errorf("manifest Content-Type: %s", rec.Header().Get("Content-Type"))
 	}
 
 	rec = get(h, "/assets/app-123.js", "")

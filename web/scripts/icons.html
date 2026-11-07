@@ -1,0 +1,38 @@
+<!doctype html>
+<!--
+  Ilova ikonkalari manbasi (PWA va Apple). PNG lar shu sahifadan headless brauzerda olinadi:
+  ?kind=any&size=512 — favicon ko'rinishi (yumaloq burchak, shaffof fon);
+  ?kind=full&size=512 — butun maydon to'q fonda (maskable va Apple: tizim o'zi kesadi).
+-->
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: transparent;
+      }
+      svg {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const q = new URLSearchParams(location.search);
+      const size = Number(q.get('size') || 512);
+      const full = q.get('kind') === 'full';
+      // Maskable: muhim qism markaziy 80% doira ichida bo'lishi kerak — belgi kichikroq chiziladi.
+      const inner = full
+        ? `<rect width="64" height="64" fill="#07110d"/><g transform="translate(32 32) scale(0.62) translate(-32 -32)">`
+        : `<rect width="64" height="64" rx="14" fill="#07110d"/><g>`;
+      document.body.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
+        ${inner}
+          <path d="M6 24h14M6 40h14M48 32h10" stroke="#3dffa0" stroke-width="4" stroke-linecap="round"/>
+          <path d="M20 12h12a20 20 0 0 1 0 40H20Z" fill="#0f2a20" stroke="#3dffa0" stroke-width="4" stroke-linejoin="round"/>
+        </g>
+      </svg>`;
+    </script>
+  </body>
+</html>

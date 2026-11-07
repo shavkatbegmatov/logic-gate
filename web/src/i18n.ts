@@ -198,6 +198,13 @@ Sen ham urinib ko'r!`,
     beatAuthor: { title: "Muallifdan o'tdingiz", text: "Do'st masalasini muallifdan kam element bilan yeching." },
   },
 
+  migrate: {
+    title: (host: string) => `O'yin yangi manzilga ko'chdi: ${host}`,
+    text: "Natijalaringiz shu manzilda saqlangan. Ularni yangi manzilga o'zingiz bilan olib o'ting — bir bosish kifoya.",
+    button: "Natijalarim bilan o'tish",
+    done: "Natijalaringiz yangi manzilga ko'chirildi.",
+  },
+
   sandbox: {
     title: 'Qum quti',
     text: "Istalgan sxemani erkin yig'ing va uning haqiqat jadvalini kuzating. Tayyor sxemani «Masala qilish» bilan do'stlarga yuboring.",
@@ -480,6 +487,13 @@ export const ru: typeof uz = {
     creator: { title: 'Создатель', text: 'Создайте задачу в песочнице и отправьте друзьям.' },
     friend: { title: 'Дружеский', text: 'Решите задачу, присланную другом.' },
     beatAuthor: { title: 'Лучше автора', text: 'Решите задачу друга меньшим числом элементов, чем автор.' },
+  },
+
+  migrate: {
+    title: (host: string) => `Игра переехала на новый адрес: ${host}`,
+    text: 'Ваши результаты сохранены на этом адресе. Возьмите их с собой на новый — достаточно одного нажатия.',
+    button: 'Перейти с результатами',
+    done: 'Ваши результаты перенесены на новый адрес.',
   },
 
   sandbox: {

@@ -1,7 +1,8 @@
 import { Fragment } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { Toast } from './components/Toast';
-import { lang } from './i18n';
+import { showToast, Toast } from './components/Toast';
+import { imported } from './migrate';
+import { lang, t } from './i18n';
 import { route } from './router';
 import './achievements';
 import { Achievements } from './screens/Achievements';
@@ -17,6 +18,7 @@ import { syncProgress } from './sync';
 
 export function App() {
   useEffect(() => {
+    if (imported > 0) showToast(t.migrate.done, 'ok', 5000);
     // Ilova ochilganda yuborilmagan natijalar jo'natiladi; aloqa bo'lmasa — jim.
     syncProgress().catch(() => {});
     const onOnline = () => syncProgress().catch(() => {});

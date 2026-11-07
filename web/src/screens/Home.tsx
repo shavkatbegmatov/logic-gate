@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { levels, MAX_STARS } from '../levels';
 import { go } from '../router';
 import { continueLevel, profile, solvedCount, totalStars } from '../state';
+import { hasProgress, moveUrl, onOldHost, siteHost } from '../migrate';
 import { LangSwitch } from './Settings';
 
 export function Home() {
@@ -15,6 +16,7 @@ export function Home() {
     <div class="screen home">
       <div class="home-inner">
         <Logo />
+        {onOldHost() && hasProgress() && <MoveBanner />}
         <p class="tagline">{t.tagline}</p>
         {profile.value && <p class="hello">{t.home.hello(profile.value.nickname)}</p>}
         <div class="home-stats">
@@ -52,6 +54,19 @@ export function Home() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Eski manzilda: natijalar bilan yangi manzilga o'tish. */
+function MoveBanner() {
+  return (
+    <div class="card move-banner">
+      <strong>{t.migrate.title(siteHost() ?? '')}</strong>
+      <p class="muted">{t.migrate.text}</p>
+      <a class="btn primary" href={moveUrl()}>
+        {t.migrate.button}
+      </a>
     </div>
   );
 }

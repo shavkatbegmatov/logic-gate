@@ -20,6 +20,11 @@ var securityHeaders = map[string]string{
 	"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 }
 
+func init() {
+	// Go'ning standart ro'yxatida yo'q; distroless'da /etc/mime.types ham yo'q.
+	mime.AddExtensionType(".webmanifest", "application/manifest+json")
+}
+
 // Static dir papkasidagi fayllarni uzatadi. Topilmagan yo'llar uchun index.html qaytariladi.
 func Static(dir string) http.Handler {
 	root := os.DirFS(dir)
