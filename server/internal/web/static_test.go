@@ -24,6 +24,7 @@ func setup(t *testing.T) string {
 	write("index.html", "<!doctype html>index")
 	write("assets/app-123.js", "console.log('app')")
 	write("manifest.webmanifest", `{"name":"Logic Gate"}`)
+	write("sw.js", "self.addEventListener('fetch', () => {})")
 	f, _ := os.Create(filepath.Join(dir, "assets", "app-123.js.gz"))
 	gz := gzip.NewWriter(f)
 	gz.Write([]byte("console.log('app')"))
@@ -81,6 +82,15 @@ func TestStatic(t *testing.T) {
 		if rec.Header().Get("Cache-Control") != "no-cache" || rec.Header().Get("Content-Security-Policy") == "" {
 			t.Errorf("%s sarlavhalari: %v", p, rec.Header())
 		}
+	}
+
+	// Yo'q xeshli fayl — 404 (index.html emas), service worker uni keshlab qo'ymasin.
+	if rec := get(h, "/assets/app-old.js", ""); rec.Code != http.StatusNotFound {
+		t.Errorf("eski asset: %d %q", rec.Code, rec.Body.String())
+	}
+	// Service worker har safar tekshiriladi — yangi versiya darhol topiladi.
+	if rec := get(h, "/sw.js", ""); rec.Header().Get("Cache-Control") != "no-cache" || !strings.Contains(rec.Header().Get("Content-Type"), "javascript") {
+		t.Errorf("sw.js sarlavhalari: %v", rec.Header())
 	}
 
 	req := httptest.NewRequest("POST", "/", nil)

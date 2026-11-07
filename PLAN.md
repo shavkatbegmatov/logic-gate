@@ -127,7 +127,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 8. **M7 — Joylash va o'sish (bajarildi):** Coolify + GitHub Actions avto-deploy, kunlik zaxira, taxallus moderatsiyasi, telefonda vertikal maydon, yangi element kartalari, Open Graph, ulashish.
 9. **M8 — Qaytib kelish uchun sabablar (bajarildi):** kunlik boshqotirma (isbotlangan minimum, kunlik reyting, seriya), tekshiruv animatsiyasi, bosqichli maslahat, do'stlar masalasi (havolada), 17 ta yutuq, rus tili.
 
-10. **M9 — Domen va HTTPS (bajarildi):** https://logic.noesis.uz, eski manzildan natijalarni ko'chirish, PWA.
+10. **M9 — Domen va HTTPS (bajarildi):** https://logic.noesis.uz, eski manzildan natijalarni ko'chirish, PWA, oflayn rejim.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 

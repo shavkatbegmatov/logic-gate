@@ -36,6 +36,12 @@ func Static(dir string) http.Handler {
 		}
 		name := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
 		if info, err := fs.Stat(root, name); name == "" || err != nil || info.IsDir() {
+			// Eski versiyaning fayli (nomida xesh) — sahifa emas, 404: aks holda brauzer yoki
+			// service worker HTML'ni skript deb oladi.
+			if err != nil && strings.HasPrefix(name, "assets/") {
+				http.NotFound(w, r)
+				return
+			}
 			name = "index.html"
 		}
 

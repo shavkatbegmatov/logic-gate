@@ -3,6 +3,7 @@
   "short_name": "Logic Gate",
   "description": "Mantiqiy elementlardan sxema yig'ib, boshqotirmalarni yechadigan o'yin.",
   "lang": "uz",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

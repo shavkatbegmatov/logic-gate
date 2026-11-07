@@ -6,7 +6,7 @@
   "scripts": {
     "levels": "node ../levels/build.mjs",
     "dev": "npm run levels && vite",
-    "build": "npm run levels && tsc --noEmit && vite build && node scripts/compress.mjs",
+    "build": "npm run levels && tsc --noEmit && vite build && node scripts/sw.mjs && node scripts/compress.mjs",
     "preview": "vite preview",
     "test": "npm run levels && vitest run",
     "typecheck": "tsc --noEmit"

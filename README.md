@@ -317,6 +317,12 @@ O'zbekcha (standart) va ruscha. Til bosh sahifadagi va sozlamalardagi tugma bila
 
 Qum qutida yig'ilgan sxemadan «Masala qilish» masala yaratadi: uning haqiqat jadvali — vazifa, muallif ishlatgan elementlar soni — maqsad, ruxsat etilgan elementlar — muallif ishlatganlari. Masala butunlay havolaning o'zida (`#/p/<kod>`, ~150 belgi): ixcham JSON → base64url. Server va baza ishtirok etmaydi; natijalar faqat qurilmada (`lg.custom.v1`). Havola o'qilganda qat'iy tekshiriladi, buzilgan bo'lsa xabar chiqadi.
 
+## Oflayn rejim
+
+HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. `vite dev` da service worker yo'q.
+
+Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'lumotlarini tozalash"ni maslahat bermang — natijalar ham o'chadi. Buning o'rniga `sw.js` ni o'zini o'chiradigan versiya bilan deploy qiling (`self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', () => self.registration.unregister());`): brauzer `sw.js` ni har ochilishda tekshiradi (`Cache-Control: no-cache`). Ishlab chiqishda: DevTools → Application → Service workers → Unregister.
+
 ## API
 
 | Metod | Yo'l | Vazifa |
