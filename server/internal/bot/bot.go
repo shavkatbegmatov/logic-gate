@@ -247,9 +247,16 @@ func (b *Bot) onCallback(ctx context.Context, cb *CallbackQuery) {
 	if err := b.tg.AnswerCallback(ctx, cb.ID, note); err != nil {
 		b.log.Warn("telegram answerCallback", "err", err)
 	}
-	// Xabardagi tugmalar yangi holatga moslanadi (boshqa tugmalar o'zgarmaydi).
-	if m := cb.Message; m != nil && m.ReplyMarkup != nil {
-		kb := Keyboard{}
+	// Xabardagi tugmalar yangi holatga moslanadi (boshqa tugmalar o'zgarmaydi). Telegram xabarni
+	// tugmalarisiz yuborgan bo'lsa — asosiy tugmalar qayta quriladi.
+	m := cb.Message
+	if m == nil || m.MessageID == 0 {
+		b.log.Info("telegram callback: xabar yo'q, tugmalar yangilanmadi")
+		return
+	}
+	var kb *Keyboard
+	if m.ReplyMarkup != nil && len(m.ReplyMarkup.InlineKeyboard) > 0 {
+		kb = &Keyboard{}
 		for _, row := range m.ReplyMarkup.InlineKeyboard {
 			next := make([]Button, len(row))
 			for i, btn := range row {
@@ -260,9 +267,16 @@ func (b *Bot) onCallback(ctx context.Context, cb *CallbackQuery) {
 			}
 			kb.InlineKeyboard = append(kb.InlineKeyboard, next)
 		}
-		if err := b.tg.EditReplyMarkup(ctx, m.Chat.ID, m.MessageID, &kb); err != nil {
-			b.log.Warn("telegram editMarkup", "err", err)
-		}
+	} else {
+		b.log.Info("telegram callback: xabarda tugmalar kelmadi, asosiy tugmalar qo'yiladi")
+		kb = b.mainKeyboard(lang, on)
+	}
+	chat = m.Chat.ID
+	if chat == 0 {
+		chat = cb.From.ID
+	}
+	if err := b.tg.EditReplyMarkup(ctx, chat, m.MessageID, kb); err != nil {
+		b.log.Warn("telegram editMarkup", "err", err)
 	}
 }
 

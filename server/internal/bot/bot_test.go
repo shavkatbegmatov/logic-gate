@@ -353,3 +353,42 @@ func TestSendBackupAndTokenInErrors(t *testing.T) {
 		t.Fatalf("xato matni: %v", err)
 	}
 }
+
+// Telegram yuboradigan haqiqiy shakldagi callback (JSON) — tugmalar bilan va tugmalarsiz.
+func TestCallbackFromRawJSON(t *testing.T) {
+	b, fake, st := setup(t)
+	ctx := context.Background()
+	const withMarkup = `{"update_id":5,"callback_query":{"id":"q1","from":{"id":42,"is_bot":false,"first_name":"Ali","language_code":"ru"},
+		"message":{"message_id":77,"from":{"id":1,"is_bot":true,"first_name":"Logic Gate","username":"LogicGateUzBot"},
+		"chat":{"id":42,"first_name":"Ali","type":"private"},"date":1700000000,"text":"Salom!",
+		"reply_markup":{"inline_keyboard":[[{"text":"🎮 O'ynash","web_app":{"url":"https://logic.noesis.uz"}}],
+		[{"text":"🔔 Har kuni eslatish","callback_data":"remind:on"}],[{"text":"🇷🇺 Русский","callback_data":"lang:ru"}]]}},
+		"chat_instance":"-1","data":"remind:on"}}`
+	var u Update
+	if err := json.Unmarshal([]byte(withMarkup), &u); err != nil {
+		t.Fatal(err)
+	}
+	b.Handle(ctx, u)
+	edits := fake.take("editMessageReplyMarkup")
+	if len(edits) != 1 || num(edits[0].Params["chat_id"]) != 42 || num(edits[0].Params["message_id"]) != 77 {
+		t.Fatalf("tahrir: %+v", edits)
+	}
+	kb := keyboard(t, edits[0])
+	if kb[0][0]["web_app"] == nil || kb[1][0]["callback_data"] != "remind:off" || kb[2][0]["callback_data"] != "lang:ru" {
+		t.Fatalf("tugmalar: %v", kb)
+	}
+	if c, _ := st.Chat(ctx, 42); !c.Remind {
+		t.Fatal("eslatma yoqilmadi")
+	}
+
+	// Tugmalarsiz xabar — asosiy tugmalar qayta quriladi (o'chirish holatida).
+	const noMarkup = `{"update_id":6,"callback_query":{"id":"q2","from":{"id":42,"is_bot":false,"first_name":"Ali"},
+		"message":{"message_id":78,"chat":{"id":42,"type":"private"},"date":1700000000,"text":"Salom!"},"data":"remind:off"}}`
+	u = Update{}
+	json.Unmarshal([]byte(noMarkup), &u)
+	b.Handle(ctx, u)
+	edits = fake.take("editMessageReplyMarkup")
+	if len(edits) != 2 || num(edits[1].Params["message_id"]) != 78 || keyboard(t, edits[1])[1][0]["callback_data"] != "remind:on" {
+		t.Fatalf("tugmalarsiz xabar: %+v", edits)
+	}
+}
