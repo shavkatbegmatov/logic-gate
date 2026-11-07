@@ -50,7 +50,7 @@ func TestTelegramRemind(t *testing.T) {
 
 	// Yoqish (tiklash kodi bilan — chat o'yinchiga bog'lanadi).
 	code := e.player("Ali")
-	if status, out := e.do("POST", "/api/telegram/remind", code, map[string]any{"initData": "ok:42", "on": true}); status != 200 || out["remind"] != true {
+	if status, out := e.do("POST", "/api/telegram/remind", code, map[string]any{"initData": "ok:42", "on": true, "lang": "ru"}); status != 200 || out["remind"] != true {
 		t.Fatalf("yoqish: %d %v", status, out)
 	}
 	c, err := e.api.store.Chat(context.Background(), 42)

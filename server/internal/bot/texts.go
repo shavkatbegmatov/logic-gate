@@ -6,6 +6,7 @@ type texts struct {
 	Play           string
 	RemindOn       string
 	RemindOff      string
+	SwitchLang     string // boshqa tilga o'tish tugmasi (o'sha tilda yozilgan)
 	RemindEnabled  string // %d — eslatma soati (Toshkent)
 	RemindDisabled string
 	CallbackOn     string
@@ -28,6 +29,7 @@ var msgs = map[string]texts{
 		Play:           "🎮 O'ynash",
 		RemindOn:       "🔔 Har kuni eslatish",
 		RemindOff:      "🔕 Eslatmani o'chirish",
+		SwitchLang:     "🇷🇺 Русский",
 		RemindEnabled:  "Kunlik eslatma yoqildi: har kuni soat %d:00 da (Toshkent) bugungi masala haqida xabar beraman. Masalani yechgan kuningiz yozmayman.",
 		RemindDisabled: "Kunlik eslatma o'chirildi. Qayta yoqish — /eslatma.",
 		CallbackOn:     "Eslatma yoqildi ✅",
@@ -38,12 +40,13 @@ var msgs = map[string]texts{
 		Solvers:        "Bugun %d kishi yechdi.",
 		First:          "Birinchilardan bo'ling!",
 		Help: "Logic Gate — mantiqiy sxemalar o'yini.\n\n" +
-			"/start — o'yinni ochish\n/eslatma — kunlik eslatmani yoqish yoki o'chirish\n/id — Telegram ID'ingiz",
+			"/start — o'yinni ochish\n/eslatma — kunlik eslatmani yoqish yoki o'chirish\n/til — Русский язык\n/id — Telegram ID'ingiz",
 		ID:    "Telegram ID'ingiz: %d",
 		Tiers: [6]string{"", "oson", "yengil", "o'rtacha", "qiyin", "juda qiyin"},
 		Commands: []Command{
 			{"start", "O'yinni ochish"},
 			{"eslatma", "Kunlik eslatmani yoqish yoki o'chirish"},
+			{"til", "Tilni almashtirish: Русский"},
 			{"id", "Telegram ID'ingiz"},
 			{"help", "Yordam"},
 		},
@@ -54,6 +57,7 @@ var msgs = map[string]texts{
 		Play:           "🎮 Играть",
 		RemindOn:       "🔔 Напоминать каждый день",
 		RemindOff:      "🔕 Выключить напоминание",
+		SwitchLang:     "🇺🇿 O'zbekcha",
 		RemindEnabled:  "Ежедневное напоминание включено: каждый день в %d:00 (по Ташкенту) напишу о новой задаче. В день, когда вы её решили, не пишу.",
 		RemindDisabled: "Ежедневное напоминание выключено. Включить снова — /eslatma.",
 		CallbackOn:     "Напоминание включено ✅",
@@ -64,12 +68,13 @@ var msgs = map[string]texts{
 		Solvers:        "Сегодня решили: %d.",
 		First:          "Будьте среди первых!",
 		Help: "Logic Gate — игра про логические схемы.\n\n" +
-			"/start — открыть игру\n/eslatma — включить или выключить ежедневное напоминание\n/id — ваш Telegram ID",
+			"/start — открыть игру\n/eslatma — включить или выключить ежедневное напоминание\n/til — o'zbek tili\n/id — ваш Telegram ID",
 		ID:    "Ваш Telegram ID: %d",
 		Tiers: [6]string{"", "легко", "несложно", "средне", "сложно", "очень сложно"},
 		Commands: []Command{
 			{"start", "Открыть игру"},
 			{"eslatma", "Ежедневное напоминание: вкл/выкл"},
+			{"til", "Сменить язык: o'zbekcha"},
 			{"id", "Ваш Telegram ID"},
 			{"help", "Помощь"},
 		},

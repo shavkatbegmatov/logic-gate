@@ -150,8 +150,20 @@ func TestStartAndRemindButton(t *testing.T) {
 	if kb[0][0]["web_app"].(map[string]any)["url"] != "https://logic.noesis.uz" || kb[1][0]["callback_data"] != "remind:on" {
 		t.Fatalf("tugmalar: %v", kb)
 	}
-	if c, err := st.Chat(ctx, 42); err != nil || c.Lang != "ru" || c.Remind {
+	// Telegram ilovasi ruscha bo'lsa ham, bot o'yin kabi o'zbekchadan boshlaydi.
+	if c, err := st.Chat(ctx, 42); err != nil || c.Lang != "uz" || c.Remind {
 		t.Fatalf("chat: %+v %v", c, err)
+	}
+	if kb[2][0]["callback_data"] != "lang:ru" {
+		t.Fatalf("til tugmasi: %v", kb[2])
+	}
+	// Til tugmasi: ruschaga o'tadi va salomlashuv ruscha qayta keladi.
+	b.Handle(ctx, Update{CallbackQuery: &CallbackQuery{ID: "cb0", From: User{ID: 42}, Data: "lang:ru"}})
+	if c, _ := st.Chat(ctx, 42); c.Lang != "ru" {
+		t.Fatal("til almashmadi")
+	}
+	if m := fake.take("sendMessage"); !strings.Contains(m[len(m)-1].Params["text"].(string), "Привет") {
+		t.Fatalf("ruscha salomlashuv: %v", m[len(m)-1].Params["text"])
 	}
 
 	// Tugma: eslatma yoqiladi, tugma "o'chirish" ga almashadi.
@@ -162,7 +174,7 @@ func TestStartAndRemindButton(t *testing.T) {
 	if c, _ := st.Chat(ctx, 42); !c.Remind {
 		t.Fatal("eslatma yoqilmadi")
 	}
-	if ans := fake.take("answerCallbackQuery"); len(ans) != 1 || ans[0].Params["text"] != "Напоминание включено ✅" {
+	if ans := fake.take("answerCallbackQuery"); len(ans) != 2 || ans[1].Params["text"] != "Напоминание включено ✅" {
 		t.Fatalf("javob: %+v", ans)
 	}
 	edits := fake.take("editMessageReplyMarkup")

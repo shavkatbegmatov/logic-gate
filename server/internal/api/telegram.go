@@ -25,18 +25,28 @@ func (s *Server) telegramRemind(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		InitData string `json:"initData"`
 		On       *bool  `json:"on"`
+		// Lang — o'yinda tanlangan til: bot ham shu tilda yozadi.
+		Lang string `json:"lang"`
 	}
 	if !decode(w, r, &req) {
 		return
 	}
-	uid, lang, err := tg.VerifyInitData(req.InitData)
+	uid, _, err := tg.VerifyInitData(req.InitData)
 	if err != nil {
 		writeErr(w, http.StatusUnauthorized, "bad_init_data")
 		return
 	}
+	lang := req.Lang
+	if lang != "ru" {
+		lang = "uz"
+	}
 	ctx := r.Context()
 	if req.On != nil {
 		if err := s.store.SetRemind(ctx, uid, lang, *req.On); err != nil {
+			s.internal(w, err)
+			return
+		}
+		if err := s.store.SetLang(ctx, uid, lang); err != nil {
 			s.internal(w, err)
 			return
 		}

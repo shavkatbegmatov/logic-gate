@@ -16,13 +16,21 @@ type Chat struct {
 	Blocked  bool
 }
 
-// UpsertChat chatni yozadi yoki tilini yangilaydi; bot qayta ishga tushirilgan bo'lsa, blokdan chiqaradi.
+// UpsertChat chatni yozadi (yangi bo'lsa — shu til bilan); bot qayta ishga tushirilgan bo'lsa, blokdan chiqaradi.
+// Mavjud chatning tili o'zgarmaydi — u faqat foydalanuvchi tanlovi bilan (SetLang) almashadi.
 func (s *Store) UpsertChat(ctx context.Context, chatID int64, lang string) error {
 	now := time.Now().Unix()
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO tg_chats (chat_id, lang, created_at, updated_at) VALUES (?, ?, ?, ?)
-		ON CONFLICT (chat_id) DO UPDATE SET lang = excluded.lang, blocked = 0, updated_at = excluded.updated_at`,
+		ON CONFLICT (chat_id) DO UPDATE SET blocked = 0, updated_at = excluded.updated_at`,
 		chatID, lang, now, now)
+	return err
+}
+
+// SetLang — bot xabarlari tili (uz/ru).
+func (s *Store) SetLang(ctx context.Context, chatID int64, lang string) error {
+	_, err := s.db.ExecContext(ctx, `UPDATE tg_chats SET lang = ?, updated_at = ? WHERE chat_id = ?`,
+		lang, time.Now().Unix(), chatID)
 	return err
 }
 

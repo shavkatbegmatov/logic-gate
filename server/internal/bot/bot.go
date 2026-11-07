@@ -147,18 +147,38 @@ func command(text string) string {
 	return strings.ToLower(cmd)
 }
 
+// chatLang — chatning tili; yangi chat o'zbekchadan boshlanadi (o'yin kabi: Telegram tiliga qaralmaydi).
+func (b *Bot) chatLang(ctx context.Context, chat int64) string {
+	if c, err := b.st.Chat(ctx, chat); err == nil && c.Lang != "" {
+		return c.Lang
+	}
+	return "uz"
+}
+
+func otherLang(lang string) string {
+	if lang == "ru" {
+		return "uz"
+	}
+	return "ru"
+}
+
 func (b *Bot) onMessage(ctx context.Context, m *Message) {
 	chat := m.Chat.ID
-	lang := langOf(m.From.LanguageCode)
-	tx := t(lang)
-	if err := b.st.UpsertChat(ctx, chat, lang); err != nil {
+	if err := b.st.UpsertChat(ctx, chat, "uz"); err != nil {
 		b.log.Error("telegram chat", "err", err)
 		return
 	}
+	lang := b.chatLang(ctx, chat)
+	tx := t(lang)
 	var err error
 	switch command(m.Text) {
 	case "/start":
 		_, err = b.tg.SendMessage(ctx, chat, tx.Welcome, b.mainKeyboard(lang, b.reminding(ctx, chat)))
+	case "/til", "/lang":
+		lang = otherLang(lang)
+		if err = b.st.SetLang(ctx, chat, lang); err == nil {
+			_, err = b.tg.SendMessage(ctx, chat, t(lang).Welcome, b.mainKeyboard(lang, b.reminding(ctx, chat)))
+		}
 	case "/eslatma", "/remind":
 		on := !b.reminding(ctx, chat)
 		if err = b.st.SetRemind(ctx, chat, lang, on); err == nil {
@@ -194,15 +214,28 @@ func (b *Bot) sendFailed(ctx context.Context, chat int64, err error) {
 }
 
 func (b *Bot) onCallback(ctx context.Context, cb *CallbackQuery) {
+	chat := cb.From.ID
+	if lang, ok := strings.CutPrefix(cb.Data, "lang:"); ok && (lang == "uz" || lang == "ru") {
+		// Til tugmasi: tanlangan tilda salomlashuv qayta yuboriladi.
+		b.st.UpsertChat(ctx, chat, lang)
+		if err := b.st.SetLang(ctx, chat, lang); err != nil {
+			b.log.Error("telegram til", "err", err)
+		}
+		b.tg.AnswerCallback(ctx, cb.ID, "")
+		if _, err := b.tg.SendMessage(ctx, chat, t(lang).Welcome, b.mainKeyboard(lang, b.reminding(ctx, chat))); err != nil {
+			b.sendFailed(ctx, chat, err)
+		}
+		return
+	}
 	action, ok := strings.CutPrefix(cb.Data, "remind:")
 	if !ok {
 		b.tg.AnswerCallback(ctx, cb.ID, "")
 		return
 	}
 	on := action == "on"
-	lang := langOf(cb.From.LanguageCode)
+	lang := b.chatLang(ctx, chat)
 	tx := t(lang)
-	if err := b.st.SetRemind(ctx, cb.From.ID, lang, on); err != nil {
+	if err := b.st.SetRemind(ctx, chat, lang, on); err != nil {
 		b.log.Error("telegram eslatma", "err", err)
 		b.tg.AnswerCallback(ctx, cb.ID, "")
 		return
@@ -240,11 +273,12 @@ func (b *Bot) remindButton(lang string, on bool) Button {
 	return Button{Text: t(lang).RemindOn, CallbackData: "remind:on"}
 }
 
-// mainKeyboard — o'yinni Mini App sifatida ochish va eslatmani yoqish/o'chirish.
+// mainKeyboard — o'yinni Mini App sifatida ochish, eslatmani yoqish/o'chirish va tilni almashtirish.
 func (b *Bot) mainKeyboard(lang string, reminding bool) *Keyboard {
 	return &Keyboard{InlineKeyboard: [][]Button{
 		{{Text: t(lang).Play, WebApp: &WebApp{URL: b.cfg.Site}}},
 		{b.remindButton(lang, reminding)},
+		{{Text: t(lang).SwitchLang, CallbackData: "lang:" + otherLang(lang)}},
 	}}
 }
 

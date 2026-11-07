@@ -345,7 +345,7 @@ Hozirgi bot: [@LogicGateUzBot](https://t.me/LogicGateUzBot), Mini App — https:
 
 Server bot tokeni bilan ishga tushsa (`server/internal/bot`), bot:
 
-- `/start` ga salomlashuv va «O'ynash» (Mini App) hamda «Har kuni eslatish» tugmalari bilan javob beradi; `/eslatma` — yoqish/o'chirish, `/id` — Telegram ID, `/help`;
+- `/start` ga salomlashuv va «O'ynash» (Mini App) hamda «Har kuni eslatish» tugmalari bilan javob beradi; `/eslatma` — yoqish/o'chirish, `/til` — o'zbekcha/ruscha (standart — o'zbekcha, o'yin kabi; o'yin ichidan yoqilganda — o'yindagi til), `/id` — Telegram ID, `/help`;
 - har kuni `LG_REMIND_HOUR` da (Toshkent, standart 9:00) eslatma yoqqanlarga bugungi masala haqida yozadi — bugun yechganlarga yozmaydi, o'yinga bog'langanlarga seriyasini aytadi; server o'chiq bo'lib qolsa, 21:00 gacha kechikib yuboradi;
 - kunlik zaxira nusxani admin'ga fayl qilib yuboradi (serverdan tashqaridagi nusxa) va admin'ga `/stats` ni ko'rsatadi;
 - o'yin ichida (Telegram'da) kunlik masala yechilgan oynada va sozlamalarda «🔔 Har kuni eslatish» tugmasi: Telegram'dan ruxsat so'raladi, server `initData` imzosini token bilan tekshiradi (`POST /api/telegram/remind`).

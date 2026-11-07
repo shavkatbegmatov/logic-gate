@@ -131,8 +131,8 @@ export const api = {
   leaderboard: () => request<{ top: LeaderEntry[]; me: LeaderEntry | null }>('GET', '/leaderboard'),
   daily: () => request<DailyInfo>('GET', '/daily'),
   /** Telegram ichida: kunlik eslatma holati (on yo'q) yoki uni o'zgartirish. Profil bo'lsa, chat unga bog'lanadi. */
-  telegramRemind: (initData: string, on?: boolean) =>
-    request<{ remind: boolean }>('POST', '/telegram/remind', on === undefined ? { initData } : { initData, on }),
+  telegramRemind: (initData: string, on?: boolean, lang?: string) =>
+    request<{ remind: boolean }>('POST', '/telegram/remind', on === undefined ? { initData } : { initData, on, lang }),
   solveDaily: (day: number, circuit: Circuit) => request<DailySolveResult>('POST', `/daily/${day}/solve`, { circuit }),
   dailyLeaderboard: (day: number | 'today') =>
     request<{ day: number; number: number; top: DailyEntry[]; me: DailyEntry | null }>('GET', `/daily/${day}/leaderboard`),

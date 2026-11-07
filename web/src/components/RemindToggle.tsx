@@ -1,7 +1,7 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { api, ApiError } from '../api';
-import { t } from '../i18n';
+import { lang, t } from '../i18n';
 import { requestWriteAccess, sdk, tg } from '../telegram';
 import { showToast } from './Toast';
 
@@ -43,7 +43,7 @@ export function RemindToggle({ compact = false, card = false }: { compact?: bool
         showToast(t.telegram.remindDenied, 'error');
         return;
       }
-      const r = await api.telegramRemind(app.initData, want);
+      const r = await api.telegramRemind(app.initData, want, lang.value);
       on.value = r.remind;
       showToast(r.remind ? t.telegram.remindEnabled : t.telegram.remindDisabled, 'ok', 4000);
     } catch (e) {
