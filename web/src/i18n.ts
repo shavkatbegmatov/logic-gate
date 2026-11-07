@@ -202,6 +202,16 @@ ${stars} — ${gates} ta element (minimum: ${goal})${streak > 1 ? `\n🔥 ${stre
 Sen ham yechib ko'r!`,
   },
 
+  lesson: {
+    button: "📖 Bo'lim xulosasi",
+    unlocked: "📖 Bo'lim xulosasi ochildi — o'qib chiqing",
+    note: (solved: number, total: number) => `📖 Bo'lim xulosasi barcha darajalar yechilgach ochiladi (${solved}/${total})`,
+    sub: (n: number, title: string) => `${n}-bo'lim xulosasi · ${title}`,
+    locked: (solved: number, total: number) =>
+      `Bu xulosa bo'limning barcha darajalari yechilgach ochiladi (${solved}/${total}) — avval o'zingiz kashf qilib ko'ring!`,
+    toLevels: 'Darajalarga',
+  },
+
   custom: {
     create: 'Masala qilish',
     createTitle: "Do'stlarga masala",
@@ -564,6 +574,16 @@ export const ru: typeof uz = {
       `Logic Gate · Задача дня #${num} (${date})\n${stars} — ${gates} эл. (минимум: ${goal})` +
       (streak > 1 ? `\n🔥 ${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд` : '') +
       '\nПопробуй и ты!',
+  },
+
+  lesson: {
+    button: '📖 Итоги главы',
+    unlocked: '📖 Открыты итоги главы — прочитайте',
+    note: (solved: number, total: number) => `📖 Итоги главы откроются, когда будут решены все уровни (${solved}/${total})`,
+    sub: (n: number, title: string) => `Итоги ${n}-й главы · ${title}`,
+    locked: (solved: number, total: number) =>
+      `Итоги откроются, когда будут решены все уровни главы (${solved}/${total}) — сначала попробуйте разобраться сами!`,
+    toLevels: 'К уровням',
   },
 
   custom: {

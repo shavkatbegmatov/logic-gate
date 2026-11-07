@@ -1067,6 +1067,97 @@ input[type='text']:focus {
   cursor: default;
 }
 
+/* ── Bo'lim xulosasi ──────────────────────────────────── */
+.lesson-btn,
+.lesson-note {
+  margin-top: 12px !important;
+}
+
+.lesson-btn.new {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.lesson {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px 16px 32px;
+  line-height: 1.6;
+}
+
+.lesson h3 {
+  margin: 22px 0 8px;
+  font-size: 17px;
+  color: var(--on);
+}
+
+.lesson p {
+  margin: 0 0 12px;
+}
+
+.formula-lines.lesson-formula {
+  margin: 0 0 12px;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+}
+
+.lesson-formula .f-full {
+  grid-column: 1 / -1;
+  white-space: pre-wrap;
+}
+
+.lesson-formula .f-label {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.lesson-formula .f-expr {
+  white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+  .formula-lines.lesson-formula {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .lesson-formula .f-label {
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .lesson-formula .f-label:first-child {
+    margin-top: 0;
+  }
+
+  .lesson-formula .f-label:empty {
+    display: none;
+  }
+}
+
+.lesson-table {
+  width: auto;
+  min-width: 220px;
+  margin: 0 0 12px;
+}
+
+.lesson-table tbody tr {
+  cursor: default;
+}
+
+.lesson-tip {
+  padding: 10px 12px;
+  border-left: 3px solid var(--copper);
+  border-radius: 8px;
+  background: #1b2614;
+}
+
+.lesson-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
 /* ── Formula ──────────────────────────────────────────── */
 .formula h2 {
   margin: 0 0 8px;

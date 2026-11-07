@@ -1,5 +1,6 @@
 import { Stars, TopBar } from '../components/ui';
 import { t } from '../i18n';
+import { chapterDone, lessonsRead } from '../lessons';
 import { chapterLevels, chapters, levelNumber } from '../levels';
 import { go } from '../router';
 import { chapterStars, chapterUnlocked, levelUnlocked, progress, totalStars } from '../state';
@@ -46,6 +47,19 @@ export function LevelsScreen() {
                     );
                   })}
                 </div>
+                {open &&
+                  (chapterDone(ch.id) ? (
+                    <button
+                      class={`btn small lesson-btn${lessonsRead.value.includes(ch.id) ? '' : ' new'}`}
+                      onClick={() => go(`lesson/${ch.id}`)}
+                    >
+                      {t.lesson.button}
+                    </button>
+                  ) : (
+                    <p class="muted small lesson-note">
+                      {t.lesson.note(list.filter((l) => progress.value[l.id]).length, list.length)}
+                    </p>
+                  ))}
               </section>
             );
           })}

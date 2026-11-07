@@ -9,6 +9,7 @@ import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
 import { Modal, Stars } from '../components/ui';
 import { t } from '../i18n';
+import { chapterDone, lessonsRead } from '../lessons';
 import { chapterOf, chapters, levelById, levelNumber, levels, newGates } from '../levels';
 import { go } from '../router';
 import { levelShareText } from '../share';
@@ -186,6 +187,11 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
       />
 
       {solvedCount.value === levels.length && <p class="good">{t.success.allDone}</p>}
+      {chapterDone(level.chapter) && !lessonsRead.value.includes(level.chapter) && (
+        <button class="btn small lesson-btn new" onClick={() => go(`lesson/${level.chapter}`)}>
+          {t.lesson.unlocked}
+        </button>
+      )}
       {next && !nextOpen && nextChapter && !chapterUnlocked(nextChapter) && (
         <p class="muted">
           {t.success.nextLocked(nextChapter.unlockStars)} ({totalStars.value} ★)

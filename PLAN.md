@@ -136,6 +136,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 16. **M15 — Avtomatlar (bajarildi):** 7-bo'lim, 6 ta daraja (birinchi bosish, navbatchi, turniket, tugmali chiroq, yuqoriga-pastga, ketma-ket qo'shuvchi), hammasi isbotlangan minimum bilan; jami 42 daraja.
 17. **M16 — Kunlik masalalar arxivi (bajarildi):** o'tgan kunlar ro'yxati va masalasi, kechagisi seriyaga kiradi, qolganlari — mashq; havola rasmlari 42 daraja bilan.
 18. **M17 — Sxema formulasi (bajarildi):** yon panelda jonli Bul ifodasi (¬ ∧ ∨ ⊕), umumiy elementlar va D-trigger holatlari nomlanadi.
+19. **M18 — Bo'lim xulosalari (bajarildi):** 7 bo'lim uchun qisqa dars (uz/ru), bo'lim yechilgach ochiladi.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 

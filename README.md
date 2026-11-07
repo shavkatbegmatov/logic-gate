@@ -4,6 +4,7 @@ Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqo
 
 - 42 ta daraja, 7 ta bo'lim: asoslardan 2 bitli ko'paytirgich, xotira (D-trigger) va avtomatlargacha.
 - Jonli simulyatsiya: simlar 1/0 holatiga qarab yonadi, haqiqat jadvali har bir o'zgarishda yangilanadi.
+- Bo'lim xulosalari (`#/lesson/<bo'lim>`, `web/src/lessons.ts`): bo'limning barcha darajalari yechilgach ochiladigan qisqa dars — formulalar, jadvallar va g'oyalar (De Morgan, NAND universalligi, summator, trigger, chekli avtomat), o'zbekcha va ruscha.
 - Sxema formulasi: yig'ilgan sxemaning Bul ifodasi (`Q = (A ∧ B) ∨ ¬C`) yon panelda jonli ko'rinadi (`web/src/sim/formula.ts`). Bir necha joyga ulangan element nom oladi (`t1`, chiqishga ulangan bo'lsa — chiqish nomi), D-trigger — `q1`, keyingi qiymati — `q1⁺`; maydonda trigger ostida ham `q1` yoziladi.
 - Element sonini tejagan o'yinchiga 3 ★. Keyingi bo'limlar yulduzlar bilan ochiladi.
 - Ro'yxatdan o'tmasdan o'ynash mumkin. Taxallus kiritilsa, natijalar reytingga qo'shiladi, progress esa tiklash kodi orqali boshqa qurilmaga o'tkaziladi.
