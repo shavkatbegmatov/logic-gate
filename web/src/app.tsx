@@ -1,6 +1,8 @@
 import { useEffect } from 'preact/hooks';
 import { Toast } from './components/Toast';
 import { route } from './router';
+import './achievements';
+import { Achievements } from './screens/Achievements';
 import { CustomScreen } from './screens/CustomScreen';
 import { DailyScreen } from './screens/DailyScreen';
 import { Home } from './screens/Home';
@@ -29,6 +31,7 @@ export function App() {
       {r.name === 'sandbox' && <Sandbox />}
       {r.name === 'leaderboard' && <Leaderboard tab={r.tab} />}
       {r.name === 'daily' && <DailyScreen />}
+      {r.name === 'achievements' && <Achievements />}
       {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}
       {r.name === 'settings' && <Settings />}
       <Toast />

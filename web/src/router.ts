@@ -8,6 +8,7 @@ export type Route =
   | { name: 'sandbox' }
   | { name: 'leaderboard'; tab: 'overall' | 'daily' }
   | { name: 'daily' }
+  | { name: 'achievements' }
   | { name: 'custom'; code: string }
   | { name: 'settings' };
 
@@ -17,6 +18,7 @@ function parse(hash: string): Route {
     case 'levels':
     case 'sandbox':
     case 'daily':
+    case 'achievements':
     case 'settings':
       return { name };
     case 'leaderboard':

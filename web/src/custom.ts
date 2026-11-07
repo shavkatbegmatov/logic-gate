@@ -190,7 +190,7 @@ export function customLevel(p: CustomPuzzle, code: string): Level {
 // ── Lokal natijalar ────────────────────────────────────────
 
 interface CustomStore {
-  solved: Record<string, { gates: number; stars: number; at: number }>;
+  solved: Record<string, { gates: number; stars: number; goal: number; at: number }>;
   created: number;
 }
 
@@ -202,10 +202,10 @@ function persist(next: CustomStore) {
   save(KEY, next);
 }
 
-export function recordCustom(id: string, gates: number, stars: number) {
+export function recordCustom(id: string, gates: number, stars: number, goal: number) {
   const prev = customStore.value.solved[id];
   const improved = !prev || gates < prev.gates;
-  if (improved) persist({ ...customStore.value, solved: { ...customStore.value.solved, [id]: { gates, stars, at: Date.now() } } });
+  if (improved) persist({ ...customStore.value, solved: { ...customStore.value.solved, [id]: { gates, stars, goal, at: Date.now() } } });
   return { improved, prev };
 }
 

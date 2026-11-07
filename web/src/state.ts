@@ -128,6 +128,10 @@ export function hintStep(levelId: string): number {
   return hintSteps[levelId] ?? 0;
 }
 
+export function allHintSteps(): Record<string, number> {
+  return { ...hintSteps };
+}
+
 export function setHintStep(levelId: string, n: number) {
   hintSteps[levelId] = n;
   saveLater(KEYS.hints, hintSteps);

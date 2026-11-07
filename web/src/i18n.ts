@@ -173,6 +173,29 @@ Sen ham urinib ko'r!`,
     toHome: 'Bosh sahifa',
   },
 
+  achievements: {
+    title: 'Yutuqlar',
+    home: (n: number, max: number) => `Yutuqlar ${n}/${max}`,
+    summary: (n: number, max: number) => `${n} / ${max} ochilgan`,
+    unlocked: (names: string[]) =>
+      names.length === 1 ? `Yangi yutuq: ${names[0]}` : `Yangi yutuqlar: ${names.join(', ')}`,
+    first: { title: 'Birinchi qadam', text: 'Birinchi darajani yeching.' },
+    chapter: {
+      title: (name: string) => `«${name}»`,
+      text: (n: number) => `Bo'limdagi barcha ${n} ta darajani yeching.`,
+    },
+    starsHalf: (n: number) => ({ title: "Yarim yo'l", text: `${n} ★ to'plang.` }),
+    starsAll: (n: number) => ({ title: 'Mukammal', text: `Barcha ${n} ★ ni to'plang.` }),
+    independent: (n: number) => ({ title: 'Mustaqil', text: `${n} ta darajani maslahatsiz 3 ★ bilan yeching.` }),
+    nandMaster: { title: 'NAND ustasi', text: "«Faqat NAND» bo'limidagi barcha darajalarni 3 ★ bilan yeching." },
+    dailyFirst: { title: 'Kunlik boshlanish', text: 'Birinchi kunlik boshqotirmani yeching.' },
+    dailyPerfect: { title: 'Minimum topildi', text: 'Kunlik masalani eng kam element bilan (3 ★) yeching.' },
+    streak: (n: number) => ({ title: `${n} kun ketma-ket`, text: `Kunlik masalani ${n} kun ketma-ket yeching.` }),
+    creator: { title: 'Ijodkor', text: "Qum qutida masala yaratib, do'stlarga yuboring." },
+    friend: { title: "Do'stona", text: "Do'stingiz yuborgan masalani yeching." },
+    beatAuthor: { title: "Muallifdan o'tdingiz", text: "Do'st masalasini muallifdan kam element bilan yeching." },
+  },
+
   sandbox: {
     title: 'Qum quti',
     text: "Istalgan sxemani erkin yig'ing va uning haqiqat jadvalini kuzating. Tayyor sxemani «Masala qilish» bilan do'stlarga yuboring.",

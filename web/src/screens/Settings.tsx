@@ -6,6 +6,7 @@ import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
+import { resetAchievements } from '../achievements';
 import { resetCustom } from '../custom';
 import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
@@ -46,6 +47,7 @@ export function Settings() {
     resetLocalProgress();
     resetDaily();
     resetCustom();
+    resetAchievements();
     // Profil qolsa, keyingi ochilishda serverdagi natijalar qaytib kelardi — qurilma to'liq tozalanadi.
     profile.value = null;
     nick.value = '';

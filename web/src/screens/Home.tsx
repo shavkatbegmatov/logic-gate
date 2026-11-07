@@ -1,6 +1,7 @@
 import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon } from '../components/ui';
+import { states } from '../achievements';
 import { dailyHistory, streak, today } from '../daily';
 import { t } from '../i18n';
 import { levels, MAX_STARS } from '../levels';
@@ -34,10 +35,13 @@ export function Home() {
             <button class="btn" onClick={() => go('leaderboard')}>
               {t.home.leaderboard}
             </button>
-            <button class="btn" onClick={() => go('settings')}>
-              {t.home.settings}
+            <button class="btn" onClick={() => go('achievements')}>
+              {t.achievements.home(states.value.filter((s) => s.done).length, states.value.length)}
             </button>
           </div>
+          <button class="btn" onClick={() => go('settings')}>
+            {t.home.settings}
+          </button>
         </nav>
         <ShareButtons text={t.share.inviteText} label={t.share.invite} />
         {!profile.value && started && (

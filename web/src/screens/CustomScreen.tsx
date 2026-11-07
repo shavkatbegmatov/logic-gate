@@ -53,7 +53,7 @@ function Play({ puzzle, code }: { puzzle: CustomPuzzle; code: string }) {
   }, [level]);
 
   const onSolved = ({ gates, stars }: Solved) => {
-    const { improved, prev } = recordCustom(level.id, gates, stars);
+    const { improved, prev } = recordCustom(level.id, gates, stars, level.goal);
     result.value = { stars, gates, improved, prevGates: prev?.gates };
   };
 
