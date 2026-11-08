@@ -395,6 +395,7 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 
 O'yin hash marshrutli SPA — Google va Yandex undan faqat bosh sahifani ko'radi. Shuning uchun build oxirida `web/scripts/pages.mjs` oddiy HTML sahifalar yozadi (JavaScript'siz o'qiladi):
 
+- `/ikkilik-sanoq-sistemasi/` va `/ru/dvoichnaya-sistema/` — ikkilik sanoq sistemasi: o'nlikdan ikkilikka va qaytib, 0–15 jadvali, ikkilikda qo'shish (misollar `pages-binary.mjs` da hisoblanadi) va bitlarni bosib sonni ko'radigan o'yinchoq (`public/guide-binary.js`). Qo'llanmalar bir-biriga sarlavhadagi menyu orqali bog'langan.
 - `/mantiqiy-elementlar/` va `/ru/logicheskie-elementy/` — mantiqiy elementlar qo'llanmasi: belgisi (o'yindagi `src/board/shapes.ts` dan), formulasi, haqiqat jadvali, D-trigger, Bul algebrasi qonunlari, o'yin bo'limlari (`levels/levels.json` dan). Matnlar — `web/scripts/pages-content.mjs`, maktab atamalari bilan (inkor, konyunksiya, dizyunksiya…).
 - `robots.txt` (`/api/` yopiq) va `sitemap.xml` — manzil `VITE_SITE_URL` dan.
 

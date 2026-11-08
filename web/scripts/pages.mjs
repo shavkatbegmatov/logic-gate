@@ -1,6 +1,6 @@
 // Qidiruv tizimlari uchun statik fayllar (build oxirida, dist/ ga):
-//   /mantiqiy-elementlar/       — mantiqiy elementlar qo'llanmasi (o'zbekcha)
-//   /ru/logicheskie-elementy/   — o'sha qo'llanma ruscha
+//   /mantiqiy-elementlar/, /ru/logicheskie-elementy/        — mantiqiy elementlar qo'llanmasi
+//   /ikkilik-sanoq-sistemasi/, /ru/dvoichnaya-sistema/       — ikkilik sanoq sistemasi (+ public/guide-binary.js)
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
 // JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
@@ -9,6 +9,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from '../src/board/shapes.ts';
+import { BINARY, binaryAdd, divisionSteps, EXAMPLES } from './pages-binary.mjs';
 import { CONTENT } from './pages-content.mjs';
 
 const OUT = { NOT: (a) => 1 - a, AND: (a, b) => a & b, OR: (a, b) => a | b, XOR: (a, b) => a ^ b };
@@ -111,48 +112,132 @@ svg.gate text.in-label{fill:var(--text)}
 .laws dt{color:var(--muted)}
 .laws dd{margin:0;font:15px var(--mono)}
 .tip{margin:0;padding:10px 12px;border-left:3px solid var(--copper);border-radius:8px;background:var(--tint)}
+.tip .ico{vertical-align:-3px;fill:none;stroke:var(--copper);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.guides{display:flex;flex-wrap:wrap;gap:8px 18px;max-width:820px;margin:0 auto;padding:10px 16px;font-size:14px;border-bottom:1px solid var(--line)}
+.guides span{color:var(--text);font-weight:600}
+.guides a{color:var(--muted);text-decoration:none}
+.guides a:hover{color:var(--on)}
+.bits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin:14px 0 10px}
+.bit{display:grid;justify-items:center;gap:4px;padding:8px 0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);font:600 12px var(--mono);cursor:pointer}
+.bit .v{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);color:var(--text);font-size:15px}
+.bit[aria-pressed=true]{border-color:var(--on)}
+.bit[aria-pressed=true] .v{background:var(--on);border-color:var(--on);color:var(--on-ink)}
+.bits-out{font:600 20px var(--mono)}
+.bits-out code{letter-spacing:.08em}
+.bits-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.bits-in input{width:96px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:600 16px var(--mono)}
+.bin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:4px 0 12px}
+.bin-grid span{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.bin-grid b{font:600 15px var(--mono)}
+.bin-grid code{color:var(--on);font-size:14px}
+.truth.column td{min-width:34px}
+.truth.column .carry td{color:var(--copper);font-size:12px;border-color:transparent}
+.truth.column .carry th{font:12px system-ui,sans-serif}
+.truth.column .sum td{border-top:2px solid var(--text)}
+.truth.column td.dec{color:var(--muted);border:none;text-align:left}
+@media (max-width:560px){.bits{gap:4px}.bit .v{width:24px;height:24px;font-size:13px}.bit{font-size:10px}}
 ol.chapters{padding-left:22px}
 ol.chapters li{margin:6px 0}
 footer{max-width:820px;margin:0 auto;padding:16px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
 @media (max-width:560px){h1{font-size:25px}section{padding:16px}.laws{grid-template-columns:1fr;gap:2px}.laws dd{margin-bottom:8px}}
 `.trim();
 
-function guidePage(c, ctx) {
-  const other = CONTENT[c.other.lang];
-  const url = ctx.site + c.path;
-  const totalLevels = ctx.pack.levels.length;
-  const chapterTitle = (ch) => (c.lang === 'uz' ? ch.title : ch.i18n?.[c.lang]?.title ?? ch.title);
-  const chapterDesc = (ch) => (c.lang === 'uz' ? ch.description : ch.i18n?.[c.lang]?.description ?? ch.description);
-  const count = (ch) => ctx.pack.levels.filter((l) => l.chapter === ch.id).length;
-  const cta = (extra = '') =>
-    `<div class="cta"><a class="btn primary" href="/">${esc(c.play)}</a>${ctx.tgApp ? `<a class="btn" href="${esc(ctx.tgApp)}">${esc(c.playTg)}</a>` : ''}${extra}</div>`;
+const BULB =
+  '<svg class="ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3Z"/></svg>';
 
-  const ld = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'LearningResource',
-        name: c.h1,
-        description: c.description,
-        inLanguage: c.lang,
-        url,
-        learningResourceType: 'article',
-        isAccessibleForFree: true,
-        teaches: c.gates.map((g) => short(g.title)),
-        isPartOf: { '@id': `${ctx.site}/#app` },
-      },
-      {
-        '@type': 'WebApplication',
-        '@id': `${ctx.site}/#app`,
-        name: 'Logic Gate',
-        url: `${ctx.site}/`,
-        applicationCategory: 'GameApplication',
-        operatingSystem: 'Any',
-        inLanguage: ['uz', 'ru'],
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'UZS' },
-      },
-    ],
-  };
+/** Qo'llanmalar: har biri uz va ru; sahifa tanasi — o'z funksiyasi. */
+const GUIDES = [
+  { id: 'elements', text: CONTENT, body: elementsBody },
+  { id: 'binary', text: BINARY, body: binaryBody },
+];
+
+const pageOf = (g, lang) => (g.id === 'elements' ? { ...CONTENT[lang], nav: CONTENT[lang].h1 } : g.text[lang]);
+
+/** Umumiy qobiq: head (SEO teglari), sarlavha (qo'llanmalar va til), tana, pastki qism. */
+function shell(g, lang, ctx, ld, body) {
+  const c = CONTENT[lang];
+  const page = pageOf(g, lang);
+  const otherLang = c.other.lang;
+  const other = pageOf(g, otherLang);
+  const url = ctx.site + page.path;
+  const nav = GUIDES.map((x) => {
+    const p = pageOf(x, lang);
+    return x === g ? `<span aria-current="page">${esc(p.nav)}</span>` : `<a href="${p.path}">${esc(p.nav)}</a>`;
+  }).join('');
+  return `<!doctype html>
+<html lang="${lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(page.title)}</title>
+<meta name="description" content="${esc(page.description)}">
+<link rel="canonical" href="${esc(url)}">
+<link rel="alternate" hreflang="${lang}" href="${esc(url)}">
+<link rel="alternate" hreflang="${otherLang}" href="${esc(ctx.site + other.path)}">
+<link rel="alternate" hreflang="x-default" href="${esc(ctx.site + pageOf(g, 'uz').path)}">
+<meta name="theme-color" content="#0b1712" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#efe9dc" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Logic Gate">
+<meta property="og:title" content="${esc(page.h1)}">
+<meta property="og:description" content="${esc(page.description)}">
+<meta property="og:url" content="${esc(url)}">
+<meta property="og:image" content="${esc(ctx.site)}/og.png?v=3">
+<meta property="og:locale" content="${c.locale}">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">${jsonLd(ld(page, url))}</script>
+<style>${CSS}</style>
+</head>
+<body>
+<header class="top"><a class="brand" href="/"><img src="/favicon.svg" width="28" height="28" alt="">Logic Gate</a><nav><a href="/">${esc(c.play.replace(/^▶\s*/, ''))}</a><a href="${other.path}" hreflang="${otherLang}" lang="${otherLang}">${esc(c.other.label)}</a></nav></header>
+<nav class="guides" aria-label="Logic Gate">${nav}</nav>
+<main>
+${body}
+</main>
+<footer>Logic Gate · <a href="/">${esc(ctx.site.replace(/^https?:\/\//, ''))}</a> · <a href="${other.path}" hreflang="${otherLang}" lang="${otherLang}">${esc(c.other.label)}</a></footer>
+</body>
+</html>
+`;
+}
+
+/** schema.org: o'quv materiali + o'yinning o'zi. */
+const learning = (lang, teaches, ctx) => (page, url) => ({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'LearningResource',
+      name: page.h1,
+      description: page.description,
+      inLanguage: lang,
+      url,
+      learningResourceType: 'article',
+      isAccessibleForFree: true,
+      teaches,
+      isPartOf: { '@id': `${ctx.site}/#app` },
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': `${ctx.site}/#app`,
+      name: 'Logic Gate',
+      url: `${ctx.site}/`,
+      applicationCategory: 'GameApplication',
+      operatingSystem: 'Any',
+      inLanguage: ['uz', 'ru'],
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'UZS' },
+    },
+  ],
+});
+
+const cta = (c, ctx, extra = '') =>
+  `<div class="cta"><a class="btn primary" href="/">${esc(c.play)}</a>${ctx.tgApp ? `<a class="btn" href="${esc(ctx.tgApp)}">${esc(c.playTg)}</a>` : ''}${extra}</div>`;
+
+function elementsBody(lang, ctx) {
+  const c = CONTENT[lang];
+  const totalLevels = ctx.pack.levels.length;
+  const chapterTitle = (ch) => (lang === 'uz' ? ch.title : ch.i18n?.[lang]?.title ?? ch.title);
+  const chapterDesc = (ch) => (lang === 'uz' ? ch.description : ch.i18n?.[lang]?.description ?? ch.description);
+  const count = (ch) => ctx.pack.levels.filter((l) => l.chapter === ch.id).length;
 
   const gates = c.gates
     .map(
@@ -170,37 +255,11 @@ function guidePage(c, ctx) {
     .map(([id, name]) => `<li><a href="#${id}">${esc(name)}</a></li>`)
     .join('');
 
-  return `<!doctype html>
-<html lang="${c.lang}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(c.title)}</title>
-<meta name="description" content="${esc(c.description)}">
-<link rel="canonical" href="${esc(url)}">
-<link rel="alternate" hreflang="${c.lang}" href="${esc(url)}">
-<link rel="alternate" hreflang="${other.lang}" href="${esc(ctx.site + other.path)}">
-<link rel="alternate" hreflang="x-default" href="${esc(ctx.site + CONTENT.uz.path)}">
-<meta name="theme-color" content="#0b1712" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#efe9dc" media="(prefers-color-scheme: light)">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<meta property="og:type" content="article">
-<meta property="og:site_name" content="Logic Gate">
-<meta property="og:title" content="${esc(c.h1)}">
-<meta property="og:description" content="${esc(c.description)}">
-<meta property="og:url" content="${esc(url)}">
-<meta property="og:image" content="${esc(ctx.site)}/og.png?v=3">
-<meta property="og:locale" content="${c.locale}">
-<meta name="twitter:card" content="summary_large_image">
-<script type="application/ld+json">${jsonLd(ld)}</script>
-<style>${CSS}</style>
-</head>
-<body>
-<header class="top"><a class="brand" href="/"><img src="/favicon.svg" width="28" height="28" alt="">Logic Gate</a><nav><a href="/">${esc(c.play.replace(/^▶\s*/, ''))}</a><a href="${other.path}" hreflang="${other.lang}" lang="${other.lang}">${esc(c.other.label)}</a></nav></header>
-<main>
-<h1>${esc(c.h1)}</h1>
+  return {
+    ld: learning(lang, c.gates.map((g) => short(g.title)), ctx),
+    html: `<h1>${esc(c.h1)}</h1>
 ${c.lead.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
-${cta()}
+${cta(c, ctx)}
 <p class="muted">${esc(c.free)}</p>
 <nav aria-label="${esc(c.toc)}"><ul class="toc">${toc}</ul></nav>
 ${gates}
@@ -213,7 +272,7 @@ ${dffTable(c)}
 <section id="laws">
 <h2>${esc(c.laws.title)}</h2>
 <dl class="laws">${c.laws.rows.map(([name, f]) => `<dt>${esc(name)}</dt><dd>${f.split(/,\s+/).map((e) => `<code>${esc(e)}</code>`).join(', ')}</dd>`).join('')}</dl>
-<p class="tip">💡 ${esc(c.laws.tip)}</p>
+<p class="tip">${BULB} ${esc(c.laws.tip)}</p>
 </section>
 <section id="game">
 <h2>${esc(c.game.title)}</h2>
@@ -221,13 +280,73 @@ ${dffTable(c)}
 <p>${esc(c.game.chapters(ctx.pack.chapters.length, totalLevels))}</p>
 <ol class="chapters">${ctx.pack.chapters.map((ch) => `<li><b>${esc(chapterTitle(ch))}</b> — ${esc(c.game.levels(count(ch)))}. ${esc(chapterDesc(ch))}</li>`).join('')}</ol>
 <ul>${c.game.features.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>
-${cta(`<a class="btn" href="/#/daily">${esc(c.daily)}</a>`)}
+${cta(c, ctx, `<a class="btn" href="/#/daily">${esc(c.daily)}</a>`)}
+</section>`,
+  };
+}
+
+function binaryBody(lang, ctx) {
+  const c = CONTENT[lang];
+  const b = BINARY[lang];
+  const div = divisionSteps(EXAMPLES.toBin);
+  const bits = EXAMPLES.toDec.split('');
+  const weights = bits.map((_, i) => 2 ** (bits.length - 1 - i));
+  const dec = weights.reduce((s, w, i) => s + (bits[i] === '1' ? w : 0), 0);
+  const add = binaryAdd(...EXAMPLES.add);
+  const w = add.sum.length;
+  const pad = (s) => s.padStart(w, ' ').split('');
+  const col = (cells, cls = '') => cells.map((v) => `<td class="${cls}${v === '1' ? ' one' : ''}">${v.trim()}</td>`).join('');
+  const toyBits = [128, 64, 32, 16, 8, 4, 2, 1]
+    .map((v) => `<button type="button" class="bit" data-w="${v}" aria-pressed="false"><span class="w">${v}</span><span class="v">0</span></button>`)
+    .join('');
+  const ex = (n) => `${n} = ${n.toString(2)}₂`;
+
+  return {
+    ld: learning(lang, [b.toBin.title, b.toDec.title, b.add.title], ctx),
+    html: `<h1>${esc(b.h1)}</h1>
+${b.lead.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
+${cta(c, ctx)}
+<section id="bits">
+<h2>${esc(b.toy.title)}</h2>
+<p>${esc(b.toy.text)}</p>
+<div class="bits" id="bits-toy">${toyBits}</div>
+<p class="bits-out"><code id="bits-bin">00000000</code> = <strong id="bits-dec">0</strong></p>
+<label class="bits-in">${esc(b.toy.input)} <input id="bits-input" type="number" min="0" max="255" value="0" inputmode="numeric"></label>
 </section>
-</main>
-<footer>Logic Gate · <a href="/">${esc(ctx.site.replace(/^https?:\/\//, ''))}</a> · <a href="${other.path}" hreflang="${other.lang}" lang="${other.lang}">${esc(c.other.label)}</a></footer>
-</body>
-</html>
-`;
+<section id="to-binary">
+<h2>${esc(b.toBin.title)}</h2>
+<p>${esc(b.toBin.text)}</p>
+<div class="scroll-x"><table class="truth steps"><thead><tr>${b.toBin.cols.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${div.steps
+      .map(([x, q, r]) => `<tr><td>${x}</td><td>${q}</td><td class="out${r ? ' one' : ''}">${r}</td></tr>`)
+      .join('')}</tbody></table></div>
+<p>${esc(b.toBin.result)} <code>${div.bin}</code> — <strong>${EXAMPLES.toBin} = ${div.bin}₂</strong></p>
+</section>
+<section id="to-decimal">
+<h2>${esc(b.toDec.title)}</h2>
+<p>${esc(b.toDec.text)}</p>
+<div class="scroll-x"><table class="truth steps"><tbody><tr><th>${esc(b.toDec.rows[0])}</th>${bits.map((v) => `<td class="${v === '1' ? 'one' : ''}">${v}</td>`).join('')}</tr><tr><th>${esc(b.toDec.rows[1])}</th>${weights.map((v) => `<td>${v}</td>`).join('')}</tr></tbody></table></div>
+<p><strong>${EXAMPLES.toDec}₂ = ${weights.filter((_, i) => bits[i] === '1').join(' + ')} = ${dec}</strong></p>
+</section>
+<section id="table">
+<h2>${esc(b.table.title)}</h2>
+<div class="bin-grid" role="list">${Array.from({ length: 16 }, (_, n) => `<span role="listitem"><b>${n}</b><code>${n.toString(2).padStart(4, '0')}</code></span>`).join('')}</div>
+<p class="muted">${[5, 10, 100, 255].map(ex).join(' · ')}</p>
+</section>
+<section id="addition">
+<h2>${esc(b.add.title)}</h2>
+<p>${esc(b.add.text)}</p>
+<div class="scroll-x"><table class="truth column"><tbody>
+<tr class="carry"><th>${esc(b.add.carry)}</th>${col(pad(add.carry.slice(-w).replace(/0/g, ' ')), 'carry')}<td></td></tr>
+<tr><th></th>${col(pad(add.a))}<td class="dec">${parseInt(add.a, 2)}</td></tr>
+<tr><th>+</th>${col(pad(add.b))}<td class="dec">${parseInt(add.b, 2)}</td></tr>
+<tr class="sum"><th>=</th>${col(pad(add.sum), 'out')}<td class="dec">${parseInt(add.sum, 2)}</td></tr>
+</tbody></table></div>
+<p class="tip">${BULB} ${esc(b.add.tip)}</p>
+<p><a href="${CONTENT[lang].path}">${esc(b.related)} →</a></p>
+${cta(c, ctx)}
+</section>
+<script src="/guide-binary.js" defer></script>`,
+  };
 }
 
 /** Barcha fayllar: dist ichidagi yo'l → mazmun. */
@@ -235,12 +354,17 @@ export function buildPages(ctx) {
   const site = ctx.site.replace(/\/+$/, '');
   const full = { ...ctx, site };
   const files = {};
-  for (const c of Object.values(CONTENT)) files[c.path.slice(1) + 'index.html'] = guidePage(c, full);
+  const urls = [`<url><loc>${site}/</loc></url>`];
+  for (const g of GUIDES) {
+    const alt = ['uz', 'ru'].map((l) => `<xhtml:link rel="alternate" hreflang="${l}" href="${site}${pageOf(g, l).path}"/>`).join('');
+    for (const lang of ['uz', 'ru']) {
+      const { ld, html } = g.body(lang, full);
+      const path = pageOf(g, lang).path;
+      files[path.slice(1) + 'index.html'] = shell(g, lang, full, ld, html);
+      urls.push(`<url><loc>${site}${path}</loc>${alt}</url>`);
+    }
+  }
   files['robots.txt'] = `User-agent: *\nDisallow: /api/\n\nSitemap: ${site}/sitemap.xml\n`;
-  const alt = Object.values(CONTENT)
-    .map((c) => `<xhtml:link rel="alternate" hreflang="${c.lang}" href="${site}${c.path}"/>`)
-    .join('');
-  const urls = [`<url><loc>${site}/</loc></url>`, ...Object.values(CONTENT).map((c) => `<url><loc>${site}${c.path}</loc>${alt}</url>`)];
   files['sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`;
   return files;
 }

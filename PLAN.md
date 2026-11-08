@@ -145,6 +145,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+26. **M25 — Qo'llanma: ikkilik sanoq sistemasi (bajarildi):** uz/ru statik sahifa (o'tkazish usullari, jadval, qo'shish, bitlar o'yinchog'i), qo'llanmalar orasida menyu, sitemap'da 5 ta manzil.
 25. **M24 — Dizayn: logotip (bajarildi):** yangi belgi (ikki kontakt, 45° yo'llar, AND va yonib turgan chiroq) — favicon, PWA va Apple ikonkalari, bosh ekran logotipi; havola rasmi va Telegram ilova rasmi Plata uslubida (og.png?v=3).
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
