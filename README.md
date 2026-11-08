@@ -388,6 +388,7 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 - Shriftlar — IBM Plex Sans va Plex Mono (`@fontsource`, o'z serverimizdan). Har alifbo `unicode-range` bilan faqat kerak bo'lganda yuklanadi; service worker shriftni birinchi yuklanishda keshga qo'yadi.
 - Maydon: simlar plata yo'li kabi — faqat gorizontal, vertikal va 45° qismlar (`geometry.ts` → `wireRoute`, burchaklar `routePath` da kesiladi); kirishlar — tumbler (qiymat dasta ichida), chiqishlar — chiroq. Plata'da yoniq yo'l ostida yorug'lik, Daftar'da — sariq marker, siyoh chiziq, katakli qog'oz va biroz "qo'lda chizilgan" chiziqlar (SVG filtri `#sketch`; sudrash, surish va masshtab paytida o'chadi — telefon sekinlashmasin).
 - Bosh ekran: "davom etish" kartochkasi (`components/MiniBoard.tsx` — navbatdagi darajaning kichik sxemasi: pinlar va o'yinchining qoralamasi; yechim hech qachon ko'rsatilmaydi), kunlik masala, pastki panel. Til — burchakdagi tugma, qo'llanma havolasi — sozlamalarda.
+- Darajalar xaritasi (`levelmap.ts`): bo'lim ichida "ilon" tartibi — ustunlar soni sig'adiganining eng kattasi va iloji bo'lsa darajalar soniga bo'linadigan; har daraja keyingisiga o'ngga, chapga yoki pastga qisqa yo'l bilan ulanadi. Xaritada birinchi marta ko'rilgan yechimlar (`lg.mapSeen.v1`) yo'lni animatsiya bilan "yoqadi".
 - Ikonkalar — `components/ui.tsx` dagi `ICONS` (24×24, chiziqli). Interfeysda emoji ishlatilmaydi; faqat ulashish matnlarida (Telegram xabari) qoladi.
 
 ## Qidiruv tizimlari (SEO)

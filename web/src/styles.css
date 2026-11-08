@@ -735,13 +735,31 @@ input[type='text']:focus {
 }
 
 .chapter {
+  position: relative;
   background: var(--bg2);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 16px;
 }
 
-.chapter.locked {
+/* Bo'limlar ham yo'l bilan ulangan: ochilgan bo'limgacha signal yetib kelgan. */
+.chapter + .chapter::before {
+  content: '';
+  position: absolute;
+  top: -17px;
+  left: 33px;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--trace);
+}
+
+.chapter + .chapter:not(.locked)::before {
+  background: var(--trace-on);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+.chapter.locked > * {
   opacity: 0.62;
 }
 
@@ -816,14 +834,15 @@ input[type='text']:focus {
   color: var(--copper);
 }
 
-.level-grid {
+/* Darajalar xaritasi: ilon tartibi (levelmap.ts), plitkalar orasida yo'l. */
+.level-map {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
-  gap: 10px;
   margin-top: 14px;
 }
 
 .level-tile {
+  position: relative;
+  min-width: 0;
   min-height: 86px;
   display: flex;
   flex-direction: column;
@@ -850,8 +869,105 @@ input[type='text']:focus {
 }
 
 .level-tile:disabled {
-  opacity: 0.45;
   cursor: not-allowed;
+}
+
+.level-tile:disabled > :not(.link) {
+  opacity: 0.45;
+}
+
+/* Plitkadagi chiroqcha: yechilgan — yoniq, navbatdagi — miltillaydi. */
+.node-led {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--lamp-stroke);
+  background: var(--lamp);
+}
+
+.level-tile.solved .node-led {
+  border-color: var(--lamp-on-stroke);
+  background: var(--lamp-on);
+}
+
+.level-tile.current {
+  border-color: var(--accent);
+}
+
+.level-tile.current .node-led {
+  border-color: var(--accent);
+  animation: led-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes led-pulse {
+  50% {
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.3);
+  }
+}
+
+/* Yo'l keyingi darajagacha: o'ngga, chapga yoki pastga (oraliq — TILE_GAP). */
+.link {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 2px;
+  background: var(--trace);
+}
+
+.link-r,
+.link-l {
+  top: 50%;
+  width: 18px;
+  height: 3px;
+  margin-top: -1.5px;
+}
+
+.link-r {
+  left: 100%;
+  transform-origin: left;
+}
+
+.link-l {
+  right: 100%;
+  transform-origin: right;
+}
+
+.link-d {
+  top: 100%;
+  left: 50%;
+  width: 3px;
+  height: 18px;
+  margin-left: -1.5px;
+  transform-origin: top;
+}
+
+.link.on {
+  background: var(--trace-on);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+/* Yangi yechim: signal yo'l bo'ylab keyingi darajaga oqadi. */
+.link-r.fresh.on,
+.link-l.fresh.on {
+  animation: link-x 0.45s ease-out both;
+}
+
+.link-d.fresh.on {
+  animation: link-y 0.45s ease-out both;
+}
+
+@keyframes link-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes link-y {
+  from {
+    transform: scaleY(0);
+  }
 }
 
 .level-num {

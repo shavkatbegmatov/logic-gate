@@ -143,9 +143,10 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 22. **M21 — Dizayn, 2-bosqich: maydon (bajarildi):** simlar plata yo'li (to'g'ri burchak va 45°), kirishlar — tumbler, chiqishlar — chiroq; Daftar'da katakli qog'oz, siyoh, marker va qo'lda chizilgandek chiziqlar.
 23. **M22 — Dizayn, 3-bosqich: bosh ekran (bajarildi):** "davom etish" kartochkasi (navbatdagi daraja, kichik sxema — qoralama bo'lsa u bilan, yechim ko'rsatilmaydi), pastki panel (Darajalar, Qum quti, Reyting, Yutuqlar, Sozlamalar), burchakda tez til almashtirish; qo'llanma havolasi — sozlamalarda.
 
+24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
+
 ### Dizayn: keyingi bosqichlar
 
-- **4 — Darajalar xaritasi:** tugunlar yo'llar bilan ulanadi, yechilganda signal keyingisiga oqadi.
 - Logotip, PWA ikonkalari va havola rasmi (og.png) — yangi uslubda.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
