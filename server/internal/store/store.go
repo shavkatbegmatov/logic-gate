@@ -63,6 +63,21 @@ var migrations = []string{
 		key   TEXT PRIMARY KEY,
 		value TEXT NOT NULL
 	) WITHOUT ROWID;`,
+	// Sinflar: o'qituvchi sinf yaratadi (id — ochiq qo'shilish kodi, key_hash — o'qituvchi kalitining
+	// xeshi), o'quvchilar o'z profili bilan qo'shiladi.
+	`CREATE TABLE classes (
+		id         TEXT PRIMARY KEY,
+		name       TEXT NOT NULL,
+		key_hash   BLOB NOT NULL,
+		created_at INTEGER NOT NULL
+	);
+	CREATE TABLE class_members (
+		class_id  TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+		player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+		joined_at INTEGER NOT NULL,
+		PRIMARY KEY (class_id, player_id)
+	) WITHOUT ROWID;
+	CREATE INDEX class_members_player ON class_members(player_id);`,
 }
 
 type Store struct {

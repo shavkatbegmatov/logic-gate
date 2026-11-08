@@ -12,6 +12,7 @@ export function errorText(e: unknown): string {
   if (e.code === 'nickname_not_allowed') return t.nicknameNotAllowed;
   if (e.code === 'rate_limited') return t.rateLimited;
   if (e.code === 'unauthorized') return t.settings.badCode;
+  if (t.classes.errors[e.code]) return t.classes.errors[e.code];
   return t.network;
 }
 

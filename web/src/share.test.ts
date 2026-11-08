@@ -32,6 +32,9 @@ describe('Telegram Mini App havolalari', () => {
     expect(tgAppLink(`#/p/${code}`, app)).toBe(`${app}?startapp=p_${code}`);
     expect(startRoute('daily')).toBe('daily');
     expect(startRoute(`p_${code}`)).toBe(`p/${code}`);
+    expect(tgAppLink('#/class/AB12CD', app)).toBe(`${app}?startapp=c_AB12CD`);
+    expect(startRoute('c_AB12CD')).toBe('class/AB12CD');
+    expect(startRoute('c_AB12')).toBe('');
     expect(startRoute('nomalum')).toBe('');
     expect(startRoute(null)).toBe('');
   });

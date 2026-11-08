@@ -1,6 +1,7 @@
 import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import { copyText, selectContents } from '../clipboard';
+import { ClassesCard } from '../components/ClassesCard';
 import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { showToast } from '../components/Toast';
@@ -124,6 +125,8 @@ export function Settings() {
               </button>
             </form>
           </section>
+
+          <ClassesCard />
 
           <section class="card">
             <div class="row between">

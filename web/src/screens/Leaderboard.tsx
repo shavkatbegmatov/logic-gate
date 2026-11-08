@@ -1,6 +1,6 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
-import { api, type DailyEntry, type LeaderEntry } from '../api';
+import { api, type ClassInfo, type DailyEntry, type LeaderEntry } from '../api';
 import { JoinForm } from '../components/JoinForm';
 import { TopBar } from '../components/ui';
 import { syncDaily } from '../daily';
@@ -17,6 +17,15 @@ export function Leaderboard({ tab }: { tab: Tab }) {
   const overall = useSignal<Overall | null>(null);
   const daily = useSignal<Daily | null>(null);
   const failed = useSignal(false);
+  const classes = useSignal<ClassInfo[]>([]);
+
+  useEffect(() => {
+    if (profile.value)
+      api
+        .myClasses()
+        .then((r) => (classes.value = r.classes))
+        .catch(() => {});
+  }, [profile.value?.id]);
 
   const fetchData = async () => {
     failed.value = false;
@@ -52,6 +61,15 @@ export function Leaderboard({ tab }: { tab: Tab }) {
               {t.leaderboard.today}
             </button>
           </div>
+          {classes.value.length > 0 && (
+            <div class="class-chips">
+              {classes.value.map((c) => (
+                <button key={c.code} class="btn ghost small" onClick={() => go(`class/${c.code}`)}>
+                  {t.classes.board}: {c.name}
+                </button>
+              ))}
+            </div>
+          )}
           {!profile.value && (
             <div class="card">
               <p class="muted">{t.leaderboard.notJoined}</p>

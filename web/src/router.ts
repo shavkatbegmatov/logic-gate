@@ -10,6 +10,8 @@ export type Route =
   | { name: 'daily'; day?: number }
   | { name: 'archive' }
   | { name: 'lesson'; id: string }
+  | { name: 'class'; code: string }
+  | { name: 'teacher'; code?: string }
   | { name: 'achievements' }
   | { name: 'custom'; code: string }
   | { name: 'settings' };
@@ -31,6 +33,10 @@ function parse(hash: string): Route {
       return arg ? { name: 'level', id: decodeURIComponent(arg) } : { name: 'levels' };
     case 'lesson':
       return arg ? { name: 'lesson', id: decodeURIComponent(arg) } : { name: 'levels' };
+    case 'class':
+      return arg ? { name: 'class', code: decodeURIComponent(arg) } : { name: 'settings' };
+    case 'teacher':
+      return arg ? { name: 'teacher', code: decodeURIComponent(arg) } : { name: 'teacher' };
     case 'p':
       return arg ? { name: 'custom', code: arg } : { name: 'home' };
     default:

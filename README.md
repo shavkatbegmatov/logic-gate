@@ -403,6 +403,15 @@ Bosh sahifada `canonical`, kengaytirilgan `description` va schema.org (`WebAppli
 
 Saytni Google Search Console va Yandex Webmaster'ga qo'shish (domen egasi tasdiqlaydi) va u yerda `https://logic.noesis.uz/sitemap.xml` ni yuborish — indekslashni tezlashtiradi. Tasdiqlash fayllari — `web/public/google*.html` va `web/public/yandex_*.html`: ularni o'chirmang, Google va Yandex vaqti-vaqti bilan qayta tekshiradi.
 
+## Sinf rejimi (o'qituvchilar uchun)
+
+Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi sinf nomini kiritadi va ikki narsa oladi:
+
+- **sinf kodi** (6 belgi, ochiq) va havola `#/class/<kod>` — o'quvchilarga yuboriladi (Telegram'da `startapp=c_<kod>`); o'quvchi taxallusi bilan qo'shiladi va sinfdoshlar reytingini ko'radi;
+- **o'qituvchi kaliti** (tiklash kodi kabi 16 belgi) — hisobot va boshqaruv uchun; shu qurilmada saqlanadi (`lg.teacher.v1`), serverda faqat SHA-256 xeshi. Boshqa qurilmada «Kod va kalit bilan qo'shish».
+
+Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
+
 ## Oflayn rejim
 
 HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. `vite dev` da service worker yo'q.
@@ -423,6 +432,13 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | GET | `/api/daily` | bugungi masala, statistika; token bo'lsa — o'yinchi natijasi va seriyasi |
 | POST | `/api/daily/{day}/solve` | `{circuit}` — kunlik yechim (faqat bugungi va kechagi kun) |
 | GET | `/api/daily/{day}/leaderboard` | kun reytingi, top-50 (`{day}` = `today` ham bo'ladi) |
+| POST | `/api/classes` | `{name}` → `{code, name, key}` — o'qituvchi sinf yaratadi (kalit faqat shu javobda) |
+| GET | `/api/classes/{code}` | sinf nomi va o'quvchilar soni; token bo'lsa — `member` |
+| POST / DELETE | `/api/classes/{code}/join` | o'quvchi sinfga qo'shiladi / chiqadi (token bilan) |
+| GET | `/api/classes/{code}/board` | sinf reytingi — faqat a'zolar uchun |
+| GET | `/api/me/classes` | o'yinchi a'zo bo'lgan sinflar |
+| GET | `/api/classes/{code}/report` | o'qituvchi hisoboti (`X-Class-Key: <kalit>`): har bir o'quvchining darajalari, bugungi va 7 kunlik kunlik masalalari, faolligi |
+| DELETE | `/api/classes/{code}/members/{id}`, `/api/classes/{code}` | o'qituvchi o'quvchini chiqaradi / sinfni o'chiradi (kalit bilan) |
 | GET | `/healthz` | holat tekshiruvi |
 
 Cheklovlar: Go'da IP bo'yicha 10 so'rov/s (40 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (5 tagacha), noto'g'ri tiklash kodi — 5 soniyada 1 ta; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim.

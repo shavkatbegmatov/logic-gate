@@ -28,7 +28,8 @@ export const TG_APP_URL = ((import.meta.env.VITE_TG_APP_URL as string | undefine
  */
 export function tgAppLink(path: string, base = TG_APP_URL): string {
   if (!base) return '';
-  const param = path === '#/daily' ? 'daily' : path.startsWith('#/p/') ? `p_${path.slice(4)}` : '';
+  const param =
+    path === '#/daily' ? 'daily' : path.startsWith('#/p/') ? `p_${path.slice(4)}` : path.startsWith('#/class/') ? `c_${path.slice(8)}` : '';
   return param && /^[\w-]{1,512}$/.test(param) ? `${base}?startapp=${param}` : base;
 }
 

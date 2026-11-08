@@ -2028,6 +2028,215 @@ input[type='text']:focus {
   margin: 0;
 }
 
+/* ── Sinf rejimi ───────────────────────────────────────── */
+.section-title {
+  margin: 18px 0 8px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.class-name {
+  margin: 4px 0 8px;
+  font-size: 22px;
+}
+
+.class-invite .btn.primary {
+  margin-top: 8px;
+}
+
+.class-actions {
+  margin: 18px 0;
+}
+
+.class-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.class-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.class-item:hover {
+  border-color: var(--gate-stroke);
+}
+
+.class-item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.class-item code {
+  font: 600 14px var(--mono);
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+
+.teacher-link {
+  margin-top: 10px;
+}
+
+.class-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.row.wrap {
+  flex-wrap: wrap;
+}
+
+.row.wrap input {
+  flex: 1 1 140px;
+}
+
+.report {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.report > .card {
+  margin: 0;
+}
+
+.class-share,
+.class-key {
+  max-width: 640px;
+}
+
+.class-code {
+  margin: 4px 0 10px;
+  font: 600 32px var(--mono);
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+.class-share input,
+.class-key code {
+  flex: 1;
+  min-width: 0;
+}
+
+.key-code {
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  font: 600 15px var(--mono);
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+}
+
+.report-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.report-head p {
+  margin: 0;
+}
+
+.report-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg2);
+}
+
+.report-table {
+  min-width: 720px;
+}
+
+.report-table th,
+.report-table td {
+  padding: 8px 6px;
+  white-space: nowrap;
+}
+
+.report-table th:first-child,
+.report-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: 12px;
+  background: var(--bg2);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Birinchi ustun — taxallus (umumiy reytingdagi o'rin raqami uslubi emas). */
+.board-table.report-table td:first-child {
+  width: auto;
+  font: 600 14px var(--sans);
+  color: var(--text);
+}
+
+.report-table td.num {
+  font: 600 14px var(--mono);
+  width: auto;
+  color: var(--text);
+}
+
+.report-table td.gold {
+  color: var(--gold);
+}
+
+.report-table th.ch {
+  width: 30px;
+  font: 600 12px var(--mono);
+}
+
+/* Bo'lim katakchasi: rang to'yinganligi — yechilgan darajalar ulushi. */
+.ch-cell {
+  font: 600 12px var(--mono);
+  color: var(--text);
+  background: rgba(var(--accent-rgb), calc(var(--fill) * 0.4));
+}
+
+.ch-cell.full {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.icon-btn.small {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-btn.small .icon {
+  width: 16px;
+  height: 16px;
+}
+
 /* O'yinchining o'rni (ro'yxatda ko'rinmasa). */
 .me-card {
   display: flex;

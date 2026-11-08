@@ -89,6 +89,7 @@ export function startRoute(param: string | null | undefined): string {
   if (!param) return '';
   if (param === 'daily' || param === 'levels' || param === 'sandbox') return param;
   if (param.startsWith('p_') && param.length > 2) return `p/${param.slice(2)}`;
+  if (/^c_[0-9A-Za-z]{6}$/.test(param)) return `class/${param.slice(2)}`;
   return '';
 }
 

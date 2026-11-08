@@ -33,8 +33,10 @@ type Server struct {
 	opts   Options
 	api    *limiter // umumiy so'rovlar
 	signup *limiter // yangi o'yinchi yaratish
-	// Kalitlar: tiklash kodi bo'yicha noto'g'ri urinishlar.
+	// Kalitlar: tiklash kodi va o'qituvchi kaliti bo'yicha noto'g'ri urinishlar.
 	auth *limiter
+	// Sinf yaratish.
+	classes *limiter
 
 	lbMu   sync.Mutex
 	lbAt   time.Time
@@ -68,6 +70,8 @@ func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logg
 		api:    newLimiter(10, 40),
 		signup: newLimiter(1.0/30, 5),
 		auth:   newLimiter(0.2, 10),
+		// Bir IP dan: 5 tagacha birdaniga, keyin 2 daqiqada bitta sinf.
+		classes: newLimiter(1.0/120, 5),
 	}
 }
 
@@ -90,6 +94,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/daily/{day}/solve", s.authed(s.solveDaily))
 	mux.HandleFunc("GET /api/daily/{day}/leaderboard", s.dailyLeaderboard)
 	mux.HandleFunc("POST /api/telegram/remind", s.telegramRemind)
+	mux.HandleFunc("POST /api/classes", s.createClass)
+	mux.HandleFunc("GET /api/classes/{code}", s.getClass)
+	mux.HandleFunc("DELETE /api/classes/{code}", s.deleteClass)
+	mux.HandleFunc("POST /api/classes/{code}/join", s.authed(s.joinClass))
+	mux.HandleFunc("DELETE /api/classes/{code}/join", s.authed(s.leaveClass))
+	mux.HandleFunc("GET /api/classes/{code}/board", s.authed(s.classBoard))
+	mux.HandleFunc("GET /api/classes/{code}/report", s.classReport)
+	mux.HandleFunc("DELETE /api/classes/{code}/members/{id}", s.removeMember)
+	mux.HandleFunc("GET /api/me/classes", s.authed(s.myClasses))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, "not_found")
 	})

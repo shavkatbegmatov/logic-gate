@@ -11,8 +11,8 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown, code?: string): Promise<T> {
-  const headers: Record<string, string> = {};
+async function request<T>(method: string, path: string, body?: unknown, code?: string, extra?: Record<string, string>): Promise<T> {
+  const headers: Record<string, string> = { ...extra };
   const token = code ?? profile.value?.code;
   if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -139,6 +139,46 @@ export interface DailyEntry {
   me?: boolean;
 }
 
+/** Sinf (o'qituvchi yaratadi). key — faqat yaratilganda qaytadi. */
+export interface ClassInfo {
+  code: string;
+  name: string;
+  members: number;
+  member?: boolean;
+  key?: string;
+}
+
+export interface ClassEntry {
+  rank: number;
+  nickname: string;
+  stars: number;
+  solved: number;
+  me?: boolean;
+}
+
+export interface ClassMember {
+  id: string;
+  nickname: string;
+  joinedAt: number;
+  lastSeen: number;
+  /** daraja → yulduzlar */
+  levels: Record<string, number>;
+  dailyToday: number;
+  dailyWeek: number;
+}
+
+export interface ClassReport {
+  code: string;
+  name: string;
+  createdAt: number;
+  today: number;
+  now: number;
+  members: ClassMember[];
+}
+
+const classPath = (code: string) => `/classes/${encodeURIComponent(code)}`;
+const teacher = (key: string) => ({ 'X-Class-Key': key });
+
 export const api = {
   createPlayer: (nickname: string) => request<PlayerInfo>('POST', '/players', { nickname }),
   me: (code?: string) => request<PlayerInfo>('GET', '/me', undefined, code),
@@ -155,6 +195,17 @@ export const api = {
   telegramRemind: (initData: string, on?: boolean, lang?: string) =>
     request<{ remind: boolean }>('POST', '/telegram/remind', on === undefined ? { initData } : { initData, on, lang }),
   solveDaily: (day: number, circuit: Circuit) => request<DailySolveResult>('POST', `/daily/${day}/solve`, { circuit }),
+  createClass: (name: string) => request<ClassInfo>('POST', '/classes', { name }),
+  classInfo: (code: string) => request<ClassInfo>('GET', classPath(code)),
+  joinClass: (code: string) => request<ClassInfo>('POST', `${classPath(code)}/join`),
+  leaveClass: (code: string) => request<{ ok: boolean }>('DELETE', `${classPath(code)}/join`),
+  classBoard: (code: string) => request<{ code: string; name: string; top: ClassEntry[] }>('GET', `${classPath(code)}/board`),
+  myClasses: () => request<{ classes: ClassInfo[] }>('GET', '/me/classes'),
+  classReport: (code: string, key: string) =>
+    request<ClassReport>('GET', `${classPath(code)}/report`, undefined, undefined, teacher(key)),
+  removeMember: (code: string, key: string, id: string) =>
+    request<{ ok: boolean }>('DELETE', `${classPath(code)}/members/${encodeURIComponent(id)}`, undefined, undefined, teacher(key)),
+  deleteClass: (code: string, key: string) => request<{ ok: boolean }>('DELETE', classPath(code), undefined, undefined, teacher(key)),
   dailyLeaderboard: (day: number | 'today') =>
     request<{ day: number; number: number; top: DailyEntry[]; me: DailyEntry | null }>('GET', `/daily/${day}/leaderboard`),
 };
