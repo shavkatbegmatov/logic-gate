@@ -283,6 +283,14 @@ h3 {
   cursor: default;
 }
 
+/* O'chirilgan asosiy tugma rangsiz: xira sariq/ko'k loyqa ko'rinardi. */
+.btn.primary:disabled {
+  opacity: 1;
+  background: var(--panel);
+  border-color: var(--line);
+  color: var(--dim);
+}
+
 a.btn {
   text-decoration: none;
 }
@@ -859,9 +867,6 @@ input[type='text']:focus {
   border-color: var(--solved);
 }
 
-.level-tile.perfect {
-  border-color: var(--gold);
-}
 
 .level-tile:disabled {
   cursor: not-allowed;
@@ -890,6 +895,7 @@ input[type='text']:focus {
 
 .level-tile.current {
   border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .level-tile.current .node-led {
@@ -2810,10 +2816,25 @@ body:has(.stage.has-check) .toast {
   }
 }
 
-/* Saytdan Telegram Mini App'ga o'tish (bosh sahifa). */
-.home .play-tg {
-  width: 100%;
-  margin-top: 8px;
+/* Saytdan Telegram Mini App'ga o'tish (bosh sahifa): taklif tugmasi bilan bir xil og'irlikda emas. */
+.tg-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tg-ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tg-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tg-link .icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* Telegram: kunlik eslatma tugmasi. */

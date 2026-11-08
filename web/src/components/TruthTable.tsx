@@ -57,7 +57,15 @@ export function TruthTable({ inputs, outputs, rows, target, current, onRow }: Pr
         <tbody>
           {rows.map((got, r) => {
             const exp = target ? outputs.map((o) => Number(target[o][r])) : null;
-            const ok = exp ? exp.every((v, i) => got[i] === v) : null;
+            // Chiqish hali ulanmagan bo'lsa — qator neytral (o'yin boshida hammasi qizil bo'lmasin);
+            // ma'lum qiymatlardan biri noto'g'ri bo'lsa — xato.
+            const ok = !exp
+              ? null
+              : exp.some((v, i) => got[i] !== null && got[i] !== v)
+                ? false
+                : got.every((g) => g !== null)
+                  ? true
+                  : null;
             return (
               <tr
                 key={r}
@@ -88,7 +96,7 @@ export function TruthTable({ inputs, outputs, rows, target, current, onRow }: Pr
                     </td>
                   ),
                 )}
-                {exp && <td class="mark">{ok ? '✓' : '✗'}</td>}
+                {exp && <td class="mark">{ok === null ? '' : ok ? '✓' : '✗'}</td>}
               </tr>
             );
           })}

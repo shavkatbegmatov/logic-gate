@@ -26,7 +26,7 @@ export function Home() {
           <DailyCard />
           <ShareButtons text={t.share.inviteText} label={t.share.invite} />
           {TG_APP_URL && !inTelegram && (
-            <a class="btn tg play-tg" href={TG_APP_URL} target="_blank" rel="noopener noreferrer">
+            <a class="tg-link" href={TG_APP_URL} target="_blank" rel="noopener noreferrer">
               <Icon name="telegram" /> {t.telegram.play}
             </a>
           )}
@@ -69,7 +69,8 @@ function ContinueCard() {
             ? t.home.solved(solvedCount.value, levels.length)
             : t.home.chapterProgress(solved, list.length, chapterStars(ch), list.length * 3)}
         </span>
-        <button class="btn primary" onClick={() => go(allDone ? 'levels' : `level/${level.id}`)} autoFocus>
+        {/* autoFocus yo'q: har ochilishda tugma atrofida fokus halqasi chiqardi. */}
+        <button class="btn primary" onClick={() => go(allDone ? 'levels' : `level/${level.id}`)}>
           <Icon name="play" /> {allDone ? t.home.levels : solvedCount.value > 0 || draft ? t.home.continue : t.home.play}
         </button>
       </div>

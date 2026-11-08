@@ -46,7 +46,7 @@ export function JoinForm({ compact = false, onJoined }: { compact?: boolean; onJ
           onInput={(e) => (name.value = (e.currentTarget as HTMLInputElement).value)}
           aria-label={t.home.nicknamePlaceholder}
         />
-        <button class="btn primary" disabled={busy.value || name.value.trim().length < 2}>
+        <button class="btn" disabled={busy.value || name.value.trim().length < 2}>
           {t.home.join}
         </button>
       </div>
