@@ -388,7 +388,7 @@ O'yin hash marshrutli SPA — Google va Yandex undan faqat bosh sahifani ko'radi
 
 Bosh sahifada `canonical`, kengaytirilgan `description` va schema.org (`WebApplication`) bor; o'yinning bosh ekranida qo'llanmaga havola (Telegram ichida yashirin). Go server papkadagi `index.html` ni beradi, sleshsiz manzilni sleshliga yo'naltiradi; Nginx'da `try_files $uri $uri/index.html /index.html`.
 
-Saytni Google Search Console va Yandex Webmaster'ga qo'shish (domen egasi tasdiqlaydi) va u yerda `https://logic.noesis.uz/sitemap.xml` ni yuborish — indekslashni tezlashtiradi.
+Saytni Google Search Console va Yandex Webmaster'ga qo'shish (domen egasi tasdiqlaydi) va u yerda `https://logic.noesis.uz/sitemap.xml` ni yuborish — indekslashni tezlashtiradi. Google tasdiqlash fayli — `web/public/google*.html`: uni o'chirmang, Google vaqti-vaqti bilan qayta tekshiradi.
 
 ## Oflayn rejim
 
