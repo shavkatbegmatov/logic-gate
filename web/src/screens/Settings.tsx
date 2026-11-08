@@ -11,6 +11,7 @@ import { resetAchievements } from '../achievements';
 import { resetCustom } from '../custom';
 import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
+import { inTelegram } from '../telegram';
 import { THEMES } from '../theme';
 import { errorText, renameProfile, restoreProfile } from '../sync';
 
@@ -137,6 +138,14 @@ export function Settings() {
               <ThemeSwitch />
             </div>
           </section>
+
+          {/* Statik qo'llanma; Telegram ichida oddiy havola Mini App oynasidan chiqib ketadi. */}
+          {!inTelegram && (
+            <a class="card guide-card" href={t.home.guideUrl}>
+              <Icon name="book" />
+              <span>{t.home.guide}</span>
+            </a>
+          )}
 
           <RemindToggle card />
 

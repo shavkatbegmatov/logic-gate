@@ -141,10 +141,10 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 21. **M20 — Dizayn, 1-bosqich (bajarildi):** mavzu o'zgaruvchilari, Plata va Daftar mavzulari + Avto (Telegram rejimi bilan), IBM Plex shriftlari, emoji o'rniga chiziqli ikonkalar, neon nur va gradientlarsiz.
 
 22. **M21 — Dizayn, 2-bosqich: maydon (bajarildi):** simlar plata yo'li (to'g'ri burchak va 45°), kirishlar — tumbler, chiqishlar — chiroq; Daftar'da katakli qog'oz, siyoh, marker va qo'lda chizilgandek chiziqlar.
+23. **M22 — Dizayn, 3-bosqich: bosh ekran (bajarildi):** "davom etish" kartochkasi (navbatdagi daraja, kichik sxema — qoralama bo'lsa u bilan, yechim ko'rsatilmaydi), pastki panel (Darajalar, Qum quti, Reyting, Yutuqlar, Sozlamalar), burchakda tez til almashtirish; qo'llanma havolasi — sozlamalarda.
 
 ### Dizayn: keyingi bosqichlar
 
-- **3 — Bosh ekran:** asosiy "davom etish" kartochkasi (joriy daraja sxemasi bilan), pastki panel; til va qo'llanma — sozlamalarga.
 - **4 — Darajalar xaritasi:** tugunlar yo'llar bilan ulanadi, yechilganda signal keyingisiga oqadi.
 - Logotip, PWA ikonkalari va havola rasmi (og.png) — yangi uslubda.
 

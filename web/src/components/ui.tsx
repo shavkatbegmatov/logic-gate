@@ -93,6 +93,11 @@ const ICONS = {
   pencil: 'M4 20l1-4L16 5l3 3L8 19ZM14 7l3 3',
   users: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2.5 20c.5-3.5 3.3-5.5 6.5-5.5s6 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.8c2 .7 3.2 2.5 3.5 5.2',
   medal: 'M8 3l3 6M16 3l-3 6M12 21a6 6 0 1 0 0-12 6 6 0 0 0 0 12ZM12 13v4',
+  play: 'M8 5.5v13l10-6.5Z',
+  levels: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+  chip: 'M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4',
+  trophy: 'M8 4h8v5a4 4 0 0 1-8 0ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M10 17h4',
+  settings: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5a2 2 0 1 0 0 4 2 2 0 1 0 0-4M9 15a2 2 0 1 0 0 4 2 2 0 1 0 0-4',
 } as const;
 
 export type IconName = keyof typeof ICONS;

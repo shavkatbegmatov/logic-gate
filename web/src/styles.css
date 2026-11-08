@@ -451,18 +451,221 @@ input[type='text']:focus {
 
 /* ── Bosh menyu ────────────────────────────────────────── */
 .home {
-  overflow-y: auto;
   background: var(--bg);
 }
 
+.home-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+}
+
 .home-inner {
-  width: min(380px, 100%);
+  position: relative;
+  width: min(420px, 100%);
   margin: auto;
-  padding: 32px 16px;
+  padding: 24px 16px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
+}
+
+/* Til: burchakdagi kichik tugma (to'liq tanlov — sozlamalarda). */
+.lang-toggle {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: 600 12px var(--mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* "Davom etish": navbatdagi daraja, kichik sxemasi va bitta asosiy tugma. */
+.continue-card {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg2);
+}
+
+.continue-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.continue-stars {
+  flex: none;
+  font: 600 13px var(--mono);
+  color: var(--gold);
+}
+
+.continue-title {
+  margin: 0;
+  font-size: 21px;
+}
+
+.continue-board {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.mini-board {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+
+.mini-wire {
+  fill: none;
+  stroke: var(--trace);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.mini-pin {
+  fill: var(--panel);
+  stroke: var(--copper);
+  stroke-width: 3;
+}
+
+.continue-board .lead {
+  stroke-width: 3;
+}
+
+.mini-name {
+  font: 600 28px var(--mono);
+  fill: var(--text);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.mini-empty rect {
+  fill: none;
+  stroke: var(--dim);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 6;
+}
+
+.mini-empty text {
+  font: 600 40px var(--mono);
+  fill: var(--dim);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.continue-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.continue-progress {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.continue-foot .btn.primary {
+  flex: none;
+  min-width: 140px;
+}
+
+.continue-foot .btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.btn .icon path[d^='M8 5.5'] {
+  fill: currentColor;
+}
+
+/* Pastki panel. */
+.home-nav {
+  flex: none;
+  border-top: 1px solid var(--line);
+  background: var(--bg2);
+  padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+}
+
+.home-nav-inner {
+  max-width: 520px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.home-nav button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 2px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.home-nav button:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.home-nav span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-badge {
+  position: absolute;
+  top: 3px;
+  left: calc(50% + 8px);
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--gold);
+  color: var(--accent-ink);
+  font: 600 10px/16px var(--mono);
+}
+
+.guide-card {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.guide-card:hover {
+  border-color: var(--muted);
 }
 
 .logo {
@@ -474,7 +677,7 @@ input[type='text']:focus {
 
 .logo-text {
   margin: 0;
-  font: 800 42px var(--mono);
+  font: 800 34px var(--mono);
   letter-spacing: 0.08em;
   color: var(--text);
 }
@@ -516,35 +719,6 @@ input[type='text']:focus {
   margin: 0;
   color: var(--muted);
   text-align: center;
-}
-
-.hello {
-  margin: 0;
-  color: var(--copper);
-}
-
-.home-stats {
-  display: flex;
-  gap: 18px;
-  font: 600 14px var(--mono);
-  color: var(--gold);
-}
-
-.home-stats span + span {
-  color: var(--muted);
-}
-
-.menu {
-  width: 100%;
-  display: grid;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.menu-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
 }
 
 .home .card {
@@ -620,14 +794,12 @@ input[type='text']:focus {
 }
 
 /* Matn yonidagi kichik ikonkalar (emoji o'rniga). */
-.guide-link,
 .streak {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.guide-link .icon,
 .streak .icon,
 .lock-note .icon,
 .level-goal .icon {
@@ -1812,7 +1984,7 @@ input[type='text']:focus {
   }
 
   .logo-text {
-    font-size: 36px;
+    font-size: 30px;
   }
 }
 
@@ -2136,18 +2308,32 @@ input[type='text']:focus {
 }
 
 /* ── Kunlik masalalar arxivi ───────────────────────────── */
+.daily-wrap {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
 .archive-link {
-  margin-top: -6px;
-}
-
-.guide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
   color: var(--muted);
-  font-size: 14px;
-  text-underline-offset: 3px;
+  font-size: 13px;
+  cursor: pointer;
 }
 
-.guide-link:hover {
-  color: var(--accent);
+.archive-link:hover {
+  color: var(--text);
+}
+
+.archive-link .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .archive {

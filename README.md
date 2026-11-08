@@ -387,6 +387,7 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 - `web/public/theme.js` mavzuni birinchi chizishdan oldin qo'yadi (CSP inline skriptga ruxsat bermaydi), keyin `src/theme.ts` boshqaradi: `<html data-theme>`, brauzer paneli rangi, Telegram oynasi ranglari.
 - Shriftlar — IBM Plex Sans va Plex Mono (`@fontsource`, o'z serverimizdan). Har alifbo `unicode-range` bilan faqat kerak bo'lganda yuklanadi; service worker shriftni birinchi yuklanishda keshga qo'yadi.
 - Maydon: simlar plata yo'li kabi — faqat gorizontal, vertikal va 45° qismlar (`geometry.ts` → `wireRoute`, burchaklar `routePath` da kesiladi); kirishlar — tumbler (qiymat dasta ichida), chiqishlar — chiroq. Plata'da yoniq yo'l ostida yorug'lik, Daftar'da — sariq marker, siyoh chiziq, katakli qog'oz va biroz "qo'lda chizilgan" chiziqlar (SVG filtri `#sketch`; sudrash, surish va masshtab paytida o'chadi — telefon sekinlashmasin).
+- Bosh ekran: "davom etish" kartochkasi (`components/MiniBoard.tsx` — navbatdagi darajaning kichik sxemasi: pinlar va o'yinchining qoralamasi; yechim hech qachon ko'rsatilmaydi), kunlik masala, pastki panel. Til — burchakdagi tugma, qo'llanma havolasi — sozlamalarda.
 - Ikonkalar — `components/ui.tsx` dagi `ICONS` (24×24, chiziqli). Interfeysda emoji ishlatilmaydi; faqat ulashish matnlarida (Telegram xabari) qoladi.
 
 ## Qidiruv tizimlari (SEO)
