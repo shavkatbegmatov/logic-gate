@@ -8,7 +8,7 @@ import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
-import { GATE_H, GATE_W, inputPortY, isSourcePort, outputPortY, portPoint, wirePath, type Point } from './geometry';
+import { GATE_H, GATE_W, inputPortY, isSourcePort, outputPortY, portPoint, routeMid, routePath, wirePath, wireRoute, type Point } from './geometry';
 import { GateShape } from './GateShape';
 
 type Drag =
@@ -47,6 +47,10 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
   const drag = useRef<Drag | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const ghost = useSignal<{ a: Point; b: Point } | null>(null);
+  // Sudrash, surish va masshtab paytida Daftar'ning "qo'lda chizilgan" filtri o'chadi (har kadrda qayta
+  // hisoblash telefonni sekinlashtiradi); maydon to'xtagach qaytadi.
+  const moving = useSignal(false);
+  const wheelTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wiring = useSignal<string | null>(null);
 
   useEffect(() => {
@@ -136,6 +140,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     capture(svgRef.current!, e.pointerId);
     const p = local(e);
     pointers.current.set(e.pointerId, p);
+    moving.value = true;
 
     if (pointers.current.size === 2) {
       // Ikkinchi barmoq: boshlangan amal bekor bo'lib, masshtablash boshlanadi.
@@ -205,6 +210,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
 
   const onUp = (e: PointerEvent) => {
     if (!pointers.current.delete(e.pointerId)) return;
+    if (pointers.current.size === 0) moving.value = false;
     const d = drag.current;
     if (!d) return;
     if (d.kind === 'pinch') {
@@ -252,6 +258,9 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
 
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
+    moving.value = true;
+    clearTimeout(wheelTimer.current);
+    wheelTimer.current = setTimeout(() => (moving.value = false), 200);
     const p = local(e);
     editor.zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), p.x, p.y);
   };
@@ -290,14 +299,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     const a = portPoint(w.from, gmap, lay);
     const b = portPoint(w.to, gmap, lay);
     if (!a || !b) return null;
-    const d = wirePath(a, b);
+    const route = wireRoute(a, b);
+    const d = routePath(route);
     const live = reached(w.from, 1);
     const on = live && values.get(w.from) === 1;
     const front = wave !== null && stepOf(w.from, 1) === wave;
     const selected = sel?.kind === 'wire' && sel.index === i;
     if (selected) {
-      // Simmetrik boshqaruv nuqtalari tufayli Bezier o'rtasi aynan a va b ning o'rtasi.
-      deleteAt = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + (vertical ? 14 : -14) };
+      const m = routeMid(route);
+      deleteAt = { x: m.x, y: m.y + (vertical ? 14 : -14) };
     }
     return (
       <g
@@ -325,6 +335,11 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     </g>
   );
 
+  // Tumbler va chiroq vertikal rejimda ham ekranda bir xil ko'rinadi (matn kabi teskari buriladi).
+  const upright = (x: number, y: number, children: ComponentChildren, vx = x, vy = y) => (
+    <g transform={vertical ? `translate(${vx},${vy}) ${TRANSPOSE}` : `translate(${x},${y})`}>{children}</g>
+  );
+
   // Matn vertikal rejimda ham to'g'ri o'qilishi uchun transpozitsiyaga teskari buriladi.
   const label = (cls: string, x: number, y: number, text: ComponentChildren, vx = x, vy = y) =>
     vertical ? (
@@ -345,7 +360,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     <div class="board" ref={wrapRef}>
       <svg
         ref={svgRef}
-        class={`board-svg ${targetClass}`}
+        class={`board-svg ${targetClass}${moving.value ? ' moving' : ''}`}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
@@ -355,8 +370,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
       >
         <defs>
           <pattern id="grid" width={24} height={24} patternUnits="userSpaceOnUse">
+            {/* Plata — teshikchalar, Daftar — katak chiziqlari (mavzuga qarab CSS ko'rsatadi). */}
             <circle cx={12} cy={12} r={1.1} class="grid-dot" />
+            <path d="M24,0 H0 V24" class="grid-line" />
           </pattern>
+          {/* Daftar: chiziqlar biroz notekis — qo'lda chizilgandek. */}
+          <filter id="sketch" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves={1} seed={7} />
+            <feDisplacementMap in="SourceGraphic" scale={2.6} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
         </defs>
         <g transform={`translate(${view.tx},${view.ty}) scale(${view.s})${vertical ? ` ${TRANSPOSE}` : ''}`}>
           <rect class="board-bg" x={-5000} y={-5000} width={10000} height={10000} fill="url(#grid)" />
@@ -400,9 +422,20 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
             return (
               <g key={`in:${name}`} class={`pin pin-in${on ? ' on' : ''}`} transform={`translate(${p.x},${p.y})`}>
                 <g data-kind="pin" data-pin={k} class="pin-body">
-                  <rect x={-70} y={-20} width={56} height={40} rx={9} />
-                  {label('pin-name', -52, 0, name)}
-                  {label('pin-val', -28, 0, on ? 1 : 0)}
+                  <rect x={-78} y={-20} width={64} height={40} rx={9} />
+                  {label('pin-name', -64, 0, name)}
+                  {/* Tumbler: dastagi 1 da o'ngda; qiymat dasta ichida yozilgan. */}
+                  {upright(
+                    -34,
+                    0,
+                    <g class="switch">
+                      <rect class="sw-track" x={-14} y={-8} width={28} height={16} rx={8} />
+                      <g class="sw-knob" style={{ transform: `translateX(${on ? 6 : -6}px)` }}>
+                        <circle r={7} />
+                        <text class="sw-val">{on ? 1 : 0}</text>
+                      </g>
+                    </g>,
+                  )}
                 </g>
                 <line class="lead" x1={-14} y1={0} x2={0} y2={0} />
                 {port(`in:${name}`, 0, 0, true, usedSources.has(`in:${name}`), on)}
@@ -427,7 +460,18 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                 <line class="lead" x1={0} y1={0} x2={14} y2={0} />
                 <rect class="pin-box" x={14} y={-20} width={60} height={40} rx={9} />
                 {label('pin-name', 30, 0, name)}
-                <circle class="lamp" cx={58} cy={0} r={8} />
+                {/* Chiroq: gardish, shisha, yonganda — yorug'lik (Plata) yoki chiziqlar (Daftar). */}
+                {upright(
+                  56,
+                  0,
+                  <g class="lamp-g">
+                    <circle class="lamp-halo" r={15} />
+                    <path class="lamp-rays" d="M-9,-11 l-3,-4 M0,-13 v-5 M9,-11 l3,-4" />
+                    <circle class="lamp-bezel" r={10} />
+                    <circle class="lamp" r={7} />
+                    <circle class="lamp-shine" cx={-2.5} cy={-2.5} r={2} />
+                  </g>,
+                )}
                 {exp !== undefined && label('pin-exp', 44, 32, `${t.play.expected.toLowerCase()}: ${exp}`, 90, 0)}
                 {port(`out:${name}`, 0, 0, false, driven.has(`out:${name}`), v === 1)}
               </g>

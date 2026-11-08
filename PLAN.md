@@ -140,9 +140,10 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 20. **M19 — Qidiruv tizimlari (bajarildi):** mantiqiy elementlar qo'llanmasi (uz/ru statik sahifa), robots.txt, sitemap.xml, schema.org, canonical; Google va Yandex'da tasdiqlangan.
 21. **M20 — Dizayn, 1-bosqich (bajarildi):** mavzu o'zgaruvchilari, Plata va Daftar mavzulari + Avto (Telegram rejimi bilan), IBM Plex shriftlari, emoji o'rniga chiziqli ikonkalar, neon nur va gradientlarsiz.
 
+22. **M21 — Dizayn, 2-bosqich: maydon (bajarildi):** simlar plata yo'li (to'g'ri burchak va 45°), kirishlar — tumbler, chiqishlar — chiroq; Daftar'da katakli qog'oz, siyoh, marker va qo'lda chizilgandek chiziqlar.
+
 ### Dizayn: keyingi bosqichlar
 
-- **2 — Maydon:** simlar mis yo'llardek (to'g'ri burchak va 45°), kirishlar — tumbler, chiqishlar — chiroq; Daftar'da siyoh va marker, biroz "qo'lda chizilgan" chiziq.
 - **3 — Bosh ekran:** asosiy "davom etish" kartochkasi (joriy daraja sxemasi bilan), pastki panel; til va qo'llanma — sozlamalarga.
 - **4 — Darajalar xaritasi:** tugunlar yo'llar bilan ulanadi, yechilganda signal keyingisiga oqadi.
 - Logotip, PWA ikonkalari va havola rasmi (og.png) — yangi uslubda.

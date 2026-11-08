@@ -386,6 +386,7 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 - Ranglar faqat `web/src/styles.css` boshidagi o'zgaruvchilarda (`:root` — Plata, `:root[data-theme='daftar']` — Daftar). Qolgan CSS'da qattiq yozilgan rang bo'lmasligini `theme.test.ts` tekshiradi; yangi rang kerak bo'lsa — ikkala mavzuga o'zgaruvchi qo'shing. `--on` — signal 1 (sim, chiroq), `--accent` — interfeysdagi asosiy tugma; shaffof variant uchun `rgba(var(--on-rgb), 0.2)`.
 - `web/public/theme.js` mavzuni birinchi chizishdan oldin qo'yadi (CSP inline skriptga ruxsat bermaydi), keyin `src/theme.ts` boshqaradi: `<html data-theme>`, brauzer paneli rangi, Telegram oynasi ranglari.
 - Shriftlar — IBM Plex Sans va Plex Mono (`@fontsource`, o'z serverimizdan). Har alifbo `unicode-range` bilan faqat kerak bo'lganda yuklanadi; service worker shriftni birinchi yuklanishda keshga qo'yadi.
+- Maydon: simlar plata yo'li kabi — faqat gorizontal, vertikal va 45° qismlar (`geometry.ts` → `wireRoute`, burchaklar `routePath` da kesiladi); kirishlar — tumbler (qiymat dasta ichida), chiqishlar — chiroq. Plata'da yoniq yo'l ostida yorug'lik, Daftar'da — sariq marker, siyoh chiziq, katakli qog'oz va biroz "qo'lda chizilgan" chiziqlar (SVG filtri `#sketch`; sudrash, surish va masshtab paytida o'chadi — telefon sekinlashmasin).
 - Ikonkalar — `components/ui.tsx` dagi `ICONS` (24×24, chiziqli). Interfeysda emoji ishlatilmaydi; faqat ulashish matnlarida (Telegram xabari) qoladi.
 
 ## Qidiruv tizimlari (SEO)

@@ -27,7 +27,19 @@
   --gate-fill: #102a1f;
   --gate-stroke: #63b98d;
   --gate-on-fill: #2b2a14;
+  --gate-on-stroke: #ffb340;
   --lead: #46705e;
+  --trace: #6b5034;
+  --trace-on: #ffb340;
+  --trace-w: 3.4px;
+  --glow: rgba(255, 179, 64, 0.16);
+  --glow-w: 9px;
+  --lamp-on: #ffb340;
+  --lamp-on-stroke: #ffd38a;
+  --bezel: #253a2f;
+  --knob: #dfe7de;
+  --knob-ink: #13271e;
+  --shine: rgba(255, 255, 255, 0.75);
   --lamp: #18322a;
   --lamp-stroke: #2d5a47;
   --tint: #1f2615;
@@ -74,8 +86,20 @@
   --star-off: #d5ccb7;
   --gate-fill: #fffdf7;
   --gate-stroke: #2a3550;
-  --gate-on-fill: #fff1d6;
+  --gate-on-fill: #fff3b8;
+  --gate-on-stroke: #1d2939;
   --lead: #8d96a5;
+  --trace: #9aa2b1;
+  --trace-on: #1d2939;
+  --trace-w: 2.6px;
+  --glow: rgba(250, 204, 21, 0.55);
+  --glow-w: 12px;
+  --lamp-on: #fbd23a;
+  --lamp-on-stroke: #1d2939;
+  --bezel: #e2d9c6;
+  --knob: #ffffff;
+  --knob-ink: #1d2939;
+  --shine: rgba(255, 255, 255, 0.9);
   --lamp: #ece5d6;
   --lamp-stroke: #b9b2a2;
   --tint: #fbf0d9;
@@ -904,24 +928,28 @@ input[type='text']:focus {
   cursor: pointer;
 }
 
+/* Sim — plata yo'li: to'g'ri burchak va 45° (geometry.ts wireRoute). Yoniq bo'lsa ostida yorug'lik
+   (Plata) yoki marker (Daftar). */
 .wire-line {
   fill: none;
-  stroke: var(--off);
-  stroke-width: 3;
+  stroke: var(--trace);
+  stroke-width: var(--trace-w);
   stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 
 .wire-glow {
   fill: none;
-  stroke: var(--on);
-  stroke-width: 9;
-  opacity: 0.16;
+  stroke: var(--glow);
+  stroke-width: var(--glow-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 
 .wire.on .wire-line {
-  stroke: var(--on);
+  stroke: var(--trace-on);
 }
 
 .wire.sel .wire-line {
@@ -967,7 +995,7 @@ input[type='text']:focus {
 
 .gate.on .gate-body {
   fill: var(--gate-on-fill);
-  stroke: var(--on);
+  stroke: var(--gate-on-stroke);
 }
 
 .gate.sel .gate-body,
@@ -989,7 +1017,7 @@ input[type='text']:focus {
 }
 
 .gate.on .gate-label {
-  fill: var(--on);
+  fill: var(--gate-on-stroke);
 }
 
 .port-hit {
@@ -1032,7 +1060,7 @@ input[type='text']:focus {
   transform: scale(1.35);
 }
 
-.pin rect,
+.pin-body > rect,
 .pin .pin-box {
   fill: var(--panel);
   stroke: var(--copper);
@@ -1044,7 +1072,6 @@ input[type='text']:focus {
 }
 
 .pin-name,
-.pin-val,
 .pin-exp {
   text-anchor: middle;
   dominant-baseline: central;
@@ -1056,29 +1083,122 @@ input[type='text']:focus {
   fill: var(--text);
 }
 
-.pin-val {
-  font: 700 19px var(--mono);
-  fill: var(--dim);
-}
-
-.pin-in.on rect {
+.pin-in.on .pin-body > rect {
   fill: var(--gate-on-fill);
-  stroke: var(--on);
+  stroke: var(--gate-on-stroke);
 }
 
-.pin-in.on .pin-val {
-  fill: var(--on);
+/* Kirish — tumbler: dasta 0 da chapda, 1 da o'ngda; qiymat dasta ichida. */
+.switch {
+  pointer-events: none;
+}
+
+.sw-track {
+  fill: var(--lamp);
+  stroke: var(--lamp-stroke);
+  stroke-width: 1.5;
+  transition: fill 0.15s;
+}
+
+.pin-in.on .sw-track {
+  fill: var(--lamp-on);
+  stroke: var(--lamp-on-stroke);
+}
+
+.sw-knob {
+  transition: transform 0.15s ease-out;
+}
+
+.sw-knob circle {
+  fill: var(--knob);
+  stroke: var(--lamp-stroke);
+  stroke-width: 1;
+}
+
+.sw-val {
+  font: 600 9px var(--mono);
+  fill: var(--knob-ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* Chiqish — chiroq: gardish va shisha; yonganda Plata'da yorug'lik, Daftar'da chiziqlar. */
+.lamp-g {
+  pointer-events: none;
+}
+
+.lamp-bezel {
+  fill: var(--bezel);
+  stroke: var(--lamp-stroke);
+  stroke-width: 1.5;
 }
 
 .lamp {
   fill: var(--lamp);
   stroke: var(--lamp-stroke);
-  stroke-width: 2;
+  stroke-width: 1.5;
+  transition: fill 0.15s;
 }
 
 .pin-out.on .lamp {
-  fill: var(--on);
-  stroke: var(--on);
+  fill: var(--lamp-on);
+  stroke: var(--lamp-on-stroke);
+}
+
+.lamp-halo,
+.lamp-shine,
+.lamp-rays {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.lamp-halo {
+  fill: var(--glow);
+}
+
+.lamp-shine {
+  fill: var(--shine);
+}
+
+.lamp-rays {
+  fill: none;
+  stroke: var(--trace-on);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.pin-out.on .lamp-halo,
+.pin-out.on .lamp-shine {
+  opacity: 1;
+}
+
+/* ── Daftar: katakli qog'oz, marker, qo'lda chizilgandek chiziqlar ── */
+.grid-line {
+  display: none;
+  fill: none;
+  stroke: var(--grid);
+  stroke-width: 0.8;
+}
+
+:root[data-theme='daftar'] .grid-dot {
+  display: none;
+}
+
+:root[data-theme='daftar'] .grid-line {
+  display: inline;
+}
+
+:root[data-theme='daftar'] .pin-out.on .lamp-halo {
+  opacity: 0;
+}
+
+:root[data-theme='daftar'] .pin-out.on .lamp-rays {
+  opacity: 1;
+}
+
+:root[data-theme='daftar'] .board-svg:not(.moving) .wires,
+:root[data-theme='daftar'] .board-svg:not(.moving) .gate-shape {
+  filter: url(#sketch);
 }
 
 .pin-out.good .pin-box {
@@ -1965,8 +2085,7 @@ input[type='text']:focus {
 
 @keyframes surge {
   from {
-    opacity: 0.75;
-    stroke-width: 15;
+    stroke-width: 16px;
   }
 }
 
