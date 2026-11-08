@@ -1,7 +1,9 @@
 <!doctype html>
 <!--
-  Ilova ikonkalari manbasi (PWA va Apple). PNG lar shu sahifadan headless brauzerda olinadi:
-  ?kind=any&size=512 — favicon ko'rinishi (yumaloq burchak, shaffof fon);
+  Ilova ikonkalari manbasi (PWA va Apple). Belgi public/favicon.svg bilan bir xil: ikki kontakt
+  (pad), 45° mis yo'llar, AND elementi va chiqishda yonib turgan chiroq — Plata mavzusi ranglarida.
+  PNG lar shu sahifadan headless Chrome'da olinadi (shaffof fon uchun --default-background-color=00000000):
+  ?kind=any&size=512 — favicon ko'rinishi (yumaloq burchak, shaffof fon): icon-192, icon-512;
   ?kind=full&size=512 — butun maydon to'q fonda (maskable va Apple: tizim o'zi kesadi).
 -->
 <html>
@@ -25,12 +27,16 @@
       const full = q.get('kind') === 'full';
       // Maskable: muhim qism markaziy 80% doira ichida bo'lishi kerak — belgi kichikroq chiziladi.
       const inner = full
-        ? `<rect width="64" height="64" fill="#07110d"/><g transform="translate(32 32) scale(0.62) translate(-32 -32)">`
-        : `<rect width="64" height="64" rx="14" fill="#07110d"/><g>`;
+        ? `<rect width="64" height="64" fill="#0b1712"/><g transform="translate(32 32) scale(0.66) translate(-33 -32)">`
+        : `<rect width="64" height="64" rx="14" fill="#0b1712"/><g>`;
       document.body.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
         ${inner}
-          <path d="M6 24h14M6 40h14M48 32h10" stroke="#3dffa0" stroke-width="4" stroke-linecap="round"/>
-          <path d="M20 12h12a20 20 0 0 1 0 40H20Z" fill="#0f2a20" stroke="#3dffa0" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M8 15l7 7M8 49l7-7M44 32h6" fill="none" stroke="#ffb340" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="6" cy="15" r="3.4" fill="#ffb340"/>
+          <circle cx="6" cy="49" r="3.4" fill="#ffb340"/>
+          <path d="M15 12h9a20 20 0 0 1 0 40h-9Z" fill="#102a1f" stroke="#ffb340" stroke-width="3.6" stroke-linejoin="round"/>
+          <rect x="50" y="26" width="10" height="12" rx="5" fill="#ffb340"/>
+          <circle cx="53.6" cy="30" r="1.5" fill="#fff1d6"/>
         </g>
       </svg>`;
     </script>

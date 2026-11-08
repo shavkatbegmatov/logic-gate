@@ -187,7 +187,7 @@ function guidePage(c, ctx) {
 <meta property="og:title" content="${esc(c.h1)}">
 <meta property="og:description" content="${esc(c.description)}">
 <meta property="og:url" content="${esc(url)}">
-<meta property="og:image" content="${esc(ctx.site)}/og.png?v=2">
+<meta property="og:image" content="${esc(ctx.site)}/og.png?v=3">
 <meta property="og:locale" content="${c.locale}">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">${jsonLd(ld)}</script>

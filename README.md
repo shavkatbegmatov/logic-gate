@@ -145,7 +145,7 @@ Avtomatik yangilash uchun repozitoriy Secrets'ida `COOLIFY_WEBHOOK` (ilovaning D
 
 DNS: domenlar eskiz.uz da (ns1/ns2.eskiz.uz), `logic.noesis.uz` — A yozuv `170.168.6.82`. Coolify `https://` domen qo'shganda `www.` variantini ham avtomatik qo'shadi — unga DNS yozuvi bo'lmasa, uni o'chiring (aks holda Let's Encrypt sertifikati olinmasligi mumkin).
 
-Havola rasmi `web/public/og.png` (1200×630) `web/scripts/og.html` dan olingan skrinshot. Telegram rasmni manzili bo'yicha keshlaydi, shuning uchun rasm o'zgarganda `web/index.html` dagi `og.png?v=…` ni oshiring va havolani @WebpageBot'ga yuboring.
+Havola rasmi `web/public/og.png` (1200×630) va Telegram ilova rasmi `deploy/telegram/app-640x360.png` — `web/scripts/og.html` dan headless Chrome skrinshoti (buyruqlar faylning boshida). Ilova ikonkalari (`web/public/icons/`) — `web/scripts/icons.html` dan, belgi `web/public/favicon.svg` bilan bir xil. Telegram rasmni manzili bo'yicha keshlaydi, shuning uchun rasm o'zgarganda `web/index.html` va `web/scripts/pages.mjs` dagi `og.png?v=…` ni oshiring va havolani @WebpageBot'ga yuboring.
 
 ### Zaxira nusxa (Coolify)
 

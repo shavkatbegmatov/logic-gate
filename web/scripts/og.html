@@ -1,78 +1,89 @@
 <!doctype html>
 <!--
-  Open Graph rasmi (1200×630) manbasi. public/og.png shu sahifaning skrinshoti:
-  brauzerda 1200×630 o'lchamda ochib, rasmga oling, masalan:
-  chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=og.png og.html
+  Havola rasmi manbasi — o'yinning Plata mavzusida: tumbler kirishlar, 45° mis yo'llar, AND elementi
+  va yonib turgan chiroq. Shriftlar node_modules dagi IBM Plex (o'yindagi bilan bir xil).
+  public/og.png (1200×630):
+    chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=og.png og.html
+  deploy/telegram/app-640x360.png (BotFather, 16:9):
+    chrome --headless=new --hide-scrollbars --force-device-scale-factor=0.5333333 --window-size=1200,675 --screenshot=app-640x360.png "og.html?h=675"
+  og.png o'zgarsa — web/index.html va scripts/pages.mjs dagi og.png?v=… ni oshiring (Telegram rasmni manzil bo'yicha keshlaydi).
 -->
 <html lang="uz">
 <head>
 <meta charset="utf-8" />
 <title>Logic Gate OG</title>
 <style>
-  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  @font-face { font-family: 'Plex Mono'; font-weight: 600; src: url(../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Plex Sans'; font-weight: 400; src: url(../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2) format('woff2'); }
+  @font-face { font-family: 'Plex Sans'; font-weight: 600; src: url(../node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2) format('woff2'); }
+  html, body { margin: 0; width: 1200px; height: var(--h, 630px); overflow: hidden; }
   body {
-    background:
-      radial-gradient(ellipse 60% 70% at 28% 50%, rgba(61, 255, 160, 0.16), transparent 70%),
-      radial-gradient(circle at 1px 1px, #183a2b 1.4px, transparent 1.6px) 0 0 / 28px 28px,
-      #07110d;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    color: #d9f6e7;
+    background: radial-gradient(circle at 14px 14px, #1f3a2c 1.6px, transparent 1.8px) 0 0 / 28px 28px, #0b1712;
+    font-family: 'Plex Sans', system-ui, sans-serif;
+    color: #e6eee4;
     display: flex;
     align-items: center;
   }
-  .art { width: 560px; height: 630px; flex: none; }
-  .text { padding-right: 70px; }
-  h1 {
-    margin: 0;
-    font: 800 96px Consolas, ui-monospace, monospace;
-    letter-spacing: 0.06em;
-    line-height: 1;
-    color: #3dffa0;
-    text-shadow: 0 0 28px rgba(61, 255, 160, 0.55);
-  }
-  h1 span { display: block; color: #e8b45a; text-shadow: 0 0 28px rgba(232, 180, 90, 0.5); }
+  .art { width: 580px; height: 630px; flex: none; }
+  .text { padding-right: 60px; }
+  h1 { margin: 0; font: 600 100px/1 'Plex Mono', monospace; letter-spacing: 0.05em; }
+  h1 span { display: block; color: #f2a93b; }
   .tag { margin: 30px 0 0; font-size: 34px; line-height: 1.3; }
-  .meta {
-    margin-top: 26px;
-    font: 600 24px Consolas, ui-monospace, monospace;
-    color: #ffd25e;
-  }
-  .wire { fill: none; stroke: #2c5444; stroke-width: 7; stroke-linecap: round; }
-  .on { stroke: #3dffa0; }
-  .glow { fill: none; stroke: #3dffa0; stroke-width: 22; opacity: 0.18; stroke-linecap: round; }
-  .gate { fill: #0f2a20; stroke: #3dffa0; stroke-width: 7; stroke-linejoin: round; }
-  .pin { fill: #0f221a; stroke: #e8b45a; stroke-width: 5; }
-  .pin-on { stroke: #3dffa0; fill: #123a28; }
-  .lbl { font: 700 40px Consolas, monospace; fill: #d9f6e7; text-anchor: middle; dominant-baseline: central; }
-  .val { font: 700 40px Consolas, monospace; fill: #3dffa0; text-anchor: middle; dominant-baseline: central; }
-  .dot { fill: #e8b45a; }
-  .dot-on { fill: #3dffa0; }
+  .meta { margin-top: 26px; font: 600 24px 'Plex Mono', monospace; color: #ffd36b; }
+  .glow { fill: none; stroke: rgba(255, 179, 64, 0.16); stroke-width: 24; stroke-linecap: round; stroke-linejoin: round; }
+  .trace { fill: none; stroke: #ffb340; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+  .pin { fill: #2b2a14; stroke: #ffb340; stroke-width: 5; }
+  .lbl { font: 600 44px 'Plex Mono', monospace; fill: #e6eee4; text-anchor: middle; dominant-baseline: central; }
+  .track { fill: #ffb340; stroke: #ffd38a; stroke-width: 3; }
+  .knob { fill: #dfe7de; stroke: #2d5a47; stroke-width: 2; }
+  .knob-val { font: 600 22px 'Plex Mono', monospace; fill: #13271e; text-anchor: middle; dominant-baseline: central; }
+  .port { fill: #ffb340; }
+  .gate { fill: #2b2a14; stroke: #ffb340; stroke-width: 8; stroke-linejoin: round; }
+  .gate-lbl { font: 600 34px 'Plex Mono', monospace; fill: #ffb340; text-anchor: middle; dominant-baseline: central; }
+  .halo { fill: rgba(255, 179, 64, 0.16); }
+  .bezel { fill: #253a2f; stroke: #2d5a47; stroke-width: 3; }
+  .lamp { fill: #ffb340; stroke: #ffd38a; stroke-width: 3; }
+  .shine { fill: rgba(255, 255, 255, 0.75); }
 </style>
+<script>
+  // 16:9 nusxa uchun (Telegram ilova rasmi): og.html?h=675
+  const h = new URLSearchParams(location.search).get('h');
+  if (h) document.documentElement.style.setProperty('--h', `${Number(h)}px`);
+</script>
 </head>
 <body>
-  <svg class="art" viewBox="0 0 560 630">
-    <!-- simlar -->
-    <path class="glow" d="M150,230 C240,230 230,268 300,268" />
-    <path class="glow" d="M150,400 C240,400 230,362 300,362" />
-    <path class="glow" d="M430,315 C470,315 470,315 520,315" />
-    <path class="wire on" d="M150,230 C240,230 230,268 300,268" />
-    <path class="wire on" d="M150,400 C240,400 230,362 300,362" />
-    <path class="wire on" d="M430,315 C470,315 470,315 520,315" />
-    <!-- kirish pinlari -->
-    <rect class="pin pin-on" x="40" y="190" width="100" height="80" rx="16" />
-    <text class="lbl" x="72" y="230">A</text><text class="val" x="112" y="230">1</text>
-    <rect class="pin pin-on" x="40" y="360" width="100" height="80" rx="16" />
-    <text class="lbl" x="72" y="400">B</text><text class="val" x="112" y="400">1</text>
-    <circle class="dot dot-on" cx="150" cy="230" r="11" />
-    <circle class="dot dot-on" cx="150" cy="400" r="11" />
-    <!-- AND elementi -->
-    <path class="gate" d="M300,225 H370 A90,90 0 0 1 370,405 H300 Z" />
-    <circle class="dot dot-on" cx="520" cy="315" r="14" />
+  <svg class="art" viewBox="0 0 580 630">
+    <!-- yo'llar: gorizontal → 45° → gorizontal, xuddi o'yin maydonidagidek -->
+    <path class="glow" d="M184,222 H226 L272,268 H310" />
+    <path class="glow" d="M184,408 H226 L272,362 H310" />
+    <path class="glow" d="M470,315 H500" />
+    <path class="trace" d="M184,222 H226 L272,268 H310" />
+    <path class="trace" d="M184,408 H226 L272,362 H310" />
+    <path class="trace" d="M470,315 H500" />
+    <!-- kirishlar: tumbler, ikkalasi ham 1 -->
+    <rect class="pin" x="36" y="180" width="136" height="84" rx="18" />
+    <text class="lbl" x="70" y="222">A</text>
+    <rect class="track" x="96" y="204" width="62" height="36" rx="18" />
+    <circle class="knob" cx="140" cy="222" r="15" /><text class="knob-val" x="140" y="223">1</text>
+    <rect class="pin" x="36" y="366" width="136" height="84" rx="18" />
+    <text class="lbl" x="70" y="408">B</text>
+    <rect class="track" x="96" y="390" width="62" height="36" rx="18" />
+    <circle class="knob" cx="140" cy="408" r="15" /><text class="knob-val" x="140" y="409">1</text>
+    <circle class="port" cx="184" cy="222" r="10" />
+    <circle class="port" cx="184" cy="408" r="10" />
+    <!-- AND elementi (yoniq) -->
+    <path class="gate" d="M310,225 H380 A90,90 0 0 1 380,405 H310 Z" />
+    <text class="gate-lbl" x="380" y="316">AND</text>
+    <!-- chiqish: chiroq -->
+    <circle class="halo" cx="530" cy="315" r="46" />
+    <circle class="bezel" cx="530" cy="315" r="32" />
+    <circle class="lamp" cx="530" cy="315" r="22" />
+    <circle class="shine" cx="522" cy="307" r="6" />
   </svg>
   <div class="text">
     <h1>LOGIC<span>GATE</span></h1>
     <p class="tag">Mantiqiy elementlardan sxema yig'ing — boshqotirma o'yini</p>
-    <div class="meta">42 daraja · reyting · bepul</div>
+    <div class="meta">42 daraja · kunlik masala · bepul</div>
   </div>
 </body>
 </html>

@@ -159,17 +159,17 @@ function DailyCard() {
 }
 
 function Logo() {
-  // Logotip: ikki kirishli AND belgisi va signal o'tayotgan sim.
+  // Belgi — public/favicon.svg dagi bilan bir xil (ranglari mavzudan): ikki kontakt, 45° yo'llar,
+  // AND elementi va chiqishda yonib turgan chiroq.
   return (
     <div class="logo">
-      <svg viewBox="0 0 160 72" width="112" height="50" aria-hidden="true">
-        <path class="logo-wire on" d="M4,22 H50" />
-        <path class="logo-wire" d="M4,50 H50" />
-        <path class="logo-gate" d="M50,8 H82 A28,28 0 0 1 82,64 H50 Z" />
-        <path class="logo-wire on" d="M110,36 H156" />
-        <circle class="logo-dot on" cx={4} cy={22} r={4} />
-        <circle class="logo-dot" cx={4} cy={50} r={4} />
-        <circle class="logo-dot on" cx={156} cy={36} r={5} />
+      <svg viewBox="0 0 64 64" width="54" height="54" aria-hidden="true">
+        <path class="logo-wire" d="M8 15l7 7M8 49l7-7M44 32h6" />
+        <circle class="logo-dot" cx={6} cy={15} r={3.4} />
+        <circle class="logo-dot" cx={6} cy={49} r={3.4} />
+        <path class="logo-gate" d="M15 12h9a20 20 0 0 1 0 40h-9Z" />
+        <rect class="logo-led" x={50} y={26} width={10} height={12} rx={5} />
+        <circle class="logo-shine" cx={53.6} cy={30} r={1.5} />
       </svg>
       <h1 class="logo-text">
         LOGIC<span>GATE</span>
