@@ -78,12 +78,62 @@ export function Leaderboard({ tab }: { tab: Tab }) {
             </div>
           ) : (
             <>
-              {data.me && !data.top.some((e) => e.me) && <p class="good center">{t.leaderboard.yourRank(data.me.rank)}</p>}
-              {tab === 'overall' ? <OverallTable rows={overall.value!.top} /> : <DailyTable rows={daily.value!.top} />}
+              <Podium rows={data.top.slice(0, 3)} view={tab === 'overall' ? overallView : dailyView} />
+              {data.top.length > 3 &&
+                (tab === 'overall' ? <OverallTable rows={overall.value!.top.slice(3)} /> : <DailyTable rows={daily.value!.top.slice(3)} />)}
+              {data.me && !data.top.some((e) => e.me) && <MeCard e={data.me} view={tab === 'overall' ? overallView : dailyView} />}
             </>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+type Entry = LeaderEntry | DailyEntry;
+/** Asosiy ko'rsatkich (umumiy — yulduzlar, kunlik — elementlar) va qo'shimchasi. */
+type View = { main: (e: Entry) => string; sub: (e: Entry) => string; stars?: boolean };
+
+const overallView: View = {
+  main: (e) => `${e.stars} ★`,
+  sub: (e) => t.leaderboard.levelsN((e as LeaderEntry).solved),
+};
+const dailyView: View = {
+  main: (e) => t.leaderboard.gatesN(e.gates),
+  sub: (e) => '★'.repeat(e.stars),
+  stars: true,
+};
+
+/** Birinchi uch o'rin — shohsupa: 2 · 1 · 3, balandligi o'ringa qarab. */
+function Podium({ rows, view }: { rows: Entry[]; view: View }) {
+  return (
+    <div class="podium">
+      {rows.map((e) => (
+        <div key={e.rank} class={`podium-col place${e.rank}${e.me ? ' me' : ''}`}>
+          <span class="podium-medal">{e.rank}</span>
+          <span class="podium-name" title={e.nickname}>
+            {e.nickname}
+          </span>
+          {e.me && <span class="badge">{t.leaderboard.you}</span>}
+          <div class="podium-base">
+            <strong>{view.main(e)}</strong>
+            <span class={view.stars ? 'stars-sub' : ''}>{view.sub(e)}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** O'yinchi ro'yxatda ko'rinmasa — uning o'rni pastda alohida. */
+function MeCard({ e, view }: { e: Entry; view: View }) {
+  return (
+    <div class="me-card">
+      <span class="me-rank">{t.leaderboard.place(e.rank)}</span>
+      <span class="me-name">
+        {e.nickname} <span class="badge">{t.leaderboard.you}</span>
+      </span>
+      <span class="me-main">{view.main(e)}</span>
     </div>
   );
 }

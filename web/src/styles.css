@@ -1920,6 +1920,143 @@ input[type='text']:focus {
 }
 
 /* ── Reyting ───────────────────────────────────────────── */
+/* Shohsupa: 2-o'rin chapda, 1-o'rin o'rtada va eng baland, 3-o'rin o'ngda. */
+.podium {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 18px 0 16px;
+}
+
+/* Bir yoki ikki o'yinchi bo'lsa ham shohsupa o'rtada turadi. */
+.podium-col {
+  flex: 0 1 calc((100% - 20px) / 3);
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 0;
+  --medal: var(--gold);
+}
+
+.podium-col.place1 {
+  order: 2;
+}
+
+.podium-col.place2 {
+  order: 1;
+  --medal: var(--silver);
+}
+
+.podium-col.place3 {
+  order: 3;
+  --medal: var(--bronze);
+}
+
+.podium-medal {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--medal);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--medal);
+  font: 600 16px var(--mono);
+}
+
+.place1 .podium-medal {
+  width: 44px;
+  height: 44px;
+  font-size: 19px;
+}
+
+.podium-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.podium-base {
+  width: 100%;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--medal);
+  border-radius: 10px 10px 4px 4px;
+  background: var(--bg2);
+}
+
+.place1 .podium-base {
+  min-height: 92px;
+}
+
+.place2 .podium-base {
+  min-height: 72px;
+}
+
+.place3 .podium-base {
+  min-height: 58px;
+}
+
+.podium-base strong {
+  font: 600 16px var(--mono);
+  color: var(--text);
+}
+
+.podium-base span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.podium-base span.stars-sub {
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--gold);
+}
+
+.podium-col.me .podium-base {
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.podium .badge {
+  margin: 0;
+}
+
+/* O'yinchining o'rni (ro'yxatda ko'rinmasa). */
+.me-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.me-rank {
+  font: 600 14px var(--mono);
+  color: var(--accent);
+}
+
+.me-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.me-main {
+  font: 600 14px var(--mono);
+}
+
 .board-table {
   width: 100%;
   border-collapse: collapse;
