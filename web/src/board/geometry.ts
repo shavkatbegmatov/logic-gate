@@ -1,4 +1,5 @@
-import { GATE_ARITY, type Circuit, type Gate, type Spec } from '../sim/types';
+import type { Circuit, Gate, Spec } from '../sim/types';
+import { inputLeads, outputY } from './shapes';
 
 // Hamma o'lchamlar "dunyo" birliklarida; ekranga View orqali o'tkaziladi.
 export const GATE_W = 72;
@@ -39,9 +40,14 @@ export function layout(spec: Spec, outX: number): Layout {
   };
 }
 
+/** Kirish porti (y, element ichida) — belgidagi uch bilan bir joyda (shapes.ts). */
 export function inputPortY(gate: Gate, idx: number): number {
-  if (GATE_ARITY[gate.type] === 1) return GATE_H / 2;
-  return idx === 0 ? 14 : 34;
+  return inputLeads(gate.type)[idx];
+}
+
+/** Chiqish porti (y, element ichida): D-trigger'da yuqorida, qolganlarida o'rtada. */
+export function outputPortY(gate: Gate): number {
+  return outputY(gate.type);
 }
 
 /** Port koordinatasi: manba (`in:A`, gid) yoki qabul qiluvchi (`out:Q`, `gid:0`). */
@@ -51,7 +57,7 @@ export function portPoint(port: string, gates: Map<string, Gate>, lay: Layout): 
   const i = port.lastIndexOf(':');
   if (i < 0) {
     const g = gates.get(port);
-    return g ? { x: g.x + GATE_W, y: g.y + GATE_H / 2 } : null;
+    return g ? { x: g.x + GATE_W, y: g.y + outputPortY(g) } : null;
   }
   const g = gates.get(port.slice(0, i));
   return g ? { x: g.x, y: g.y + inputPortY(g, Number(port.slice(i + 1))) } : null;

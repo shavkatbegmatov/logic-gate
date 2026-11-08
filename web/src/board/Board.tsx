@@ -8,7 +8,7 @@ import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
-import { GATE_H, GATE_W, inputPortY, isSourcePort, portPoint, wirePath, type Point } from './geometry';
+import { GATE_H, GATE_W, inputPortY, isSourcePort, outputPortY, portPoint, wirePath, type Point } from './geometry';
 import { GateShape } from './GateShape';
 
 type Drag =
@@ -97,7 +97,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     for (const [name, w] of lay.inputs) consider(`in:${name}`, w);
     for (const [name, w] of lay.outputs) consider(`out:${name}`, w);
     for (const g of editor.circuit.value.gates) {
-      consider(g.id, { x: g.x + GATE_W, y: g.y + GATE_H / 2 });
+      consider(g.id, { x: g.x + GATE_W, y: g.y + outputPortY(g) });
       for (let i = 0; i < GATE_ARITY[g.type]; i++) consider(`${g.id}:${i}`, { x: g.x, y: g.y + inputPortY(g, i) });
     }
     return best;
@@ -389,7 +389,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
                   port(`${g.id}:${i}`, 0, inputPortY(g, i), false, driven.has(`${g.id}:${i}`), false),
                 )}
-                {port(g.id, GATE_W, GATE_H / 2, true, usedSources.has(g.id), on)}
+                {port(g.id, GATE_W, outputPortY(g), true, usedSources.has(g.id), on)}
               </g>
             );
           })}

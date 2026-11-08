@@ -1,13 +1,13 @@
 import type { GateType } from '../sim/types';
-import { DFF_BODY, inputLeads, leadEnd, SHAPE_H, SHAPE_W, SHAPES } from './shapes';
+import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from './shapes';
 
-/** D-trigger: to'rtburchak, kirish tomonida takt belgisi (uchburchak). Takt hamma triggerlar uchun umumiy. */
+/** D-trigger: to'rtburchak, takt belgisi (uchburchak) chap qirraning pastida. Takt hamma triggerlar uchun umumiy. */
 function FlipFlop() {
   const d = DFF_BODY;
   return (
     <g class="gate-shape">
-      <line class="lead" x1={0} y1={24} x2={d.x} y2={24} />
-      <line class="lead" x1={d.out} y1={24} x2={SHAPE_W} y2={24} />
+      <line class="lead" x1={0} y1={inputLeads('DFF')[0]} x2={d.x} y2={inputLeads('DFF')[0]} />
+      <line class="lead" x1={d.out} y1={outputY('DFF')} x2={SHAPE_W} y2={outputY('DFF')} />
       <rect class="gate-body" x={d.x} y={d.y} width={d.w} height={d.h} rx={d.rx} />
       <path class="gate-back" d={d.clock} />
     </g>

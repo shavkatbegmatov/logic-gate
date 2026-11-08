@@ -30,11 +30,18 @@ export const SHAPES: Record<Exclude<GateType, 'DFF'>, ShapeInfo> = {
   XNOR: { body: XOR_BODY, tip: 58, bubble: true, back: XOR_BACK },
 };
 
-/** Kirish uchlari (y koordinatalari): NOT — bitta, qolganlari — ikkita. */
-export const inputLeads = (type: GateType): number[] => (type === 'NOT' || type === 'DFF' ? [24] : [14, 34]);
+/** Kirish uchlari (y koordinatalari): NOT — o'rtada, D-trigger — yuqorida (D), qolganlari — ikkita. */
+export const inputLeads = (type: GateType): number[] => (type === 'NOT' ? [24] : type === 'DFF' ? [14] : [14, 34]);
+
+/** Chiqish uchi (y): D-trigger'da Q yuqorida, D bilan bir chiziqda (standart belgi); qolganlarida o'rtada. */
+export const outputY = (type: GateType): number => (type === 'DFF' ? 14 : 24);
 
 /** Kirish uchining tana bilan uchrashadigan x nuqtasi. */
 export const leadEnd = (type: GateType): number => (type === 'NOT' ? 18 : type === 'DFF' ? 14 : 20);
 
-/** D-trigger: to'rtburchak, kirish tomonida takt belgisi (uchburchak). */
-export const DFF_BODY = { x: 14, y: 4, w: 44, h: 40, rx: 5, clock: 'M14,33 L22,38 L14,43', out: 58 };
+/**
+ * D-trigger: to'rtburchak; D kirishi va Q chiqishi yuqorida, takt belgisi (uchburchak) chap qirraning
+ * pastki qismida — standart belgidagi takt kirishi o'rnida (y 29…39, yumaloq burchakka tegmaydi).
+ * Takt hamma triggerlar uchun umumiy, shuning uchun uning simi yo'q.
+ */
+export const DFF_BODY = { x: 14, y: 4, w: 44, h: 40, rx: 5, clock: 'M14,29 L21,34 L14,39', out: 58 };

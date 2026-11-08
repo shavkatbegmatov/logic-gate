@@ -7,7 +7,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DFF_BODY, inputLeads, leadEnd, SHAPE_H, SHAPE_W, SHAPES } from '../src/board/shapes.ts';
+import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from '../src/board/shapes.ts';
 import { CONTENT } from './pages-content.mjs';
 
 const OUT = { NOT: (a) => 1 - a, AND: (a, b) => a & b, OR: (a, b) => a | b, XOR: (a, b) => a ^ b };
@@ -30,10 +30,10 @@ function gateSvg(type, label) {
   for (const y of inputLeads(type)) parts.push(`<line class="lead" x1="0" y1="${y}" x2="${leadEnd(type)}" y2="${y}"/>`);
   if (type === 'DFF') {
     const d = DFF_BODY;
-    parts.push(`<line class="lead" x1="${d.out}" y1="24" x2="${SHAPE_W}" y2="24"/>`);
+    parts.push(`<line class="lead" x1="${d.out}" y1="${outputY(type)}" x2="${SHAPE_W}" y2="${outputY(type)}"/>`);
     parts.push(`<rect class="body" x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}" rx="${d.rx}"/>`);
     parts.push(`<path class="back" d="${d.clock}"/>`);
-    parts.push(`<text x="36" y="22" class="in-label">DFF</text>`);
+    parts.push(`<text x="37" y="25" class="in-label">DFF</text>`);
   } else {
     const s = SHAPES[type];
     parts.push(`<line class="lead" x1="${s.bubble ? s.tip + 8 : s.tip}" y1="24" x2="${SHAPE_W}" y2="24"/>`);
@@ -43,7 +43,7 @@ function gateSvg(type, label) {
   }
   const ins = type === 'DFF' ? ['D'] : inputLeads(type).length === 1 ? ['A'] : ['A', 'B'];
   inputLeads(type).forEach((y, i) => parts.push(`<text x="-8" y="${y + 1}">${ins[i]}</text>`));
-  parts.push(`<text x="${SHAPE_W + 9}" y="25">Q</text>`);
+  parts.push(`<text x="${SHAPE_W + 9}" y="${outputY(type) + 1}">Q</text>`);
   return `<svg class="gate" viewBox="-16 0 ${SHAPE_W + 32} ${SHAPE_H}" width="208" height="${Math.round((208 * SHAPE_H) / (SHAPE_W + 32))}" role="img" aria-label="${esc(label)}">${parts.join('')}</svg>`;
 }
 
