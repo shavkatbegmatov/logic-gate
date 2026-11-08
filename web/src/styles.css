@@ -1920,6 +1920,16 @@ input[type='text']:focus {
   margin-top: -6px;
 }
 
+.guide-link {
+  color: var(--muted);
+  font-size: 14px;
+  text-underline-offset: 3px;
+}
+
+.guide-link:hover {
+  color: var(--on);
+}
+
 .archive {
   max-width: 560px;
   margin: 0 auto;

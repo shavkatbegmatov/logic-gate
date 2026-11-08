@@ -106,3 +106,36 @@ func TestStatic(t *testing.T) {
 		t.Errorf("POST: %d", rr.Code)
 	}
 }
+
+// Qo'llanma sahifalari: papka ichidagi index.html; sleshsiz manzil sleshliga yo'naltiriladi.
+func TestStaticPages(t *testing.T) {
+	dir := setup(t)
+	os.MkdirAll(filepath.Join(dir, "ru", "guide"), 0o755)
+	os.WriteFile(filepath.Join(dir, "ru", "guide", "index.html"), []byte("<!doctype html>guide"), 0o644)
+	os.WriteFile(filepath.Join(dir, "robots.txt"), []byte("User-agent: *"), 0o644)
+	h := Static(dir)
+
+	rec := get(h, "/ru/guide/", "")
+	if rec.Code != 200 || rec.Body.String() != "<!doctype html>guide" || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") {
+		t.Fatalf("sahifa: %d %v %q", rec.Code, rec.Header(), rec.Body.String())
+	}
+	if rec.Header().Get("Cache-Control") != "no-cache" || rec.Header().Get("Content-Security-Policy") == "" {
+		t.Errorf("sahifa sarlavhalari: %v", rec.Header())
+	}
+
+	rec = get(h, "/ru/guide?x=1", "")
+	if rec.Code != http.StatusMovedPermanently || rec.Header().Get("Location") != "/ru/guide/?x=1" {
+		t.Errorf("yo'naltirish: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+
+	// index.html'siz papka (ru/) va yo'q sahifa — o'yinning o'zi.
+	for _, p := range []string{"/ru/", "/ru", "/ru/nope/"} {
+		if rec := get(h, p, ""); rec.Code != 200 || !strings.Contains(rec.Body.String(), "index") {
+			t.Errorf("%s: %d %q", p, rec.Code, rec.Body.String())
+		}
+	}
+
+	if rec := get(h, "/robots.txt", ""); rec.Code != 200 || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/plain") {
+		t.Errorf("robots.txt: %d %v", rec.Code, rec.Header())
+	}
+}

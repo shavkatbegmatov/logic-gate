@@ -58,6 +58,12 @@ export function Home() {
           </a>
         )}
         <LangSwitch />
+        {/* Telegram ichida emas: oddiy havola Mini App oynasidan chiqib ketadi. */}
+        {!inTelegram && (
+          <a class="guide-link" href={t.home.guideUrl}>
+            {t.home.guide}
+          </a>
+        )}
         {!profile.value && started && (
           <div class="card">
             <JoinForm />

@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#07110d" />
-    <meta name="description" content="Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirmalarni yechadigan brauzer o'yini." />
+    <meta name="description" content="Mantiqiy elementlar (EMAS, VA, YOKI, XOR, NAND) va triggerlardan sxema yig'ib, 42 ta boshqotirmani yeching. Haqiqat jadvallari va Bul algebrasini o'yinda o'rganing — bepul, brauzerda va Telegram'da." />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- Telefonga ilova sifatida o'rnatish (HTTPS'da). -->
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -12,7 +13,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Logic Gate" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Logic Gate</title>
+    <title>Logic Gate — mantiqiy elementlar o'yini</title>
     <!-- Telegram va boshqa ilovalarda havola ko'rinishi. Manzil web/.env dagi VITE_SITE_URL dan olinadi. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Logic Gate" />
@@ -25,10 +26,33 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="uz_UZ" />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Qidiruv tizimlari uchun tavsif (schema.org). Bajarilmaydi — CSP'ga ta'sir qilmaydi. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "@id": "%VITE_SITE_URL%/#app",
+        "name": "Logic Gate",
+        "alternateName": "Logic Gate — mantiqiy sxemalar o'yini",
+        "url": "%VITE_SITE_URL%/",
+        "image": "%VITE_SITE_URL%/og.png?v=2",
+        "description": "Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, D-trigger) sxema yig'ib, boshqotirmalarni yechadigan o'quv o'yini: 42 ta daraja, kunlik boshqotirma, qum quti.",
+        "applicationCategory": "GameApplication",
+        "genre": ["Puzzle", "Educational"],
+        "operatingSystem": "Any",
+        "inLanguage": ["uz", "ru"],
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "UZS" }
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
-    <noscript>O'yin ishlashi uchun JavaScript yoqilgan bo'lishi kerak.</noscript>
+    <noscript>
+      O'yin ishlashi uchun JavaScript yoqilgan bo'lishi kerak.
+      <a href="/mantiqiy-elementlar/">Mantiqiy elementlar va haqiqat jadvallari</a> ·
+      <a href="/ru/logicheskie-elementy/">Логические элементы и таблицы истинности</a>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

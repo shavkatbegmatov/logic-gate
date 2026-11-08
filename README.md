@@ -379,6 +379,17 @@ O'zbekcha (standart) va ruscha. Til bosh sahifadagi va sozlamalardagi tugma bila
 
 Qum qutida yig'ilgan sxemadan «Masala qilish» masala yaratadi: uning haqiqat jadvali — vazifa, muallif ishlatgan elementlar soni — maqsad, ruxsat etilgan elementlar — muallif ishlatganlari. Masala butunlay havolaning o'zida (`#/p/<kod>`, ~150 belgi): ixcham JSON → base64url. Server va baza ishtirok etmaydi; natijalar faqat qurilmada (`lg.custom.v1`). Havola o'qilganda qat'iy tekshiriladi, buzilgan bo'lsa xabar chiqadi.
 
+## Qidiruv tizimlari (SEO)
+
+O'yin hash marshrutli SPA — Google va Yandex undan faqat bosh sahifani ko'radi. Shuning uchun build oxirida `web/scripts/pages.mjs` oddiy HTML sahifalar yozadi (JavaScript'siz o'qiladi):
+
+- `/mantiqiy-elementlar/` va `/ru/logicheskie-elementy/` — mantiqiy elementlar qo'llanmasi: belgisi (o'yindagi `src/board/shapes.ts` dan), formulasi, haqiqat jadvali, D-trigger, Bul algebrasi qonunlari, o'yin bo'limlari (`levels/levels.json` dan). Matnlar — `web/scripts/pages-content.mjs`, maktab atamalari bilan (inkor, konyunksiya, dizyunksiya…).
+- `robots.txt` (`/api/` yopiq) va `sitemap.xml` — manzil `VITE_SITE_URL` dan.
+
+Bosh sahifada `canonical`, kengaytirilgan `description` va schema.org (`WebApplication`) bor; o'yinning bosh ekranida qo'llanmaga havola (Telegram ichida yashirin). Go server papkadagi `index.html` ni beradi, sleshsiz manzilni sleshliga yo'naltiradi; Nginx'da `try_files $uri $uri/index.html /index.html`.
+
+Saytni Google Search Console va Yandex Webmaster'ga qo'shish (domen egasi tasdiqlaydi) va u yerda `https://logic.noesis.uz/sitemap.xml` ni yuborish — indekslashni tezlashtiradi.
+
 ## Oflayn rejim
 
 HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. `vite dev` da service worker yo'q.

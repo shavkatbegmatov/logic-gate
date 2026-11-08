@@ -137,7 +137,9 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 17. **M16 — Kunlik masalalar arxivi (bajarildi):** o'tgan kunlar ro'yxati va masalasi, kechagisi seriyaga kiradi, qolganlari — mashq; havola rasmlari 42 daraja bilan.
 18. **M17 — Sxema formulasi (bajarildi):** yon panelda jonli Bul ifodasi (¬ ∧ ∨ ⊕), umumiy elementlar va D-trigger holatlari nomlanadi.
 19. **M18 — Bo'lim xulosalari (bajarildi):** 7 bo'lim uchun qisqa dars (uz/ru), bo'lim yechilgach ochiladi.
+20. **M19 — Qidiruv tizimlari (bajarildi):** mantiqiy elementlar qo'llanmasi (uz/ru statik sahifa), robots.txt, sitemap.xml, schema.org, canonical.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 
+- Google Search Console va Yandex Webmaster'da saytni tasdiqlash va sitemap yuborish — domen egasining akkaunti kerak.
 - Telegram orqali kirish (initData imzosini serverda tekshirish) — bot tokeni serverda kerak bo'ladi; hozircha CloudStorage yetarli.

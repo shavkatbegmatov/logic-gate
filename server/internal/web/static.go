@@ -37,7 +37,23 @@ func Static(dir string) http.Handler {
 			return
 		}
 		name := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
-		if info, err := fs.Stat(root, name); name == "" || err != nil || info.IsDir() {
+		info, err := fs.Stat(root, name)
+		// Ichida index.html bor papka — alohida statik sahifa (masalan, /mantiqiy-elementlar/).
+		if err == nil && info.IsDir() && name != "" {
+			if _, ierr := fs.Stat(root, name+"/index.html"); ierr == nil {
+				if !strings.HasSuffix(r.URL.Path, "/") {
+					target := "/" + name + "/"
+					if r.URL.RawQuery != "" {
+						target += "?" + r.URL.RawQuery
+					}
+					http.Redirect(w, r, target, http.StatusMovedPermanently)
+					return
+				}
+				name += "/index.html"
+				info, err = fs.Stat(root, name)
+			}
+		}
+		if name == "" || err != nil || info.IsDir() {
 			// Eski versiyaning fayli (nomida xesh) — sahifa emas, 404: aks holda brauzer yoki
 			// service worker HTML'ni skript deb oladi.
 			if err != nil && strings.HasPrefix(name, "assets/") {
@@ -76,12 +92,12 @@ func Static(dir string) http.Handler {
 			return
 		}
 		defer f.Close()
-		info, err := f.Stat()
+		st, err := f.Stat()
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		http.ServeContent(w, r, name, info.ModTime(), f.(readSeeker))
+		http.ServeContent(w, r, name, st.ModTime(), f.(readSeeker))
 	})
 }
 

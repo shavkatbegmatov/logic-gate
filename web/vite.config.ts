@@ -20,6 +20,6 @@ export default defineConfig({
     assetsInlineLimit: 0,
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
   },
 });

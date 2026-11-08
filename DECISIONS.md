@@ -48,6 +48,7 @@ Ishlab chiqish davomida qabul qilingan qarorlar. Yangilari pastga qo'shiladi.
 - **Qum qutida** 1–5 kirish, 1–4 chiqish, barcha elementlar; holat `localStorage` da.
 - **Ovozlar WebAudio'da** sintez qilinadi: fayl yuklanmaydi, sozlamalarda o'chiriladi.
 - **Shriftlar tizimniki** (monospace + system-ui): tashqi so'rov va qo'shimcha bayt yo'q.
+- **SEO uchun statik qo'llanma** (2026-11-08): o'yin hash-marshrutli bo'lib qoladi, qidiruv uchun esa build vaqtida alohida HTML sahifalar yoziladi (SSR yoki prerender o'rniga — qo'shimcha bog'liqlik yo'q). Ular darajalarning yechimini aytmaydi: bo'lim xulosalari o'yin ichida qulfli qoladi. Element belgilari o'yin bilan bitta fayldan (`shapes.ts`), Node uni TypeScript sifatida to'g'ridan-to'g'ri o'qiydi.
 
 ## Haqiqiy server (2026-11-05)
 

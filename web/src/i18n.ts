@@ -28,6 +28,9 @@ export const uz = {
     nicknamePlaceholder: 'Taxallusingiz',
     join: 'Qatnashish',
     hello: (name: string) => `Salom, ${name}!`,
+    // Statik qo'llanma (scripts/pages.mjs) — qidiruv tizimlari uchun ham.
+    guide: "📘 Mantiqiy elementlar qo'llanmasi",
+    guideUrl: '/mantiqiy-elementlar/',
   },
 
   chapters: {
@@ -405,6 +408,8 @@ export const ru: typeof uz = {
     nicknamePlaceholder: 'Ваш никнейм',
     join: 'Участвовать',
     hello: (name: string) => `Привет, ${name}!`,
+    guide: '📘 Справочник: логические элементы',
+    guideUrl: '/ru/logicheskie-elementy/',
   },
 
   chapters: {
