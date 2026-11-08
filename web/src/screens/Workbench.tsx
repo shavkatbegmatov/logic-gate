@@ -75,6 +75,9 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   const showSide = useSignal(false);
   /** Tekshiruv qatorlari holati; null — tekshiruv ko'rsatilmayapti. */
   const rowStates = useSignal<RowState[] | null>(null);
+  // Tekshiruv natijasining izohi ("2 ta qatorda xato…") — natija chizig'ining ichida; alohida xabar
+  // (toast) xuddi shu joyga, chiziq ustiga tushardi.
+  const stripNote = useSignal<string | null>(null);
   /** Ketma-ket tekshiruvda birinchi ko'rsatilgan taktning raqami (uzun ketma-ketlikda oxirgilari). */
   const stripOffset = useSignal(0);
   const solvedRef = useRef(onSolved);
@@ -83,9 +86,19 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   const run = useRef<{ skip: boolean; dead: boolean } | null>(null);
   // Natija qatorlari biroz ko'rinib turadi, keyin vazifa qatori qaytadi.
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const hideRowsLater = () => {
+  const hideRowsLater = (ms = 2500) => {
     clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => (rowStates.value = null), 2500);
+    hideTimer.current = setTimeout(() => (rowStates.value = null), ms);
+  };
+
+  /** Xato izohi: natija chizig'i ko'rinib tursa — uning ichida (va uzoqroq), bo'lmasa — xabar. */
+  const explain = (text: string) => {
+    if (rowStates.value) {
+      stripNote.value = text;
+      hideRowsLater(5000);
+    } else {
+      showToast(text, 'error');
+    }
   };
 
   useEditorKeys(editor, { clock: level.gates.includes('DFF') });
@@ -109,7 +122,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     sfx.error();
     editor.setRow(wrongRows[0]);
     showSide.value = true;
-    showToast(t.wrongRows(wrongRows.length), 'error');
+    explain(t.wrongRows(wrongRows.length));
   };
 
   /** Qatorlarni birma-bir ko'rsatadi: har birida signal kirishlardan chiqishlarga oqadi. */
@@ -117,6 +130,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     const me = { skip: false, dead: false };
     run.current = me;
     clearTimeout(hideTimer.current);
+    stripNote.value = null;
     editor.busy.value = true;
     editor.selection.value = null;
     editor.pending.value = null;
@@ -161,6 +175,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     const me = { skip: false, dead: false };
     run.current = me;
     clearTimeout(hideTimer.current);
+    stripNote.value = null;
     editor.busy.value = true;
     editor.selection.value = null;
     editor.pending.value = null;
@@ -214,7 +229,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     const got = editor.evaluation.value.outputs;
     const names = level.outputs.filter((_, i) => got[i] !== want[i]).join(', ');
     showSide.value = true;
-    showToast(t.play.seqWrong(trace.length, names), 'error');
+    explain(t.play.seqWrong(trace.length, names));
   };
 
   const runCheck = async () => {
@@ -326,6 +341,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
             <CheckStrip
               states={states}
               busy={busy}
+              note={busy ? null : stripNote.value}
               label={seq ? (i) => t.play.stepLabel(i + stripOffset.value) : t.play.rowLabel}
             />
           )}
@@ -405,16 +421,27 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
 }
 
 /** Tekshiruv qatorlari (ketma-ket masalada — taktlar): kutmoqda / tekshirilmoqda / to'g'ri / xato. */
-function CheckStrip({ states, busy, label: cellLabel }: { states: RowState[]; busy: boolean; label: (i: number) => string }) {
+function CheckStrip({
+  states,
+  busy,
+  note,
+  label: cellLabel,
+}: {
+  states: RowState[];
+  busy: boolean;
+  note: string | null;
+  label: (i: number) => string;
+}) {
   const label = busy ? t.play.checking : states.includes('bad') ? '✗' : '✓';
   return (
-    <div class={`check-strip${busy ? '' : ' done'}${states.includes('bad') ? ' bad' : ''}`} role="status">
+    <div class={`check-strip${busy ? '' : ' done'}${states.includes('bad') ? ' bad' : ''}${note ? ' noted' : ''}`} role="status">
       <span class="check-label">{label}</span>
       <span class={`check-cells${states.length > 16 ? ' tiny' : ''}`}>
         {states.map((st, r) => (
           <i key={r} class={st} title={cellLabel(r)} />
         ))}
       </span>
+      {note && <span class="check-note">{note}</span>}
     </div>
   );
 }

@@ -2300,6 +2300,30 @@ input[type='text']:focus {
   color: var(--bad);
 }
 
+/* Xato izohi chiziq ichida: tor ekranda katakchalar ostiga tushadi. */
+.check-strip.noted {
+  flex-wrap: wrap;
+  width: min(520px, calc(100% - 24px));
+}
+
+.check-note {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+/* Tekshiruv paytida yuqoridagi boshqa yozuvlar chiziq ostida qolib ketmasin. */
+.stage.has-check .tutorial {
+  visibility: hidden;
+}
+
+/* Natija chizig'i ko'rinib turganda boshqa xabarlar (masalan, yutuq) undan pastda chiqadi. */
+body:has(.stage.has-check) .toast {
+  top: 150px;
+}
+
 .check-cells {
   display: flex;
   flex-wrap: wrap;
