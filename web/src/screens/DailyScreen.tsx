@@ -8,7 +8,7 @@ import { GateIntro } from '../components/GateIntro';
 import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { ShareButtons } from '../components/ShareButtons';
-import { Modal, Stars, TopBar } from '../components/ui';
+import { Icon, Modal, Stars, TopBar } from '../components/ui';
 import {
   dailyHistory,
   dailyShareText,
@@ -179,7 +179,11 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
       <p>{t.success.gates(result.gates, level.goal)}</p>
       {result.stars < 3 && <p class="muted">{t.success.tryFewer(level.goal)}</p>}
       {result.improved && result.prevGates !== undefined && <p class="good">{t.success.improved}</p>}
-      {streak.value > 0 && <p class="streak">{t.daily.streak(streak.value)}</p>}
+      {streak.value > 0 && (
+        <p class="streak">
+          <Icon name="flame" /> {t.daily.streak(streak.value)}
+        </p>
+      )}
 
       <div class="server-info">
         {profile.value ? (

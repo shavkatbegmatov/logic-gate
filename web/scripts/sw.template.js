@@ -5,6 +5,7 @@
 //  - Sahifa (navigatsiya) — avval tarmoqdan, shunda yangi versiya darhol keladi; tarmoq bo'lmasa
 //    yoki juda sekin bo'lsa — keshdagi nusxa.
 //  - Ro'yxatdagi fayllar (JS, CSS, ikonka) — keshdan; nomida xesh bor, o'zgarmaydi.
+//  - Shriftlar (.woff2) — birinchi yuklanganda keshga, keyin keshdan.
 //  - /api va boshqa hamma narsa — to'g'ridan-to'g'ri tarmoqqa (keshlanmaydi).
 
 const VERSION = '__VERSION__';
@@ -56,12 +57,24 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(page(req));
   } else if (FILES.includes(url.pathname)) {
     event.respondWith(file(req, url.pathname));
+  } else if (/^\/assets\/[\w.-]+\.woff2$/.test(url.pathname)) {
+    event.respondWith(font(req, url.pathname));
   }
 });
 
 async function file(req, path) {
   const hit = await (await caches.open(CACHE)).match(path);
   return hit || fetch(req);
+}
+
+// Shrift: nomida xesh bor — birinchi yuklanganda keshga, keyin oflayn ham keshdan.
+async function font(req, path) {
+  const cache = await caches.open(CACHE);
+  const hit = await cache.match(path);
+  if (hit) return hit;
+  const res = await fetch(req);
+  if (res.ok) cache.put(path, res.clone()).catch(() => {});
+  return res;
 }
 
 async function page(req) {

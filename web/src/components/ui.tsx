@@ -77,9 +77,27 @@ const ICONS = {
   // Takt signali (to'rtburchak to'lqin) va vaqtni boshiga qaytarish.
   clock: 'M3 17h4V7h5v10h5V7h4',
   reset: 'M4 4v6h6M4.6 15A8 8 0 1 0 6 6.3L4 10',
+  // Emoji o'rniga: elementlar bilan bir xil chiziq, yumaloq uchlar.
+  book: 'M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5ZM12 6.5V19',
+  archive: 'M4 8h16v12H4zM6 5h12M8 2h8M9 12h6',
+  lock: 'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3M12 15v2',
+  bell: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4',
+  bellOff: 'M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4M4 3l17 17',
+  flame: 'M12 21a6 6 0 0 0 6-6c0-4-3-6-4-10-2 2-2 4-2 6-1-1-2-2-2-4-2 2-4 5-4 8a6 6 0 0 0 6 6ZM12 21a2.5 2.5 0 0 1-2.5-2.5c0-2 2.5-3.5 2.5-3.5s2.5 1.5 2.5 3.5A2.5 2.5 0 0 1 12 21Z',
+  power: 'M12 3v8M7.5 6.5a7 7 0 1 0 9 0',
+  star: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z',
+  crown: 'M4 18h16M5 15 4 7l5 4 3-6 3 6 5-4-1 8Z',
+  gem: 'M7 4h10l4 5-9 11L3 9ZM3 9h18M10 4 8 9l4 11 4-11-2-5',
+  nand: 'M2 9h3M2 15h3M5 5h6a7 7 0 0 1 0 14H5ZM18 12a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0',
+  target: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 1 0 0-8M12 12h.01',
+  pencil: 'M4 20l1-4L16 5l3 3L8 19ZM14 7l3 3',
+  users: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2.5 20c.5-3.5 3.3-5.5 6.5-5.5s6 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14.8c2 .7 3.2 2.5 3.5 5.2',
+  medal: 'M8 3l3 6M16 3l-3 6M12 21a6 6 0 1 0 0-12 6 6 0 0 0 0 12ZM12 13v4',
 } as const;
 
-export function Icon({ name }: { name: keyof typeof ICONS }) {
+export type IconName = keyof typeof ICONS;
+
+export function Icon({ name }: { name: IconName }) {
   return (
     <svg class="icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
       <path d={ICONS[name]} />

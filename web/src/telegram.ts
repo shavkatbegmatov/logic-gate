@@ -23,6 +23,9 @@ export interface TgWebApp {
   setHeaderColor(color: string): void;
   setBackgroundColor(color: string): void;
   setBottomBarColor?(color: string): void;
+  /** Telegram'ning yorug'/qorong'i rejimi (6.0+); o'zgarsa — 'themeChanged' hodisasi. */
+  colorScheme?: 'light' | 'dark';
+  onEvent?(event: 'themeChanged', cb: () => void): void;
   openTelegramLink(url: string): void;
   requestWriteAccess?(cb: (granted: boolean) => void): void;
   BackButton: { show(): void; hide(): void; onClick(cb: () => void): void };

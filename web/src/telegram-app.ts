@@ -7,9 +7,9 @@ import { t } from './i18n';
 import { replaceRoute } from './router';
 import { profile } from './state';
 import { restoreProfile } from './sync';
+import { activeTheme, telegramScheme, THEME_BG } from './theme';
 import { launchHash, launchStartParam, sdk, startRoute, type TgWebApp } from './telegram';
 
-const BG = '#07110d';
 /** Telegram bulutidagi kalit: { code } — tiklash kodi (shu bot va shu foydalanuvchi uchun shaxsiy). */
 const CLOUD_KEY = 'profile';
 
@@ -23,11 +23,21 @@ export async function startTelegram() {
     app.expand();
     // Maydonda sudrash pastga surish bilan ilovani yopib yubormasin.
     if (app.isVersionAtLeast('7.7')) app.disableVerticalSwipes?.();
-    if (app.isVersionAtLeast('6.1')) {
-      app.setHeaderColor(BG);
-      app.setBackgroundColor(BG);
-    }
-    if (app.isVersionAtLeast('7.10')) app.setBottomBarColor?.(BG);
+    // "Avto" mavzu Telegram rejimiga qaraydi; Telegram oynasining ranglari — mavzu fonida.
+    if (app.colorScheme) telegramScheme.value = app.colorScheme;
+    app.onEvent?.('themeChanged', () => (telegramScheme.value = app.colorScheme ?? null));
+    effect(() => {
+      const bg = THEME_BG[activeTheme.value];
+      try {
+        if (app.isVersionAtLeast('6.1')) {
+          app.setHeaderColor(bg);
+          app.setBackgroundColor(bg);
+        }
+        if (app.isVersionAtLeast('7.10')) app.setBottomBarColor?.(bg);
+      } catch {
+        // Eski Telegram — ranglarsiz.
+      }
+    });
   } catch {
     // Eski Telegram — sozlamalarsiz ham ishlaydi.
   }

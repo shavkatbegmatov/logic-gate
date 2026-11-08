@@ -2,8 +2,14 @@
 import { onOldHost } from './migrate';
 import { render } from 'preact';
 import { App } from './app';
+import './theme';
 import { inTelegram } from './telegram';
 import { startTelegram } from './telegram-app';
+// Shriftlar (IBM Plex): o'z serverimizdan, har alifbo kerak bo'lgandagina yuklanadi (unicode-range).
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/600.css';
 import './styles.css';
 
 render(<App />, document.getElementById('app')!);

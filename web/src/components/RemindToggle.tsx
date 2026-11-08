@@ -4,6 +4,7 @@ import { api, ApiError } from '../api';
 import { lang, t } from '../i18n';
 import { requestWriteAccess, sdk, tg } from '../telegram';
 import { showToast } from './Toast';
+import { Icon } from './ui';
 
 /**
  * Telegram ichida: kunlik eslatmani bot orqali yoqish/o'chirish. Telegram tashqarisida, bot serverda
@@ -57,7 +58,7 @@ export function RemindToggle({ compact = false, card = false }: { compact?: bool
     <div class={`remind${compact ? ' compact' : ''}`}>
       {!compact && <p class="muted small">{t.telegram.remindText}</p>}
       <button class={`btn remind-btn${on.value ? ' on' : ''}`} onClick={toggle} disabled={busy.value} aria-pressed={on.value}>
-        {on.value ? t.telegram.remindOff : t.telegram.remindOn}
+        <Icon name={on.value ? 'bellOff' : 'bell'} /> {on.value ? t.telegram.remindOff : t.telegram.remindOn}
       </button>
     </div>
   );

@@ -8,7 +8,10 @@ const here = (p) => new URL(p, import.meta.url).pathname.replace(/^\/(\w:)/, '$1
 const dist = here('../dist/');
 
 // Sahifa ishlashi uchun kerak bo'ladiganlar. Ilova ikonkalari va og.png ni brauzer/Telegram o'zi oladi.
-const keep = (path) => path === '/index.html' || path === '/favicon.svg' || path === '/manifest.webmanifest' || /^\/assets\/[^/]+\.(js|css)$/.test(path);
+// Shriftlar ro'yxatda yo'q: har til uchun faqat keraklisi yuklanadi va sw.template.js uni birinchi
+// so'rovda keshga qo'yadi (hamma alifbolarni oldindan yuklash isrof).
+const keep = (path) =>
+  path === '/index.html' || path === '/favicon.svg' || path === '/manifest.webmanifest' || path === '/theme.js' || /^\/assets\/[^/]+\.(js|css)$/.test(path);
 
 const files = [];
 (function walk(dir) {

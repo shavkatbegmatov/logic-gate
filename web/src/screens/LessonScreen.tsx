@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks';
-import { TopBar } from '../components/ui';
+import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { chapterDone, lessonFor, markLessonRead, type Block } from '../lessons';
 import { chapterLevels, chapters } from '../levels';
@@ -49,7 +49,12 @@ export function LessonScreen({ id }: { id: string }) {
 function LessonBlock({ b }: { b: Block }) {
   if ('h' in b) return <h3>{b.h}</h3>;
   if ('p' in b) return <p>{b.p}</p>;
-  if ('tip' in b) return <p class="lesson-tip">💡 {b.tip}</p>;
+  if ('tip' in b)
+    return (
+      <p class="lesson-tip">
+        <Icon name="hint" /> {b.tip}
+      </p>
+    );
   if ('f' in b)
     return (
       <div class="formula-lines lesson-formula">

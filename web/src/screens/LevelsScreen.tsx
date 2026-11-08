@@ -1,4 +1,4 @@
-import { Stars, TopBar } from '../components/ui';
+import { Icon, Stars, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { chapterDone, lessonsRead } from '../lessons';
 import { chapterLevels, chapters, levelNumber } from '../levels';
@@ -28,7 +28,11 @@ export function LevelsScreen() {
                   </div>
                   <span class="chapter-stars">{t.chapters.chapterStars(chapterStars(ch), list.length * 3)}</span>
                 </header>
-                {!open && <p class="lock-note">🔒 {t.chapters.locked(ch.unlockStars, totalStars.value)}</p>}
+                {!open && (
+                  <p class="lock-note">
+                    <Icon name="lock" /> {t.chapters.locked(ch.unlockStars, totalStars.value)}
+                  </p>
+                )}
                 <div class="level-grid">
                   {list.map((l) => {
                     const p = progress.value[l.id];
@@ -42,7 +46,7 @@ export function LevelsScreen() {
                       >
                         <span class="level-num">{levelNumber(l)}</span>
                         <span class="level-title">{l.title}</span>
-                        {p ? <Stars n={p.stars} size="sm" /> : <span class="level-goal">{can ? '' : '🔒'}</span>}
+                        {p ? <Stars n={p.stars} size="sm" /> : <span class="level-goal">{can ? '' : <Icon name="lock" />}</span>}
                       </button>
                     );
                   })}
@@ -53,7 +57,7 @@ export function LevelsScreen() {
                       class={`btn small lesson-btn${lessonsRead.value.includes(ch.id) ? '' : ' new'}`}
                       onClick={() => go(`lesson/${ch.id}`)}
                     >
-                      {t.lesson.button}
+                      <Icon name="book" /> {t.lesson.button}
                     </button>
                   ) : (
                     <p class="muted small lesson-note">

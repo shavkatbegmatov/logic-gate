@@ -2,6 +2,7 @@
 import { computed, effect, signal } from '@preact/signals';
 import { sfx } from './audio';
 import { showToast } from './components/Toast';
+import type { IconName } from './components/ui';
 import { customStore } from './custom';
 import { dailyHistory, streak } from './daily';
 import { t } from './i18n';
@@ -20,7 +21,7 @@ export interface Snapshot {
 
 export interface Achievement {
   id: string;
-  icon: string;
+  icon: IconName;
   title: () => string;
   text: () => string;
   /** [hozirgi, kerak]; hozirgi ≥ kerak bo'lsa — ochilgan. */
@@ -33,48 +34,48 @@ const MAX_STARS = levels.length * 3;
 const a = () => t.achievements;
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'first', icon: '🚀', title: () => a().first.title, text: () => a().first.text, measure: (s) => [Math.min(1, count(levels, (l) => !!s.progress[l.id])), 1] },
+  { id: 'first', icon: 'power', title: () => a().first.title, text: () => a().first.text, measure: (s) => [Math.min(1, count(levels, (l) => !!s.progress[l.id])), 1] },
   ...chapters.map((ch): Achievement => {
     const list = chapterLevels(ch.id);
     return {
       id: `chapter-${ch.id}`,
-      icon: '📘',
+      icon: 'book',
       title: () => a().chapter.title(ch.title),
       text: () => a().chapter.text(list.length),
       measure: (s) => [count(list, (l) => !!s.progress[l.id]), list.length],
     };
   }),
-  { id: 'stars-half', icon: '⭐', title: () => a().starsHalf(MAX_STARS / 2).title, text: () => a().starsHalf(MAX_STARS / 2).text, measure: (s) => [Math.min(stars(s), MAX_STARS / 2), MAX_STARS / 2] },
-  { id: 'stars-all', icon: '🌟', title: () => a().starsAll(MAX_STARS).title, text: () => a().starsAll(MAX_STARS).text, measure: (s) => [stars(s), MAX_STARS] },
+  { id: 'stars-half', icon: 'star', title: () => a().starsHalf(MAX_STARS / 2).title, text: () => a().starsHalf(MAX_STARS / 2).text, measure: (s) => [Math.min(stars(s), MAX_STARS / 2), MAX_STARS / 2] },
+  { id: 'stars-all', icon: 'crown', title: () => a().starsAll(MAX_STARS).title, text: () => a().starsAll(MAX_STARS).text, measure: (s) => [stars(s), MAX_STARS] },
   {
     id: 'independent',
-    icon: '💎',
+    icon: 'gem',
     title: () => a().independent(10).title, text: () => a().independent(10).text,
     measure: (s) => [Math.min(10, count(levels, (l) => s.progress[l.id]?.stars === 3 && !s.hints[l.id])), 10],
   },
   {
     id: 'nand-master',
-    icon: '🧠',
+    icon: 'nand',
     title: () => a().nandMaster.title, text: () => a().nandMaster.text,
     measure: (s) => {
       const list = chapterLevels('nand');
       return [count(list, (l) => s.progress[l.id]?.stars === 3), list.length];
     },
   },
-  { id: 'daily-first', icon: '📅', title: () => a().dailyFirst.title, text: () => a().dailyFirst.text, measure: (s) => [Math.min(1, Object.keys(s.daily).length), 1] },
+  { id: 'daily-first', icon: 'calendar', title: () => a().dailyFirst.title, text: () => a().dailyFirst.text, measure: (s) => [Math.min(1, Object.keys(s.daily).length), 1] },
   {
     id: 'daily-perfect',
-    icon: '🎯',
+    icon: 'target',
     title: () => a().dailyPerfect.title, text: () => a().dailyPerfect.text,
     measure: (s) => [Math.min(1, count(Object.values(s.daily), (d) => d.stars === 3)), 1],
   },
-  { id: 'streak-3', icon: '🔥', title: () => a().streak(3).title, text: () => a().streak(3).text, measure: (s) => [Math.min(s.streak, 3), 3] },
-  { id: 'streak-7', icon: '🔥', title: () => a().streak(7).title, text: () => a().streak(7).text, measure: (s) => [Math.min(s.streak, 7), 7] },
-  { id: 'creator', icon: '✏️', title: () => a().creator.title, text: () => a().creator.text, measure: (s) => [Math.min(1, s.custom.created), 1] },
-  { id: 'friend', icon: '🤝', title: () => a().friend.title, text: () => a().friend.text, measure: (s) => [Math.min(1, Object.keys(s.custom.solved).length), 1] },
+  { id: 'streak-3', icon: 'flame', title: () => a().streak(3).title, text: () => a().streak(3).text, measure: (s) => [Math.min(s.streak, 3), 3] },
+  { id: 'streak-7', icon: 'flame', title: () => a().streak(7).title, text: () => a().streak(7).text, measure: (s) => [Math.min(s.streak, 7), 7] },
+  { id: 'creator', icon: 'pencil', title: () => a().creator.title, text: () => a().creator.text, measure: (s) => [Math.min(1, s.custom.created), 1] },
+  { id: 'friend', icon: 'users', title: () => a().friend.title, text: () => a().friend.text, measure: (s) => [Math.min(1, Object.keys(s.custom.solved).length), 1] },
   {
     id: 'beat-author',
-    icon: '🏅',
+    icon: 'medal',
     title: () => a().beatAuthor.title, text: () => a().beatAuthor.text,
     measure: (s) => [Math.min(1, count(Object.values(s.custom.solved), (c) => c.goal !== undefined && c.gates < c.goal)), 1],
   },
@@ -134,7 +135,7 @@ effect(() => {
   save(KEY, next);
   if (announce) {
     sfx.achievement();
-    showToast(t.achievements.unlocked(fresh.map((x) => `${x.a.icon} ${x.a.title()}`)), 'ok', 4500);
+    showToast(t.achievements.unlocked(fresh.map((x) => x.a.title())), 'ok', 4500);
   }
   announce = true;
 });

@@ -137,7 +137,15 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 17. **M16 — Kunlik masalalar arxivi (bajarildi):** o'tgan kunlar ro'yxati va masalasi, kechagisi seriyaga kiradi, qolganlari — mashq; havola rasmlari 42 daraja bilan.
 18. **M17 — Sxema formulasi (bajarildi):** yon panelda jonli Bul ifodasi (¬ ∧ ∨ ⊕), umumiy elementlar va D-trigger holatlari nomlanadi.
 19. **M18 — Bo'lim xulosalari (bajarildi):** 7 bo'lim uchun qisqa dars (uz/ru), bo'lim yechilgach ochiladi.
-20. **M19 — Qidiruv tizimlari (bajarildi):** mantiqiy elementlar qo'llanmasi (uz/ru statik sahifa), robots.txt, sitemap.xml, schema.org, canonical.
+20. **M19 — Qidiruv tizimlari (bajarildi):** mantiqiy elementlar qo'llanmasi (uz/ru statik sahifa), robots.txt, sitemap.xml, schema.org, canonical; Google va Yandex'da tasdiqlangan.
+21. **M20 — Dizayn, 1-bosqich (bajarildi):** mavzu o'zgaruvchilari, Plata va Daftar mavzulari + Avto (Telegram rejimi bilan), IBM Plex shriftlari, emoji o'rniga chiziqli ikonkalar, neon nur va gradientlarsiz.
+
+### Dizayn: keyingi bosqichlar
+
+- **2 — Maydon:** simlar mis yo'llardek (to'g'ri burchak va 45°), kirishlar — tumbler, chiqishlar — chiroq; Daftar'da siyoh va marker, biroz "qo'lda chizilgan" chiziq.
+- **3 — Bosh ekran:** asosiy "davom etish" kartochkasi (joriy daraja sxemasi bilan), pastki panel; til va qo'llanma — sozlamalarga.
+- **4 — Darajalar xaritasi:** tugunlar yo'llar bilan ulanadi, yechilganda signal keyingisiga oqadi.
+- Logotip, PWA ikonkalari va havola rasmi (og.png) — yangi uslubda.
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 

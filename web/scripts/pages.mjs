@@ -3,7 +3,8 @@
 //   /ru/logicheskie-elementy/   — o'sha qo'llanma ruscha
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
-// JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts).
+// JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
+// ranglar — o'yinning Plata mavzusi (src/styles.css).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,7 +70,7 @@ function dffTable(c) {
 }
 
 const CSS = `
-:root{--bg:#07110d;--panel:#0f221a;--line:#1d3a2e;--text:#d9f6e7;--muted:#84aa9a;--on:#3dffa0;--copper:#e8b45a;--fill:#0f2a20;--stroke:#4fbf8c;--mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,Menlo,monospace;color-scheme:dark}
+:root{--bg:#0b1712;--panel:#13271e;--line:#244232;--text:#e6eee4;--muted:#8fa697;--on:#f2a93b;--copper:#c68a57;--fill:#102a1f;--stroke:#63b98d;--mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,Menlo,monospace;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif}
 a{color:var(--on)}
@@ -85,7 +86,7 @@ section{margin:28px 0;padding:20px;border:1px solid var(--line);border-radius:14
 code{font-family:var(--mono);white-space:nowrap}
 .cta{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
 .btn{display:inline-block;padding:11px 18px;border:1px solid var(--stroke);border-radius:10px;color:var(--text);text-decoration:none;font-weight:600}
-.btn.primary{background:var(--on);border-color:var(--on);color:#04140c}
+.btn.primary{background:var(--on);border-color:var(--on);color:#1e1305}
 .toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0;padding:0;list-style:none}
 .toc a{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;font-size:14px}
 .gate-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;margin:4px 0 12px}
@@ -108,7 +109,7 @@ svg.gate text.in-label{fill:var(--text)}
 .laws{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0 0 12px}
 .laws dt{color:var(--muted)}
 .laws dd{margin:0;font:15px var(--mono)}
-.tip{margin:0;padding:10px 12px;border-left:3px solid var(--copper);border-radius:8px;background:#1b2614}
+.tip{margin:0;padding:10px 12px;border-left:3px solid var(--copper);border-radius:8px;background:#1f2615}
 ol.chapters{padding-left:22px}
 ol.chapters li{margin:6px 0}
 footer{max-width:820px;margin:0 auto;padding:16px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}

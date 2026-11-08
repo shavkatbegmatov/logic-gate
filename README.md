@@ -379,6 +379,15 @@ O'zbekcha (standart) va ruscha. Til bosh sahifadagi va sozlamalardagi tugma bila
 
 Qum qutida yig'ilgan sxemadan «Masala qilish» masala yaratadi: uning haqiqat jadvali — vazifa, muallif ishlatgan elementlar soni — maqsad, ruxsat etilgan elementlar — muallif ishlatganlari. Masala butunlay havolaning o'zida (`#/p/<kod>`, ~150 belgi): ixcham JSON → base64url. Server va baza ishtirok etmaydi; natijalar faqat qurilmada (`lg.custom.v1`). Havola o'qilganda qat'iy tekshiriladi, buzilgan bo'lsa xabar chiqadi.
 
+## Mavzular va shriftlar
+
+O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda **Plata** (qorong'i, sukut bo'yicha: yashil plata, mis yo'llar, sariq chiroq), **Daftar** (yorug': katakli qog'oz va siyoh — kunduzi va sinfda proyektorda qulay) va **Avto** (telefon yoki Telegram rejimiga qarab).
+
+- Ranglar faqat `web/src/styles.css` boshidagi o'zgaruvchilarda (`:root` — Plata, `:root[data-theme='daftar']` — Daftar). Qolgan CSS'da qattiq yozilgan rang bo'lmasligini `theme.test.ts` tekshiradi; yangi rang kerak bo'lsa — ikkala mavzuga o'zgaruvchi qo'shing. `--on` — signal 1 (sim, chiroq), `--accent` — interfeysdagi asosiy tugma; shaffof variant uchun `rgba(var(--on-rgb), 0.2)`.
+- `web/public/theme.js` mavzuni birinchi chizishdan oldin qo'yadi (CSP inline skriptga ruxsat bermaydi), keyin `src/theme.ts` boshqaradi: `<html data-theme>`, brauzer paneli rangi, Telegram oynasi ranglari.
+- Shriftlar — IBM Plex Sans va Plex Mono (`@fontsource`, o'z serverimizdan). Har alifbo `unicode-range` bilan faqat kerak bo'lganda yuklanadi; service worker shriftni birinchi yuklanishda keshga qo'yadi.
+- Ikonkalar — `components/ui.tsx` dagi `ICONS` (24×24, chiziqli). Interfeysda emoji ishlatilmaydi; faqat ulashish matnlarida (Telegram xabari) qoladi.
+
 ## Qidiruv tizimlari (SEO)
 
 O'yin hash marshrutli SPA — Google va Yandex undan faqat bosh sahifani ko'radi. Shuning uchun build oxirida `web/scripts/pages.mjs` oddiy HTML sahifalar yozadi (JavaScript'siz o'qiladi):

@@ -27,7 +27,7 @@ export function Home() {
         </div>
         <DailyCard />
         <button class="btn ghost small archive-link" onClick={() => go('archive')}>
-          {t.daily.archiveLink}
+          <Icon name="archive" /> {t.daily.archiveLink}
         </button>
         <nav class="menu">
           <button class="btn primary big" onClick={() => go(`level/${continueLevel().id}`)} autoFocus>
@@ -61,7 +61,7 @@ export function Home() {
         {/* Telegram ichida emas: oddiy havola Mini App oynasidan chiqib ketadi. */}
         {!inTelegram && (
           <a class="guide-link" href={t.home.guideUrl}>
-            {t.home.guide}
+            <Icon name="book" /> {t.home.guide}
           </a>
         )}
         {!profile.value && started && (
@@ -98,7 +98,11 @@ function DailyCard() {
         <span class="muted">
           {done ? t.daily.homeDone('★'.repeat(done.stars) + '☆'.repeat(3 - done.stars), done.gates) : t.daily.homeNew}
         </span>
-        {days > 0 && <span class="streak">{t.daily.streak(days)}</span>}
+        {days > 0 && (
+          <span class="streak">
+            <Icon name="flame" /> {t.daily.streak(days)}
+          </span>
+        )}
       </span>
       {!done && <span class="dot" aria-hidden="true" />}
     </button>

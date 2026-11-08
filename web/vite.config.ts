@@ -21,5 +21,7 @@ export default defineConfig({
   },
   test: {
     include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
+    // theme.test.ts styles.css ni ?raw bilan o'qiydi — CSS o'chirilgan bo'lsa, matn bo'sh keladi.
+    css: { include: [/styles\.css/] },
   },
 });

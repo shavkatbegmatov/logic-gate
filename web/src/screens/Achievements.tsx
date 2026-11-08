@@ -1,5 +1,5 @@
 import { states } from '../achievements';
-import { TopBar } from '../components/ui';
+import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
 
@@ -14,7 +14,7 @@ export function Achievements() {
           {list.map(({ a, n, max, done }) => (
             <div key={a.id} class={`achievement${done ? ' done' : ''}`}>
               <span class="ach-icon" aria-hidden="true">
-                {a.icon}
+                <Icon name={a.icon} />
               </span>
               <div class="ach-body">
                 <strong>{a.title()}</strong>

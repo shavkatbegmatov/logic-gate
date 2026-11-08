@@ -48,6 +48,7 @@ Ishlab chiqish davomida qabul qilingan qarorlar. Yangilari pastga qo'shiladi.
 - **Qum qutida** 1–5 kirish, 1–4 chiqish, barcha elementlar; holat `localStorage` da.
 - **Ovozlar WebAudio'da** sintez qilinadi: fayl yuklanmaydi, sozlamalarda o'chiriladi.
 - **Shriftlar tizimniki** (monospace + system-ui): tashqi so'rov va qo'shimcha bayt yo'q.
+- **Dizayn: bitta uslub, ikki rang mavzusi** (2026-11-09): uchta to'liq uslub (plata, daftar, laboratoriya pulti) o'rniga — bitta "ustaxona" tuzilmasi va ikki rang mavzusi (Plata, Daftar) + Avto. Uchta to'liq mavzu har yangi imkoniyatni uch marta chizishni talab qilardi va o'yinning tanib olinadigan qiyofasini yo'qotardi. Daftar — sinfda proyektor uchun haqiqiy foyda. Neon yashil nur, gradient va emoji olib tashlandi ("AI shabloni" belgilari); signal 1 — sariq chiroq, asosiy tugma — sariq (Plata) yoki ko'k siyoh (Daftar). Shrift — IBM Plex (muhandislik ruhida, o'zbek ʻ va kirill bilan). Sukut bo'yicha Plata: Daftar maydoni 2-bosqichda sayqallanadi.
 - **SEO uchun statik qo'llanma** (2026-11-08): o'yin hash-marshrutli bo'lib qoladi, qidiruv uchun esa build vaqtida alohida HTML sahifalar yoziladi (SSR yoki prerender o'rniga — qo'shimcha bog'liqlik yo'q). Ular darajalarning yechimini aytmaydi: bo'lim xulosalari o'yin ichida qulfli qoladi. Element belgilari o'yin bilan bitta fayldan (`shapes.ts`), Node uni TypeScript sifatida to'g'ridan-to'g'ri o'qiydi.
 
 ## Haqiqiy server (2026-11-05)

@@ -1,3 +1,4 @@
+import type { Theme } from './theme';
 import { computed, effect, signal } from '@preact/signals';
 import { setLang, type Lang } from './i18n';
 import { chapterLevels, chapterOf, chapters, levelById, levels } from './levels';
@@ -33,6 +34,8 @@ export interface Profile {
 export interface Settings {
   sound: boolean;
   lang?: Lang;
+  /** Rang mavzusi (theme.ts); yo'q bo'lsa — Plata. */
+  theme?: Theme;
 }
 
 export const progress = signal<Record<string, LevelProgress>>(load(KEYS.progress, {}));

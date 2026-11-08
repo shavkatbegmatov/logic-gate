@@ -11,6 +11,7 @@ import { resetAchievements } from '../achievements';
 import { resetCustom } from '../custom';
 import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
+import { THEMES } from '../theme';
 import { errorText, renameProfile, restoreProfile } from '../sync';
 
 declare const __APP_VERSION__: string;
@@ -130,6 +131,13 @@ export function Settings() {
             </div>
           </section>
 
+          <section class="card">
+            <div class="row between">
+              <span>{t.settings.theme}</span>
+              <ThemeSwitch />
+            </div>
+          </section>
+
           <RemindToggle card />
 
           <section class="card">
@@ -158,6 +166,26 @@ export function Settings() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Mavzu tanlash: Plata, Daftar yoki Avto (telefon/Telegram rejimiga qarab). */
+function ThemeSwitch() {
+  const current = settings.value.theme ?? 'plata';
+  return (
+    <div class="lang-switch" role="group" aria-label={t.settings.theme}>
+      {THEMES.map((id) => (
+        <button
+          key={id}
+          class={id === current ? 'on' : ''}
+          aria-pressed={id === current}
+          title={t.settings.themeHint[id]}
+          onClick={() => (settings.value = { ...settings.value, theme: id })}
+        >
+          {t.settings.themes[id]}
+        </button>
+      ))}
     </div>
   );
 }

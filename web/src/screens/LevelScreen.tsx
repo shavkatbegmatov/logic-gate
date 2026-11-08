@@ -7,7 +7,7 @@ import { outputColumn } from '../board/geometry';
 import { GateIntro } from '../components/GateIntro';
 import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
-import { Modal, Stars } from '../components/ui';
+import { Icon, Modal, Stars } from '../components/ui';
 import { t } from '../i18n';
 import { chapterDone, lessonsRead } from '../lessons';
 import { chapterOf, chapters, levelById, levelNumber, levels, newGates } from '../levels';
@@ -189,7 +189,7 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
       {solvedCount.value === levels.length && <p class="good">{t.success.allDone}</p>}
       {chapterDone(level.chapter) && !lessonsRead.value.includes(level.chapter) && (
         <button class="btn small lesson-btn new" onClick={() => go(`lesson/${level.chapter}`)}>
-          {t.lesson.unlocked}
+          <Icon name="book" /> {t.lesson.unlocked}
         </button>
       )}
       {next && !nextOpen && nextChapter && !chapterUnlocked(nextChapter) && (
