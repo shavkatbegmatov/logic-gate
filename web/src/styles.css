@@ -2222,6 +2222,38 @@ input[type='date']:focus {
   cursor: pointer;
 }
 
+/* ── O'rnatish ────────────────────────────────────────── */
+.install-banner {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 40px 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg2);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.install-banner > svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.install-banner > span {
+  flex: 1;
+}
+
+.install-banner .btn {
+  flex: none;
+}
+
+.install-card h2 {
+  margin-bottom: 4px;
+}
+
 /* ── Sertifikat ───────────────────────────────────────── */
 .cert {
   max-width: 920px;

@@ -460,6 +460,10 @@ Har reliz oldidan:
 
 `changelog.test.ts` versiya, tartib, sanalar, uz/ru soni va `CHANGELOG.md` mosligini tekshiradi — biri unutilsa test yiqiladi.
 
+## Telefonga o'rnatish
+
+O'yin — PWA (`public/manifest.webmanifest` + service worker). Chrome/Edge/Android `beforeinstallprompt` hodisasini beradi: `web/src/install.ts` (main.tsx da erta import qilinadi) uni ushlaydi, bosh sahifada (kamida 2 daraja yechgan o'yinchiga; yopilsa — 30 kun ko'rsatilmaydi, `lg.installDismissed.v1`) va Sozlamalarda «O'rnatish» tugmasi tizim oynasini chaqiradi. iPhone/iPad'da hodisa yo'q — Sozlamalarda «Ulashish → Bosh ekranga qo'shish» izohi. O'rnatilgan ilovada (`display-mode: standalone`) va Telegram ichida ko'rsatilmaydi. Manifestdagi `shortcuts` — ikonkani bosib turilganda: kunlik masala, darajalar, Qum quti.
+
 ## Oflayn rejim
 
 HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. `vite dev` da service worker yo'q.

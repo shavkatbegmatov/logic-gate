@@ -12,6 +12,7 @@ import { resetAchievements } from '../achievements';
 import { resetCustom } from '../custom';
 import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
+import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
 import { THEMES } from '../theme';
 import { APP_VERSION } from '../version';
@@ -142,6 +143,8 @@ export function Settings() {
             </div>
           </section>
 
+          <InstallCard />
+
           <GuidesCard />
 
           <RemindToggle card />
@@ -239,6 +242,26 @@ function GuidesCard() {
           </a>
         ))}
       </div>
+    </section>
+  );
+}
+
+/** O'rnatish: tizim oynasi (Chrome/Edge/Android) yoki iPhone uchun izoh. O'rnatilgan va Telegram'da — yo'q. */
+function InstallCard() {
+  if (inTelegram || installed.value) return null;
+  const canPrompt = !!installPrompt.value;
+  if (!canPrompt && !isIOS()) return null;
+  return (
+    <section class="card install-card">
+      <h2>{t.install.title}</h2>
+      <p class="muted small">{t.install.text}</p>
+      {canPrompt ? (
+        <button class="btn primary" onClick={() => void promptInstall()}>
+          <Icon name="download" /> {t.install.button}
+        </button>
+      ) : (
+        <p class="small">{t.install.ios}</p>
+      )}
     </section>
   );
 }

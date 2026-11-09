@@ -2,6 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { refreshMyTasks } from '../classes';
 import { JoinForm } from '../components/JoinForm';
 import { HomeTaskCard } from '../components/TaskView';
+import { canOfferInstall, dismissInstall, promptInstall } from '../install';
 import { MiniBoard } from '../components/MiniBoard';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon, type IconName } from '../components/ui';
@@ -33,6 +34,7 @@ export function Home() {
           <p class="tagline">{profile.value ? t.home.hello(profile.value.nickname) : t.tagline}</p>
           {newsFor(started || !!profile.value) && <NewsBanner />}
           <HomeTaskCard />
+          {canOfferInstall.value && !inTelegram && solvedCount.value >= 2 && <InstallBanner />}
           <ContinueCard />
           <DailyCard />
           <ShareButtons text={t.share.inviteText} label={t.share.invite} />
@@ -112,6 +114,22 @@ function HomeNav() {
         ))}
       </div>
     </nav>
+  );
+}
+
+/** Telefonga o'rnatish taklifi: brauzer tayyor bo'lsa; yopilsa — 30 kun ko'rsatilmaydi. */
+function InstallBanner() {
+  return (
+    <div class="install-banner">
+      <Icon name="download" />
+      <span>{t.install.banner}</span>
+      <button class="btn small primary" onClick={() => void promptInstall()}>
+        {t.install.button}
+      </button>
+      <button class="news-close" onClick={() => dismissInstall()} aria-label={t.close} title={t.close}>
+        ×
+      </button>
+    </div>
   );
 }
 

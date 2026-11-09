@@ -3,6 +3,7 @@ import { onOldHost } from './migrate';
 import { render } from 'preact';
 import { App } from './app';
 import { installErrorReporting } from './errors';
+import './install';
 import './theme';
 import { inTelegram } from './telegram';
 import { startTelegram } from './telegram-app';

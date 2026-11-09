@@ -419,6 +419,14 @@ Sen ham urinib ko'r!`,
     outputs: 'Chiqishlar',
   },
 
+  install: {
+    title: "Telefonga o'rnatish",
+    text: "O'yin ilova kabi bosh ekrandan ochiladi va internetsiz ham ishlaydi. Joy kam egallaydi (1 MB dan kam).",
+    banner: "Logic Gate'ni telefoningizga o'rnating — ilova kabi ochiladi, internetsiz ham ishlaydi.",
+    button: "O'rnatish",
+    ios: "iPhone/iPad'da: Safari'da «Ulashish» tugmasini bosing va «Bosh ekranga qo'shish»ni tanlang.",
+  },
+
   certificate: {
     title: 'Sertifikat',
     given: 'Ushbu sertifikat egasi',
@@ -993,6 +1001,14 @@ export const ru: typeof uz = {
     text: 'Свободно собирайте любые схемы и смотрите их таблицу истинности. Готовую схему отправьте друзьям через «Сделать задачу».',
     inputs: 'Входы',
     outputs: 'Выходы',
+  },
+
+  install: {
+    title: 'Установить на телефон',
+    text: 'Игра откроется с главного экрана как приложение и будет работать без интернета. Занимает мало места (меньше 1 МБ).',
+    banner: 'Установите Logic Gate на телефон — откроется как приложение и работает без интернета.',
+    button: 'Установить',
+    ios: 'На iPhone/iPad: в Safari нажмите «Поделиться» и выберите «На экран „Домой“».',
   },
 
   certificate: {

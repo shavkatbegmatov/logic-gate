@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.9.0',
+    date: '2026-11-09',
+    uz: [
+      "Telefonga o'rnatish: «O'rnatish» tugmasi (bosh sahifada va sozlamalarda) — o'yin ilova kabi ochiladi va internetsiz ishlaydi; iPhone uchun — qanday qo'shish izohi.",
+      "O'rnatilgan ilova ikonkasini bosib tursangiz — tezkor havolalar: kunlik masala, darajalar, Qum quti.",
+    ],
+    ru: [
+      'Установка на телефон: кнопка «Установить» (на главной и в настройках) — игра открывается как приложение и работает без интернета; для iPhone — подсказка, как добавить.',
+      'Если удерживать значок установленного приложения — быстрые ссылки: задача дня, уровни, песочница.',
+    ],
+  },
+  {
     version: '2.8.0',
     date: '2026-11-09',
     uz: [
