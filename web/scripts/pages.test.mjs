@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ru, uz } from '../src/i18n';
 import { applyGate } from '../src/sim/sim';
 import { GATE_ARITY, GATE_TYPES } from '../src/sim/types';
-import { compareExprs, parseExpr, truthTableOf } from './boolexpr.mjs';
+import { compareExprs, parseExpr, truthTableOf } from '../src/boolexpr.ts';
 import { BINARY, binaryAdd, divisionSteps } from './pages-binary.mjs';
 import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
@@ -128,6 +128,7 @@ describe("qo'llanma sahifalari", () => {
       const html = files[BOOL[lang].path.slice(1) + 'index.html'];
       expect(html).toContain('<script src="/guide-bool.js" defer></script>');
       expect(html).toContain('id="bool-calc"');
+      expect(html).toContain(`href="/#/sandbox/${encodeURIComponent(CALC_DEFAULT[0])}"`);
       expect(html.match(/class="sym"/g)).toHaveLength(9);
       expect(html.match(/<section/g)?.length).toBe(html.match(/<\/section>/g)?.length);
       // Shablonlar ({n}, {row}) faqat skript uchun data-* atributlarida, ko'rinadigan matnda emas.

@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.5.0',
+    date: '2026-11-09',
+    uz: [
+      "Qum qutida formuladan sxema: mantiqiy ifodani yozing — sxema o'zi yig'iladi va joylashadi.",
+      "«Bul algebrasi» qo'llanmasidagi kalkulyatordan ifodani bir bosishda o'yinda sxema qilib ochish mumkin.",
+    ],
+    ru: [
+      'Схема по формуле в песочнице: введите логическое выражение — схема соберётся и расположится сама.',
+      'Из калькулятора в справочнике «Алгебра логики» выражение можно одним нажатием открыть в игре как схему.',
+    ],
+  },
+  {
     version: '2.4.0',
     date: '2026-11-09',
     uz: [

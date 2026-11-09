@@ -1,7 +1,11 @@
 // Mantiqiy ifodalar: o'qish (parser), hisoblash, haqiqat jadvali va ikki ifodani solishtirish.
-// "Bul algebrasi" qo'llanmasi uchun: build'da (statik jadval va misollarni tekshirish) va brauzerda
-// (kalkulyator) bir xil kod ishlaydi — pages.mjs bu faylni `export` so'zlarisiz guide-bool.js ga qo'shadi.
-// Shuning uchun bu yerda import yo'q va faqat oddiy JavaScript.
+// Bitta manba uch joyda ishlatiladi:
+//   - o'yin: Qum qutida formuladan sxema yig'ish (src/formula-build.ts);
+//   - build: "Bul algebrasi" qo'llanmasidagi misollar va statik jadval (scripts/pages.mjs);
+//   - brauzer: qo'llanmadagi kalkulyator — pages.mjs bu faylni turlari va `export` so'zlarisiz
+//     dist/guide-bool.js ga qo'shadi (node:module stripTypeScriptTypes).
+// Shuning uchun bu yerda import yo'q va faqat o'chiriladigan TypeScript (turlar, interfeyslar):
+// enum, namespace, parametr-xossalar ishlatilmaydi.
 //
 // Yozuv: o'zgaruvchilar — bitta lotin harfi (A–Z, kichigi ham), 0 va 1.
 //   NOT: ¬ ! ~ NOT, yoki keyin ' (A')   AND: ∧ & · * AND, yoki yonma-yon (AB)
@@ -10,8 +14,31 @@
 
 export const MAX_VARS = 6;
 
-const WORDS = { NOT: 'not', AND: 'and', OR: 'or', XOR: 'xor' };
-const SYMBOLS = {
+export type ExprNode =
+  | { op: 'var'; v: string }
+  | { op: 'const'; v: 0 | 1 }
+  | { op: 'not'; a: ExprNode }
+  | { op: 'and' | 'or' | 'xor'; a: ExprNode; b: ExprNode };
+
+export type ExprErrorCode = 'empty' | 'char' | 'end' | 'unexpected' | 'paren' | 'vars';
+
+export interface ParsedExpr {
+  ast: ExprNode;
+  vars: string[];
+}
+
+export type Env = Record<string, number>;
+
+type TokenType = 'var' | 'const' | 'not' | 'and' | 'or' | 'xor' | '(' | ')' | 'post';
+
+interface Token {
+  t: TokenType;
+  v?: string | number;
+  pos: number;
+}
+
+const WORDS: Record<string, TokenType> = { NOT: 'not', AND: 'and', OR: 'or', XOR: 'xor' };
+const SYMBOLS: Record<string, TokenType> = {
   '¬': 'not', '!': 'not', '~': 'not',
   '∧': 'and', '&': 'and', '·': 'and', '*': 'and', '⋅': 'and',
   '∨': 'or', '|': 'or', '+': 'or',
@@ -20,15 +47,17 @@ const SYMBOLS = {
 };
 
 export class ExprError extends Error {
-  constructor(code, pos) {
+  code: ExprErrorCode;
+  pos: number;
+  constructor(code: ExprErrorCode, pos: number) {
     super(code);
     this.code = code;
     this.pos = pos;
   }
 }
 
-function tokenize(src) {
-  const out = [];
+function tokenize(src: string): Token[] {
+  const out: Token[] = [];
   let i = 0;
   while (i < src.length) {
     const ch = src[i];
@@ -61,15 +90,16 @@ function tokenize(src) {
 }
 
 /** Ifodani o'qiydi: { ast, vars } (vars — alifbo tartibida). Xatoda ExprError (code, pos). */
-export function parseExpr(src) {
+export function parseExpr(src: string): ParsedExpr {
   const tokens = tokenize(String(src));
   if (!tokens.length) throw new ExprError('empty', 0);
   let i = 0;
-  const peek = () => tokens[i];
-  const end = () => (tokens.length ? tokens[tokens.length - 1].pos + 1 : 0);
-  const startsOperand = (tok) => tok && (tok.t === 'var' || tok.t === 'const' || tok.t === '(' || tok.t === 'not');
+  const peek = (): Token | undefined => tokens[i];
+  const end = () => tokens[tokens.length - 1].pos + 1;
+  const startsOperand = (tok: Token | undefined) =>
+    !!tok && (tok.t === 'var' || tok.t === 'const' || tok.t === '(' || tok.t === 'not');
 
-  function or() {
+  function or(): ExprNode {
     let left = xor();
     while (peek()?.t === 'or') {
       i++;
@@ -77,7 +107,7 @@ export function parseExpr(src) {
     }
     return left;
   }
-  function xor() {
+  function xor(): ExprNode {
     let left = and();
     while (peek()?.t === 'xor') {
       i++;
@@ -85,7 +115,7 @@ export function parseExpr(src) {
     }
     return left;
   }
-  function and() {
+  function and(): ExprNode {
     let left = unary();
     for (;;) {
       if (peek()?.t === 'and') {
@@ -96,7 +126,7 @@ export function parseExpr(src) {
       } else return left;
     }
   }
-  function unary() {
+  function unary(): ExprNode {
     if (peek()?.t === 'not') {
       i++;
       return { op: 'not', a: unary() };
@@ -108,16 +138,16 @@ export function parseExpr(src) {
     }
     return node;
   }
-  function atom() {
+  function atom(): ExprNode {
     const tok = peek();
     if (!tok) throw new ExprError('end', end());
     if (tok.t === 'var') {
       i++;
-      return { op: 'var', v: tok.v };
+      return { op: 'var', v: String(tok.v) };
     }
     if (tok.t === 'const') {
       i++;
-      return { op: 'const', v: tok.v };
+      return { op: 'const', v: tok.v === 1 ? 1 : 0 };
     }
     if (tok.t === '(') {
       i++;
@@ -131,20 +161,23 @@ export function parseExpr(src) {
 
   const ast = or();
   if (i < tokens.length) throw new ExprError('unexpected', tokens[i].pos);
-  const vars = [...collectVars(ast, new Set())].sort();
+  const vars = [...collectVars(ast, new Set<string>())].sort();
   if (vars.length > MAX_VARS) throw new ExprError('vars', 0);
   return { ast, vars };
 }
 
-function collectVars(node, set) {
+function collectVars(node: ExprNode, set: Set<string>): Set<string> {
   if (node.op === 'var') set.add(node.v);
-  if (node.a) collectVars(node.a, set);
-  if (node.b) collectVars(node.b, set);
+  else if (node.op === 'not') collectVars(node.a, set);
+  else if (node.op !== 'const') {
+    collectVars(node.a, set);
+    collectVars(node.b, set);
+  }
   return set;
 }
 
 /** Qiymat: env — { A: 0|1, ... }. */
-export function evalExpr(node, env) {
+export function evalExpr(node: ExprNode, env: Env): number {
   switch (node.op) {
     case 'var':
       return env[node.v] ? 1 : 0;
@@ -162,10 +195,10 @@ export function evalExpr(node, env) {
 }
 
 /** Kirishlarning barcha qiymatlari: 00…0 dan 11…1 gacha (birinchi o'zgaruvchi — katta bit). */
-export function rowsOf(vars) {
-  const rows = [];
+export function rowsOf(vars: string[]): Env[] {
+  const rows: Env[] = [];
   for (let r = 0; r < 1 << vars.length; r++) {
-    const env = {};
+    const env: Env = {};
     vars.forEach((v, k) => (env[v] = (r >> (vars.length - 1 - k)) & 1));
     rows.push(env);
   }
@@ -173,13 +206,13 @@ export function rowsOf(vars) {
 }
 
 /** Haqiqat jadvali: { vars, rows: [{ env, q }] }. */
-export function truthTableOf(src) {
+export function truthTableOf(src: string): { vars: string[]; rows: { env: Env; q: number }[] } {
   const { ast, vars } = parseExpr(src);
   return { vars, rows: rowsOf(vars).map((env) => ({ env, q: evalExpr(ast, env) })) };
 }
 
 /** Ikki ifoda tengmi: { equal, vars, counter } — counter: farq qiladigan birinchi qator (yoki null). */
-export function compareExprs(a, b) {
+export function compareExprs(a: string, b: string): { equal: boolean; vars: string[]; counter: Env | null; values: number[] | null } {
   const x = parseExpr(a);
   const y = parseExpr(b);
   const vars = [...new Set([...x.vars, ...y.vars])].sort();
@@ -192,13 +225,13 @@ export function compareExprs(a, b) {
   return { equal: true, vars, counter: null, values: null };
 }
 
-const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const escHtml = (s: string) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /**
  * Kalkulyator jadvali (HTML): o'zgaruvchilar ustunlari va har bir ifoda natijasi.
  * outs — [{ label, values }]; ikkita bo'lsa, farq qiladigan qatorlar belgilanadi.
  */
-export function calcTableHtml(vars, rows, outs) {
+export function calcTableHtml(vars: string[], rows: Env[], outs: { label: string; values: number[] }[]): string {
   const head = vars.map((v) => `<th>${v}</th>`).join('') + outs.map((o) => `<th class="out">${escHtml(o.label)}</th>`).join('');
   const body = rows
     .map((env, r) => {

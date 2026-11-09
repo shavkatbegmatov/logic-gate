@@ -145,6 +145,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+33. **M32 — Formuladan sxema (bajarildi, 2.5.0):** Qum qutida Bul ifodasidan sxema (konstantalar soddalashadi, NAND/NOR/XNOR birlashadi, takrorlar bir marta, ustunlarga joylash), `#/sandbox/<formula>` havolasi; qo'llanma kalkulyatoridan o'yinga tugma. Ifoda o'qigich o'yin va qo'llanma uchun bitta (`src/boolexpr.ts`).
 32. **M31 — Qo'llanma: Bul algebrasi (bajarildi, 2.4.0):** uz/ru statik sahifa — amallar, qonunlar, De Morgan, soddalashtirish, MDNSh, Karno kartasi; haqiqat jadvali kalkulyatori (ifodalarni solishtiradi); sitemap'da 7 ta manzil.
 31. **M30 — Hisobotni chiqarish (bajarildi, 2.3.0):** o'qituvchi hisoboti — CSV fayl (Excel), jadvalni nusxalash (Sheets/Excel), chop etish (yorug' mavzu, faqat hisobot).
 30. **M29 — Sinf vazifalari (bajarildi, 2.2.0):** o'qituvchi darajalarni tanlab vazifa beradi (nom va muddat ixtiyoriy), o'quvchi bosh sahifada va sinf sahifasida ko'radi, vazifadagi darajalar qulfsiz; o'qituvchi hisobotida — bajarganlar soni va bajarmaganlar ro'yxati.

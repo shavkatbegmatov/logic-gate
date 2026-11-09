@@ -38,7 +38,7 @@ export function App() {
       {r.name === 'home' && <Home />}
       {r.name === 'levels' && <LevelsScreen />}
       {r.name === 'level' && <LevelScreen id={r.id} />}
-      {r.name === 'sandbox' && <Sandbox />}
+      {r.name === 'sandbox' && <Sandbox formula={r.formula} />}
       {r.name === 'leaderboard' && <Leaderboard tab={r.tab} />}
       {r.name === 'daily' && <DailyScreen key={r.day ?? 'today'} day={r.day} />}
       {r.name === 'archive' && <ArchiveScreen />}

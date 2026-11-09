@@ -1,4 +1,4 @@
-// "Bul algebrasi" qo'llanmasidagi kalkulyator (brauzer qismi). pages.mjs build'da buni boolexpr.mjs
+// "Bul algebrasi" qo'llanmasidagi kalkulyator (brauzer qismi). pages.mjs build'da buni src/boolexpr.ts
 // bilan birga dist/guide-bool.js ga yig'adi (bitta IIFE ichida) — shuning uchun parseExpr va boshqalar
 // shu yerda mavjud. Sahifa JavaScript'siz ham o'qiladi: jadval build'da chizilgan.
 var root = document.getElementById('bool-calc');
@@ -6,6 +6,7 @@ if (root) {
   var inA = document.getElementById('expr-a');
   var inB = document.getElementById('expr-b');
   var verdict = document.getElementById('expr-verdict');
+  var toSandbox = document.getElementById('expr-sandbox');
   var table = document.getElementById('expr-table');
   var last = inA;
 
@@ -36,7 +37,10 @@ if (root) {
     var la = root.getAttribute('data-short-a');
     var lb = root.getAttribute('data-short-b');
     var a = parse(inA, la);
+    if (toSandbox) toSandbox.hidden = !a;
     if (!a) return;
+    // O'yindagi Qum qutida — 1-ifodaning sxemasi.
+    if (toSandbox) toSandbox.href = '/#/sandbox/' + encodeURIComponent(inA.value.trim());
     var withB = inB.value.trim() !== '';
     var b = withB ? parse(inB, lb) : null;
     if (withB && !b) return;

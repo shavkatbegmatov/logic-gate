@@ -1,7 +1,7 @@
 // "Bul algebrasi" qo'llanmasining matnlari (scripts/pages.mjs). Maktab va kollej informatikasidagi
 // mavzu: amallar, qonunlar, De Morgan, soddalashtirish, jadvaldan formula (MDNSh), Karno kartasi.
 // Misollar o'yindagi darajalarning jadvallari emas — yechimlar oshkor qilinmaydi (testda tekshiriladi).
-// Har bir formula boolexpr.mjs bilan tekshiriladi: qonunlar va soddalashtirish qadamlari haqiqatan teng.
+// Har bir formula src/boolexpr.ts bilan tekshiriladi: qonunlar va soddalashtirish qadamlari haqiqatan teng.
 
 /** Jadvaldan formula va Karno kartasi misoli: A, B, C; natija 1 — 010, 011, 111 qatorlarida. */
 export const SOP_EXAMPLE = '00110001';
@@ -26,6 +26,7 @@ export const BOOL = {
       shortA: '1-ifoda',
       shortB: '2-ifoda',
       symbols: 'Belgilar',
+      toSandbox: "Sxemasini o'yinda yig'ish →",
       syntax:
         "Yozuv: ¬ yoki ! — EMAS, ∧ yoki & — VA, ∨ yoki + — YOKI, ⊕ yoki ^ — XOR, qavslar ( ). O'zgaruvchilar — lotin harflari (A, B, C…), 6 tagacha. AB — bu A ∧ B, A' — bu ¬A.",
       equal: 'Ifodalar teng: barcha {n} qatorda natija bir xil.',
@@ -154,6 +155,7 @@ export const BOOL = {
       shortA: 'Выр. 1',
       shortB: 'Выр. 2',
       symbols: 'Символы',
+      toSandbox: 'Собрать схему в игре →',
       syntax:
         "Запись: ¬ или ! — НЕ, ∧ или & — И, ∨ или + — ИЛИ, ⊕ или ^ — исключающее ИЛИ, скобки ( ). Переменные — латинские буквы (A, B, C…), до 6. AB — это A ∧ B, A' — это ¬A.",
       equal: 'Выражения равны: результат совпадает во всех {n} строках.',

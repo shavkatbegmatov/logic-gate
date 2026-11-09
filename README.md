@@ -396,7 +396,7 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 O'yin hash marshrutli SPA — Google va Yandex undan faqat bosh sahifani ko'radi. Shuning uchun build oxirida `web/scripts/pages.mjs` oddiy HTML sahifalar yozadi (JavaScript'siz o'qiladi):
 
 - `/ikkilik-sanoq-sistemasi/` va `/ru/dvoichnaya-sistema/` — ikkilik sanoq sistemasi: o'nlikdan ikkilikka va qaytib, 0–15 jadvali, ikkilikda qo'shish (misollar `pages-binary.mjs` da hisoblanadi) va bitlarni bosib sonni ko'radigan o'yinchoq (`public/guide-binary.js`). Qo'llanmalar bir-biriga sarlavhadagi menyu orqali bog'langan.
-- `/bul-algebrasi/` va `/ru/algebra-logiki/` — Bul algebrasi: amallar va yozuvlari, qonunlar jadvali, De Morgan, soddalashtirish qadamlari, jadvaldan formula (MDNSh), Karno kartasi va haqiqat jadvali kalkulyatori (ikki ifodani solishtiradi). Matnlar — `pages-bool.mjs`; ifoda o'qigich — `scripts/boolexpr.mjs`: build'da misollarni hisoblaydi va tekshiradi (har bir qonun va qadam haqiqatan teng; misol birorta darajaning jadvali emas), brauzerga esa `guide-bool-ui.js` bilan birga `dist/guide-bool.js` bo'lib chiqadi.
+- `/bul-algebrasi/` va `/ru/algebra-logiki/` — Bul algebrasi: amallar va yozuvlari, qonunlar jadvali, De Morgan, soddalashtirish qadamlari, jadvaldan formula (MDNSh), Karno kartasi va haqiqat jadvali kalkulyatori (ikki ifodani solishtiradi). Matnlar — `pages-bool.mjs`; ifoda o'qigich — `src/boolexpr.ts` (o'yin bilan umumiy): build'da misollarni hisoblaydi va tekshiradi (har bir qonun va qadam haqiqatan teng; misol birorta darajaning jadvali emas), brauzerga esa `guide-bool-ui.js` bilan birga `dist/guide-bool.js` bo'lib chiqadi. Kalkulyator ostidagi tugma ifodani o'yindagi Qum qutida sxema qilib ochadi.
 - `/mantiqiy-elementlar/` va `/ru/logicheskie-elementy/` — mantiqiy elementlar qo'llanmasi: belgisi (o'yindagi `src/board/shapes.ts` dan), formulasi, haqiqat jadvali, D-trigger, Bul algebrasi qonunlari, o'yin bo'limlari (`levels/levels.json` dan). Matnlar — `web/scripts/pages-content.mjs`, maktab atamalari bilan (inkor, konyunksiya, dizyunksiya…).
 - `robots.txt` (`/api/` yopiq) va `sitemap.xml` (7 ta manzil) — manzil `VITE_SITE_URL` dan.
 
@@ -416,6 +416,18 @@ Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi 
 **Hisobotni chiqarish.** Jadval ostida: «Excel (CSV)» — fayl (UTF-8 BOM, `;` ajratgich: Excel o'zbek/rus sozlamalarida shuni kutadi), «Jadvalni nusxalash» — TSV, Excel yoki Google Sheets'ga to'g'ridan-to'g'ri qo'yiladi (Telegram ichida ham ishlaydi), «Chop etish» — faqat hisobot va vazifalar, yorug' mavzuda. Ustunlar: o'quvchi, yulduzlar, darajalar, har bo'lim bo'yicha yechilganlar, bugungi va 7 kunlik kunlik masalalar, oxirgi kirish sanasi, har vazifa bo'yicha yechilgan darajalar. `=`, `+`, `-`, `@` bilan boshlangan matn formula bo'lib qolmasligi uchun oldiga `'` qo'yiladi.
 
 Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
+
+## Formuladan sxema (Qum quti)
+
+Qum qutida «Formuladan sxema» (yuqoridagi ƒ× tugmasi yoki yon paneldagi tugma): Bul ifodasi yoziladi va sxema o'zi yig'iladi (`src/formula-build.ts`). Ifoda o'qigich — `src/boolexpr.ts`: «Bul algebrasi» qo'llanmasidagi kalkulyator bilan bitta fayl (build `node:module` `stripTypeScriptTypes` bilan undan `dist/guide-bool.js` yasaydi). Qoidalar:
+
+- konstantalar soddalashtiriladi (`A ∧ 1 = A`); butun ifoda doimiy bo'lsa — xabar (maydonda 0/1 manbai yo'q);
+- `¬(A ∧ B)` → bitta NAND (NOR, XNOR ham), bir xil qism-ifodalar bir marta yig'iladi;
+- kirishlar A–E: boshqa harflar (x, y…) tartib bilan A, B… ga almashtiriladi va bu oynada aytiladi; 5 tadan ortiq — xato;
+- joylash: element ustuni — kirishdan chuqurligi, ustun ichida — manbalari ro'parasida, ustma-ust tushmaydi; chuqur sxemada chiqishlar ustuni o'ngga suriladi;
+- maydondagi kirish/chiqishlar soni kamaytirilmaydi: «Bekor qilish» eski sxemani yaroqli holda qaytaradi.
+
+Havola: `#/sandbox/<encodeURIComponent(ifoda)>` — Qum quti shu formula bilan oynani ochadi (manzil `#/sandbox` ga qaytariladi). Qo'llanmadagi «Sxemasini o'yinda yig'ish →» tugmasi shu havolani birinchi ifoda bilan yangilab boradi. Test (`formula-build.test.ts`) har bir misolda yig'ilgan sxemaning simulyatordagi jadvali ifodaning o'zi bilan bir xilligini tekshiradi.
 
 ## Versiya va yangiliklar
 

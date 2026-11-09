@@ -153,6 +153,13 @@ export class Editor {
     this.onChange?.(next);
   }
 
+  /** Butun sxemani almashtiradi (formuladan yig'ilgan); "bekor qilish" bilan qaytariladi. */
+  replace(circuit: Circuit) {
+    this.selection.value = null;
+    this.pending.value = null;
+    this.commit(sanitize(this.spec.value, circuit));
+  }
+
   clear() {
     if (!this.circuit.value.gates.length && !this.circuit.value.wires.length) return;
     this.commit({ gates: [], wires: [] });

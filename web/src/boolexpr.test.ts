@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { compareExprs, ExprError, parseExpr, truthTableOf } from './boolexpr.mjs';
+import { compareExprs, ExprError, parseExpr, truthTableOf } from './boolexpr';
 
-const q = (src) => truthTableOf(src).rows.map((r) => r.q).join('');
-const err = (src) => {
+const q = (src: string) => truthTableOf(src).rows.map((r) => r.q).join('');
+const err = (src: string) => {
   try {
     parseExpr(src);
   } catch (e) {

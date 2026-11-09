@@ -1,8 +1,10 @@
 import { useSignal } from '@preact/signals';
-import { useMemo, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
-import { outputColumn } from '../board/geometry';
+import { GATE_W, GRID, outputColumn } from '../board/geometry';
+import { buildFromFormula, type BuildError } from '../formula-build';
+import { showToast } from '../components/Toast';
 import { GateList } from '../components/GateList';
 import { ShareButtons } from '../components/ShareButtons';
 import { encodePuzzle, LIMITS, markCreated, puzzleFromCircuit, type CreateError } from '../custom';
@@ -28,19 +30,23 @@ interface Saved {
   circuit: Circuit;
 }
 
+/** Chiqishlar ustuni: saqlangan sxemadagi eng o'ngdagi elementdan o'ngda (formuladan yig'ilgan chuqur sxema). */
+const outXFor = (circuit: Circuit) =>
+  Math.max(outputColumn(4), ...circuit.gates.map((g) => Math.round((g.x + GATE_W + 96) / GRID) * GRID));
+
 const specFor = (inputs: number, outputs: number): Spec => ({
   inputs: INPUT_NAMES.slice(0, inputs),
   outputs: OUTPUT_NAMES.slice(0, outputs),
   gates: ALL_GATE_TYPES,
 });
 
-export function Sandbox() {
+export function Sandbox({ formula }: { formula?: string }) {
   const editor = useMemo(() => {
     const saved = load<Saved>(KEYS.sandbox, { inputs: 2, outputs: 1, circuit: { gates: [], wires: [] } });
     const ed = new Editor();
     const ins = Math.min(5, Math.max(1, saved.inputs | 0));
     const outs = Math.min(4, Math.max(1, saved.outputs | 0));
-    ed.load(specFor(ins, outs), saved.circuit, outputColumn(4));
+    ed.load(specFor(ins, outs), saved.circuit, outXFor(saved.circuit));
     ed.onChange = (circuit) => {
       const spec = ed.spec.value;
       saveLater(KEYS.sandbox, { inputs: spec.inputs.length, outputs: spec.outputs.length, circuit });
@@ -51,6 +57,14 @@ export function Sandbox() {
   useEditorKeys(editor, { clock: hasDff });
   const showSide = useSignal(false);
   const creating = useSignal(false);
+  // Qo'llanmadagi kalkulyatordan: #/sandbox/<formula> — oyna shu formula bilan ochiladi.
+  const formulaOpen = useSignal<string | null>(formula ?? null);
+  useEffect(() => {
+    if (formula === undefined) return;
+    formulaOpen.value = formula;
+    // Sahifa yangilansa, oyna qayta ochilmasin.
+    history.replaceState(null, '', '#/sandbox');
+  }, [formula]);
 
   const spec = editor.spec.value;
   const resize = (di: number, dout: number) => {
@@ -65,6 +79,9 @@ export function Sandbox() {
   return (
     <div class="screen play sandbox">
       <TopBar title={t.sandbox.title} onBack={() => go('')}>
+        <button class="icon-btn" onClick={() => (formulaOpen.value = '')} aria-label={t.formula.button} title={t.formula.button}>
+          <Icon name="formula" />
+        </button>
         <button class="icon-btn" onClick={() => editor.undo()} disabled={!editor.canUndo.value} aria-label={t.play.undo} title={t.play.undo}>
           <Icon name="undo" />
         </button>
@@ -86,6 +103,9 @@ export function Sandbox() {
             <p class="muted">{t.sandbox.text}</p>
             <Stepper label={t.sandbox.inputs} value={spec.inputs.length} onDec={() => resize(-1, 0)} onInc={() => resize(1, 0)} />
             <Stepper label={t.sandbox.outputs} value={spec.outputs.length} onDec={() => resize(0, -1)} onInc={() => resize(0, 1)} />
+            <button class="btn small formula-btn" onClick={() => (formulaOpen.value = '')}>
+              <Icon name="formula" /> {t.formula.button}
+            </button>
           </section>
           <TruthTable
             inputs={spec.inputs}
@@ -123,7 +143,112 @@ export function Sandbox() {
         </div>
       </div>
       {creating.value && <CreateModal editor={editor} onClose={() => (creating.value = false)} />}
+      {formulaOpen.value !== null && (
+        <FormulaModal editor={editor} initial={formulaOpen.value} onClose={() => (formulaOpen.value = null)} />
+      )}
     </div>
+  );
+}
+
+function formulaError(e: BuildError): string {
+  const f = t.formula.errors;
+  switch (e.code) {
+    case 'char':
+    case 'unexpected':
+      return f[e.code](e.pos + 1);
+    case 'const':
+      return f.const(e.value);
+    default:
+      return f[e.code];
+  }
+}
+
+const FORMULA_SYMBOLS = ['¬', '∧', '∨', '⊕', '(', ')', 'A', 'B', 'C', 'D'];
+
+/** Formuladan sxema: ifoda yoziladi, oldindan nechta element bo'lishi ko'rinadi, "Yig'ish" — maydonga. */
+function FormulaModal({ editor, initial, onClose }: { editor: Editor; initial: string; onClose: () => void }) {
+  const text = useSignal(initial);
+  const input = useRef<HTMLInputElement>(null);
+  const spec = editor.spec.value;
+  const res = text.value.trim()
+    ? buildFromFormula(text.value, { minInputs: spec.inputs.length, outputs: spec.outputs })
+    : null;
+  const hasCircuit = editor.circuit.value.gates.length > 0 || editor.circuit.value.wires.length > 0;
+
+  const insert = (sym: string) => {
+    const el = input.current;
+    if (!el) return;
+    const start = el.selectionStart ?? el.value.length;
+    el.setRangeText(sym, start, el.selectionEnd ?? start, 'end');
+    text.value = el.value;
+    el.focus();
+  };
+
+  const build = () => {
+    if (!res?.ok) return;
+    const v = res.value;
+    if (v.inputs.length !== spec.inputs.length) editor.setSpec(specFor(v.inputs.length, spec.outputs.length));
+    editor.outX.value = Math.max(editor.outX.value, v.outX);
+    editor.replace(v.circuit);
+    editor.fit();
+    showToast(t.formula.built, 'ok');
+    onClose();
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <h2>{t.formula.title}</h2>
+      <p class="muted">{t.formula.text}</p>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          build();
+        }}
+      >
+        <input
+          ref={input}
+          class="text-input formula-input"
+          type="text"
+          value={text.value}
+          placeholder={t.formula.placeholder}
+          aria-label={t.formula.title}
+          autoFocus
+          autoComplete="off"
+          spellcheck={false}
+          autoCapitalize="characters"
+          onInput={(e) => (text.value = (e.currentTarget as HTMLInputElement).value)}
+        />
+        <div class="formula-syms" role="group" aria-label={t.formula.symbols}>
+          {FORMULA_SYMBOLS.map((s) => (
+            <button key={s} type="button" class="formula-sym" onClick={() => insert(s)}>
+              {s}
+            </button>
+          ))}
+        </div>
+        <p class="muted small">{t.formula.syntax}</p>
+        {res && (
+          <p class={res.ok ? 'small' : 'form-error'} role="status">
+            {res.ok
+              ? res.value.circuit.gates.length
+                ? t.formula.preview(res.value.circuit.gates.length, res.value.inputs.length)
+                : t.formula.wire
+              : formulaError(res.error)}
+          </p>
+        )}
+        {res?.ok && res.value.rename.length > 0 && (
+          <p class="muted small">{t.formula.rename(res.value.rename.map(([a, b]) => `${a} → ${b}`).join(', '))}</p>
+        )}
+        {res?.ok && hasCircuit && <p class="muted small">{t.formula.replace}</p>}
+        <div class="modal-actions">
+          <button type="button" class="btn" onClick={onClose}>
+            {t.close}
+          </button>
+          <button class="btn primary" disabled={!res?.ok}>
+            {t.formula.build}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

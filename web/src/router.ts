@@ -5,7 +5,7 @@ export type Route =
   | { name: 'home' }
   | { name: 'levels' }
   | { name: 'level'; id: string }
-  | { name: 'sandbox' }
+  | { name: 'sandbox'; formula?: string }
   | { name: 'leaderboard'; tab: 'overall' | 'daily' }
   | { name: 'daily'; day?: number }
   | { name: 'archive' }
@@ -17,13 +17,23 @@ export type Route =
   | { name: 'custom'; code: string }
   | { name: 'settings' };
 
+/** Buzilgan %-kodlashda ham yiqilmasin (qo'lda yozilgan havola). */
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 function parse(hash: string): Route {
   const [name, arg] = hash.replace(/^#\/?/, '').split('/');
   switch (name) {
     case 'daily':
       return arg && /^\d+$/.test(arg) ? { name, day: Number(arg) } : { name };
-    case 'levels':
     case 'sandbox':
+      return arg ? { name, formula: safeDecode(arg) } : { name };
+    case 'levels':
     case 'archive':
     case 'achievements':
     case 'settings':

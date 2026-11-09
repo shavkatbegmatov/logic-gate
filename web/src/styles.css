@@ -2182,6 +2182,39 @@ input[type='date']:focus {
   cursor: pointer;
 }
 
+/* ── Formuladan sxema (Qum quti) ───────────────────────── */
+.formula-input {
+  width: 100%;
+  font: 600 18px var(--mono);
+}
+
+.formula-syms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+
+.formula-sym {
+  min-width: 40px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: 600 16px var(--mono);
+  cursor: pointer;
+}
+
+.formula-sym:hover {
+  border-color: var(--accent);
+}
+
+.formula-btn {
+  margin-top: 10px;
+}
+
 /* ── Sinf vazifalari ───────────────────────────────────── */
 .home-task {
   width: 100%;

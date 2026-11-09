@@ -1,16 +1,17 @@
 // Qidiruv tizimlari uchun statik fayllar (build oxirida, dist/ ga):
 //   /mantiqiy-elementlar/, /ru/logicheskie-elementy/        — mantiqiy elementlar qo'llanmasi
 //   /ikkilik-sanoq-sistemasi/, /ru/dvoichnaya-sistema/       — ikkilik sanoq sistemasi (+ public/guide-binary.js)
-//   /bul-algebrasi/, /ru/algebra-logiki/                     — Bul algebrasi (+ /guide-bool.js: boolexpr.mjs + guide-bool-ui.js)
+//   /bul-algebrasi/, /ru/algebra-logiki/                     — Bul algebrasi (+ /guide-bool.js: src/boolexpr.ts + guide-bool-ui.js)
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
 // JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
 // ranglar — o'yinning Plata mavzusi, yorug' tizim rejimida — Daftar (src/styles.css).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { stripTypeScriptTypes } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from '../src/board/shapes.ts';
-import { calcTableHtml, compareExprs, evalExpr, parseExpr, rowsOf } from './boolexpr.mjs';
+import { calcTableHtml, compareExprs, evalExpr, parseExpr, rowsOf } from '../src/boolexpr.ts';
 import { BINARY, binaryAdd, divisionSteps, EXAMPLES } from './pages-binary.mjs';
 import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
@@ -77,6 +78,7 @@ const CSS = `
 :root{--bg:#0b1712;--panel:#13271e;--line:#244232;--text:#e6eee4;--muted:#8fa697;--on:#f2a93b;--on-ink:#1e1305;--copper:#c68a57;--fill:#102a1f;--stroke:#63b98d;--lead:#46705e;--tint:#1f2615;--mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,Menlo,monospace;color-scheme:dark}
 @media (prefers-color-scheme:light){:root{--bg:#efe9dc;--panel:#f8f4ea;--line:#d9cfba;--text:#1d2939;--muted:#5a6475;--on:#2253b0;--on-ink:#ffffff;--copper:#a35f2a;--fill:#fffdf7;--stroke:#2a3550;--lead:#8d96a5;--tint:#fbf0d9;color-scheme:light}}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif}
 a{color:var(--on)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:820px;margin:0 auto;padding:12px 16px;border-bottom:1px solid var(--line)}
@@ -385,6 +387,9 @@ ${cta(c, ctx)}
   };
 }
 
+/** O'yindagi Qum qutiga havola: formula oynasi shu ifoda bilan ochiladi (guide-bool-ui.js ham shunday yozadi). */
+export const sandboxLink = (expr) => `/#/sandbox/${encodeURIComponent(expr)}`;
+
 /** Kalkulyatorning boshlang'ich misoli — De Morgan (sahifa JavaScript'siz ham jadvalni ko'rsatadi). */
 export const CALC_DEFAULT = ['¬(A ∧ B)', '¬A ∨ ¬B'];
 
@@ -473,6 +478,7 @@ ${cta(c, ctx)}
 <p class="muted">${esc(b.calc.syntax)}</p>
 <p class="verdict${equal ? ' ok' : ' bad'}" id="expr-verdict" role="status">${esc(b.calc.equal.replace('{n}', String(rows.length)))}</p>
 <div class="scroll-x" id="expr-table">${calcTableHtml(vars, rows, outs)}</div>
+<p><a class="btn" id="expr-sandbox" href="${sandboxLink(CALC_DEFAULT[0])}">${esc(b.calc.toSandbox)}</a></p>
 </div>
 </section>
 <section id="ops">
@@ -530,11 +536,11 @@ ${cta(c, ctx, `<a class="btn" href="/#/sandbox">${esc(c.game.features[1].split('
   };
 }
 
-/** Kalkulyator skripti: boolexpr.mjs (export'larsiz) + guide-bool-ui.js, bitta IIFE ichida. */
+/** Kalkulyator skripti: src/boolexpr.ts (turlar va export'larsiz) + guide-bool-ui.js, bitta IIFE ichida. */
 export function guideBoolScript() {
   const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
-  const lib = read('./boolexpr.mjs').replace(/^export /gm, '');
-  return `// Logic Gate — Bul algebrasi kalkulyatori (scripts/boolexpr.mjs + scripts/guide-bool-ui.js).\n(function () {\n'use strict';\n${lib}\n${read('./guide-bool-ui.js')}\n})();\n`;
+  const lib = stripTypeScriptTypes(read('../src/boolexpr.ts')).replace(/^export /gm, '');
+  return `// Logic Gate — Bul algebrasi kalkulyatori (src/boolexpr.ts + scripts/guide-bool-ui.js).\n(function () {\n'use strict';\n${lib}\n${read('./guide-bool-ui.js')}\n})();\n`;
 }
 
 /** Barcha fayllar: dist ichidagi yo'l → mazmun. */
