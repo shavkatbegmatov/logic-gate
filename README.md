@@ -354,7 +354,7 @@ Server bot tokeni bilan ishga tushsa (`server/internal/bot`), bot:
 - `/start` ga salomlashuv va «O'ynash» (Mini App) hamda «Har kuni eslatish» tugmalari bilan javob beradi; `/eslatma` — yoqish/o'chirish, `/til` — o'zbekcha/ruscha (standart — o'zbekcha, o'yin kabi; o'yin ichidan yoqilganda — o'yindagi til), `/id` — Telegram ID, `/help`;
 - har kuni `LG_REMIND_HOUR` da (Toshkent, standart 9:00) eslatma yoqqanlarga bugungi masala haqida yozadi — bugun yechganlarga yozmaydi, o'yinga bog'langanlarga seriyasini aytadi; server o'chiq bo'lib qolsa, 21:00 gacha kechikib yuboradi;
 - kunlik zaxira nusxani admin'ga fayl qilib yuboradi (serverdan tashqaridagi nusxa) va admin'ga `/stats` ni ko'rsatadi;
-- admin'ga har dushanba 10:00 da haftalik hisobot (o'yinchilar, faollik, kunlik masala, reyting) va serverdagi xatolar haqida ogohlantirish (ERROR log, 10 daqiqada ko'pi bilan bitta xabar);
+- admin'ga har dushanba 10:00 da haftalik hisobot (o'yinchilar, faollik, kunlik masala, reyting) va xatolar haqida ogohlantirish (ERROR log, 10 daqiqada ko'pi bilan bitta xabar) — server xatolari ham, o'yinchilar brauzeridagi xatolar ham (pastda);
 - **inline rejim** (BotFather → `/setinline` → @LogicGateUzBot → masalan `masala`): istalgan suhbatda `@LogicGateUzBot` yozilsa — «Bugungi masala» (o'yinga bog'langan va bugun yechgan bo'lsa — natijasi bilan) va «O'yinga taklif» kartalari, «Yechish»/«O'ynash» tugmasi Mini App'ni ochadi;
 - o'yin ichida (Telegram'da) kunlik masala yechilgan oynada va sozlamalarda «🔔 Har kuni eslatish» tugmasi: Telegram'dan ruxsat so'raladi, server `initData` imzosini token bilan tekshiradi (`POST /api/telegram/remind`).
 
@@ -370,6 +370,12 @@ Yangilanishlar long polling bilan olinadi — webhook manzili kerak emas. Token 
 Coolify: ilova → **Environment Variables** → `LG_TELEGRAM_TOKEN` (va `LG_TELEGRAM_ADMIN`) qo'shing → **Redeploy**. Tokenni hech qayerga (chat, repozitoriy, skrinshot) yozmang.
 
 Rasm `deploy/telegram/app-640x360.png` va `web/public/og.png` — `web/scripts/og.html` dan.
+
+### Brauzer xatolari
+
+O'yin (faqat build'da) kutilmagan xatolarni — `error` va `unhandledrejection` — `POST /api/client-errors` ga yuboradi (`web/src/errors.ts`). Faqat o'yinning o'z kodidagi (`/assets/*.js` stekda) xatolar: brauzer kengaytmalari, Telegram skripti, tarmoq uzilishlari va ma'lum shovqinlar (`ResizeObserver loop`, `Script error.`) yuborilmaydi; bir sahifada ko'pi bilan 5 ta, har biri bir marta. Yuboriladi: xabar, stek, ekran nomi (marshrutning birinchi qismi — sinf yoki masala kodisiz), versiya, brauzer (User-Agent), Telegram ichidami. O'yinchi, IP, natijalar yuborilmaydi.
+
+Server (`server/internal/api/clienterr.go`) ularni `level=ERROR msg="brauzer xatosi"` qilib log'ga yozadi — bot admin'ga server xatolari bilan birga ogohlantiradi. Bir xil xato (xabar + stekning birinchi qatori) 6 soatda bir marta yoziladi, orada nechta takrorlangani keyingi yozuvda (`repeat=`). Bir IP dan: 5 tagacha birdaniga, keyin daqiqada bitta. Ko'rish: `docker logs <konteyner> 2>&1 | grep "brauzer xatosi"`.
 
 ## Tillar
 
@@ -473,6 +479,7 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | GET | `/api/me/classes` | o'yinchi a'zo bo'lgan sinflar (har birida `tasks`) |
 | GET | `/api/classes/{code}/report` | o'qituvchi hisoboti (`X-Class-Key: <kalit>`): har bir o'quvchining darajalari, bugungi va 7 kunlik kunlik masalalari, faolligi |
 | DELETE | `/api/classes/{code}/members/{id}`, `/api/classes/{code}` | o'qituvchi o'quvchini chiqaradi / sinfni o'chiradi (kalit bilan) |
+| POST | `/api/client-errors` | `{msg, stack, route, version, ua, tg}` — o'yindagi kutilmagan xato (javob 204; log'ga ERROR, bot ogohlantiradi) |
 | POST | `/api/classes/{code}/tasks` | `{title, levels, due}` — o'qituvchi vazifa beradi (kalit bilan); `due` — Toshkent kuni, 0 — muddatsiz |
 | DELETE | `/api/classes/{code}/tasks/{id}` | o'qituvchi vazifani o'chiradi (kalit bilan) |
 | GET | `/healthz` | holat tekshiruvi |

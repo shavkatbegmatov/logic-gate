@@ -2,6 +2,7 @@
 import { onOldHost } from './migrate';
 import { render } from 'preact';
 import { App } from './app';
+import { installErrorReporting } from './errors';
 import './theme';
 import { inTelegram } from './telegram';
 import { startTelegram } from './telegram-app';
@@ -11,6 +12,9 @@ import '@fontsource/ibm-plex-sans/600.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/600.css';
 import './styles.css';
+
+// Kutilmagan xatolar haqida serverga xabar (faqat build'da: dev'da konsol yetarli).
+if (import.meta.env.PROD) installErrorReporting();
 
 render(<App />, document.getElementById('app')!);
 

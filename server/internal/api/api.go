@@ -37,6 +37,9 @@ type Server struct {
 	auth *limiter
 	// Sinf yaratish.
 	classes *limiter
+	// Brauzer xatolari haqida xabarlar va ularning takrorlari.
+	reports *limiter
+	cerr    clientErrors
 
 	lbMu   sync.Mutex
 	lbAt   time.Time
@@ -72,6 +75,8 @@ func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logg
 		auth:   newLimiter(0.2, 10),
 		// Bir IP dan: 5 tagacha birdaniga, keyin 2 daqiqada bitta sinf.
 		classes: newLimiter(1.0/120, 5),
+		// Bir IP dan: 5 tagacha birdaniga, keyin daqiqada bitta xato xabari.
+		reports: newLimiter(1.0/60, 5),
 	}
 }
 
@@ -105,6 +110,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/classes/{code}/tasks", s.createTask)
 	mux.HandleFunc("DELETE /api/classes/{code}/tasks/{id}", s.deleteTask)
 	mux.HandleFunc("GET /api/me/classes", s.authed(s.myClasses))
+	mux.HandleFunc("POST /api/client-errors", s.clientError)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, "not_found")
 	})

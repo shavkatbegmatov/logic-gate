@@ -153,7 +153,7 @@ func (b *Bot) FlushAlerts(ctx context.Context) {
 	if n == 0 {
 		return
 	}
-	text := fmt.Sprintf("⚠️ Logic Gate serverida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: %s", n, last)
+	text := fmt.Sprintf("⚠️ Logic Gate'da %d ta xato (oxirgi 10 daqiqada; server yoki o'yinchi brauzeri).\nOxirgisi: %s", n, last)
 	if _, err := b.tg.SendMessage(ctx, b.cfg.Admin, text, nil); err != nil {
 		b.log.Warn("telegram ogohlantirish yuborilmadi", "err", err)
 	}
