@@ -4,8 +4,10 @@ import { inputLeads, outputY } from './shapes';
 // Hamma o'lchamlar "dunyo" birliklarida; ekranga View orqali o'tkaziladi.
 export const GATE_W = 72;
 export const GATE_H = 48;
-export const PIN_SPACING = 84;
-export const PIN_TOP = 40;
+// Pinlar ham to'rda turadi: PIN_TOP va PIN_SPACING / 2 — GRID ga karrali (aks holda juft sonli
+// pinlar to'rdan yarim qadam siljiydi va element chiqishi chiqish pini bilan bir chiziqqa tushmaydi).
+export const PIN_SPACING = 96;
+export const PIN_TOP = 36;
 export const GRID = 12;
 
 export interface Point {

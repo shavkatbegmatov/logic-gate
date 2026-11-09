@@ -1,5 +1,6 @@
 // Sxemani tartibga keltirish: elementlar ustunlarga — kirishdan chuqurligi bo'yicha (kirishdan
-// nechanchi element), ustun ichida — manbalari (va chiqish pin'i) ro'parasida, ustma-ust tushmaydi.
+// nechanchi element), ustun ichida — manbalari ro'parasida (chiqish pin'iga ulangani — pin
+// ro'parasida, sim to'g'ri bo'lsin), ustma-ust tushmaydi.
 // Simlar o'zgarmaydi — faqat joylar. Formuladan sxema (formula-build.ts) ham shu joylashni ishlatadi.
 // D-trigger chiqishi manba kabi hisoblanadi: teskari bog'lanish halqa bo'lib qolmasin.
 import type { Circuit, Gate, Spec } from '../sim/types';
@@ -84,9 +85,12 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
       .filter((g) => depth.get(g.id) === d)
       .map((g) => {
         const leads = inputLeads(g.type);
-        // Kirish portlari manbalar ro'parasida, chiqishi — ulangan chiqish pin'i ro'parasida bo'lsin.
-        const wants = inputsOf(g.id).map((f, i) => sourceY(f) - (leads[i] ?? leads[0]));
-        for (const y of outPull.get(g.id) ?? []) wants.push(y - outputY(g.type));
+        // Chiqish pin'iga ulangan element — aynan pin ro'parasida: chiqishga boradigan uzun sim to'g'ri
+        // chiziq bo'lsin (manbalardan keladigan simlar baribir qiya). Qolganlari — manbalari ro'parasida.
+        const pull = outPull.get(g.id) ?? [];
+        const wants = pull.length
+          ? pull.map((y) => y - outputY(g.type))
+          : inputsOf(g.id).map((f, i) => sourceY(f) - (leads[i] ?? leads[0]));
         const want = wants.length ? wants.reduce((s, v) => s + v, 0) / wants.length : original.get(g.id) ?? 0;
         return { g, want };
       })

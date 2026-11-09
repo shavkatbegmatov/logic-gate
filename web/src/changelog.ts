@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.11.1',
+    date: '2026-11-09',
+    uz: [
+      "Simlar endi to'g'ri chiziq bo'lib tushadi: element chiqishga yoki keyingi elementga ro'para qo'yilsa, sim o'rtasidagi mayda pog'ona yo'qoladi. «Tartibga keltirish» esa chiqishga boradigan simni doim to'g'ri chiziq qilib joylaydi.",
+    ],
+    ru: [
+      'Провода теперь ложатся ровной линией: если элемент стоит напротив выхода или следующего элемента, мелкая ступенька посередине провода исчезает. А «Упорядочить» всегда делает провод к выходу прямым.',
+    ],
+  },
+  {
     version: '2.11.0',
     date: '2026-11-09',
     uz: [

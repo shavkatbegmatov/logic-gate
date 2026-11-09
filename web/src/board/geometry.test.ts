@@ -1,5 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { routeMid, routePath, wireRoute, type Point } from './geometry';
+import { ALL_GATE_TYPES } from '../sim/types';
+import { GRID, layout, routeMid, routePath, wireRoute, type Point } from './geometry';
+import { inputLeads, outputY } from './shapes';
+
+describe("to'r: uchlar va pinlar bir to'rda", () => {
+  // Element to'rga (GRID) joylanadi. Uchlar yoki pinlar to'rdan siljigan bo'lsa, element chiqishini
+  // chiqish pini (yoki keyingi element kirishi) bilan bir chiziqqa qo'yib bo'lmaydi — sim o'rtasida
+  // mayda pog'ona qoladi.
+  it("element uchlari GRID ga karrali", () => {
+    for (const t of ALL_GATE_TYPES) {
+      for (const y of [...inputLeads(t), outputY(t)]) expect(y % GRID, `${t}: ${y}`).toBe(0);
+    }
+  });
+
+  it("daraja pinlari GRID ga karrali (har qanday kirish/chiqish sonida)", () => {
+    for (let ni = 1; ni <= 5; ni++) {
+      for (let no = 1; no <= 4; no++) {
+        const lay = layout({ inputs: 'ABCDE'.slice(0, ni).split(''), outputs: ['Q', 'R', 'S', 'T'].slice(0, no), gates: [] }, 520);
+        for (const p of [...lay.inputs.values(), ...lay.outputs.values()]) expect(p.y % GRID, `${ni}/${no}: ${p.y}`).toBe(0);
+      }
+    }
+  });
+});
 
 const CASES: [Point, Point][] = [
   [{ x: 0, y: 0 }, { x: 200, y: 0 }], // to'g'ri

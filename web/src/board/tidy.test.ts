@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildFromFormula } from '../formula-build';
 import { compile, truthTable } from '../sim/sim';
 import { ALL_GATE_TYPES, type Circuit, type Spec } from '../sim/types';
-import { GATE_H, GATE_W } from './geometry';
+import { GATE_H, GATE_W, layout, portPoint, wireRoute } from './geometry';
 import { COL_STEP, COL_X, tidy } from './tidy';
 
 const spec = (n: number, outs = ['Q']): Spec => ({ inputs: ['A', 'B', 'C', 'D', 'E'].slice(0, n), outputs: outs, gates: ALL_GATE_TYPES });
@@ -77,6 +77,68 @@ describe('tartibga keltirish', () => {
     const byId = new Map(t.circuit.gates.map((g) => [g.id, g]));
     expect(byId.get('g2')!.x).toBeLessThan(byId.get('g1')!.x);
     noOverlap(t.circuit);
+  });
+
+  it("bitta element: kirish va chiqish simlari to'g'ri chiziq (pog'onasiz)", () => {
+    for (const type of ALL_GATE_TYPES) {
+      const two = type !== 'NOT' && type !== 'DFF';
+      const s = spec(two ? 2 : 1);
+      const c: Circuit = {
+        gates: [{ id: 'g1', type, x: 200, y: 300 }],
+        wires: [{ from: 'in:A', to: 'g1:0' }, ...(two ? [{ from: 'in:B', to: 'g1:1' }] : []), { from: 'g1', to: 'out:Q' }],
+      };
+      const t = tidy(s, c, 520, { fit: true });
+      const lay = layout(s, t.outX);
+      const gates = new Map(t.circuit.gates.map((g) => [g.id, g]));
+      const out = wireRoute(portPoint('g1', gates, lay)!, portPoint('out:Q', gates, lay)!);
+      expect(out, `${type} → Q`).toHaveLength(2);
+      if (!two) {
+        const inp = wireRoute(portPoint('in:A', gates, lay)!, portPoint('g1:0', gates, lay)!);
+        expect(inp, `A → ${type}`).toHaveLength(2);
+      }
+    }
+  });
+
+  it("chiqishga boradigan sim to'g'ri: oxirgi element pin ro'parasida (bir va ikki chiqish)", () => {
+    const route = (s: Spec, c: Circuit, from: string, to: string) => {
+      const t = tidy(s, c, 520, { fit: true });
+      const lay = layout(s, t.outX);
+      const gates = new Map(t.circuit.gates.map((g) => [g.id, g]));
+      return wireRoute(portPoint(from, gates, lay)!, portPoint(to, gates, lay)!);
+    };
+    // (A ∧ B) ∨ C — OR'ning manbalari uni boshqa joyga tortadi, lekin chiqish simi baribir to'g'ri.
+    const chain: Circuit = {
+      gates: [
+        { id: 'g1', type: 'AND', x: 0, y: 0 },
+        { id: 'g2', type: 'OR', x: 0, y: 0 },
+      ],
+      wires: [
+        { from: 'in:A', to: 'g1:0' },
+        { from: 'in:B', to: 'g1:1' },
+        { from: 'g1', to: 'g2:0' },
+        { from: 'in:C', to: 'g2:1' },
+        { from: 'g2', to: 'out:Q' },
+      ],
+    };
+    expect(route(spec(3), chain, 'g2', 'out:Q')).toHaveLength(2);
+    // Yarim summator: S = A ⊕ B, C = A ∧ B — ikkala chiqish simi ham to'g'ri.
+    const half: Circuit = {
+      gates: [
+        { id: 'g1', type: 'XOR', x: 0, y: 0 },
+        { id: 'g2', type: 'AND', x: 0, y: 0 },
+      ],
+      wires: [
+        { from: 'in:A', to: 'g1:0' },
+        { from: 'in:B', to: 'g1:1' },
+        { from: 'in:A', to: 'g2:0' },
+        { from: 'in:B', to: 'g2:1' },
+        { from: 'g1', to: 'out:S' },
+        { from: 'g2', to: 'out:C' },
+      ],
+    };
+    const s2 = spec(2, ['S', 'C']);
+    expect(route(s2, half, 'g1', 'out:S')).toHaveLength(2);
+    expect(route(s2, half, 'g2', 'out:C')).toHaveLength(2);
   });
 
   it("bo'sh sxema", () => {

@@ -30,11 +30,15 @@ export const SHAPES: Record<Exclude<GateType, 'DFF'>, ShapeInfo> = {
   XNOR: { body: XOR_BODY, tip: 58, bubble: true, back: XOR_BACK },
 };
 
+// Barcha uchlarning y si to'r qadamiga (geometry.ts GRID = 12) karrali: element to'rga joylanadi,
+// shuning uchun uchlar ham, daraja pinlari ham bir to'rda turadi va sim to'g'ri chiziq bo'la oladi.
+// Karrali bo'lmasa, ro'parama-ro'para qo'yilgan elementlar orasida ham sim o'rtasida mayda pog'ona qoladi.
+
 /** Kirish uchlari (y koordinatalari): NOT — o'rtada, D-trigger — yuqorida (D), qolganlari — ikkita. */
-export const inputLeads = (type: GateType): number[] => (type === 'NOT' ? [24] : type === 'DFF' ? [14] : [14, 34]);
+export const inputLeads = (type: GateType): number[] => (type === 'NOT' ? [24] : type === 'DFF' ? [12] : [12, 36]);
 
 /** Chiqish uchi (y): D-trigger'da Q yuqorida, D bilan bir chiziqda (standart belgi); qolganlarida o'rtada. */
-export const outputY = (type: GateType): number => (type === 'DFF' ? 14 : 24);
+export const outputY = (type: GateType): number => (type === 'DFF' ? 12 : 24);
 
 /** Kirish uchining tana bilan uchrashadigan x nuqtasi. */
 export const leadEnd = (type: GateType): number => (type === 'NOT' ? 18 : type === 'DFF' ? 14 : 20);

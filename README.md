@@ -433,7 +433,7 @@ Chizish — canvas'da (1600×1131, A4 yotiq), har doim Daftar ranglarida va plat
 
 ## Tartibga keltirish
 
-Maydonning o'ng pastidagi tugmalar ichida (zoom yonida) «Tartibga keltirish» — `web/src/board/tidy.ts`: elementlar kirishdan chuqurligi bo'yicha ustunlarga (D-trigger chiqishi manba kabi — teskari bog'lanish halqa bo'lmaydi), ustun ichida — manbalari va ulangan chiqish pin'i ro'parasida, ustma-ust tushmaydi. Simlar o'zgarmaydi, faqat joylar; «Bekor qilish» bilan qaytariladi. Darajada chiqishlar joyiga sig'dirishga harakat qiladi (ustunlar orasi 144 dan 108 gacha qisqaradi), sig'masa chiqishlar ustuni o'ngga suriladi. Formuladan sxema ham shu joylashni ishlatadi.
+Maydonning o'ng pastidagi tugmalar ichida (zoom yonida) «Tartibga keltirish» — `web/src/board/tidy.ts`: elementlar kirishdan chuqurligi bo'yicha ustunlarga (D-trigger chiqishi manba kabi — teskari bog'lanish halqa bo'lmaydi), ustun ichida — manbalari ro'parasida, chiqish pin'iga ulangan element esa aynan pin ro'parasida (chiqishga boradigan sim to'g'ri chiziq), ustma-ust tushmaydi. Element uchlari va daraja pinlari 12 lik to'rda turadi (`shapes.ts`, `geometry.ts`; testda tekshiriladi) — shuning uchun ro'para qo'yilgan elementlar orasidagi sim pog'onasiz. Simlar o'zgarmaydi, faqat joylar; «Bekor qilish» bilan qaytariladi. Darajada chiqishlar joyiga sig'dirishga harakat qiladi (ustunlar orasi 144 dan 108 gacha qisqaradi), sig'masa chiqishlar ustuni o'ngga suriladi. Formuladan sxema ham shu joylashni ishlatadi.
 
 ## Formuladan sxema (Qum quti)
 
