@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.10.0',
+    date: '2026-11-09',
+    uz: [
+      "«Tartibga keltirish» tugmasi (maydonning o'ng pastida): elementlar o'zi ustunlarga joylashadi, simlar chalkashmaydi — darajalarda ham, Qum qutida ham.",
+    ],
+    ru: [
+      'Кнопка «Упорядочить» (справа внизу поля): элементы сами выстраиваются по столбцам, провода не путаются — и в уровнях, и в песочнице.',
+    ],
+  },
+  {
     version: '2.9.0',
     date: '2026-11-09',
     uz: [

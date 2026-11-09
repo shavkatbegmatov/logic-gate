@@ -3,10 +3,10 @@
 //   - inkor ostidagi VA/YOKI/XOR bitta elementga birlashadi: ¬(A ∧ B) → NAND;
 //   - bir xil qism-ifodalar bir marta yig'iladi: (A ∧ B) ∨ ¬(A ∧ B) da AND bitta emas, NAND alohida;
 //   - qum qutida kirishlar A–E: boshqa harflar tartib bilan A, B, … ga almashtiriladi (xabar beriladi).
-// Joylash: element ustuni — chuqurligi (kirishdan nechanchi element), ustun ichida — kirishlari o'rtasida.
+// Joylash — board/tidy.ts ("Tartibga keltirish" tugmasi bilan bir xil).
 import { ExprError, parseExpr, type ExprErrorCode, type ExprNode } from './boolexpr';
-import { GATE_H, GATE_W, GRID, layout, outputColumn } from './board/geometry';
-import { inputLeads, outputY } from './board/shapes';
+import { outputColumn } from './board/geometry';
+import { tidy } from './board/tidy';
 import { LIMITS } from './sim/sim';
 import type { Circuit, Gate, GateType, Spec, Wire } from './sim/types';
 
@@ -29,12 +29,6 @@ export interface Built {
 
 export type BuildResult = { ok: true; value: Built } | { ok: false; error: BuildError };
 
-/** Ustunlar orasidagi masofa va birinchi ustun (o'yin darajalaridagi yechimlar kabi). */
-const COL_X = 120;
-const COL_STEP = 144;
-const ROW_GAP = 24;
-
-const snap = (v: number) => Math.round(v / GRID) * GRID;
 
 const FUSED: Record<'and' | 'or' | 'xor', GateType> = { and: 'NAND', or: 'NOR', xor: 'XNOR' };
 const PLAIN: Record<'and' | 'or' | 'xor', GateType> = { and: 'AND', or: 'OR', xor: 'XOR' };
@@ -123,8 +117,8 @@ export function buildFromFormula(src: string, opts: { minInputs?: number; output
   if (gates.length > LIMITS.gates) return { ok: false, error: { code: 'too_many_gates', max: LIMITS.gates } };
 
   const spec: Spec = { inputs, outputs, gates: [] };
-  const outX = place(spec, gates, wires);
-  return { ok: true, value: { inputs, rename, circuit: { gates, wires }, outX } };
+  const placed = tidy(spec, { gates, wires }, outputColumn(4));
+  return { ok: true, value: { inputs, rename, circuit: placed.circuit, outX: placed.outX } };
 }
 
 function collect(n: ExprNode, set: Set<string>): Set<string> {
@@ -135,46 +129,4 @@ function collect(n: ExprNode, set: Set<string>): Set<string> {
     collect(n.b, set);
   }
   return set;
-}
-
-/** Elementlarni ustunlarga joylaydi (gates o'zgaradi) va chiqishlar ustunini qaytaradi. */
-function place(spec: Spec, gates: Gate[], wires: Wire[]): number {
-  const pins = layout(spec, 0).inputs;
-  const byId = new Map(gates.map((g) => [g.id, g]));
-  const inputsOf = (g: Gate) =>
-    wires
-      .filter((w) => w.to.startsWith(`${g.id}:`))
-      .sort((a, b) => a.to.localeCompare(b.to))
-      .map((w) => w.from);
-  const depth = new Map<string, number>();
-  for (const g of gates) {
-    depth.set(g.id, 1 + Math.max(0, ...inputsOf(g).map((f) => depth.get(f) ?? 0)));
-  }
-  const maxDepth = Math.max(0, ...depth.values());
-  // Manba porti y: kirish pin'i yoki element chiqishi.
-  const sourceY = (f: string) => {
-    if (f.startsWith('in:')) return pins.get(f.slice(3))!.y;
-    const g = byId.get(f)!;
-    return g.y + outputY(g.type);
-  };
-  for (let d = 1; d <= maxDepth; d++) {
-    const column = gates
-      .filter((g) => depth.get(g.id) === d)
-      .map((g) => {
-        const from = inputsOf(g);
-        const leads = inputLeads(g.type);
-        // Kirish portlari manbalar ro'parasida bo'lsin: o'rtacha farq bo'yicha.
-        const want = from.reduce((s, f, i) => s + sourceY(f) - leads[i], 0) / from.length;
-        return { g, want };
-      })
-      .sort((a, b) => a.want - b.want);
-    let next = -Infinity;
-    for (const { g, want } of column) {
-      g.x = COL_X + (d - 1) * COL_STEP;
-      g.y = snap(Math.max(want, next));
-      if (g.y < next) g.y += GRID;
-      next = g.y + GATE_H + ROW_GAP;
-    }
-  }
-  return Math.max(outputColumn(4), snap(COL_X + (maxDepth - 1) * COL_STEP + GATE_W + 96));
 }

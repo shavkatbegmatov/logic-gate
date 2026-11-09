@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { sfx } from '../audio';
 import { Board } from '../board/Board';
 import { MAX_TICKS, type Editor } from '../board/editor';
+import { tidy } from '../board/tidy';
 import { GateList } from '../components/GateList';
 import { HintPanel } from '../components/HintPanel';
 import { Palette } from '../components/Palette';
@@ -469,9 +470,30 @@ export function ClockTools({ editor }: { editor: Editor }) {
   );
 }
 
+/** Elementlarni ustunlarga joylaydi (simlar o'zgarmaydi); chiqishlar joyiga sig'dirishga harakat qiladi. */
+function arrange(editor: Editor) {
+  const c = editor.circuit.value;
+  if (!c.gates.length) return;
+  const r = tidy(editor.spec.value, c, editor.outX.value, { fit: true });
+  editor.outX.value = r.outX;
+  editor.replace(r.circuit);
+  editor.viewTouched = false;
+  editor.fit();
+  showToast(t.play.tidied, 'ok');
+}
+
 export function ZoomTools({ editor }: { editor: Editor }) {
   return (
     <div class="zoom-tools">
+      <button
+        class="icon-btn"
+        onClick={() => arrange(editor)}
+        disabled={editor.circuit.value.gates.length < 2}
+        title={t.play.tidy}
+        aria-label={t.play.tidy}
+      >
+        <Icon name="tidy" />
+      </button>
       <button class="icon-btn" onClick={() => editor.zoomAt(1.25)} title={t.play.zoomIn} aria-label={t.play.zoomIn}>
         <Icon name="plus" />
       </button>

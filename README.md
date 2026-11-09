@@ -430,6 +430,10 @@ Yutuqlar ekranining tepasida «Sertifikat» (`#/certificate`, `web/src/certifica
 
 Chizish — canvas'da (1600×1131, A4 yotiq), har doim Daftar ranglarida va plata yo'llari bilan; shriftlar (IBM Plex) yuklangach chiziladi. «PNG yuklab olish», «Ulashish» (Web Share bilan fayl — telefonda), «Chop etish» (faqat sertifikat). Telegram ichida yuklab olish va chop etish ishlamaydi — u yerda ekran rasmi haqida izoh. Sertifikat imzolanmagan: bu rag'bat uchun; o'qituvchi natijani sinf hisobotida ko'radi.
 
+## Tartibga keltirish
+
+Maydonning o'ng pastidagi tugmalar ichida (zoom yonida) «Tartibga keltirish» — `web/src/board/tidy.ts`: elementlar kirishdan chuqurligi bo'yicha ustunlarga (D-trigger chiqishi manba kabi — teskari bog'lanish halqa bo'lmaydi), ustun ichida — manbalari va ulangan chiqish pin'i ro'parasida, ustma-ust tushmaydi. Simlar o'zgarmaydi, faqat joylar; «Bekor qilish» bilan qaytariladi. Darajada chiqishlar joyiga sig'dirishga harakat qiladi (ustunlar orasi 144 dan 108 gacha qisqaradi), sig'masa chiqishlar ustuni o'ngga suriladi. Formuladan sxema ham shu joylashni ishlatadi.
+
 ## Formuladan sxema (Qum quti)
 
 Qum qutida «Formuladan sxema» (yuqoridagi ƒ× tugmasi yoki yon paneldagi tugma): Bul ifodasi yoziladi va sxema o'zi yig'iladi (`src/formula-build.ts`). Ifoda o'qigich — `src/boolexpr.ts`: «Bul algebrasi» qo'llanmasidagi kalkulyator bilan bitta fayl (build `node:module` `stripTypeScriptTypes` bilan undan `dist/guide-bool.js` yasaydi). Qoidalar:
@@ -438,7 +442,7 @@ Qum qutida «Formuladan sxema» (yuqoridagi ƒ× tugmasi yoki yon paneldagi tugm
 - konstantalar soddalashtiriladi (`A ∧ 1 = A`); butun ifoda doimiy bo'lsa — xabar (maydonda 0/1 manbai yo'q);
 - `¬(A ∧ B)` → bitta NAND (NOR, XNOR ham), bir xil qism-ifodalar bir marta yig'iladi;
 - kirishlar A–E: boshqa harflar (x, y…) tartib bilan A, B… ga almashtiriladi va bu oynada aytiladi; 5 tadan ortiq — xato;
-- joylash: element ustuni — kirishdan chuqurligi, ustun ichida — manbalari ro'parasida, ustma-ust tushmaydi; chuqur sxemada chiqishlar ustuni o'ngga suriladi;
+- joylash — «Tartibga keltirish» bilan bir xil (`board/tidy.ts`); chuqur sxemada chiqishlar ustuni o'ngga suriladi;
 - maydondagi kirish/chiqishlar soni kamaytirilmaydi: «Bekor qilish» eski sxemani yaroqli holda qaytaradi.
 
 Havola: `#/sandbox/<encodeURIComponent(ifoda)>` — Qum quti shu formula bilan oynani ochadi (manzil `#/sandbox` ga qaytariladi). Qo'llanmadagi «Sxemasini o'yinda yig'ish →» tugmasi shu havolani birinchi ifoda bilan yangilab boradi. Test (`formula-build.test.ts`) har bir misolda yig'ilgan sxemaning simulyatordagi jadvali ifodaning o'zi bilan bir xilligini tekshiradi.

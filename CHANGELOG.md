@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.10.0 — 2026-11-09
+
+- «Tartibga keltirish» tugmasi (maydonning o'ng pastida): elementlar o'zi ustunlarga joylashadi, simlar chalkashmaydi — darajalarda ham, Qum qutida ham.
+
 ## 2.9.0 — 2026-11-09
 
 - Telefonga o'rnatish: «O'rnatish» tugmasi (bosh sahifada va sozlamalarda) — o'yin ilova kabi ochiladi va internetsiz ishlaydi; iPhone uchun — qanday qo'shish izohi.
