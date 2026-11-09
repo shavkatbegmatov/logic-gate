@@ -1,6 +1,7 @@
 // Qidiruv tizimlari uchun statik fayllar (build oxirida, dist/ ga):
 //   /mantiqiy-elementlar/, /ru/logicheskie-elementy/        — mantiqiy elementlar qo'llanmasi
 //   /ikkilik-sanoq-sistemasi/, /ru/dvoichnaya-sistema/       — ikkilik sanoq sistemasi (+ public/guide-binary.js)
+//   /bul-algebrasi/, /ru/algebra-logiki/                     — Bul algebrasi (+ /guide-bool.js: boolexpr.mjs + guide-bool-ui.js)
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
 // JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
@@ -9,7 +10,9 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from '../src/board/shapes.ts';
+import { calcTableHtml, compareExprs, evalExpr, parseExpr, rowsOf } from './boolexpr.mjs';
 import { BINARY, binaryAdd, divisionSteps, EXAMPLES } from './pages-binary.mjs';
+import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
 
 const OUT = { NOT: (a) => 1 - a, AND: (a, b) => a & b, OR: (a, b) => a | b, XOR: (a, b) => a ^ b };
@@ -136,6 +139,37 @@ svg.gate text.in-label{fill:var(--text)}
 .truth.column .sum td{border-top:2px solid var(--text)}
 .truth.column td.dec{color:var(--muted);border:none;text-align:left}
 @media (max-width:560px){.bits{gap:4px}.bit .v{width:24px;height:24px;font-size:13px}.bit{font-size:10px}}
+.calc{display:grid;gap:8px}
+.calc label{font-size:14px;color:var(--muted)}
+.calc input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:600 18px var(--mono)}
+.calc input:focus{outline:2px solid var(--on);outline-offset:1px}
+.syms{display:flex;flex-wrap:wrap;gap:6px}
+.sym{min-width:42px;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:600 17px var(--mono);cursor:pointer}
+.sym:hover{border-color:var(--on)}
+.verdict{margin:4px 0 0;font-weight:600}
+.verdict.ok{color:var(--stroke)}
+.verdict.bad{color:var(--copper)}
+.calc-table tr.differ td{background:var(--tint)}
+.ops td:nth-child(2),.ops td:nth-child(3){font-family:var(--mono)}
+.wide{border-collapse:collapse;width:100%;font-size:15px}
+.wide th,.wide td{padding:7px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+.wide th{color:var(--muted);font-weight:600}
+.wide code{white-space:normal}
+@media (max-width:560px){.wide thead{display:none}.wide,.wide tbody,.wide tr,.wide td{display:block;width:100%}.wide tr{padding:8px 0;border-bottom:1px solid var(--line)}.wide td{border:none;padding:2px 0}.wide td:first-child{font-weight:600}.wide td[colspan]{padding-top:4px}}
+.chain{margin:0 0 14px;padding:0;list-style:none}
+.chain li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;padding:3px 0}
+.chain code{font-size:16px}
+.chain li+li code::before{content:'= ';color:var(--muted)}
+.chain span{color:var(--muted);font-size:14px}
+.truth tr.hl td{background:var(--tint)}
+.kmap td{min-width:52px}
+.kmap td.g1{box-shadow:inset 0 0 0 2px var(--stroke)}
+.kmap td.g2{box-shadow:inset 0 -4px 0 var(--copper)}
+.kmap td.g1.g2{box-shadow:inset 0 0 0 2px var(--stroke),inset 0 -6px 0 var(--copper)}
+.legend{margin:0 0 12px;padding-left:20px}
+.legend .g1{color:var(--stroke)}
+.legend .g2{color:var(--copper)}
+.formula-line{font:600 17px var(--mono);overflow-wrap:anywhere}
 ol.chapters{padding-left:22px}
 ol.chapters li{margin:6px 0}
 footer{max-width:820px;margin:0 auto;padding:16px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
@@ -149,6 +183,7 @@ const BULB =
 const GUIDES = [
   { id: 'elements', text: CONTENT, body: elementsBody },
   { id: 'binary', text: BINARY, body: binaryBody },
+  { id: 'bool', text: BOOL, body: boolBody },
 ];
 
 const pageOf = (g, lang) => (g.id === 'elements' ? { ...CONTENT[lang], nav: CONTENT[lang].h1 } : g.text[lang]);
@@ -273,6 +308,7 @@ ${dffTable(c)}
 <h2>${esc(c.laws.title)}</h2>
 <dl class="laws">${c.laws.rows.map(([name, f]) => `<dt>${esc(name)}</dt><dd>${f.split(/,\s+/).map((e) => `<code>${esc(e)}</code>`).join(', ')}</dd>`).join('')}</dl>
 <p class="tip">${BULB} ${esc(c.laws.tip)}</p>
+<p><a href="${BOOL[lang].path}">${esc(BOOL[lang].more)} →</a></p>
 </section>
 <section id="game">
 <h2>${esc(c.game.title)}</h2>
@@ -349,6 +385,158 @@ ${cta(c, ctx)}
   };
 }
 
+/** Kalkulyatorning boshlang'ich misoli — De Morgan (sahifa JavaScript'siz ham jadvalni ko'rsatadi). */
+export const CALC_DEFAULT = ['¬(A ∧ B)', '¬A ∨ ¬B'];
+
+function boolBody(lang, ctx) {
+  const c = CONTENT[lang];
+  const b = BOOL[lang];
+  const code = (s) => `<code>${esc(s)}</code>`;
+
+  // Kalkulyator: boshlang'ich jadval va xulosa build'da hisoblanadi.
+  const [ea, eb] = CALC_DEFAULT.map(parseExpr);
+  const vars = [...new Set([...ea.vars, ...eb.vars])].sort();
+  const rows = rowsOf(vars);
+  const outs = [
+    { label: b.calc.shortA, values: rows.map((env) => evalExpr(ea.ast, env)) },
+    { label: b.calc.shortB, values: rows.map((env) => evalExpr(eb.ast, env)) },
+  ];
+  const equal = compareExprs(...CALC_DEFAULT).equal;
+  const data = {
+    'short-a': b.calc.shortA,
+    'short-b': b.calc.shortB,
+    equal: b.calc.equal,
+    differ: b.calc.differ,
+    rows: b.calc.rows,
+    ...Object.fromEntries(Object.entries(b.calc.errors).map(([k, v]) => [`err-${k}`, v])),
+  };
+  const attrs = Object.entries(data)
+    .map(([k, v]) => `data-${k}="${esc(v)}"`)
+    .join(' ');
+  const syms = ['¬', '∧', '∨', '⊕', '(', ')', 'A', 'B', 'C']
+    .map((s) => `<button type="button" class="sym" data-sym="${esc(s)}">${esc(s)}</button>`)
+    .join('');
+
+  // De Morgan jadvali.
+  const dmCols = ['A ∧ B', '¬(A ∧ B)', '¬A ∨ ¬B'];
+  const dm = rowsOf(['A', 'B'])
+    .map((env) => {
+      const vals = dmCols.map((e) => evalExpr(parseExpr(e).ast, env));
+      return `<tr><td>${env.A}</td><td>${env.B}</td>${vals.map((v, i) => `<td class="${i ? 'out' : ''}${v && i ? ' one' : ''}">${v}</td>`).join('')}</tr>`;
+    })
+    .join('');
+
+  // Jadvaldan formula va Karno kartasi.
+  const terms = sopTerms(SOP_EXAMPLE);
+  const sop = terms.map((t) => `(${t.term})`).join(' ∨ ');
+  const sopRows = rowsOf(['A', 'B', 'C'])
+    .map((env, r) => {
+      const q = Number(SOP_EXAMPLE[r]);
+      const term = terms.find((t) => parseInt(t.row, 2) === r);
+      return `<tr${q ? ' class="hl"' : ''}><td>${env.A}</td><td>${env.B}</td><td>${env.C}</td><td class="out${q ? ' one' : ''}">${q}</td><td class="term">${term ? esc(term.term) : ''}</td></tr>`;
+    })
+    .join('');
+  const kmapRows = [0, 1]
+    .map((a) => {
+      const cells = KMAP_COLS.map((bc) => {
+        const q = SOP_EXAMPLE[parseInt(`${a}${bc}`, 2)];
+        const groups = KMAP_GROUPS.map((g, i) => (g.cells.includes(`${a},${bc}`) ? ` g${i + 1}` : '')).join('');
+        return `<td class="${q === '1' ? 'one' : ''}${groups}">${q}</td>`;
+      }).join('');
+      return `<tr><th>A = ${a}</th>${cells}</tr>`;
+    })
+    .join('');
+
+  const simplify = b.simplify.steps
+    .map(
+      (steps, i) =>
+        `<h3>${esc(b.simplify.example)} ${i + 1}</h3><ol class="chain">${steps
+          .map(([e, why]) => `<li>${code(e)}${why ? `<span>${esc(why)}</span>` : ''}</li>`)
+          .join('')}</ol>`,
+    )
+    .join('');
+
+  return {
+    ld: learning(lang, [b.laws.title, b.demorgan.title, b.simplify.title, b.kmap.title], ctx),
+    html: `<h1>${esc(b.h1)}</h1>
+${b.lead.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
+${cta(c, ctx)}
+<section id="calc">
+<h2>${esc(b.calc.title)}</h2>
+<p>${esc(b.calc.text)}</p>
+<div class="calc" id="bool-calc" ${attrs}>
+<label for="expr-a">${esc(b.calc.labelA)}</label>
+<input id="expr-a" type="text" value="${esc(CALC_DEFAULT[0])}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<label for="expr-b">${esc(b.calc.labelB)}</label>
+<input id="expr-b" type="text" value="${esc(CALC_DEFAULT[1])}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<div class="syms" role="group" aria-label="${esc(b.calc.symbols)}">${syms}</div>
+<p class="muted">${esc(b.calc.syntax)}</p>
+<p class="verdict${equal ? ' ok' : ' bad'}" id="expr-verdict" role="status">${esc(b.calc.equal.replace('{n}', String(rows.length)))}</p>
+<div class="scroll-x" id="expr-table">${calcTableHtml(vars, rows, outs)}</div>
+</div>
+</section>
+<section id="ops">
+<h2>${esc(b.ops.title)}</h2>
+<p>${esc(b.ops.text)}</p>
+<div class="scroll-x"><table class="wide ops"><thead><tr>${b.ops.cols.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.ops.rows
+      .map(([name, sym, when]) => `<tr><td>${esc(name)}</td><td>${esc(sym)}</td><td>${esc(when)}</td></tr>`)
+      .join('')}</tbody></table></div>
+<p>${esc(b.ops.order)}</p>
+</section>
+<section id="laws">
+<h2>${esc(b.laws.title)}</h2>
+<p>${esc(b.laws.text)}</p>
+<div class="scroll-x"><table class="wide"><thead><tr>${b.laws.cols.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.laws.rows
+      .map(([name, and, or]) => `<tr><td>${esc(name)}</td><td>${code(and)}</td><td>${code(or)}</td></tr>`)
+      .join('')}<tr><td>${esc(b.laws.double)}</td><td colspan="2">${code(b.laws.doubleLaw)}</td></tr></tbody></table></div>
+<p class="tip">${BULB} ${esc(b.laws.tip)}</p>
+</section>
+<section id="de-morgan">
+<h2>${esc(b.demorgan.title)}</h2>
+${b.demorgan.text.map((t) => `<p>${esc(t)}</p>`).join('\n')}
+<div class="scroll-x"><table class="truth"><thead><tr><th>A</th><th>B</th>${dmCols.map((h) => `<th class="out">${esc(h)}</th>`).join('')}</tr></thead><tbody>${dm}</tbody></table></div>
+<p class="tip">${BULB} ${esc(b.demorgan.tip)}</p>
+</section>
+<section id="simplify">
+<h2>${esc(b.simplify.title)}</h2>
+<p>${esc(b.simplify.text)}</p>
+${simplify}
+<p class="muted">${esc(b.simplify.check)}</p>
+</section>
+<section id="sop">
+<h2>${esc(b.sop.title)}</h2>
+${b.sop.text.map((t) => `<p>${esc(t)}</p>`).join('\n')}
+<div class="scroll-x"><table class="truth"><caption>${esc(b.sop.caption)}</caption><thead><tr><th>A</th><th>B</th><th>C</th><th class="out">Q</th><th>${esc(b.sop.term)}</th></tr></thead><tbody>${sopRows}</tbody></table></div>
+<p>${esc(b.sop.formula)}:</p>
+<p class="formula-line">Q = ${esc(sop)}</p>
+<p>${esc(b.sop.simplified)}:</p>
+<p class="formula-line">Q = ${esc(SOP_SIMPLIFIED)} = ${esc(SOP_FACTORED)}</p>
+<p>${esc(b.sop.why)}</p>
+</section>
+<section id="karnaugh">
+<h2>${esc(b.kmap.title)}</h2>
+${b.kmap.text.map((t) => `<p>${esc(t)}</p>`).join('\n')}
+<div class="scroll-x"><table class="truth kmap"><caption>${esc(b.kmap.caption)}</caption><thead><tr><th></th>${KMAP_COLS.map((bc) => `<th>BC = ${bc}</th>`).join('')}</tr></thead><tbody>${kmapRows}</tbody></table></div>
+<ul class="legend">${b.kmap.groups.map((g, i) => `<li class="g${i + 1}">${esc(g)}</li>`).join('')}</ul>
+<p>${esc(b.kmap.result)}: <span class="formula-line">Q = ${esc(SOP_SIMPLIFIED)}</span></p>
+</section>
+<section id="game">
+<h2>${esc(b.game.title)}</h2>
+<p>${esc(b.game.text)}</p>
+<p><a href="${CONTENT[lang].path}">${esc(b.related)} →</a></p>
+${cta(c, ctx, `<a class="btn" href="/#/sandbox">${esc(c.game.features[1].split(':')[0])}</a>`)}
+</section>
+<script src="/guide-bool.js" defer></script>`,
+  };
+}
+
+/** Kalkulyator skripti: boolexpr.mjs (export'larsiz) + guide-bool-ui.js, bitta IIFE ichida. */
+export function guideBoolScript() {
+  const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
+  const lib = read('./boolexpr.mjs').replace(/^export /gm, '');
+  return `// Logic Gate — Bul algebrasi kalkulyatori (scripts/boolexpr.mjs + scripts/guide-bool-ui.js).\n(function () {\n'use strict';\n${lib}\n${read('./guide-bool-ui.js')}\n})();\n`;
+}
+
 /** Barcha fayllar: dist ichidagi yo'l → mazmun. */
 export function buildPages(ctx) {
   const site = ctx.site.replace(/\/+$/, '');
@@ -364,6 +552,7 @@ export function buildPages(ctx) {
       urls.push(`<url><loc>${site}${path}</loc>${alt}</url>`);
     }
   }
+  files['guide-bool.js'] = guideBoolScript();
   files['robots.txt'] = `User-agent: *\nDisallow: /api/\n\nSitemap: ${site}/sitemap.xml\n`;
   files['sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`;
   return files;

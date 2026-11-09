@@ -396,8 +396,9 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 O'yin hash marshrutli SPA — Google va Yandex undan faqat bosh sahifani ko'radi. Shuning uchun build oxirida `web/scripts/pages.mjs` oddiy HTML sahifalar yozadi (JavaScript'siz o'qiladi):
 
 - `/ikkilik-sanoq-sistemasi/` va `/ru/dvoichnaya-sistema/` — ikkilik sanoq sistemasi: o'nlikdan ikkilikka va qaytib, 0–15 jadvali, ikkilikda qo'shish (misollar `pages-binary.mjs` da hisoblanadi) va bitlarni bosib sonni ko'radigan o'yinchoq (`public/guide-binary.js`). Qo'llanmalar bir-biriga sarlavhadagi menyu orqali bog'langan.
+- `/bul-algebrasi/` va `/ru/algebra-logiki/` — Bul algebrasi: amallar va yozuvlari, qonunlar jadvali, De Morgan, soddalashtirish qadamlari, jadvaldan formula (MDNSh), Karno kartasi va haqiqat jadvali kalkulyatori (ikki ifodani solishtiradi). Matnlar — `pages-bool.mjs`; ifoda o'qigich — `scripts/boolexpr.mjs`: build'da misollarni hisoblaydi va tekshiradi (har bir qonun va qadam haqiqatan teng; misol birorta darajaning jadvali emas), brauzerga esa `guide-bool-ui.js` bilan birga `dist/guide-bool.js` bo'lib chiqadi.
 - `/mantiqiy-elementlar/` va `/ru/logicheskie-elementy/` — mantiqiy elementlar qo'llanmasi: belgisi (o'yindagi `src/board/shapes.ts` dan), formulasi, haqiqat jadvali, D-trigger, Bul algebrasi qonunlari, o'yin bo'limlari (`levels/levels.json` dan). Matnlar — `web/scripts/pages-content.mjs`, maktab atamalari bilan (inkor, konyunksiya, dizyunksiya…).
-- `robots.txt` (`/api/` yopiq) va `sitemap.xml` — manzil `VITE_SITE_URL` dan.
+- `robots.txt` (`/api/` yopiq) va `sitemap.xml` (7 ta manzil) — manzil `VITE_SITE_URL` dan.
 
 Bosh sahifada `canonical`, kengaytirilgan `description` va schema.org (`WebApplication`) bor; o'yinning bosh ekranida qo'llanmaga havola (Telegram ichida yashirin). Go server papkadagi `index.html` ni beradi, sleshsiz manzilni sleshliga yo'naltiradi; Nginx'da `try_files $uri $uri/index.html /index.html`.
 

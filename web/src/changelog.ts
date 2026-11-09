@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.4.0',
+    date: '2026-11-09',
+    uz: [
+      "Saytda yangi qo'llanma — «Bul algebrasi»: qonunlar, ifodani soddalashtirish, Karno kartasi va istalgan ifodaning haqiqat jadvalini chiqaradigan kalkulyator.",
+    ],
+    ru: [
+      'Новый справочник на сайте — «Алгебра логики»: законы, упрощение выражений, карты Карно и калькулятор таблиц истинности для любого выражения.',
+    ],
+  },
+  {
     version: '2.3.0',
     date: '2026-11-09',
     uz: [
