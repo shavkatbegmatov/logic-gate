@@ -13,13 +13,18 @@ import {
 } from '../classes';
 import { copyText } from '../clipboard';
 import { ShareButtons } from '../components/ShareButtons';
+import { taskTitle } from '../components/TaskView';
 import { TeacherTasks } from '../components/TeacherTasks';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { chapters } from '../levels';
 import { go } from '../router';
+import { todaySig } from '../daily';
+import { downloadCSV, reportFileName, reportTable, toCSV, toTSV, type ReportLabels } from '../report-export';
 import { errorText } from '../sync';
+import { dayToISO } from '../tasks';
+import { inTelegram } from '../telegram';
 
 const copy = async (text: string) => {
   if (await copyText(text)) showToast(t.classes.copied, 'ok');
@@ -186,6 +191,18 @@ export function TeacherReport({ code }: { code: string }) {
   const rows = r ? sortSummaries(r.members.map((m) => summarize(m, r.now)), sort.value) : [];
   const link = classLink(code);
 
+  const labels = (): ReportLabels => ({
+    ...t.classes.csv,
+    task: (task, total) => `${t.classes.csv.task}: ${taskTitle(task)} (${total})`,
+  });
+  const exportCSV = () => r && downloadCSV(reportFileName(cls.name, todaySig.value), toCSV(reportTable(r, rows, labels())));
+  const copyTable = async () => {
+    if (!r) return;
+    const text = toTSV(reportTable(r, rows, labels()));
+    if (await copyText(text)) showToast(t.classes.exportCopied, 'ok');
+    else window.prompt(t.share.copyManual, text);
+  };
+
   const remove = async (id: string, nick: string) => {
     if (!confirm(t.classes.removeConfirm(nick))) return;
     try {
@@ -216,6 +233,9 @@ export function TeacherReport({ code }: { code: string }) {
       </TopBar>
       <div class="scroll">
         <div class="report">
+          <h1 class="print-title">
+            {cls.name} · {code} · {dayToISO(todaySig.value)}
+          </h1>
           <section class="card class-share">
             <h2>{t.classes.joinLink}</h2>
             <p class="muted">{t.classes.joinLinkText}</p>
@@ -262,6 +282,21 @@ export function TeacherReport({ code }: { code: string }) {
                     </button>
                   ))}
                 </div>
+              </div>
+              <div class="report-tools">
+                {!inTelegram && (
+                  <button class="btn small" onClick={exportCSV}>
+                    <Icon name="download" /> {t.classes.exportCsv}
+                  </button>
+                )}
+                <button class="btn small" onClick={copyTable}>
+                  <Icon name="table" /> {t.classes.exportCopy}
+                </button>
+                {!inTelegram && (
+                  <button class="btn small" onClick={() => window.print()}>
+                    <Icon name="printer" /> {t.classes.print}
+                  </button>
+                )}
               </div>
               <div class="report-wrap">
                 <table class="board-table report-table">

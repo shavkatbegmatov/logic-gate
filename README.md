@@ -412,6 +412,8 @@ Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi 
 
 **Vazifalar.** Hisobotda «Yangi vazifa»: o'qituvchi 1–12 ta darajani belgilaydi, istasa nom va muddat qo'yadi (sinfda 20 tagacha vazifa). O'quvchi vazifani bosh sahifada ko'radi («Sinf vazifasi», bajarilmagan va muddati o'tmaganlardan eng yaqini) va sinf sahifasida — hammasini. Vazifadagi darajalar o'quvchiga yulduzlar yetmasa ham ochiq (ro'yxat qurilmada `lg.tasks.v1` da, oflayn ham ishlaydi). O'qituvchi har vazifa bo'yicha nechta o'quvchi bajarganini va kim hali bajarmaganini ko'radi.
 
+**Hisobotni chiqarish.** Jadval ostida: «Excel (CSV)» — fayl (UTF-8 BOM, `;` ajratgich: Excel o'zbek/rus sozlamalarida shuni kutadi), «Jadvalni nusxalash» — TSV, Excel yoki Google Sheets'ga to'g'ridan-to'g'ri qo'yiladi (Telegram ichida ham ishlaydi), «Chop etish» — faqat hisobot va vazifalar, yorug' mavzuda. Ustunlar: o'quvchi, yulduzlar, darajalar, har bo'lim bo'yicha yechilganlar, bugungi va 7 kunlik kunlik masalalar, oxirgi kirish sanasi, har vazifa bo'yicha yechilgan darajalar. `=`, `+`, `-`, `@` bilan boshlangan matn formula bo'lib qolmasligi uchun oldiga `'` qo'yiladi.
+
 Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
 
 ## Versiya va yangiliklar

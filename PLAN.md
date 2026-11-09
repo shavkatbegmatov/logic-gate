@@ -145,6 +145,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+31. **M30 — Hisobotni chiqarish (bajarildi, 2.3.0):** o'qituvchi hisoboti — CSV fayl (Excel), jadvalni nusxalash (Sheets/Excel), chop etish (yorug' mavzu, faqat hisobot).
 30. **M29 — Sinf vazifalari (bajarildi, 2.2.0):** o'qituvchi darajalarni tanlab vazifa beradi (nom va muddat ixtiyoriy), o'quvchi bosh sahifada va sinf sahifasida ko'radi, vazifadagi darajalar qulfsiz; o'qituvchi hisobotida — bajarganlar soni va bajarmaganlar ro'yxati.
 29. **M28 — Yechimlar taqsimoti (bajarildi, 2.1.0):** daraja va kunlik masala yechilgach — boshqa o'yinchilar nechta element ishlatgani (ustunlar, ko'pi bilan 10 ta, ortiqchasi "N+") va o'yinchining ustuni; "X% o'yinchi sizdan kamroq element bilan yechgan". Server faqat sonlarni beradi (taxalluslarsiz).
 28. **M27 — Versiya va yangiliklar (bajarildi):** versiya 2.0.0; o'yinda «Yangiliklar» ekrani (uz/ru), qaytgan o'yinchiga bosh sahifada bir martalik xabar, Sozlamalarda versiya va havola; `CHANGELOG.md`; test versiya va yangiliklar mosligini tekshiradi. Har relizda versiya oshiriladi va sodda tilda yozuv qo'shiladi.

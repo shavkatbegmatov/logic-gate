@@ -25,8 +25,17 @@ export function resolveTheme(theme: Theme | undefined, light: boolean): ActiveTh
   return 'plata';
 }
 
+/** Chop etilayotganda (Ctrl+P yoki "Chop etish") — har doim Daftar: qorong'i fon qog'ozga chiqmasin. */
+const printing = signal(false);
+if (typeof window !== 'undefined') {
+  addEventListener('beforeprint', () => (printing.value = true));
+  addEventListener('afterprint', () => (printing.value = false));
+}
+
 export const activeTheme = computed(() =>
-  resolveTheme(settings.value.theme, telegramScheme.value ? telegramScheme.value === 'light' : systemLight.value),
+  printing.value
+    ? 'daftar'
+    : resolveTheme(settings.value.theme, telegramScheme.value ? telegramScheme.value === 'light' : systemLight.value),
 );
 
 if (typeof document !== 'undefined') {

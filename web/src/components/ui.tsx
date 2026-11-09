@@ -68,6 +68,8 @@ const ICONS = {
   minus: 'M5 12h14',
   fit: 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
   table: 'M4 5h16v14H4zM4 10h16M4 15h16M10 5v14',
+  download: 'M12 4v11M7 10l5 5 5-5M4 20h16',
+  printer: 'M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z',
   sound: 'M4 9v6h4l5 4V5L8 9H4ZM16 9a4 4 0 0 1 0 6',
   mute: 'M4 9v6h4l5 4V5L8 9H4ZM17 9l4 6M21 9l-4 6',
   copy: 'M8 8h11v11H8zM5 16V5h11',

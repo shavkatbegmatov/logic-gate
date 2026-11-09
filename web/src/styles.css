@@ -2591,6 +2591,16 @@ button.task-level:hover {
   margin: 0;
 }
 
+.report-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.print-title {
+  display: none;
+}
+
 .report-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -3629,4 +3639,67 @@ body:has(.stage.has-check) .toast {
 .remind-btn.on {
   border-color: var(--line);
   color: var(--muted);
+}
+
+/* ── Chop etish: faqat hisobot (o'qituvchi uchun), oq qog'oz ─ */
+@media print {
+  body {
+    overflow: visible;
+  }
+
+  html,
+  body,
+  #app,
+  .screen,
+  .scroll {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .topbar,
+  .home-nav,
+  .toast,
+  .class-share,
+  .class-key,
+  .report-tools,
+  .report-head .lang-switch,
+  .class-actions,
+  .teacher-tasks-head .btn,
+  .teacher-task .icon-btn,
+  .task-editor,
+  .report-table th:last-child,
+  .report-table td:last-child {
+    display: none !important;
+  }
+
+  .print-title {
+    display: block;
+    margin: 0 0 4px;
+    font-size: 20px;
+  }
+
+  .report {
+    max-width: none;
+    padding: 0;
+  }
+
+  .report-wrap {
+    overflow: visible;
+  }
+
+  .report-table {
+    min-width: 0;
+  }
+
+  .report-table th:first-child,
+  .report-table td:first-child {
+    position: static;
+    max-width: none;
+  }
+
+  .card,
+  .teacher-task,
+  tr {
+    break-inside: avoid;
+  }
 }

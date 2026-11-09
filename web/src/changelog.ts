@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.3.0',
+    date: '2026-11-09',
+    uz: [
+      "O'qituvchi hisobotini Excel uchun yuklab olish, jadvalni nusxalab Google Sheets'ga qo'yish yoki chop etish mumkin.",
+    ],
+    ru: [
+      'Отчёт учителя можно скачать для Excel, скопировать таблицу в Google Таблицы или распечатать.',
+    ],
+  },
+  {
     version: '2.2.0',
     date: '2026-11-09',
     uz: [
