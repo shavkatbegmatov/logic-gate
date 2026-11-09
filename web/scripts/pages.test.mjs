@@ -67,6 +67,13 @@ describe("qo'llanma sahifalari", () => {
     expect(files['sitemap.xml']).toContain('<loc>https://example.uz/</loc>');
     expect(uz.home.guideUrl).toBe(CONTENT.uz.path);
     expect(ru.home.guideUrl).toBe(CONTENT.ru.path);
+    // O'yindagi "Qo'llanmalar" ro'yxati — har biri haqiqiy sahifa, har til o'z sahifalariga.
+    for (const [lang, t] of [['uz', uz], ['ru', ru]]) {
+      for (const g of t.guides.items) {
+        expect(files[g.url.slice(1) + 'index.html'], g.url).toContain(`<html lang="${lang}">`);
+      }
+      expect(t.guides.items.length).toBe(4);
+    }
   });
 
   it("ikkilik sanoq sistemasi: misollar to'g'ri, sahifalar bir-biriga havola", () => {

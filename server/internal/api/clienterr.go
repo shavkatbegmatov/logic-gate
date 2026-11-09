@@ -2,10 +2,13 @@ package api
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
+
+	"logicgate/server/internal/bot"
 )
 
 // Brauzer xatolari: o'yin o'z kodidagi kutilmagan xatolarni yuboradi (web/src/errors.ts). Server ularni
@@ -48,6 +51,18 @@ func clip(s string, max int, oneLine bool) string {
 	return s
 }
 
+// firstFrame — stekning joy ko'rsatilgan birinchi qatori (…:12:34), bo'lmasa — bo'sh.
+func firstFrame(stack string) string {
+	for _, line := range strings.Split(stack, "\n") {
+		if frameRe.MatchString(line) {
+			return strings.TrimSpace(line)
+		}
+	}
+	return ""
+}
+
+var frameRe = regexp.MustCompile(`:\d+:\d+\)?\s*$`)
+
 func (s *Server) clientError(w http.ResponseWriter, r *http.Request) {
 	if !s.reports.allow(s.clientIP(r)) {
 		writeErr(w, http.StatusTooManyRequests, "rate_limited")
@@ -79,16 +94,20 @@ func (s *Server) clientError(w http.ResponseWriter, r *http.Request) {
 	if len(route) > 20 {
 		route = route[:20]
 	}
-	// Bir xil xato: xabar va stekning birinchi qatori (joyi).
-	first, _, _ := strings.Cut(stack, "\n")
-	key := msg + "|" + first
+	// Bir xil xato: xabar va stekdagi birinchi kadr (joyi). Chrome'da stekning birinchi qatori —
+	// xabarning o'zi ("TypeError: …"), shuning uchun fayl:qator:ustun bor birinchi qator olinadi.
+	key := msg + "|" + firstFrame(stack)
 
 	now := s.now()
 	s.cerr.mu.Lock()
-	if s.cerr.seen == nil || len(s.cerr.seen) >= clientErrKeys {
+	if s.cerr.seen == nil {
 		s.cerr.seen = map[string]*clientErrSeen{}
 	}
 	prev := s.cerr.seen[key]
+	// Xarita to'lsa — faqat yangi xato kelganda tozalanadi (takrorlar sanog'i bekorga yo'qolmasin).
+	if prev == nil && len(s.cerr.seen) >= clientErrKeys {
+		s.cerr.seen = map[string]*clientErrSeen{}
+	}
 	if prev != nil && now.Sub(prev.at) < clientErrEvery {
 		prev.skipped++
 		s.cerr.mu.Unlock()
@@ -102,7 +121,7 @@ func (s *Server) clientError(w http.ResponseWriter, r *http.Request) {
 	s.cerr.seen[key] = &clientErrSeen{at: now}
 	s.cerr.mu.Unlock()
 
-	s.log.Error("brauzer xatosi", "error", msg, "route", route, "version", clip(req.Version, 20, true),
+	s.log.Error(bot.ClientErrorMsg, "error", msg, "route", route, "version", clip(req.Version, 20, true),
 		"tg", req.Tg, "repeat", repeat, "ua", clip(req.UA, 200, true), "stack", stack)
 	w.WriteHeader(http.StatusNoContent)
 }

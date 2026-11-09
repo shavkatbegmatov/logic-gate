@@ -10,7 +10,7 @@ import { Icon } from './ui';
 const solved = (id: string) => !!progress.value[id];
 
 /** Vazifa nomi: o'qituvchi yozgani yoki "N ta daraja". */
-export const taskTitle = (task: ClassTask) => task.title || t.tasks.untitled(task.levels.length);
+export const taskTitle = (task: ClassTask) => task.title || t.tasks.untitled(taskLevels(task).length);
 
 /** Muddat yozuvi: "12-noyabrgacha", "Bugun oxirgi kun", "Muddat o'tgan". */
 export function DueLabel({ due }: { due?: number }) {

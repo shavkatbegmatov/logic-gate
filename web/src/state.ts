@@ -66,12 +66,15 @@ export function chapterStars(ch: Chapter): number {
 }
 
 export function levelUnlocked(level: Level): boolean {
+  // Yechilgan daraja doim ochiq: vazifa orqali yechilgan bo'lsa ham, vazifa o'chirilgandan
+  // yoki sinfdan chiqilgandan keyin uni qayta o'ynab, natijani yaxshilash mumkin.
+  if (progress.value[level.id]) return true;
   // O'qituvchi bergan vazifadagi daraja yulduzlar yetmasa ham ochiq.
   if (assignedLevels.value.has(level.id)) return true;
   if (!chapterUnlocked(chapterOf(level))) return false;
   const list = chapterLevels(level.chapter);
   const i = list.indexOf(level);
-  return i === 0 || !!progress.value[list[i - 1].id] || !!progress.value[level.id];
+  return i === 0 || !!progress.value[list[i - 1].id];
 }
 
 export function nextLevel(level: Level): Level | undefined {

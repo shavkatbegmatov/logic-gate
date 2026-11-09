@@ -678,6 +678,46 @@ input[type='date']:focus {
   border-color: var(--muted);
 }
 
+.guides-card h2 {
+  margin-bottom: 4px;
+}
+
+.guides-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.guide-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.guide-link:hover {
+  border-color: var(--accent);
+}
+
+.guide-link svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.guide-link span {
+  display: grid;
+  min-width: 0;
+}
+
+.guide-link small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .logo {
   display: flex;
   align-items: center;

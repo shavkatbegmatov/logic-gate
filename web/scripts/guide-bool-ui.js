@@ -21,6 +21,8 @@ if (root) {
   var show = function (msg, cls) {
     verdict.textContent = msg;
     verdict.className = 'verdict' + (cls ? ' ' + cls : '');
+    // Xato bo'lsa — eski jadval qolmasin (boshqa ifodaniki bo'lib ko'rinadi).
+    if (cls === 'bad') table.innerHTML = '';
   };
 
   var parse = function (input, label) {

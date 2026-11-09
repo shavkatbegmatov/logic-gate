@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
 import { GATE_W, GRID, outputColumn } from '../board/geometry';
-import { buildFromFormula, type BuildError } from '../formula-build';
+import { MAX_LENGTH } from '../boolexpr';
+import { buildFromFormula, type BuildError, type BuildResult } from '../formula-build';
 import { showToast } from '../components/Toast';
 import { GateList } from '../components/GateList';
 import { ShareButtons } from '../components/ShareButtons';
@@ -14,7 +15,7 @@ import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
 import { Icon, Modal, TopBar } from '../components/ui';
 import { t } from '../i18n';
-import { go } from '../router';
+import { go, replaceRoute } from '../router';
 import { ALL_GATE_TYPES, type Circuit, type Spec } from '../sim/types';
 import { KEYS, profile } from '../state';
 import { load, saveLater } from '../storage';
@@ -46,7 +47,9 @@ export function Sandbox({ formula }: { formula?: string }) {
     const ed = new Editor();
     const ins = Math.min(5, Math.max(1, saved.inputs | 0));
     const outs = Math.min(4, Math.max(1, saved.outputs | 0));
-    ed.load(specFor(ins, outs), saved.circuit, outXFor(saved.circuit));
+    ed.load(specFor(ins, outs), saved.circuit, outputColumn(4));
+    // Chiqishlar ustuni — tozalangan (sanitize) sxemadan: saqlangan ma'lumot buzilgan bo'lishi mumkin.
+    ed.outX.value = outXFor(ed.circuit.value);
     ed.onChange = (circuit) => {
       const spec = ed.spec.value;
       saveLater(KEYS.sandbox, { inputs: spec.inputs.length, outputs: spec.outputs.length, circuit });
@@ -62,8 +65,8 @@ export function Sandbox({ formula }: { formula?: string }) {
   useEffect(() => {
     if (formula === undefined) return;
     formulaOpen.value = formula;
-    // Sahifa yangilansa, oyna qayta ochilmasin.
-    history.replaceState(null, '', '#/sandbox');
+    // Sahifa yangilansa, oyna qayta ochilmasin; o'sha havola yana ochilsa — oyna yana chiqsin.
+    replaceRoute('sandbox');
   }, [formula]);
 
   const spec = editor.spec.value;
@@ -156,6 +159,8 @@ function formulaError(e: BuildError): string {
     case 'char':
     case 'unexpected':
       return f[e.code](e.pos + 1);
+    case 'long':
+      return f.long;
     case 'const':
       return f.const(e.value);
     default:
@@ -165,14 +170,21 @@ function formulaError(e: BuildError): string {
 
 const FORMULA_SYMBOLS = ['¬', '∧', '∨', '⊕', '(', ')', 'A', 'B', 'C', 'D'];
 
+/** Kutilmagan xato ham ekranni yiqitmasin (masalan, juda chuqur ifoda) — oddiy xato sifatida. */
+function safeBuild(src: string, spec: Spec): BuildResult {
+  try {
+    return buildFromFormula(src, { minInputs: spec.inputs.length, outputs: spec.outputs });
+  } catch {
+    return { ok: false, error: { code: 'long', pos: 0 } };
+  }
+}
+
 /** Formuladan sxema: ifoda yoziladi, oldindan nechta element bo'lishi ko'rinadi, "Yig'ish" — maydonga. */
 function FormulaModal({ editor, initial, onClose }: { editor: Editor; initial: string; onClose: () => void }) {
   const text = useSignal(initial);
   const input = useRef<HTMLInputElement>(null);
   const spec = editor.spec.value;
-  const res = text.value.trim()
-    ? buildFromFormula(text.value, { minInputs: spec.inputs.length, outputs: spec.outputs })
-    : null;
+  const res = text.value.trim() ? safeBuild(text.value, spec) : null;
   const hasCircuit = editor.circuit.value.gates.length > 0 || editor.circuit.value.wires.length > 0;
 
   const insert = (sym: string) => {
@@ -187,9 +199,9 @@ function FormulaModal({ editor, initial, onClose }: { editor: Editor; initial: s
   const build = () => {
     if (!res?.ok) return;
     const v = res.value;
-    if (v.inputs.length !== spec.inputs.length) editor.setSpec(specFor(v.inputs.length, spec.outputs.length));
     editor.outX.value = Math.max(editor.outX.value, v.outX);
-    editor.replace(v.circuit);
+    // Bitta "bekor qilish" qadami: kirishlar soni va sxema birga.
+    editor.replace(v.circuit, v.inputs.length !== spec.inputs.length ? specFor(v.inputs.length, spec.outputs.length) : undefined);
     editor.fit();
     showToast(t.formula.built, 'ok');
     onClose();
@@ -207,6 +219,7 @@ function FormulaModal({ editor, initial, onClose }: { editor: Editor; initial: s
       >
         <input
           ref={input}
+          maxLength={MAX_LENGTH}
           class="text-input formula-input"
           type="text"
           value={text.value}

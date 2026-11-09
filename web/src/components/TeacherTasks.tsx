@@ -24,10 +24,11 @@ export function TeacherTasks({ code, teacherKey, report, onChange }: {
     error.value = '';
     try {
       await api.deleteTask(code, teacherKey, task.id);
-      onChange();
     } catch (e) {
       error.value = errorText(e);
     }
+    // Xato bo'lsa ham (masalan, boshqa qurilmada allaqachon o'chirilgan) — ro'yxat yangilansin.
+    onChange();
   };
 
   return (
@@ -63,9 +64,10 @@ export function TeacherTasks({ code, teacherKey, report, onChange }: {
 function TeacherTask({ task, members, onDelete }: { task: ClassTask; members: ClassMember[]; onDelete: () => void }) {
   const list = taskLevels(task);
   const rows = members.map((m) => ({ id: m.id, nick: m.nickname, done: list.filter((l) => m.levels[l.id]).length }));
-  const complete = rows.filter((r) => r.done === list.length).length;
+  // O'yin bilmaydigan darajalar (eski versiya) bo'lsa, vazifa "bajarilgan" hisoblanmaydi.
+  const complete = list.length ? rows.filter((r) => r.done === list.length).length : 0;
   const behind = rows
-    .filter((r) => r.done < list.length)
+    .filter((r) => !list.length || r.done < list.length)
     .sort((a, b) => a.done - b.done || a.nick.localeCompare(b.nick, undefined, { sensitivity: 'base' }));
   return (
     <article class="task teacher-task">

@@ -10,9 +10,13 @@
 // Yozuv: o'zgaruvchilar — bitta lotin harfi (A–Z, kichigi ham), 0 va 1.
 //   NOT: ¬ ! ~ NOT, yoki keyin ' (A')   AND: ∧ & · * AND, yoki yonma-yon (AB)
 //   XOR: ⊕ ^ XOR                          OR:  ∨ | + OR
-// Ustunlik: NOT > AND > XOR > OR; qavslar ( ).
+//   NAND, NOR, XNOR — so'z bilan: A NAND B = ¬(A ∧ B) (mos ravishda VA, YOKI, XOR darajasida).
+// Ustunlik: NOT > AND/NAND > XOR/XNOR > OR/NOR; qavslar ( ).
 
 export const MAX_VARS = 6;
+
+/** Ifoda uzunligi: undan uzuni — 'long' xatosi (rekursiya va har tugmada qayta hisoblash cheklansin). */
+export const MAX_LENGTH = 400;
 
 export type ExprNode =
   | { op: 'var'; v: string }
@@ -20,7 +24,7 @@ export type ExprNode =
   | { op: 'not'; a: ExprNode }
   | { op: 'and' | 'or' | 'xor'; a: ExprNode; b: ExprNode };
 
-export type ExprErrorCode = 'empty' | 'char' | 'end' | 'unexpected' | 'paren' | 'vars';
+export type ExprErrorCode = 'empty' | 'char' | 'end' | 'unexpected' | 'paren' | 'vars' | 'long';
 
 export interface ParsedExpr {
   ast: ExprNode;
@@ -29,7 +33,7 @@ export interface ParsedExpr {
 
 export type Env = Record<string, number>;
 
-type TokenType = 'var' | 'const' | 'not' | 'and' | 'or' | 'xor' | '(' | ')' | 'post';
+type TokenType = 'var' | 'const' | 'not' | 'and' | 'or' | 'xor' | 'nand' | 'nor' | 'xnor' | '(' | ')' | 'post';
 
 interface Token {
   t: TokenType;
@@ -37,7 +41,7 @@ interface Token {
   pos: number;
 }
 
-const WORDS: Record<string, TokenType> = { NOT: 'not', AND: 'and', OR: 'or', XOR: 'xor' };
+const WORDS: Record<string, TokenType> = { NOT: 'not', AND: 'and', OR: 'or', XOR: 'xor', NAND: 'nand', NOR: 'nor', XNOR: 'xnor' };
 const SYMBOLS: Record<string, TokenType> = {
   '¬': 'not', '!': 'not', '~': 'not',
   '∧': 'and', '&': 'and', '·': 'and', '*': 'and', '⋅': 'and',
@@ -91,6 +95,7 @@ function tokenize(src: string): Token[] {
 
 /** Ifodani o'qiydi: { ast, vars } (vars — alifbo tartibida). Xatoda ExprError (code, pos). */
 export function parseExpr(src: string): ParsedExpr {
+  if (String(src).length > MAX_LENGTH) throw new ExprError('long', MAX_LENGTH);
   const tokens = tokenize(String(src));
   if (!tokens.length) throw new ExprError('empty', 0);
   let i = 0;
@@ -101,26 +106,30 @@ export function parseExpr(src: string): ParsedExpr {
 
   function or(): ExprNode {
     let left = xor();
-    while (peek()?.t === 'or') {
+    for (let t = peek()?.t; t === 'or' || t === 'nor'; t = peek()?.t) {
       i++;
-      left = { op: 'or', a: left, b: xor() };
+      const node: ExprNode = { op: 'or', a: left, b: xor() };
+      left = t === 'nor' ? { op: 'not', a: node } : node;
     }
     return left;
   }
   function xor(): ExprNode {
     let left = and();
-    while (peek()?.t === 'xor') {
+    for (let t = peek()?.t; t === 'xor' || t === 'xnor'; t = peek()?.t) {
       i++;
-      left = { op: 'xor', a: left, b: and() };
+      const node: ExprNode = { op: 'xor', a: left, b: and() };
+      left = t === 'xnor' ? { op: 'not', a: node } : node;
     }
     return left;
   }
   function and(): ExprNode {
     let left = unary();
     for (;;) {
-      if (peek()?.t === 'and') {
+      const t = peek()?.t;
+      if (t === 'and' || t === 'nand') {
         i++;
-        left = { op: 'and', a: left, b: unary() };
+        const node: ExprNode = { op: 'and', a: left, b: unary() };
+        left = t === 'nand' ? { op: 'not', a: node } : node;
       } else if (startsOperand(peek())) {
         left = { op: 'and', a: left, b: unary() }; // yonma-yon: AB = A ∧ B
       } else return left;

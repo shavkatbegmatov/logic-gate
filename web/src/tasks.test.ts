@@ -51,3 +51,19 @@ describe('sinf vazifalari', () => {
     expect(isoToDay('')).toBe(0);
   });
 });
+
+describe("vazifa va qulf", () => {
+  it("vazifadagi daraja ochiq; yechilgani vazifa o'chirilgandan keyin ham ochiq qoladi", async () => {
+    const { progress, levelUnlocked, chapterUnlocked } = await import('./state');
+    const { setMyTasks } = await import('./tasks');
+    const { chapters, chapterLevels } = await import('./levels');
+    const locked = chapters.find((ch) => !chapterUnlocked(ch))!;
+    const level = chapterLevels(locked.id)[2];
+    expect(levelUnlocked(level)).toBe(false);
+    setMyTasks([{ id: 1, title: '', levels: [level.id], createdAt: 0, classCode: 'AAAAAA', className: '8-A' }]);
+    expect(levelUnlocked(level)).toBe(true);
+    progress.value = { ...progress.value, [level.id]: { stars: 2, gates: 5 } as never };
+    setMyTasks([]);
+    expect(levelUnlocked(level)).toBe(true);
+  });
+});

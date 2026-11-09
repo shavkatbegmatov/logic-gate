@@ -93,19 +93,26 @@ type Alerts struct {
 	mu    sync.Mutex
 	count int
 	last  string
+	// O'yinchilar brauzeridan kelgan xatolar (api: "brauzer xatosi") — alohida: tashqaridan keladigan
+	// matn server xatolarini xabardan siqib chiqarmasin.
+	clientCount int
+	clientLast  string
 }
+
+// ClientErrorMsg — api paketi brauzer xatolarini shu xabar bilan yozadi (server/internal/api/clienterr.go).
+const ClientErrorMsg = "brauzer xatosi"
 
 func NewAlerts() *Alerts { return &Alerts{} }
 
 // Wrap log handler'ini o'raydi: yozuvlar odatdagidek chiqadi, xatolar esa sanaladi.
 func (a *Alerts) Wrap(h slog.Handler) slog.Handler { return &alertHandler{Handler: h, a: a} }
 
-func (a *Alerts) take() (int, string) {
+func (a *Alerts) take() (n int, last string, cn int, clast string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	n, last := a.count, a.last
-	a.count, a.last = 0, ""
-	return n, last
+	n, last, cn, clast = a.count, a.last, a.clientCount, a.clientLast
+	a.count, a.last, a.clientCount, a.clientLast = 0, "", 0, ""
+	return n, last, cn, clast
 }
 
 type alertHandler struct {
@@ -126,8 +133,13 @@ func (h *alertHandler) Handle(ctx context.Context, r slog.Record) error {
 			msg = msg[:300] + "…"
 		}
 		h.a.mu.Lock()
-		h.a.count++
-		h.a.last = msg
+		if r.Message == ClientErrorMsg {
+			h.a.clientCount++
+			h.a.clientLast = msg
+		} else {
+			h.a.count++
+			h.a.last = msg
+		}
 		h.a.mu.Unlock()
 	}
 	return h.Handler.Handle(ctx, r)
@@ -149,14 +161,26 @@ func (b *Bot) FlushAlerts(ctx context.Context) {
 	if b.alerts == nil || b.cfg.Admin == 0 {
 		return
 	}
-	n, last := b.alerts.take()
-	if n == 0 {
+	n, last, cn, clast := b.alerts.take()
+	if n == 0 && cn == 0 {
 		return
 	}
-	text := fmt.Sprintf("⚠️ Logic Gate'da %d ta xato (oxirgi 10 daqiqada; server yoki o'yinchi brauzeri).\nOxirgisi: %s", n, last)
+	text := alertText(n, last, cn, clast)
 	if _, err := b.tg.SendMessage(ctx, b.cfg.Admin, text, nil); err != nil {
 		b.log.Warn("telegram ogohlantirish yuborilmadi", "err", err)
 	}
+}
+
+// alertText — ogohlantirish matni: server xatolari birinchi, brauzer xatolari alohida qatorda.
+func alertText(n int, last string, cn int, clast string) string {
+	var parts []string
+	if n > 0 {
+		parts = append(parts, fmt.Sprintf("⚠️ Logic Gate serverida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: %s", n, last))
+	}
+	if cn > 0 {
+		parts = append(parts, fmt.Sprintf("🌐 O'yinchilar brauzerida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: %s", cn, clast))
+	}
+	return strings.Join(parts, "\n\n")
 }
 
 func (b *Bot) alertLoop(ctx context.Context) {

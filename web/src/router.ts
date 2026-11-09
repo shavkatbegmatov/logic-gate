@@ -42,13 +42,13 @@ function parse(hash: string): Route {
     case 'leaderboard':
       return { name, tab: arg === 'daily' ? 'daily' : 'overall' };
     case 'level':
-      return arg ? { name: 'level', id: decodeURIComponent(arg) } : { name: 'levels' };
+      return arg ? { name: 'level', id: safeDecode(arg) } : { name: 'levels' };
     case 'lesson':
-      return arg ? { name: 'lesson', id: decodeURIComponent(arg) } : { name: 'levels' };
+      return arg ? { name: 'lesson', id: safeDecode(arg) } : { name: 'levels' };
     case 'class':
-      return arg ? { name: 'class', code: decodeURIComponent(arg) } : { name: 'settings' };
+      return arg ? { name: 'class', code: safeDecode(arg) } : { name: 'settings' };
     case 'teacher':
-      return arg ? { name: 'teacher', code: decodeURIComponent(arg) } : { name: 'teacher' };
+      return arg ? { name: 'teacher', code: safeDecode(arg) } : { name: 'teacher' };
     case 'p':
       return arg ? { name: 'custom', code: arg } : { name: 'home' };
     default:

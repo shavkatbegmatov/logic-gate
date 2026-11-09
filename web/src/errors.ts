@@ -8,10 +8,14 @@ import { APP_VERSION } from './version';
 const MAX_PER_PAGE = 5;
 const sent = new Set<string>();
 
-/** Bizning bundle'dagi xatomi va shovqin emasmi. */
-export function shouldReport(msg: string, stack: string, file = ''): boolean {
-  if (!msg || /ResizeObserver loop|^Script error\.?$|Load failed|Failed to fetch|NetworkError|AbortError/i.test(msg)) return false;
-  return /\/assets\/[^/]+\.js/.test(stack) || /\/assets\/[^/]+\.js/.test(file);
+/**
+ * Bizning bundle'dagi xatomi va shovqin emasmi. Manzil saytning o'zi bilan: kengaytmalar ham
+ * chrome-extension://…/assets/x.js kabi yo'l ishlatadi.
+ */
+export function shouldReport(msg: string, stack: string, file = '', origin = typeof location !== 'undefined' ? location.origin : ''): boolean {
+  if (!msg || !origin || /ResizeObserver loop|^Script error\.?$|Load failed|Failed to fetch|NetworkError|AbortError/i.test(msg)) return false;
+  const ours = `${origin}/assets/`;
+  return stack.includes(ours) || file.startsWith(ours);
 }
 
 /** Ekran nomi: "#/class/ABC123" → "class" (kod va boshqa qiymatlarsiz). */

@@ -61,4 +61,14 @@ describe('mantiqiy ifodalar', () => {
     // Turli o'zgaruvchilar: A ∨ ¬A = 1 (B qiymati ahamiyatsiz).
     expect(compareExprs('A ∨ ¬A', 'B ∨ 1').equal).toBe(true);
   });
+
+  it("NAND, NOR, XNOR so'z bilan; uzun ifoda — xato", () => {
+    expect(q('A NAND B')).toBe('1110');
+    expect(q('a nor b')).toBe('1000');
+    expect(q('A XNOR B')).toBe('1001');
+    expect(q('A NAND B NAND C')).toBe(q('¬(¬(A ∧ B) ∧ C)'));
+    expect(q('A ∨ B NAND C')).toBe(q('A ∨ ¬(B ∧ C)'));
+    expect(err('A'.repeat(401))).toBe('long@400');
+    expect(err('!'.repeat(399) + 'A')).toBe('ok');
+  });
 });

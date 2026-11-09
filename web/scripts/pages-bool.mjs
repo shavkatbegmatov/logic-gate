@@ -39,6 +39,7 @@ export const BOOL = {
         unexpected: "Bu yerda xato bor ({pos}-o'rinda).",
         paren: 'Qavs yopilmagan.',
         vars: "O'zgaruvchilar ko'pi bilan 6 ta.",
+        long: 'Ifoda juda uzun (400 belgigacha).',
       },
     },
     ops: {
@@ -168,6 +169,7 @@ export const BOOL = {
         unexpected: 'Здесь ошибка (позиция {pos}).',
         paren: 'Скобка не закрыта.',
         vars: 'Не больше 6 переменных.',
+        long: 'Слишком длинное выражение (до 400 символов).',
       },
     },
     ops: {

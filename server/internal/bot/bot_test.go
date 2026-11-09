@@ -491,4 +491,23 @@ func TestWeeklyReportAndAlerts(t *testing.T) {
 	if len(got) != 2 || !strings.Contains(got[1].Params["text"].(string), "2 ta xato") || !strings.Contains(got[1].Params["text"].(string), "ikkinchi err=b") {
 		t.Fatalf("ogohlantirish: %+v", got[1:])
 	}
+
+	// Brauzer xatolari alohida qatorda: ular server xatosini "Oxirgisi" dan siqib chiqarmaydi.
+	logger.Error("server buzildi", "err", "db")
+	logger.Error(ClientErrorMsg, "error", "TypeError: x")
+	logger.Error(ClientErrorMsg, "error", "TypeError: y")
+	b.FlushAlerts(ctx)
+	got = fake.take("sendMessage")
+	text := got[len(got)-1].Params["text"].(string)
+	if !strings.Contains(text, "serverida 1 ta xato") || !strings.Contains(text, "server buzildi err=db") ||
+		!strings.Contains(text, "brauzerida 2 ta xato") || !strings.Contains(text, "error=TypeError: y") {
+		t.Fatalf("server va brauzer xatolari: %q", text)
+	}
+	// Faqat brauzer xatosi — server qatori yo'q.
+	logger.Error(ClientErrorMsg, "error", "z")
+	b.FlushAlerts(ctx)
+	got = fake.take("sendMessage")
+	if text := got[len(got)-1].Params["text"].(string); strings.Contains(text, "serverida") || !strings.Contains(text, "brauzerida 1 ta xato") {
+		t.Fatalf("faqat brauzer: %q", text)
+	}
 }

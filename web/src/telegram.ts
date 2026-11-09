@@ -27,6 +27,8 @@ export interface TgWebApp {
   colorScheme?: 'light' | 'dark';
   onEvent?(event: 'themeChanged', cb: () => void): void;
   openTelegramLink(url: string): void;
+  /** Oddiy havola (sayt) — Telegram'ning brauzerida, Mini App yopilmaydi. */
+  openLink?(url: string): void;
   requestWriteAccess?(cb: (granted: boolean) => void): void;
   BackButton: { show(): void; hide(): void; onClick(cb: () => void): void };
   HapticFeedback: {
@@ -134,6 +136,17 @@ export function openTelegramLink(url: string): boolean {
   if (!app) return false;
   try {
     app.openTelegramLink(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Sayt havolasi Telegram ichida: Mini App'dan chiqmasdan brauzerda ochiladi. */
+export function openExternal(url: string): boolean {
+  if (!app?.openLink) return false;
+  try {
+    app.openLink(url);
     return true;
   } catch {
     return false;

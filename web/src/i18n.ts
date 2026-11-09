@@ -419,6 +419,17 @@ Sen ham urinib ko'r!`,
     outputs: 'Chiqishlar',
   },
 
+  guides: {
+    title: "Qo'llanmalar",
+    text: "Saytdagi qisqa darslar va kalkulyatorlar — uy vazifasi uchun ham qulay.",
+    items: [
+      { title: 'Mantiqiy elementlar', text: 'Belgilar, haqiqat jadvallari, D-trigger', url: '/mantiqiy-elementlar/' },
+      { title: 'Bul algebrasi', text: 'Qonunlar, soddalashtirish, haqiqat jadvali kalkulyatori', url: '/bul-algebrasi/' },
+      { title: 'Sanoq sistemalari', text: "2, 8, 16 lik — yechimi bilan o'tkazish kalkulyatori", url: '/sanoq-sistemalari/' },
+      { title: 'Ikkilik sanoq sistemasi', text: "Bitlar, o'tkazish va qo'shish", url: '/ikkilik-sanoq-sistemasi/' },
+    ],
+  },
+
   formula: {
     button: 'Formuladan sxema',
     title: 'Formuladan sxema',
@@ -439,6 +450,7 @@ Sen ham urinib ko'r!`,
       unexpected: (pos: number) => `Bu yerda xato bor (${pos}-o'rinda).`,
       paren: 'Qavs yopilmagan.',
       vars: "O'zgaruvchilar juda ko'p.",
+      long: 'Ifoda juda uzun (400 belgigacha).',
       const: (v: number) => `Ifoda doimiy — har doim ${v}. Buning uchun sxema kerak emas.`,
       too_many_inputs: "Qum qutida ko'pi bilan 5 ta kirish (A–E).",
       too_many_gates: "Elementlar juda ko'p (ko'pi bilan 64 ta).",
@@ -959,6 +971,17 @@ export const ru: typeof uz = {
     outputs: 'Выходы',
   },
 
+  guides: {
+    title: 'Справочники',
+    text: 'Короткие уроки и калькуляторы на сайте — пригодятся и для домашних заданий.',
+    items: [
+      { title: 'Логические элементы', text: 'Обозначения, таблицы истинности, D-триггер', url: '/ru/logicheskie-elementy/' },
+      { title: 'Алгебра логики', text: 'Законы, упрощение, калькулятор таблиц истинности', url: '/ru/algebra-logiki/' },
+      { title: 'Системы счисления', text: 'Перевод в 2, 8, 16 — калькулятор с решением', url: '/ru/sistemy-schisleniya/' },
+      { title: 'Двоичная система', text: 'Биты, перевод и сложение', url: '/ru/dvoichnaya-sistema/' },
+    ],
+  },
+
   formula: {
     button: 'Схема по формуле',
     title: 'Схема по формуле',
@@ -979,6 +1002,7 @@ export const ru: typeof uz = {
       unexpected: (pos: number) => `Здесь ошибка (позиция ${pos}).`,
       paren: 'Скобка не закрыта.',
       vars: 'Слишком много переменных.',
+      long: 'Слишком длинное выражение (до 400 символов).',
       const: (v: number) => `Выражение постоянное — всегда ${v}. Схема не нужна.`,
       too_many_inputs: 'В песочнице не больше 5 входов (A–E).',
       too_many_gates: 'Слишком много элементов (не больше 64).',

@@ -12,7 +12,7 @@ import { resetAchievements } from '../achievements';
 import { resetCustom } from '../custom';
 import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
-import { inTelegram } from '../telegram';
+import { inTelegram, openExternal } from '../telegram';
 import { THEMES } from '../theme';
 import { APP_VERSION } from '../version';
 import { errorText, renameProfile, restoreProfile } from '../sync';
@@ -142,13 +142,7 @@ export function Settings() {
             </div>
           </section>
 
-          {/* Statik qo'llanma; Telegram ichida oddiy havola Mini App oynasidan chiqib ketadi. */}
-          {!inTelegram && (
-            <a class="card guide-card" href={t.home.guideUrl}>
-              <Icon name="book" />
-              <span>{t.home.guide}</span>
-            </a>
-          )}
+          <GuidesCard />
 
           <RemindToggle card />
 
@@ -222,5 +216,29 @@ export function LangSwitch() {
         </button>
       ))}
     </div>
+  );
+}
+
+/** Saytdagi qo'llanmalar (statik sahifalar). Telegram ichida — Telegram brauzerida, Mini App yopilmaydi. */
+function GuidesCard() {
+  const open = (e: MouseEvent, url: string) => {
+    if (inTelegram && openExternal(location.origin + url)) e.preventDefault();
+  };
+  return (
+    <section class="card guides-card">
+      <h2>{t.guides.title}</h2>
+      <p class="muted small">{t.guides.text}</p>
+      <div class="guides-list">
+        {t.guides.items.map((g) => (
+          <a key={g.url} class="guide-link" href={g.url} onClick={(e) => open(e, g.url)}>
+            <Icon name="book" />
+            <span>
+              <b>{g.title}</b>
+              <small>{g.text}</small>
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
   );
 }

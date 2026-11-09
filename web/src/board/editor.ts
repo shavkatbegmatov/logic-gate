@@ -153,10 +153,18 @@ export class Editor {
     this.onChange?.(next);
   }
 
-  /** Butun sxemani almashtiradi (formuladan yig'ilgan); "bekor qilish" bilan qaytariladi. */
-  replace(circuit: Circuit) {
+  /**
+   * Butun sxemani almashtiradi (formuladan yig'ilgan); "bekor qilish" bilan bitta qadamda qaytariladi.
+   * spec — kirishlar ko'paygan bo'lsa (kamaymaydi: eski sxema yangi spec'da ham yaroqli).
+   */
+  replace(circuit: Circuit, spec?: Spec) {
     this.selection.value = null;
     this.pending.value = null;
+    if (spec) {
+      this.spec.value = spec;
+      this.bits.value = spec.inputs.map((_, k) => this.bits.value[k] ?? 0);
+      this.history.value = [];
+    }
     this.commit(sanitize(this.spec.value, circuit));
   }
 

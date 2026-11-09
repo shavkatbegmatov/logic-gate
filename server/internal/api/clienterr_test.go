@@ -81,9 +81,22 @@ func TestClientErrors(t *testing.T) {
 	if n := len(logs.errors()); n != 2 {
 		t.Fatalf("boshqa xato yozilmadi: %d", n)
 	}
+	// Chrome steki: birinchi qator — xabar; xabari bir xil, lekin joyi boshqa xato — alohida.
+	post(`{"msg":"TypeError: same","stack":"TypeError: same\n    at a (https://x/assets/i.js:1:10)"}`)
+	post(`{"msg":"TypeError: same","stack":"TypeError: same\n    at b (https://x/assets/i.js:9:20)"}`)
+	post(`{"msg":"TypeError: same","stack":"TypeError: same\n    at b (https://x/assets/i.js:9:20)"}`)
+	if n := len(logs.errors()); n != 4 {
+		t.Fatalf("joyi boshqa xatolar: %d", n)
+	}
+	if f := firstFrame("TypeError: q\n    at f (https://x/assets/i.js:3:4)\n    at g (https://x/assets/i.js:5:6)"); f != "at f (https://x/assets/i.js:3:4)" {
+		t.Fatalf("firstFrame chrome: %q", f)
+	}
+	if f := firstFrame("f@https://x/assets/i.js:3:4\ng@https://x/assets/i.js:5:6"); f != "f@https://x/assets/i.js:3:4" {
+		t.Fatalf("firstFrame firefox: %q", f)
+	}
 	e.setNow(time.Now().Add(7 * time.Hour))
 	post(report)
-	if errs := logs.errors(); len(errs) != 3 || errs[2]["repeat"] != "2" {
+	if errs := logs.errors(); len(errs) != 5 || errs[4]["repeat"] != "2" {
 		t.Fatalf("6 soatdan keyin: %v", errs)
 	}
 

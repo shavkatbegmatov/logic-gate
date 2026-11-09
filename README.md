@@ -373,9 +373,9 @@ Rasm `deploy/telegram/app-640x360.png` va `web/public/og.png` — `web/scripts/o
 
 ### Brauzer xatolari
 
-O'yin (faqat build'da) kutilmagan xatolarni — `error` va `unhandledrejection` — `POST /api/client-errors` ga yuboradi (`web/src/errors.ts`). Faqat o'yinning o'z kodidagi (`/assets/*.js` stekda) xatolar: brauzer kengaytmalari, Telegram skripti, tarmoq uzilishlari va ma'lum shovqinlar (`ResizeObserver loop`, `Script error.`) yuborilmaydi; bir sahifada ko'pi bilan 5 ta, har biri bir marta. Yuboriladi: xabar, stek, ekran nomi (marshrutning birinchi qismi — sinf yoki masala kodisiz), versiya, brauzer (User-Agent), Telegram ichidami. O'yinchi, IP, natijalar yuborilmaydi.
+O'yin (faqat build'da) kutilmagan xatolarni — `error` va `unhandledrejection` — `POST /api/client-errors` ga yuboradi (`web/src/errors.ts`). Faqat o'yinning o'z kodidagi (stekda `<sayt>/assets/…`) xatolar: brauzer kengaytmalari, Telegram skripti, tarmoq uzilishlari va ma'lum shovqinlar (`ResizeObserver loop`, `Script error.`) yuborilmaydi; bir sahifada ko'pi bilan 5 ta, har biri bir marta. Yuboriladi: xabar, stek, ekran nomi (marshrutning birinchi qismi — sinf yoki masala kodisiz), versiya, brauzer (User-Agent), Telegram ichidami. O'yinchi, IP, natijalar yuborilmaydi.
 
-Server (`server/internal/api/clienterr.go`) ularni `level=ERROR msg="brauzer xatosi"` qilib log'ga yozadi — bot admin'ga server xatolari bilan birga ogohlantiradi. Bir xil xato (xabar + stekning birinchi qatori) 6 soatda bir marta yoziladi, orada nechta takrorlangani keyingi yozuvda (`repeat=`). Bir IP dan: 5 tagacha birdaniga, keyin daqiqada bitta. Ko'rish: `docker logs <konteyner> 2>&1 | grep "brauzer xatosi"`.
+Server (`server/internal/api/clienterr.go`) ularni `level=ERROR msg="brauzer xatosi"` qilib log'ga yozadi — bot admin'ga ogohlantiradi; xabarda server xatolari va brauzer xatolari alohida qatorlarda (tashqaridan kelgan matn server xatosini yashirmasin). Bir xil xato (xabar + stekdagi birinchi `fayl:qator:ustun`) 6 soatda bir marta yoziladi, orada nechta takrorlangani keyingi yozuvda (`repeat=`). Bir IP dan: 5 tagacha birdaniga, keyin daqiqada bitta. Ko'rish: `docker logs <konteyner> 2>&1 | grep "brauzer xatosi"`.
 
 ## Tillar
 
@@ -428,6 +428,7 @@ Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'y
 
 Qum qutida «Formuladan sxema» (yuqoridagi ƒ× tugmasi yoki yon paneldagi tugma): Bul ifodasi yoziladi va sxema o'zi yig'iladi (`src/formula-build.ts`). Ifoda o'qigich — `src/boolexpr.ts`: «Bul algebrasi» qo'llanmasidagi kalkulyator bilan bitta fayl (build `node:module` `stripTypeScriptTypes` bilan undan `dist/guide-bool.js` yasaydi). Qoidalar:
 
+- ifoda 400 belgigacha (uzunrog'i — xabar: o'qigich rekursiv va har tugmada qayta hisoblaydi); `NAND`, `NOR`, `XNOR` so'z bilan ham yoziladi;
 - konstantalar soddalashtiriladi (`A ∧ 1 = A`); butun ifoda doimiy bo'lsa — xabar (maydonda 0/1 manbai yo'q);
 - `¬(A ∧ B)` → bitta NAND (NOR, XNOR ham), bir xil qism-ifodalar bir marta yig'iladi;
 - kirishlar A–E: boshqa harflar (x, y…) tartib bilan A, B… ga almashtiriladi va bu oynada aytiladi; 5 tadan ortiq — xato;

@@ -18,6 +18,20 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.7.0',
+    date: '2026-11-09',
+    uz: [
+      "Sozlamalarda — saytdagi barcha qo'llanmalar va kalkulyatorlar ro'yxati (Telegram ichidan ham ochiladi).",
+      "Formulada NAND, NOR, XNOR so'zlarini ham yozish mumkin: A NAND B.",
+      "Tuzatishlar: vazifa orqali yechilgan daraja vazifa o'chirilgandan keyin ham ochiq qoladi; juda uzun formula Qum qutini to'xtatib qo'ymaydi.",
+    ],
+    ru: [
+      'В настройках — список всех справочников и калькуляторов сайта (открываются и из Telegram).',
+      'В формулах можно писать NAND, NOR, XNOR словами: A NAND B.',
+      'Исправления: уровень, решённый по заданию, остаётся открытым и после удаления задания; слишком длинная формула больше не ломает песочницу.',
+    ],
+  },
+  {
     version: '2.6.0',
     date: '2026-11-09',
     uz: [

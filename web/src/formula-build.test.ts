@@ -87,4 +87,12 @@ describe('formuladan sxema', () => {
     expect(built('A ∧ B').outX).toBe(520);
     expect(built('¬(¬(¬(¬(A ∧ B) ∨ C) ∧ D) ∨ E)').outX).toBeGreaterThan(520);
   });
+
+  it("so'z bilan NAND/NOR — bitta element; juda uzun ifoda — xato, yiqilmaydi", () => {
+    expect(types('A NAND B')).toBe('NAND');
+    expect(types('A NOR B')).toBe('NOR');
+    expect(types('A XNOR B')).toBe('XNOR');
+    expect(buildFromFormula('AB'.repeat(1500))).toEqual({ ok: false, error: { code: 'long', pos: 400 } });
+    expect(buildFromFormula('!'.repeat(5000) + 'A')).toEqual({ ok: false, error: { code: 'long', pos: 400 } });
+  });
 });
