@@ -2222,6 +2222,78 @@ input[type='date']:focus {
   cursor: pointer;
 }
 
+/* ── Sertifikat ───────────────────────────────────────── */
+.cert {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.cert canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 2px 14px rgba(var(--copper-rgb), 0.25);
+}
+
+.cert-form {
+  display: grid;
+  gap: 4px;
+  max-width: 420px;
+}
+
+.cert-form input {
+  width: 100%;
+}
+
+.cert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cert-locked p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cert-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: var(--bg2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.achievements .cert-card {
+  grid-column: 1 / -1;
+}
+
+.cert-card.open {
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+.cert-card .ach-body {
+  flex: 1;
+}
+
+.cert-go {
+  color: var(--accent);
+  font-size: 20px;
+}
+
 /* ── Formuladan sxema (Qum quti) ───────────────────────── */
 .formula-input {
   width: 100%;
@@ -3735,6 +3807,10 @@ body:has(.stage.has-check) .toast {
   .class-share,
   .class-key,
   .report-tools,
+  .cert-form,
+  .cert-actions,
+  .cert-hint,
+  .cert > p,
   .report-head .lang-switch,
   .class-actions,
   .teacher-tasks-head .btn,
@@ -3774,5 +3850,15 @@ body:has(.stage.has-check) .toast {
   .teacher-task,
   tr {
     break-inside: avoid;
+  }
+
+  .cert {
+    max-width: none;
+    padding: 0;
+  }
+
+  .cert canvas {
+    box-shadow: none;
+    border-radius: 0;
   }
 }

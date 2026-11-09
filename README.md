@@ -424,6 +424,12 @@ Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi 
 
 Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
 
+## Sertifikat
+
+Yutuqlar ekranining tepasida «Sertifikat» (`#/certificate`, `web/src/certificate.ts`, `screens/CertificateScreen.tsx`). Birinchi bo'lim to'liq yechilgach ochiladi; unda: ism (sertifikat uchun alohida maydon — sukut bo'yicha taxallus, faqat qurilmada `lg.certName.v1`), tugatilgan bo'limlar (belgi bilan), yulduzlar va yechilgan darajalar, sana (Toshkent), sayt. Hamma darajalar yechilsa — «kursning barcha N darajasini yechdi». Bo'lim aynan shu yechim bilan tugasa, natija oynasida «Bo'lim tugadi — sertifikat» tugmasi chiqadi.
+
+Chizish — canvas'da (1600×1131, A4 yotiq), har doim Daftar ranglarida va plata yo'llari bilan; shriftlar (IBM Plex) yuklangach chiziladi. «PNG yuklab olish», «Ulashish» (Web Share bilan fayl — telefonda), «Chop etish» (faqat sertifikat). Telegram ichida yuklab olish va chop etish ishlamaydi — u yerda ekran rasmi haqida izoh. Sertifikat imzolanmagan: bu rag'bat uchun; o'qituvchi natijani sinf hisobotida ko'radi.
+
 ## Formuladan sxema (Qum quti)
 
 Qum qutida «Formuladan sxema» (yuqoridagi ƒ× tugmasi yoki yon paneldagi tugma): Bul ifodasi yoziladi va sxema o'zi yig'iladi (`src/formula-build.ts`). Ifoda o'qigich — `src/boolexpr.ts`: «Bul algebrasi» qo'llanmasidagi kalkulyator bilan bitta fayl (build `node:module` `stripTypeScriptTypes` bilan undan `dist/guide-bool.js` yasaydi). Qoidalar:

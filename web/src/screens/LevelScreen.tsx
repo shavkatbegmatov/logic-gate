@@ -194,6 +194,12 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
           <Icon name="book" /> {t.lesson.unlocked}
         </button>
       )}
+      {/* Bo'lim aynan shu yechim bilan tugadi (birinchi yechim) — sertifikat yangilandi. */}
+      {chapterDone(level.chapter) && result.prevGates === undefined && (
+        <button class="btn small ghost" onClick={() => go('certificate')}>
+          <Icon name="medal" /> {t.certificate.ready}
+        </button>
+      )}
       {next && !nextOpen && nextChapter && !chapterUnlocked(nextChapter) && (
         <p class="muted">
           {t.success.nextLocked(nextChapter.unlockStars)} ({totalStars.value} ★)

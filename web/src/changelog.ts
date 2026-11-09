@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.8.0',
+    date: '2026-11-09',
+    uz: [
+      "Sertifikat: birinchi bo'lim tugagach ochiladi — ismingiz, tugatilgan bo'limlar va yulduzlar bilan; PNG qilib yuklab olish, ulashish yoki chop etish mumkin (Yutuqlar ekranida).",
+    ],
+    ru: [
+      'Сертификат: открывается после первой главы — с вашим именем, пройденными главами и звёздами; его можно скачать в PNG, отправить или распечатать (на экране «Достижения»).',
+    ],
+  },
+  {
     version: '2.7.0',
     date: '2026-11-09',
     uz: [

@@ -2,6 +2,7 @@ import { states } from '../achievements';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
+import { CertificateCard } from './CertificateScreen';
 
 export function Achievements() {
   const list = states.value;
@@ -11,6 +12,7 @@ export function Achievements() {
       <TopBar title={t.achievements.title} sub={t.achievements.summary(done, list.length)} onBack={() => go('')} />
       <div class="scroll">
         <div class="achievements">
+          <CertificateCard />
           {list.map(({ a, n, max, done }) => (
             <div key={a.id} class={`achievement${done ? ' done' : ''}`}>
               <span class="ach-icon" aria-hidden="true">
