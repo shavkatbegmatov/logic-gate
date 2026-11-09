@@ -11,6 +11,7 @@ import { CustomScreen } from './screens/CustomScreen';
 import { DailyScreen } from './screens/DailyScreen';
 import { Home } from './screens/Home';
 import { LessonScreen } from './screens/LessonScreen';
+import { NewsScreen } from './screens/NewsScreen';
 import { ClassScreen } from './screens/ClassScreen';
 import { TeacherReport, TeacherScreen } from './screens/TeacherScreen';
 import { Leaderboard } from './screens/Leaderboard';
@@ -43,6 +44,7 @@ export function App() {
       {r.name === 'archive' && <ArchiveScreen />}
       {r.name === 'lesson' && <LessonScreen key={r.id} id={r.id} />}
       {r.name === 'class' && <ClassScreen key={r.code} code={r.code} />}
+      {r.name === 'news' && <NewsScreen />}
       {r.name === 'teacher' && (r.code ? <TeacherReport key={r.code} code={r.code} /> : <TeacherScreen />)}
       {r.name === 'achievements' && <Achievements />}
       {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}

@@ -14,9 +14,9 @@ import { resetDaily } from '../daily';
 import { profile, resetLocalProgress, settings } from '../state';
 import { inTelegram } from '../telegram';
 import { THEMES } from '../theme';
+import { APP_VERSION } from '../version';
 import { errorText, renameProfile, restoreProfile } from '../sync';
 
-declare const __APP_VERSION__: string;
 
 export function Settings() {
   const p = profile.value;
@@ -174,7 +174,10 @@ export function Settings() {
           </section>
 
           <p class="muted center">
-            {t.appName} · {t.settings.version(__APP_VERSION__)}
+            {t.appName} · {t.settings.version(APP_VERSION)} ·{' '}
+            <button class="link-btn" onClick={() => go('news')}>
+              {t.news.link}
+            </button>
           </p>
         </div>
       </div>

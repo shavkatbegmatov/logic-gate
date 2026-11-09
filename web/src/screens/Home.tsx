@@ -11,6 +11,9 @@ import { chapterStars, continueLevel, getDraft, profile, progress, settings, sol
 import { hasProgress, moveUrl, onOldHost, siteHost } from '../migrate';
 import { TG_APP_URL } from '../share';
 import { inTelegram } from '../telegram';
+import { CHANGELOG } from '../changelog';
+import { lang } from '../i18n';
+import { APP_VERSION, markNewsSeen, newsFor } from '../version';
 
 export function Home() {
   const started = solvedCount.value > 0;
@@ -22,6 +25,7 @@ export function Home() {
           <Logo />
           {onOldHost() && hasProgress() && <MoveBanner />}
           <p class="tagline">{profile.value ? t.home.hello(profile.value.nickname) : t.tagline}</p>
+          {newsFor(started || !!profile.value) && <NewsBanner />}
           <ContinueCard />
           <DailyCard />
           <ShareButtons text={t.share.inviteText} label={t.share.invite} />
@@ -101,6 +105,24 @@ function HomeNav() {
         ))}
       </div>
     </nav>
+  );
+}
+
+/** Yangi versiyadan keyin bir marta: nima o'zgarganining birinchi qatori va "Nimalar yangi". */
+function NewsBanner() {
+  const latest = CHANGELOG[0];
+  const first = (lang.value === 'ru' ? latest.ru : latest.uz)[0];
+  return (
+    <div class="news-banner">
+      <button class="news-banner-main" onClick={() => go('news')}>
+        <strong>{t.news.banner(APP_VERSION)}</strong>
+        <span>{first}</span>
+        <span class="news-more">{t.news.more} →</span>
+      </button>
+      <button class="news-close" onClick={markNewsSeen} aria-label={t.news.close} title={t.news.close}>
+        ×
+      </button>
+    </div>
   );
 }
 

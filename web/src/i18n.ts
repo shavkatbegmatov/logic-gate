@@ -219,6 +219,16 @@ Sen ham yechib ko'r!`,
     toLevels: 'Darajalarga',
   },
 
+  news: {
+    title: 'Yangiliklar',
+    version: (v: string) => `Versiya ${v}`,
+    current: 'Hozirgi',
+    banner: (v: string) => `Yangi versiya ${v}`,
+    more: 'Nimalar yangi',
+    link: 'Yangiliklar',
+    close: 'Yopish',
+  },
+
   classes: {
     title: 'Sinf',
     teacher: "O'qituvchilar uchun",
@@ -670,6 +680,16 @@ export const ru: typeof uz = {
     locked: (solved: number, total: number) =>
       `Итоги откроются, когда будут решены все уровни главы (${solved}/${total}) — сначала попробуйте разобраться сами!`,
     toLevels: 'К уровням',
+  },
+
+  news: {
+    title: 'Что нового',
+    version: (v: string) => `Версия ${v}`,
+    current: 'Текущая',
+    banner: (v: string) => `Новая версия ${v}`,
+    more: 'Что нового',
+    link: 'Что нового',
+    close: 'Закрыть',
   },
 
   classes: {

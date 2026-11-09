@@ -12,6 +12,7 @@ export type Route =
   | { name: 'lesson'; id: string }
   | { name: 'class'; code: string }
   | { name: 'teacher'; code?: string }
+  | { name: 'news' }
   | { name: 'achievements' }
   | { name: 'custom'; code: string }
   | { name: 'settings' };
@@ -26,6 +27,7 @@ function parse(hash: string): Route {
     case 'archive':
     case 'achievements':
     case 'settings':
+    case 'news':
       return { name };
     case 'leaderboard':
       return { name, tab: arg === 'daily' ? 'daily' : 'overall' };

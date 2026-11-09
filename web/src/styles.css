@@ -2028,6 +2028,95 @@ input[type='text']:focus {
   margin: 0;
 }
 
+/* ── Yangiliklar ───────────────────────────────────────── */
+.news-banner {
+  position: relative;
+  width: 100%;
+}
+
+.news-banner-main {
+  width: 100%;
+  display: grid;
+  gap: 3px;
+  padding: 12px 40px 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  background: rgba(var(--accent-rgb), 0.08);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.news-banner-main strong {
+  color: var(--accent);
+}
+
+.news-banner-main span {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.news-more {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.news-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.news-close:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.news .release header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.news .release h2 {
+  margin: 0;
+}
+
+.news .release.current {
+  border-color: var(--accent);
+}
+
+.news .release ul {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  line-height: 1.5;
+}
+
+.news .release li + li {
+  margin-top: 4px;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
 /* ── Sinf rejimi ───────────────────────────────────────── */
 .section-title {
   margin: 18px 0 8px;

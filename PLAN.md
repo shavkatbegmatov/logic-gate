@@ -145,11 +145,11 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+28. **M27 — Versiya va yangiliklar (bajarildi):** versiya 2.0.0; o'yinda «Yangiliklar» ekrani (uz/ru), qaytgan o'yinchiga bosh sahifada bir martalik xabar, Sozlamalarda versiya va havola; `CHANGELOG.md`; test versiya va yangiliklar mosligini tekshiradi. Har relizda versiya oshiriladi va sodda tilda yozuv qo'shiladi.
 27. **M26 — Sinf rejimi (bajarildi):** o'qituvchi sinf yaratadi (kod + maxfiy kalit), o'quvchilar havola orqali qo'shiladi va sinf reytingini ko'radi; o'qituvchi hisoboti — darajalar, bo'limlar, kunlik masalalar, faollik; Telegram havolasi `c_<kod>`.
 26. **M25 — Qo'llanma: ikkilik sanoq sistemasi (bajarildi):** uz/ru statik sahifa (o'tkazish usullari, jadval, qo'shish, bitlar o'yinchog'i), qo'llanmalar orasida menyu, sitemap'da 5 ta manzil.
 25. **M24 — Dizayn: logotip (bajarildi):** yangi belgi (ikki kontakt, 45° yo'llar, AND va yonib turgan chiroq) — favicon, PWA va Apple ikonkalari, bosh ekran logotipi; havola rasmi va Telegram ilova rasmi Plata uslubida (og.png?v=3).
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 
-- Google Search Console va Yandex Webmaster'da saytni tasdiqlash va sitemap yuborish — domen egasining akkaunti kerak.
 - Telegram orqali kirish (initData imzosini serverda tekshirish) — bot tokeni serverda kerak bo'ladi; hozircha CloudStorage yetarli.

@@ -412,6 +412,23 @@ Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi 
 
 Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
 
+## Versiya va yangiliklar
+
+O'yin versiyasi — `web/package.json` dagi `version` (build'da `__APP_VERSION__`); u Sozlamalar pastida ko'rinadi. O'yinchilar uchun yangiliklar sodda tilda ikki joyda yoziladi:
+
+- `web/src/changelog.ts` — o'yin ichidagi «Yangiliklar» ekrani (`#/news`, uz va ru);
+- `CHANGELOG.md` — repoda, o'zbekcha.
+
+Yangi versiyadan keyin qaytgan o'yinchiga bosh sahifada bir marta «Yangi versiya X» xabari chiqadi (birinchi qator + «Nimalar yangi →»); ko'rilgan versiya `lg.seenVersion.v1` da saqlanadi. Yangi o'yinchiga xabar chiqmaydi.
+
+Har reliz oldidan:
+
+1. `web/package.json` dagi versiyani oshiring: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
+2. `changelog.ts` boshiga yozuv qo'shing: sana, uz va ru qatorlari (soni teng). O'yinchi tilida yozing: nima o'zgardi va unga nima foyda — texnik so'zlarsiz.
+3. Xuddi shu o'zbekcha qatorlarni `CHANGELOG.md` ga qo'shing.
+
+`changelog.test.ts` versiya, tartib, sanalar, uz/ru soni va `CHANGELOG.md` mosligini tekshiradi — biri unutilsa test yiqiladi.
+
 ## Oflayn rejim
 
 HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. `vite dev` da service worker yo'q.
