@@ -145,6 +145,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+40. **M39 — O'qituvchilar sahifasi (bajarildi, 2.11.0):** uz/ru statik sahifa — sinf rejimi, qanday boshlash, 3 ta 45 daqiqalik dars ishlanmasi, savol-javob; o'yindagi o'qituvchi ekranidan havola; sitemap'da 11 ta manzil.
 39. **M38 — Tartibga keltirish (bajarildi, 2.10.0):** bitta tugma bilan sxema ustunlarga joylashadi (darajalarda va Qum qutida), D-trigger va teskari bog'lanish bilan ham; formuladan sxema ham shu joylashni ishlatadi.
 38. **M37 — Telefonga o'rnatish (bajarildi, 2.9.0):** «O'rnatish» tugmasi (beforeinstallprompt) bosh sahifada va Sozlamalarda, iPhone uchun izoh, manifestda tezkor havolalar.
 37. **M36 — Sertifikat (bajarildi, 2.8.0):** birinchi bo'lim tugagach ochiladi; ism, bo'limlar, yulduzlar, sana; canvas → PNG, ulashish, chop etish; Yutuqlar ekranida va bo'lim tugagan natija oynasida.

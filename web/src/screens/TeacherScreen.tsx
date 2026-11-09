@@ -24,7 +24,7 @@ import { todaySig } from '../daily';
 import { downloadCSV, reportFileName, reportTable, toCSV, toTSV, type ReportLabels } from '../report-export';
 import { errorText } from '../sync';
 import { dayToISO } from '../tasks';
-import { inTelegram } from '../telegram';
+import { inTelegram, openExternal } from '../telegram';
 
 const copy = async (text: string) => {
   if (await copyText(text)) showToast(t.classes.copied, 'ok');
@@ -79,6 +79,18 @@ export function TeacherScreen() {
       <div class="scroll">
         <div class="narrow">
           <p class="muted">{t.classes.teacherIntro}</p>
+          <a
+            class="guide-link"
+            href={t.classes.lessonsUrl}
+            onClick={(e) => {
+              if (inTelegram && openExternal(location.origin + t.classes.lessonsUrl)) e.preventDefault();
+            }}
+          >
+            <Icon name="book" />
+            <span>
+              <b>{t.classes.lessons}</b>
+            </span>
+          </a>
 
           <form class="card" onSubmit={create}>
             <label class="field-label" for="class-name">

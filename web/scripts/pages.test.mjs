@@ -7,6 +7,7 @@ import { compareExprs, parseExpr, truthTableOf } from '../src/boolexpr.ts';
 import { convert } from './numbase.mjs';
 import { BASE_EXAMPLES, BASES } from './pages-base.mjs';
 import { BINARY, binaryAdd, divisionSteps } from './pages-binary.mjs';
+import { TEACHERS } from './pages-teachers.mjs';
 import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
 import { buildPages, CALC_DEFAULT, gateOut } from './pages.mjs';
@@ -28,11 +29,13 @@ describe("qo'llanma sahifalari", () => {
       'guide-bool.js',
       'ikkilik-sanoq-sistemasi/index.html',
       'mantiqiy-elementlar/index.html',
+      'oqituvchilar/index.html',
       'robots.txt',
       'ru/algebra-logiki/index.html',
       'ru/dvoichnaya-sistema/index.html',
       'ru/logicheskie-elementy/index.html',
       'ru/sistemy-schisleniya/index.html',
+      'ru/uchitelyam/index.html',
       'sanoq-sistemalari/index.html',
       'sitemap.xml',
     ]);
@@ -63,7 +66,7 @@ describe("qo'llanma sahifalari", () => {
   it("robots.txt, sitemap va o'yindagi havolalar", () => {
     expect(files['robots.txt']).toContain('Sitemap: https://example.uz/sitemap.xml');
     expect(files['robots.txt']).toContain('Disallow: /api/');
-    expect(files['sitemap.xml'].match(/<loc>/g)).toHaveLength(9);
+    expect(files['sitemap.xml'].match(/<loc>/g)).toHaveLength(11);
     expect(files['sitemap.xml']).toContain('<loc>https://example.uz/</loc>');
     expect(uz.home.guideUrl).toBe(CONTENT.uz.path);
     expect(ru.home.guideUrl).toBe(CONTENT.ru.path);
@@ -188,5 +191,30 @@ describe("qo'llanma sahifalari", () => {
     expect(files['guide-base.js']).toContain("getElementById('base-calc')");
     expect(files['guide-base.js']).not.toMatch(/^export /m);
     expect(() => new Function(files['guide-base.js'])).not.toThrow();
+  });
+
+  it("o'qituvchilar sahifasi: darajalar haqiqiy, darslar to'liq, sinf yaratishga havola", () => {
+    const ids = new Set(pack.levels.map((l) => l.id));
+    for (const lang of ['uz', 'ru']) {
+      const b = TEACHERS[lang];
+      const html = files[b.path.slice(1) + 'index.html'];
+      expect(b.title.length).toBeLessThanOrEqual(60);
+      expect(b.description.length).toBeLessThanOrEqual(200);
+      expect(html).toContain('href="/#/teacher"');
+      expect(html.match(/<article class="lesson">/g)).toHaveLength(b.lessons.items.length);
+      for (const x of b.lessons.items) {
+        for (const id of [...x.inClass, ...x.homework]) expect(ids.has(id), id).toBe(true);
+        // 45 daqiqa — bosqichlar yig'indisi.
+        expect(x.plan.reduce((s, [m]) => s + m, 0), x.title).toBe(45);
+        expect(x.plan.some(([, t]) => t.includes('{inClass}'))).toBe(true);
+      }
+      // uz va ru darslari bir xil darajalar bilan.
+      expect(b.lessons.items.map((x) => [x.inClass, x.homework, x.guide])).toEqual(TEACHERS.uz.lessons.items.map((x) => [x.inClass, x.homework, x.guide]));
+      expect(html).not.toMatch(/undefined|NaN|\[object|\{inClass\}/);
+      expect(html.match(/<section/g)?.length).toBe(html.match(/<\/section>/g)?.length);
+      // Daraja raqami va nomi joriy tilda: 1-daraja.
+      const first = pack.levels[0];
+      expect(html).toContain(`<span class="lvl">1. ${lang === 'uz' ? first.title : first.i18n.ru.title}</span>`);
+    }
   });
 });

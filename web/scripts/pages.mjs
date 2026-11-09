@@ -3,6 +3,7 @@
 //   /ikkilik-sanoq-sistemasi/, /ru/dvoichnaya-sistema/       — ikkilik sanoq sistemasi (+ public/guide-binary.js)
 //   /bul-algebrasi/, /ru/algebra-logiki/                     — Bul algebrasi (+ /guide-bool.js: src/boolexpr.ts + guide-bool-ui.js)
 //   /sanoq-sistemalari/, /ru/sistemy-schisleniya/            — sanoq sistemalari (+ /guide-base.js: numbase.mjs + guide-base-ui.js)
+//   /oqituvchilar/, /ru/uchitelyam/                          — o'qituvchilar uchun: sinf rejimi va dars ishlanmalari
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
 // JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
@@ -16,6 +17,7 @@ import { calcTableHtml, compareExprs, evalExpr, parseExpr, rowsOf } from '../src
 import { convert, MAX_BASE, MIN_BASE, stepsHtml, sub } from './numbase.mjs';
 import { BASE_EXAMPLES, BASES } from './pages-base.mjs';
 import { BINARY, binaryAdd, divisionSteps, EXAMPLES } from './pages-binary.mjs';
+import { TEACHERS } from './pages-teachers.mjs';
 import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
 
@@ -182,6 +184,21 @@ svg.gate text.in-label{fill:var(--text)}
 .answer strong{color:var(--on)}
 .groups td{min-width:56px}
 .base-table td:nth-child(n+2){font-family:var(--mono)}
+.features{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.features li{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.features b{display:block;margin-bottom:4px}
+.steps-list{padding-left:22px}
+.steps-list li{margin:6px 0}
+.lesson{margin:18px 0 0;padding:16px 0 0;border-top:1px solid var(--line)}
+.lesson h3{margin:0 0 4px;font-size:19px}
+.lesson .meta{margin:0 0 10px;color:var(--muted);font-size:14px}
+.lesson h4{margin:12px 0 6px;font-size:15px}
+.plan{border-collapse:collapse;width:100%;font-size:15px}
+.plan td{padding:6px 10px;border:1px solid var(--line);vertical-align:top}
+.plan td:first-child{width:72px;white-space:nowrap;font-family:var(--mono);color:var(--copper)}
+.lvl{font-family:var(--mono);font-size:14px;padding:1px 6px;border:1px solid var(--line);border-radius:6px;white-space:nowrap}
+.faq dt{font-weight:600;margin-top:10px}
+.faq dd{margin:4px 0 0;color:var(--muted)}
 ol.chapters{padding-left:22px}
 ol.chapters li{margin:6px 0}
 footer{max-width:820px;margin:0 auto;padding:16px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
@@ -197,6 +214,7 @@ const GUIDES = [
   { id: 'binary', text: BINARY, body: binaryBody },
   { id: 'bool', text: BOOL, body: boolBody },
   { id: 'bases', text: BASES, body: basesBody },
+  { id: 'teachers', text: TEACHERS, body: teachersBody },
 ];
 
 const pageOf = (g, lang) => (g.id === 'elements' ? { ...CONTENT[lang], nav: CONTENT[lang].h1 } : g.text[lang]);
@@ -608,6 +626,68 @@ ${solve(BASE_EXAMPLES.group16)}
 ${cta(c, ctx)}
 </section>
 <script src="/guide-base.js" defer></script>`,
+  };
+}
+
+function teachersBody(lang, ctx) {
+  const c = CONTENT[lang];
+  const b = TEACHERS[lang];
+  const levels = ctx.pack.levels;
+  // Daraja: raqami (xaritadagi) va nomi — joriy tilda.
+  const lvl = (id) => {
+    const i = levels.findIndex((l) => l.id === id);
+    if (i < 0) throw new Error(`teachers: noma'lum daraja ${id}`);
+    const l = levels[i];
+    const title = lang === 'uz' ? l.title : l.i18n?.[lang]?.title ?? l.title;
+    return `<span class="lvl">${i + 1}. ${esc(title)}</span>`;
+  };
+  const list = (ids) => ids.map(lvl).join(', ');
+  const guides = { elements: CONTENT[lang], bool: BOOL[lang], bases: BASES[lang], binary: BINARY[lang] };
+  const create = `<a class="btn primary" href="/#/teacher">${esc(b.create)}</a>`;
+
+  const lessons = b.lessons.items
+    .map((x) => {
+      const g = guides[x.guide];
+      const rows = x.plan
+        .map(([m, text]) => `<tr><td>${m} ${esc(b.lessons.min)}</td><td>${esc(text).replace('{inClass}', list(x.inClass))}</td></tr>`)
+        .join('');
+      return `<article class="lesson">
+<h3>${esc(x.title)}</h3>
+<p class="meta">${esc(b.lessons.grade)}: ${esc(x.grade)} · ${esc(b.lessons.minutes)} · ${esc(b.lessons.guide)}: <a href="${g.path}">${esc(g.nav ?? g.h1)}</a></p>
+<h4>${esc(b.lessons.goals)}</h4>
+<ul>${x.goals.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+<h4>${esc(b.lessons.plan)}</h4>
+<div class="scroll-x"><table class="plan"><tbody>${rows}</tbody></table></div>
+<p><b>${esc(b.lessons.homework)}:</b> ${list(x.homework)}</p>
+<p><b>${esc(b.lessons.assess)}:</b> ${esc(x.assess)}</p>
+</article>`;
+    })
+    .join('\n');
+
+  return {
+    ld: learning(lang, b.lessons.items.map((x) => x.title), ctx),
+    html: `<h1>${esc(b.h1)}</h1>
+${b.lead.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
+<div class="cta">${create}<a class="btn" href="/">${esc(c.play.replace(/^▶\s*/, ''))}</a></div>
+<section id="features">
+<h2>${esc(b.features.title)}</h2>
+<ul class="features">${b.features.items.map(([t, d]) => `<li><b>${esc(t)}</b>${esc(d)}</li>`).join('')}</ul>
+</section>
+<section id="start">
+<h2>${esc(b.start.title)}</h2>
+<ol class="steps-list">${b.start.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+<div class="cta">${create}</div>
+</section>
+<section id="lessons">
+<h2>${esc(b.lessons.title)}</h2>
+<p>${esc(b.lessons.text)}</p>
+${lessons}
+</section>
+<section id="faq">
+<h2>${esc(b.faq.title)}</h2>
+<dl class="faq">${b.faq.items.map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join('')}</dl>
+${cta(c, ctx)}
+</section>`,
   };
 }
 

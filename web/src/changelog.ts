@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.11.0',
+    date: '2026-11-09',
+    uz: [
+      "Saytda o'qituvchilar uchun sahifa: sinf rejimi qanday ishlashi va o'yin bilan o'tiladigan 3 ta tayyor dars ishlanmasi (45 daqiqa, darajalar, uy vazifasi, baholash).",
+    ],
+    ru: [
+      'Страница для учителей на сайте: как работает режим класса и 3 готовых плана урока с игрой (45 минут, уровни, домашнее задание, оценивание).',
+    ],
+  },
+  {
     version: '2.10.0',
     date: '2026-11-09',
     uz: [

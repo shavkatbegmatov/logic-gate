@@ -307,6 +307,8 @@ Sen ham yechib ko'r!`,
     enterCode: "Sinf kodi bilan qo'shilish",
     open: 'Ochish',
     teacherLink: "O'qituvchilar uchun: sinf yaratish",
+    lessons: "Tayyor dars ishlanmalari va yo'riqnoma",
+    lessonsUrl: '/oqituvchilar/',
     errors: {
       no_class: 'Bunday sinf topilmadi. Kodni tekshiring.',
       class_full: "Sinfda o'rin qolmagan (ko'pi bilan 200 o'quvchi).",
@@ -895,6 +897,8 @@ export const ru: typeof uz = {
     enterCode: 'Присоединиться по коду класса',
     open: 'Открыть',
     teacherLink: 'Для учителей: создать класс',
+    lessons: 'Готовые планы уроков и инструкция',
+    lessonsUrl: '/ru/uchitelyam/',
     errors: {
       no_class: 'Такой класс не найден. Проверьте код.',
       class_full: 'В классе нет мест (не больше 200 учеников).',
