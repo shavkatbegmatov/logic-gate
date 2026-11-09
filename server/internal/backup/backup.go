@@ -5,6 +5,7 @@ package backup
 import (
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -20,7 +21,15 @@ import (
 const (
 	prefix = "logicgate-"
 	suffix = ".db.gz"
+	tmpRaw = ".tmp-" // VACUUM INTO ning vaqtinchalik fayli
+	tmpGz  = ".tmp"  // gzip qilinayotgan nusxa: logicgate-….db.gz.tmp
 )
+
+// ErrPrune — nusxa yozildi, lekin eskilari o'chirilmadi. Nusxaning o'zi yaroqli: faqat ogohlantirish.
+var ErrPrune = errors.New("eski nusxalar o'chirilmadi")
+
+// remove — fayl o'chirish (testlarda xatoni tekshirish uchun almashtiriladi).
+var remove = os.Remove
 
 type Config struct {
 	Dir  string // nusxalar papkasi; bo'sh bo'lsa zaxira o'chirilgan
@@ -31,26 +40,45 @@ type Config struct {
 }
 
 // Once bazaning gzip qilingan nusxasini dir ga yozadi va eng yangi keep tasidan boshqasini o'chiradi.
-// Bir kunda qayta chaqirilsa, o'sha kungi nusxa yangilanadi.
+// Bir kunda qayta chaqirilsa, o'sha kungi nusxa yangilanadi. Eskilarini o'chirib bo'lmasa — nusxa yo'li
+// va ErrPrune bilan o'ralgan xato qaytadi (nusxa yozilgan).
 func Once(ctx context.Context, st *store.Store, dir string, keep int, now time.Time) (string, error) {
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return "", err
 	}
+	removeLeftovers(dir)
 	final := filepath.Join(dir, prefix+now.UTC().Format("2006-01-02")+suffix)
-	raw := filepath.Join(dir, ".tmp-"+now.UTC().Format("20060102T150405")+".db")
+	raw := filepath.Join(dir, tmpRaw+now.UTC().Format("20060102T150405")+".db")
 	os.Remove(raw)
 	defer os.Remove(raw)
 	if err := st.Backup(ctx, raw); err != nil {
 		return "", fmt.Errorf("VACUUM INTO: %w", err)
 	}
-	if err := gzipFile(raw, final+".tmp"); err != nil {
-		os.Remove(final + ".tmp")
+	if err := gzipFile(raw, final+tmpGz); err != nil {
+		os.Remove(final + tmpGz)
 		return "", err
 	}
-	if err := os.Rename(final+".tmp", final); err != nil {
+	if err := os.Rename(final+tmpGz, final); err != nil {
 		return "", err
 	}
-	return final, prune(dir, keep)
+	if err := prune(dir, keep); err != nil {
+		return final, fmt.Errorf("%w: %w", ErrPrune, err)
+	}
+	return final, nil
+}
+
+// removeLeftovers — avvalgi (yarmida uzilgan) nusxa olishdan qolgan vaqtinchalik fayllarni o'chiradi.
+func removeLeftovers(dir string) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		n := e.Name()
+		if !e.IsDir() && (strings.HasPrefix(n, tmpRaw) || (strings.HasPrefix(n, prefix) && strings.HasSuffix(n, suffix+tmpGz))) {
+			os.Remove(filepath.Join(dir, n))
+		}
+	}
 }
 
 func gzipFile(src, dst string) error {
@@ -104,7 +132,7 @@ func prune(dir string, keep int) error {
 		return err
 	}
 	for _, n := range names[:max(0, len(names)-keep)] {
-		if err := os.Remove(filepath.Join(dir, n)); err != nil {
+		if err := remove(filepath.Join(dir, n)); err != nil {
 			return err
 		}
 	}
@@ -131,20 +159,28 @@ func needsCatchUp(dir string, now time.Time) bool {
 	return err != nil || now.Sub(info.ModTime()) > 24*time.Hour
 }
 
+// scheduled — bitta rejali nusxa: Once, log va Notify. Eskilarini o'chirish xatosi faqat ogohlantirish —
+// yozilgan nusxa "olinmadi" deb hisoblanmaydi va Telegram'ga baribir yuboriladi.
+func scheduled(ctx context.Context, st *store.Store, cfg Config, log *slog.Logger, now time.Time) {
+	path, err := Once(ctx, st, cfg.Dir, cfg.Keep, now)
+	switch {
+	case errors.Is(err, ErrPrune):
+		log.Warn("zaxira nusxa olindi, lekin eskilari o'chirilmadi", "file", path, "err", err)
+	case err != nil:
+		log.Error("zaxira nusxa olinmadi", "err", err)
+		return
+	default:
+		log.Info("zaxira nusxa olindi", "file", path)
+	}
+	if cfg.Notify != nil {
+		cfg.Notify(ctx, path)
+	}
+}
+
 // Run ctx bekor qilinguncha har kuni nusxa oladi. Ishga tushganda oxirgi 24 soatda nusxa bo'lmasa,
 // bir daqiqadan keyin darhol oladi (yangi deploy'dan keyin ham himoya bo'lsin).
 func Run(ctx context.Context, st *store.Store, cfg Config, log *slog.Logger) {
-	do := func() {
-		path, err := Once(ctx, st, cfg.Dir, cfg.Keep, time.Now())
-		if err != nil {
-			log.Error("zaxira nusxa olinmadi", "err", err)
-			return
-		}
-		log.Info("zaxira nusxa olindi", "file", path)
-		if cfg.Notify != nil {
-			cfg.Notify(ctx, path)
-		}
-	}
+	do := func() { scheduled(ctx, st, cfg, log, time.Now()) }
 	if needsCatchUp(cfg.Dir, time.Now()) {
 		select {
 		case <-ctx.Done():

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Editor } from './editor';
-import { bounds, outputColumn } from './geometry';
+import { bounds, outputColumn, portPoint, wireRoute } from './geometry';
 
 const spec = { inputs: ['A', 'B'], outputs: ['Q'], gates: ['AND' as const] };
 
@@ -66,5 +66,91 @@ describe('fit', () => {
     expect(sp.x).toBeLessThan(375);
     expect(sp.y).toBeGreaterThan(60);
     expect(sp.y).toBeLessThan(560);
+  });
+
+  it("markaz pin qatoriga yaqin bo'lsa — element chiqishi pin ro'parasida (sim to'g'ri)", () => {
+    const one = { inputs: ['A'], outputs: ['Q'], gates: ['NOT' as const] };
+    const ed = new Editor();
+    ed.load(one, { gates: [], wires: [] }, outputColumn(1));
+    ed.size = { w: 800, h: 500 };
+    ed.fit();
+    ed.addGateAtCenter('NOT');
+    const g = ed.circuit.value.gates[0];
+    const lay = ed.layout.value;
+    const gates = new Map([[g.id, g]]);
+    expect(wireRoute(portPoint(g.id, gates, lay)!, portPoint('out:Q', gates, lay)!)).toHaveLength(2);
+    expect(wireRoute(portPoint('in:A', gates, lay)!, portPoint(`${g.id}:0`, gates, lay)!)).toHaveLength(2);
+  });
+});
+
+describe('tarix va tanlov', () => {
+  const three = { inputs: ['A', 'B', 'C'], outputs: ['Q'], gates: ['AND' as const, 'NOT' as const] };
+  const base = () => {
+    const ed = new Editor();
+    ed.load(
+      three,
+      {
+        gates: [
+          { id: 'g1', type: 'AND', x: 156, y: 36 },
+          { id: 'g2', type: 'NOT', x: 156, y: 156 },
+        ],
+        wires: [
+          { from: 'in:A', to: 'g1:0' },
+          { from: 'in:C', to: 'g1:1' },
+          { from: 'g1', to: 'out:Q' },
+        ],
+      },
+      outputColumn(2),
+    );
+    return ed;
+  };
+
+  it("o'chirilgan elementning porti tanlangan bo'lib qolmaydi, ko'rinmas sim yaratilmaydi", () => {
+    const ed = base();
+    ed.selection.value = { kind: 'gate', id: 'g2' };
+    ed.pending.value = 'g2';
+    ed.removeSelection();
+    expect(ed.pending.value).toBe(null);
+    // Undo/redo orqali ham: port qaytsa ham, yo'qolsa ham — tanlov eskirgan bo'lib qolmaydi.
+    ed.undo();
+    ed.pending.value = 'g2';
+    ed.redo();
+    expect(ed.pending.value).toBe(null);
+    expect(ed.connect('g2', 'g1:0')).toBe('invalid');
+    expect(ed.circuit.value.wires).toContainEqual({ from: 'in:A', to: 'g1:0' });
+  });
+
+  it("tanlangan sim joyi o'zgarsa ham o'sha simda qoladi, o'chsa — tanlov yo'qoladi", () => {
+    const ed = base();
+    ed.selection.value = { kind: 'wire', index: 2 }; // g1 → Q
+    ed.connect('in:B', 'g1:0'); // A→g1:0 o'rniga B→g1:0 (oxiriga qo'shiladi)
+    const sel = ed.selection.value;
+    expect(sel?.kind === 'wire' && ed.circuit.value.wires[sel.index]).toEqual({ from: 'g1', to: 'out:Q' });
+    ed.removeSelection();
+    expect(ed.circuit.value.wires).toContainEqual({ from: 'in:B', to: 'g1:0' });
+    expect(ed.circuit.value.wires).not.toContainEqual({ from: 'g1', to: 'out:Q' });
+  });
+
+  it("«Tartibga keltirish» kengaytirgan chiqishlar ustuni qayta ochilganda ham saqlanadi", () => {
+    const ed = new Editor();
+    // NOT→NOT→NOT zanjiri tartibga keltirilgandan keyin: oxirgi element x=336 da (outputColumn(1) = 380).
+    const chain = { gates: [{ id: 'g3', type: 'NOT' as const, x: 336, y: 12 }], wires: [] };
+    ed.load(three, chain, outputColumn(1));
+    expect(ed.outX.value).toBe(504);
+    ed.load(three, { gates: [], wires: [] }, outputColumn(1));
+    expect(ed.outX.value).toBe(380);
+  });
+
+  it("Qum qutida kirishlar kamaytirilib, keyin bekor qilinsa — spec ham qaytadi", () => {
+    const ed = base();
+    ed.setSpec({ ...three, inputs: ['A', 'B'] });
+    expect(ed.circuit.value.wires).not.toContainEqual({ from: 'in:C', to: 'g1:1' });
+    ed.undo();
+    expect(ed.spec.value.inputs).toEqual(['A', 'B', 'C']);
+    expect(ed.bits.value).toHaveLength(3);
+    expect(ed.circuit.value.wires).toContainEqual({ from: 'in:C', to: 'g1:1' });
+    ed.redo();
+    expect(ed.spec.value.inputs).toEqual(['A', 'B']);
+    expect(ed.circuit.value.wires.every((w) => w.from !== 'in:C')).toBe(true);
   });
 });

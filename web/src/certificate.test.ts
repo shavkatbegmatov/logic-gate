@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { certificateData } from './certificate';
+import { certificateData } from './certificate-data';
 import { chapterLevels, chapters, levels } from './levels';
 
 const solve = (ids: string[], stars = 3) => Object.fromEntries(ids.map((id) => [id, { stars }]));

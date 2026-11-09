@@ -13,6 +13,7 @@ export const uz = {
   save: 'Saqlash',
   retry: 'Qayta urinish',
   loading: 'Yuklanmoqda…',
+  loadFailed: "Sahifa yuklanmadi. Internetni tekshirib, qayta urinib ko'ring.",
 
   home: {
     play: "O'ynash",
@@ -607,6 +608,7 @@ export const ru: typeof uz = {
   save: 'Сохранить',
   retry: 'Повторить',
   loading: 'Загрузка…',
+  loadFailed: 'Страница не загрузилась. Проверьте интернет и попробуйте снова.',
 
   home: {
     play: 'Играть',

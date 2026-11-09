@@ -2,8 +2,8 @@
 // Bu shablon: scripts/sw.mjs build vaqtida fayllar ro'yxati va versiyani joylab, dist/sw.js ni yozadi.
 //
 // Qoidalar:
-//  - Sahifa (navigatsiya) — avval tarmoqdan, shunda yangi versiya darhol keladi; tarmoq bo'lmasa
-//    yoki juda sekin bo'lsa — keshdagi nusxa.
+//  - Sahifa (navigatsiya) — avval tarmoqdan, shunda yangi versiya darhol keladi; tarmoq bo'lmasa,
+//    juda sekin bo'lsa yoki server xato (5xx) qaytarsa — keshdagi nusxa.
 //  - Ro'yxatdagi fayllar (JS, CSS, ikonka) — keshdan; nomida xesh bor, o'zgarmaydi.
 //  - Shriftlar (.woff2) — birinchi yuklanganda keshga, keyin keshdan.
 //  - /api va boshqa hamma narsa — to'g'ridan-to'g'ri tarmoqqa (keshlanmaydi).
@@ -81,7 +81,11 @@ async function page(req) {
   const network = fetch(req);
   try {
     return await Promise.race([
-      network,
+      // Server xatosi (masalan, deploy paytida proksi 502 qaytaradi) — xato sahifasi o'rniga keshdagi o'yin.
+      network.then((res) => {
+        if (res.status >= 500) throw new Error(`server ${res.status}`);
+        return res;
+      }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), NAV_TIMEOUT)),
     ]);
   } catch {

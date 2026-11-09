@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { chapterDone, LESSONS, lessonsRead, markLessonRead, unreadLessons, type Block } from './lessons';
+import { LESSONS, type Block } from './lesson-texts';
+import { chapterDone, lessonsRead, markLessonRead, unreadLessons } from './lessons';
 import { chapterLevels, chapters } from './levels';
 import { progress } from './state';
 

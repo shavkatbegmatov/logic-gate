@@ -72,6 +72,28 @@ describe("eski manzildan ko'chish", () => {
     expect(merge('lg.settings.v1', { sound: true }, { sound: false, lang: 'ru' })).toEqual({ sound: true, lang: 'ru' });
   });
 
+  it("yangi manzilda boshqa profil bo'lsa — eski natijalar unga qayta yuboriladi", () => {
+    const old = memStore({
+      'lg.progress.v1': { b1: level(1), b2: level(5) },
+      'lg.profile.v1': { id: 'eski', nickname: 'TEST_USER', code: 'AAAA-AAAA-AAAA-AAAA' },
+    });
+    const code = moveUrl(old).split('#/import/')[1];
+    const fresh = memStore({
+      'lg.progress.v1': { b2: level(3) },
+      'lg.profile.v1': { id: 'yangi', nickname: 'TEST_USER', code: 'BBBB-BBBB-BBBB-BBBB' },
+    });
+    importData(code, fresh);
+    const d = fresh.dump();
+    expect(d['lg.profile.v1'].id).toBe('yangi');
+    // b1 — eski manzildan, joriy profil uni bilmaydi; b2 — yangi manzildagisi yaxshiroq, o'zgarmaydi.
+    expect(d['lg.progress.v1']).toEqual({ b1: { ...level(1), synced: false }, b2: level(3) });
+
+    // Profil bir xil bo'lsa — belgilar o'zgarmaydi.
+    const same = memStore({ 'lg.profile.v1': { id: 'eski', nickname: 'TEST_USER', code: 'AAAA-AAAA-AAAA-AAAA' } });
+    importData(code, same);
+    expect(same.dump()['lg.progress.v1']).toEqual({ b1: level(1), b2: level(5) });
+  });
+
   it('buzilgan kod hech narsani buzmaydi', () => {
     const store = memStore({ 'lg.progress.v1': { b1: level(1) } });
     expect(importData('!!!', store)).toBe(0);

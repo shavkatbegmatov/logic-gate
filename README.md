@@ -16,7 +16,7 @@ Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqo
 | Qatlam | Tanlov | Nega |
 |---|---|---|
 | Backend | Go + `net/http` + SQLite (`modernc.org/sqlite`, CGO'siz) | Bitta binar fayl, serverga runtime kerak emas, RAM ~15–25 MB |
-| Frontend | Vite + TypeScript + Preact + `@preact/signals`, o'yin maydoni SVG | JS gzip'da ~28 KB, hammasi statik fayllar |
+| Frontend | Vite + TypeScript + Preact + `@preact/signals`, o'yin maydoni SVG | Ochilishda JS + CSS gzip'da ~96 KB (byudjet 100 KB), hammasi statik fayllar |
 | Server | Nginx + certbot, systemd | Statik fayllar oldindan gzip qilingan, `/api` Go'ga proksi qilinadi |
 
 O'yin mantig'i to'liq brauzerda ishlaydi. Server faqat o'yinchi, progress, reyting va yechimni qayta tekshirish bilan shug'ullanadi.
@@ -33,9 +33,11 @@ O'lchov WSL2 (Ubuntu) da, production Linux binari bilan, 50 o'yinchi × 30 daraj
 | CPU bitta so'rovga | ~0,38 ms |
 | Bitta mijozdan o'tkazuvchanlik | ~2000 so'rov/s |
 | Linux binar hajmi | 11 MB |
-| Frontend JS (gzip) | 28,3 KB |
-| Frontend CSS (gzip) | 4,3 KB |
-| Butun frontend (gzip) | 32,3 KB |
+| Frontend JS (gzip), ochilishda | 84,7 KB (2.11.2; 1-versiyada 28,3 KB) |
+| Frontend CSS (gzip) | 11,1 KB |
+| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, o'qituvchi 3,9 KB, sertifikat 2,5 KB |
+
+Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi.
 
 Nginx sarfi o'lchanmagan: odatda 1 ta worker bilan 5–10 MB. systemd unit'da `MemoryHigh=64M`, `MemoryMax=96M`, `.env` da `GOMEMLIMIT=40MiB` o'rnatilgan.
 
@@ -471,7 +473,7 @@ O'yin — PWA (`public/manifest.webmanifest` + service worker). Chrome/Edge/Andr
 
 ## Oflayn rejim
 
-HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. `vite dev` da service worker yo'q.
+HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. Server 5xx qaytarsa (masalan, deploy paytida proksi 502), sahifa o'rniga keshdagi o'yin ochiladi. `vite dev` da service worker yo'q.
 
 Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'lumotlarini tozalash"ni maslahat bermang — natijalar ham o'chadi. Buning o'rniga `sw.js` ni o'zini o'chiradigan versiya bilan deploy qiling (`self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', () => self.registration.unregister());`): brauzer `sw.js` ni har ochilishda tekshiradi (`Cache-Control: no-cache`). Ishlab chiqishda: DevTools → Application → Service workers → Unregister.
 
@@ -501,7 +503,7 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | DELETE | `/api/classes/{code}/tasks/{id}` | o'qituvchi vazifani o'chiradi (kalit bilan) |
 | GET | `/healthz` | holat tekshiruvi |
 
-Cheklovlar: Go'da IP bo'yicha 10 so'rov/s (40 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (5 tagacha), noto'g'ri tiklash kodi — 5 soniyada 1 ta; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim.
+Cheklovlar (bitta maktab NAT manzili ortidagi 40 o'quvchili sinfga mo'ljallangan): Go'da IP bo'yicha 20 so'rov/s (400 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (50 tagacha birdaniga), noto'g'ri tiklash kodi yoki topilmagan sinf kodi — 5 soniyada 1 ta (10 tagacha); IPv6 manzillar /64 tarmog'i bo'yicha hisoblanadi, `X-Real-IP` faqat haqiqiy IP bo'lsa olinadi; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim. Reyting (o'rinlar bilan) 15 soniya, kunlik arxiv statistikasi 60 soniya keshlanadi.
 
 ## Xavfsizlik
 

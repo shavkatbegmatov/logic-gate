@@ -1,12 +1,16 @@
 package backup
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,6 +69,71 @@ func TestOnceAndPrune(t *testing.T) {
 	defer rs.Close()
 	if p, err := rs.PlayerByToken(ctx, []byte("hash")); err != nil || p.Nickname != "Ali" {
 		t.Fatalf("tiklangan bazada o'yinchi yo'q: %v %v", p, err)
+	}
+}
+
+func testStore(t *testing.T) *store.Store {
+	t.Helper()
+	st, err := store.Open(filepath.Join(t.TempDir(), "live.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	return st
+}
+
+// Avvalgi (yarmida uzilgan) nusxa olishdan qolgan vaqtinchalik fayllar o'chiriladi, boshqalari qoladi.
+func TestLeftoversRemoved(t *testing.T) {
+	st := testStore(t)
+	dir := t.TempDir()
+	leftovers := []string{".tmp-20261101T220000.db", "logicgate-2026-11-01.db.gz.tmp"}
+	keep := []string{"notes.txt", "logicgate-2026-11-01.db.gz"}
+	for _, n := range append(append([]string{}, leftovers...), keep...) {
+		os.WriteFile(filepath.Join(dir, n), []byte("x"), 0o600)
+	}
+	path, err := Once(t.Context(), st, dir, 7, time.Date(2026, 11, 2, 22, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, _ := os.ReadDir(dir)
+	var names []string
+	for _, e := range entries {
+		names = append(names, e.Name())
+	}
+	want := []string{"logicgate-2026-11-01.db.gz", filepath.Base(path), "notes.txt"}
+	if !slices.Equal(names, want) {
+		t.Fatalf("papkada: %v, kutilgan %v", names, want)
+	}
+}
+
+// Eskilarini o'chirish xatosi: nusxa yozilgan, xato ErrPrune; rejali nusxa ogohlantirish bilan
+// Telegram'ga (Notify) baribir yuboriladi.
+func TestPruneErrorIsWarning(t *testing.T) {
+	st := testStore(t)
+	dir := t.TempDir()
+	os.WriteFile(filepath.Join(dir, "logicgate-2026-10-01.db.gz"), []byte("x"), 0o600)
+	remove = func(string) error { return errors.New("TEST: ruxsat yo'q") }
+	t.Cleanup(func() { remove = os.Remove })
+	now := time.Date(2026, 11, 2, 22, 0, 0, 0, time.UTC)
+
+	path, err := Once(t.Context(), st, dir, 1, now)
+	if !errors.Is(err, ErrPrune) || path == "" {
+		t.Fatalf("Once: %q %v", path, err)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("nusxa yozilmagan: %v", err)
+	}
+
+	var logs bytes.Buffer
+	log := slog.New(slog.NewTextHandler(&logs, nil))
+	var notified []string
+	cfg := Config{Dir: dir, Keep: 1, Notify: func(_ context.Context, p string) { notified = append(notified, p) }}
+	scheduled(t.Context(), st, cfg, log, now.Add(24*time.Hour))
+	if len(notified) != 1 || filepath.Base(notified[0]) != "logicgate-2026-11-03.db.gz" {
+		t.Fatalf("Notify: %v", notified)
+	}
+	if out := logs.String(); !strings.Contains(out, "level=WARN") || strings.Contains(out, "level=ERROR") {
+		t.Fatalf("log: %s", out)
 	}
 }
 

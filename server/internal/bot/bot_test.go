@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -8,6 +9,8 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"mime"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -351,6 +354,89 @@ func TestSendBackupAndTokenInErrors(t *testing.T) {
 	_, err := c.GetMe(context.Background())
 	if err == nil || strings.Contains(err.Error(), testToken) || !strings.Contains(err.Error(), "***") {
 		t.Fatalf("xato matni: %v", err)
+	}
+}
+
+// SendDocument faylni xotiraga o'qimay, oqim bilan yuboradi: aniq Content-Length (chunked emas) va
+// to'g'ri multipart forma.
+func TestSendDocumentStreams(t *testing.T) {
+	content := make([]byte, 3<<20)
+	for i := range content {
+		content[i] = byte(i*7 + i>>9)
+	}
+	path := filepath.Join(t.TempDir(), "logicgate-2026-11-09.db.gz")
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	type got struct {
+		contentLength int64
+		chunked       bool
+		body          []byte
+		ctype         string
+	}
+	ch := make(chan got, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		ch <- got{r.ContentLength, len(r.TransferEncoding) > 0, b, r.Header.Get("Content-Type")}
+		w.Write([]byte(`{"ok":true,"result":{}}`))
+	}))
+	defer srv.Close()
+
+	if err := NewClient(srv.URL, testToken).SendDocument(context.Background(), 99, path, "💾 TEST <izoh>"); err != nil {
+		t.Fatal(err)
+	}
+	g := <-ch
+	if g.chunked || g.contentLength != int64(len(g.body)) || g.contentLength <= int64(len(content)) {
+		t.Fatalf("uzunlik: Content-Length=%d, tana=%d, chunked=%v", g.contentLength, len(g.body), g.chunked)
+	}
+	mt, params, err := mime.ParseMediaType(g.ctype)
+	if err != nil || mt != "multipart/form-data" {
+		t.Fatalf("Content-Type: %q %v", g.ctype, err)
+	}
+	form, err := multipart.NewReader(bytes.NewReader(g.body), params["boundary"]).ReadForm(64 << 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer form.RemoveAll()
+	if form.Value["chat_id"][0] != "99" || form.Value["caption"][0] != "💾 TEST <izoh>" {
+		t.Fatalf("maydonlar: %v", form.Value)
+	}
+	fh := form.File["document"]
+	if len(fh) != 1 || fh[0].Filename != "logicgate-2026-11-09.db.gz" {
+		t.Fatalf("fayl: %+v", fh)
+	}
+	f, _ := fh[0].Open()
+	defer f.Close()
+	if b, _ := io.ReadAll(f); !bytes.Equal(b, content) {
+		t.Fatalf("fayl mazmuni boshqacha: %d bayt", len(b))
+	}
+}
+
+// Brauzer xatosi matni tashqaridan keladi: admin xabarida havolalar bosiladigan bo'lmasin (HTML <code>,
+// ko'rinish o'chirilgan) va matndagi teglar ishlamasin.
+func TestAlertLinksNotClickable(t *testing.T) {
+	b, fake, _ := setup(t)
+	alerts := NewAlerts()
+	b.SetAlerts(alerts)
+	logger := slog.New(alerts.Wrap(slog.NewTextHandler(io.Discard, nil)))
+	logger.Error(ClientErrorMsg, "error", `<a href="https://evil.example/x">bos</a> https://evil.example/login & evil.com`)
+	b.FlushAlerts(context.Background())
+	msgs := fake.take("sendMessage")
+	if len(msgs) != 1 {
+		t.Fatalf("xabarlar: %+v", msgs)
+	}
+	p := msgs[0].Params
+	if p["parse_mode"] != "HTML" || p["link_preview_options"].(map[string]any)["is_disabled"] != true {
+		t.Fatalf("parametrlar: %v", p)
+	}
+	text := p["text"].(string)
+	start, end := strings.Index(text, "<code>"), strings.LastIndex(text, "</code>")
+	if start < 0 || end < start || strings.Count(text, "<") != 2 {
+		t.Fatalf("matn <code> ichida emas yoki teglar zararsizlantirilmagan: %q", text)
+	}
+	inside := text[start:end]
+	if !strings.Contains(inside, "https://evil.example/login &amp; evil.com") || !strings.Contains(inside, "&lt;a href=&#34;https://evil.example/x&#34;&gt;") {
+		t.Fatalf("code ichidagi matn: %q", inside)
 	}
 }
 

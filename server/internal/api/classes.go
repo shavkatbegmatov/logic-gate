@@ -157,6 +157,11 @@ func (s *Server) classFrom(w http.ResponseWriter, r *http.Request) *store.Class 
 	}
 	c, err := s.store.ClassByID(r.Context(), code)
 	if errors.Is(err, store.ErrNotFound) {
+		// Sinf kodlarini terib topishga urinishlarni sekinlashtirish (to'g'ri kod cheklovni sarflamaydi).
+		if !s.auth.allow(s.clientIP(r)) {
+			writeErr(w, http.StatusTooManyRequests, "rate_limited")
+			return nil
+		}
 		writeErr(w, http.StatusNotFound, "no_class")
 		return nil
 	}

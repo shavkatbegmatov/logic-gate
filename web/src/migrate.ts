@@ -87,25 +87,32 @@ export function moveUrl(store: Store = localStorage): string {
 type Rec = Record<string, unknown>;
 const isObj = (v: unknown): v is Rec => !!v && typeof v === 'object' && !Array.isArray(v);
 
-/** Kalit bo'yicha: elementlari kam (gates) bo'lgani yutadi. */
-function mergeBest(a: unknown, b: unknown): unknown {
-  if (!isObj(a)) return b;
+/**
+ * Kalit bo'yicha: elementlari kam (gates) bo'lgani yutadi.
+ * resync — eski manzildan kelgan g'olib natija "yuborilmagan" deb belgilanadi (boshqa profilga
+ * tegishli bo'lgani uchun joriy profilga ham yuborilishi kerak).
+ */
+function mergeBest(a: unknown, b: unknown, resync = false): unknown {
+  const mark = (v: unknown) => (resync && isObj(v) && 'synced' in v ? { ...v, synced: false } : v);
   if (!isObj(b)) return a;
+  if (!isObj(a)) return resync ? Object.fromEntries(Object.entries(b).map(([k, v]) => [k, mark(v)])) : b;
   const out: Rec = { ...a };
   for (const [k, v] of Object.entries(b)) {
     const cur = out[k] as { gates?: number } | undefined;
     const inc = v as { gates?: number };
-    if (!cur || (typeof inc?.gates === 'number' && inc.gates < (cur.gates ?? Infinity))) out[k] = v;
+    if (!cur || (typeof inc?.gates === 'number' && inc.gates < (cur.gates ?? Infinity))) out[k] = mark(v);
   }
   return out;
 }
 
-export function merge(key: string, mine: unknown, theirs: unknown): unknown {
+/** resync — yangi manzilda boshqa profil bor: eski manzil natijalari unga yuborilishi kerak. */
+export function merge(key: string, mine: unknown, theirs: unknown, resync = false): unknown {
+  if (key === 'lg.progress.v1' || key === 'lg.daily.v1') {
+    if (mine === null || mine === undefined) return resync ? mergeBest({}, theirs, true) : theirs;
+    return mergeBest(mine, theirs, resync);
+  }
   if (mine === null || mine === undefined) return theirs;
   switch (key) {
-    case 'lg.progress.v1':
-    case 'lg.daily.v1':
-      return mergeBest(mine, theirs);
     case 'lg.custom.v1': {
       const a = (isObj(mine) ? mine : {}) as { solved?: Rec; created?: number };
       const b = (isObj(theirs) ? theirs : {}) as { solved?: Rec; created?: number };
@@ -140,16 +147,23 @@ export function importData(code: string, store: Store = localStorage): number {
     return 0;
   }
   if (!isObj(data)) return 0;
+  const read = (key: string): unknown => {
+    try {
+      return JSON.parse(store.getItem(key) ?? 'null');
+    } catch {
+      return null; // Buzilgan — ustiga yoziladi.
+    }
+  };
+  // Yangi manzilda o'z profili qoladi. Eski manzildagi natijalar boshqa profilda (yoki profilsiz) bo'lsa,
+  // ular "yuborilgan" belgisi bilan kelib, joriy profilga hech qachon yuborilmay qolardi.
+  const mineProfile = read('lg.profile.v1');
+  const theirsProfile = data['lg.profile.v1'];
+  const resync = isObj(mineProfile) && (!isObj(theirsProfile) || theirsProfile.id !== mineProfile.id);
   let n = 0;
   for (const [key, theirs] of Object.entries(data)) {
     if (!key.startsWith(PREFIX)) continue;
-    let mine: unknown = null;
-    try {
-      mine = JSON.parse(store.getItem(key) ?? 'null');
-    } catch {
-      // Buzilgan — ustiga yoziladi.
-    }
-    const next = merge(key, mine, theirs);
+    const mine = read(key);
+    const next = merge(key, mine, theirs, resync);
     if (next === mine) continue;
     try {
       store.setItem(key, JSON.stringify(next));

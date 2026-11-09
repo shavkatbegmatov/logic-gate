@@ -71,7 +71,10 @@ func main() {
 				dest = os.Args[2]
 			}
 			path, err := backupNow(dbPath, dest, backupConfig())
-			if err != nil {
+			if errors.Is(err, backup.ErrPrune) {
+				// Nusxa yozilgan — eskilarini o'chirib bo'lmagani faqat ogohlantirish.
+				log.Warn("zaxira nusxa", "err", err)
+			} else if err != nil {
 				log.Error("zaxira nusxa", "err", err)
 				os.Exit(1)
 			}

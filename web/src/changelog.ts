@@ -18,6 +18,24 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.11.2',
+    date: '2026-11-09',
+    uz: [
+      "Sinfda bir vaqtda 40 tagacha o'quvchi profil ochib o'ynay oladi — maktab Wi-Fi'ida ham «juda ko'p so'rov» xatosi chiqmaydi.",
+      "Telefonda: elementlar palitrasini barmoq bilan surish mumkin (NOR, XNOR, D-trigger ham ko'rinadi), kirish tumbleri bosilganda sim boshlanib ketmaydi.",
+      "Muharrir: o'chirilgan element simni buzmaydi, tanlangan sim boshqasiga sakramaydi, Qum qutida «bekor qilish» kirishlar sonini ham qaytaradi, «Tartibga keltirish» joylashi qayta ochilganda saqlanadi.",
+      "Natijalar ikki tabda o'ynalganda yo'qolmaydi, serverga yuborilmay qolgan natijalar bitta xato tufayli to'xtab qolmaydi.",
+      "O'yin tezroq ochiladi: kam ishlatiladigan sahifalar kerak bo'lganda yuklanadi.",
+    ],
+    ru: [
+      'В классе одновременно до 40 учеников могут создать профиль и играть — даже через школьный Wi-Fi ошибка «слишком много запросов» не появляется.',
+      'На телефоне: палитру элементов можно листать пальцем (видны и NOR, XNOR, D-триггер), нажатие на переключатель входа больше не начинает провод.',
+      'Редактор: удалённый элемент не портит провода, выбранный провод не перескакивает на другой, в Песочнице «отменить» возвращает и число входов, расстановка «Упорядочить» сохраняется после повторного открытия.',
+      'Результаты не теряются при игре в двух вкладках, а неотправленные результаты не застревают из-за одной ошибки.',
+      'Игра открывается быстрее: редкие страницы загружаются, когда нужны.',
+    ],
+  },
+  {
     version: '2.11.1',
     date: '2026-11-09',
     uz: [

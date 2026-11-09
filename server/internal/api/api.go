@@ -41,9 +41,16 @@ type Server struct {
 	reports *limiter
 	cerr    clientErrors
 
-	lbMu   sync.Mutex
-	lbAt   time.Time
-	lbData []store.Entry
+	lbMu    sync.Mutex
+	lbAt    time.Time
+	lbData  []store.Entry          // reytingning yuqori qismi (leaderboardSize)
+	lbRanks map[string]store.Entry // reytingdagi har bir o'yinchi: id → o'rni (lbData bilan birga tozalanadi)
+
+	// Kunlik arxivning umumiy qismi (o'yinchi natijalarisiz): archDay kuni uchun, archiveCacheTTL davomida.
+	archMu   sync.Mutex
+	archDay  int
+	archAt   time.Time
+	archData []archiveDayJSON
 }
 
 // Options — muhitga bog'liq sozlamalar.
@@ -64,14 +71,19 @@ func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logg
 		now = time.Now
 	}
 	return &Server{
-		store:  st,
-		pack:   pack,
-		daily:  daily,
-		now:    now,
-		log:    log,
-		opts:   opts,
-		api:    newLimiter(10, 40),
-		signup: newLimiter(1.0/30, 5),
+		store: st,
+		pack:  pack,
+		daily: daily,
+		now:   now,
+		log:   log,
+		opts:  opts,
+		// Sinf rejimi: 25–40 o'quvchi bitta maktab NAT manzilidan keladi. Bir qurilma ilovani ochib, profil
+		// yaratib, sinfga qo'shilguncha ~10 ta so'rov yuboradi (progress, sinf, a'zolik, vazifalar, kunlik
+		// masala...) — 40 qurilmaga 400 ta birdaniga; keyin o'yin davomida soniyasiga 20 ta (qurilmaga ~0.5).
+		api: newLimiter(20, 400),
+		// Bir IP dan: butun sinf (40 + zaxira) birdaniga, keyin 30 soniyada bitta — keyingi darsdagi sinfgacha
+		// (~20 daqiqada) yana to'ladi.
+		signup: newLimiter(1.0/30, 50),
 		auth:   newLimiter(0.2, 10),
 		// Bir IP dan: 5 tagacha birdaniga, keyin 2 daqiqada bitta sinf.
 		classes: newLimiter(1.0/120, 5),
@@ -117,19 +129,24 @@ func (s *Server) Handler() http.Handler {
 	return s.limit(mux)
 }
 
-// clientIP: proksi (Nginx yoki Traefik) qo'ygan X-Real-IP faqat ishonchli manzildan kelsa olinadi —
-// lokal manzil, TrustPrivateProxies yoqilgan bo'lsa esa xususiy tarmoq (Docker) manzillari ham.
+// clientIP — so'rovlar cheklovi kaliti (ipKey: IPv6 — /64 tarmoq). Proksi (Nginx yoki Traefik) qo'ygan
+// X-Real-IP faqat ishonchli manzildan kelsa va haqiqatan IP bo'lsa olinadi — lokal manzil,
+// TrustPrivateProxies yoqilgan bo'lsa esa xususiy tarmoq (Docker) manzillari ham.
 func (s *Server) clientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		host = r.RemoteAddr
 	}
-	if ip := net.ParseIP(host); ip != nil && (ip.IsLoopback() || (s.opts.TrustPrivateProxies && ip.IsPrivate())) {
-		if real := strings.TrimSpace(r.Header.Get("X-Real-IP")); real != "" {
-			return real
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return host
+	}
+	if ip.IsLoopback() || (s.opts.TrustPrivateProxies && ip.IsPrivate()) {
+		if real := net.ParseIP(strings.TrimSpace(r.Header.Get("X-Real-IP"))); real != nil {
+			ip = real
 		}
 	}
-	return host
+	return ipKey(ip)
 }
 
 func (s *Server) limit(next http.Handler) http.Handler {
@@ -181,6 +198,8 @@ func (s *Server) authed(h http.HandlerFunc) http.HandlerFunc {
 func playerFrom(r *http.Request) *store.Player { return r.Context().Value(ctxKey{}).(*store.Player) }
 
 // optionalPlayer — token ixtiyoriy bo'lgan so'rovlar uchun: noto'g'ri yoki yo'q bo'lsa nil.
+// Javobdagi me/member maydonlari kod to'g'riligini bildirmasin: topilmagan kod auth cheklovini sarflaydi,
+// u tugagan IP dan esa kod umuman tekshirilmaydi (nil).
 func (s *Server) optionalPlayer(r *http.Request) *store.Player {
 	token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
 	if !ok {
@@ -190,7 +209,14 @@ func (s *Server) optionalPlayer(r *http.Request) *store.Player {
 	if code == "" {
 		return nil
 	}
+	ip := s.clientIP(r)
+	if s.auth.blocked(ip) {
+		return nil
+	}
 	p, err := s.store.PlayerByToken(r.Context(), hashCode(code))
+	if errors.Is(err, store.ErrNotFound) {
+		s.auth.allow(ip)
+	}
 	if err != nil {
 		return nil
 	}
@@ -270,11 +296,14 @@ func (s *Server) patchMe(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := s.store.SetNickname(r.Context(), p.ID, nick); err != nil {
-		s.internal(w, err)
-		return
+	// Taxallus o'zgarmagan bo'lsa — yozish ham, reyting keshini tozalash ham kerak emas.
+	if nick != p.Nickname {
+		if err := s.store.SetNickname(r.Context(), p.ID, nick); err != nil {
+			s.internal(w, err)
+			return
+		}
+		s.dropLeaderboardCache()
 	}
-	s.dropLeaderboardCache()
 	writeJSON(w, http.StatusOK, playerJSON{ID: p.ID, Nickname: nick, CreatedAt: p.CreatedAt.Unix()})
 }
 
@@ -418,36 +447,43 @@ type entryJSON struct {
 
 func (s *Server) dropLeaderboardCache() {
 	s.lbMu.Lock()
-	s.lbData = nil
+	s.lbData, s.lbRanks = nil, nil
 	s.lbMu.Unlock()
 }
 
-func (s *Server) cachedLeaderboard(ctx context.Context) ([]store.Entry, error) {
+// cachedLeaderboard — reytingning yuqori qismi va har bir o'yinchining o'rni. Ikkalasi bitta hisoblashdan
+// olinadi va leaderboardCache davomida qayta ishlatiladi: bitta SQLite ulanishida har so'rov barcha
+// yechimlarni qayta yig'masin.
+func (s *Server) cachedLeaderboard(ctx context.Context) ([]store.Entry, map[string]store.Entry, error) {
 	s.lbMu.Lock()
 	defer s.lbMu.Unlock()
 	if s.lbData != nil && time.Since(s.lbAt) < leaderboardCache {
-		return s.lbData, nil
+		return s.lbData, s.lbRanks, nil
 	}
-	data, err := s.store.Leaderboard(ctx, leaderboardSize)
+	all, err := s.store.Ranking(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	if data == nil {
-		data = []store.Entry{}
+	ranks := make(map[string]store.Entry, len(all))
+	for _, e := range all {
+		ranks[e.PlayerID] = e
 	}
-	s.lbData, s.lbAt = data, time.Now()
-	return data, nil
+	// Nusxa: to'liq ro'yxat xotirada qolmasin (o'rinlar xaritada bor).
+	top := append([]store.Entry{}, all[:min(len(all), leaderboardSize)]...)
+	s.lbData, s.lbRanks, s.lbAt = top, ranks, time.Now()
+	return top, ranks, nil
 }
 
 func (s *Server) leaderboard(w http.ResponseWriter, r *http.Request) {
-	top, err := s.cachedLeaderboard(r.Context())
+	top, ranks, err := s.cachedLeaderboard(r.Context())
 	if err != nil {
 		s.internal(w, err)
 		return
 	}
 	// Token ixtiyoriy: bo'lsa, o'yinchining o'rni ham qaytariladi.
+	p := s.optionalPlayer(r)
 	var meID string
-	if p := s.optionalPlayer(r); p != nil {
+	if p != nil {
 		meID = p.ID
 	}
 	out := make([]entryJSON, 0, len(top))
@@ -455,12 +491,11 @@ func (s *Server) leaderboard(w http.ResponseWriter, r *http.Request) {
 		out = append(out, entryJSON{Rank: e.Rank, Nickname: e.Nickname, Stars: e.Stars, Solved: e.Solved, Gates: e.Gates, Me: e.PlayerID == meID})
 	}
 	resp := map[string]any{"top": out, "me": nil}
-	if meID != "" {
-		if e, err := s.store.Rank(r.Context(), meID); err == nil {
-			resp["me"] = entryJSON{Rank: e.Rank, Nickname: e.Nickname, Stars: e.Stars, Solved: e.Solved, Gates: e.Gates, Me: true}
-		} else if !errors.Is(err, store.ErrNotFound) {
-			s.internal(w, err)
-			return
+	// Keshdagi reytingda yo'q o'yinchi hali hech narsa yechmagan (yaxshilangan har bir yechim keshni
+	// tozalaydi) — avvalgidek me: null. Taxallus — o'yinchining hozirgisi.
+	if p != nil {
+		if e, ok := ranks[p.ID]; ok {
+			resp["me"] = entryJSON{Rank: e.Rank, Nickname: p.Nickname, Stars: e.Stars, Solved: e.Solved, Gates: e.Gates, Me: true}
 		}
 	}
 	writeJSON(w, http.StatusOK, resp)

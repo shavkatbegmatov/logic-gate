@@ -25,3 +25,15 @@ function walk(dir) {
 
 walk(dist);
 console.log(`gzip: ${(raw / 1024).toFixed(1)} KB → ${(packed / 1024).toFixed(1)} KB`);
+
+// Byudjet (PLAN.md): o'yin ochilishida yuklanadigan JS + CSS — gzip'da 100 KB gacha. Kam ochiladigan
+// ekranlar alohida bo'lakda (src/components/lazy.tsx); bosh bundle o'sib ketsa, build to'xtaydi.
+const BUDGET = 100 * 1024;
+const html = readFileSync(join(dist, 'index.html'), 'utf8');
+const initial = [...html.matchAll(/(?:src|href)="\/(assets\/[\w.-]+\.(?:js|css))"/g)].map((m) => m[1]);
+const size = initial.reduce((sum, p) => sum + gzipSync(readFileSync(join(dist, p)), { level: 9 }).length, 0);
+console.log(`bosh yuklama: ${(size / 1024).toFixed(1)} KB (byudjet ${BUDGET / 1024} KB): ${initial.join(', ')}`);
+if (!initial.length || size > BUDGET) {
+  console.error('Bosh bundle byudjetdan oshdi — yangi og\'ir ekranni lazy() bilan alohida yuklang.');
+  process.exit(1);
+}

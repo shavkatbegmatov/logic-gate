@@ -10,9 +10,11 @@ import {
   gateIdNumber,
   isSourcePort,
   layout,
+  outputColumnFor,
   snap,
   type Layout,
 } from './geometry';
+import { outputY } from './shapes';
 
 export type Selection = { kind: 'gate'; id: string } | { kind: 'wire'; index: number } | null;
 
@@ -22,7 +24,14 @@ export interface View {
   s: number;
 }
 
-export type ConnectResult = 'ok' | 'same' | 'cycle' | 'kind';
+/** invalid — portlardan biri sxemada yo'q (masalan, element o'chirilgan). */
+export type ConnectResult = 'ok' | 'same' | 'cycle' | 'kind' | 'invalid';
+
+/** Tarix qadami: sxema va kirish/chiqishlar to'plami (Qum qutida u ham o'zgaradi). */
+interface Snapshot {
+  circuit: Circuit;
+  spec: Spec;
+}
 
 const MAX_HISTORY = 100;
 /** Taktlar tarixi chegarasi (holat har o'zgarishda shu tarixdan qayta hisoblanadi). */
@@ -91,14 +100,15 @@ export class Editor {
   viewTouched = false;
   onChange: ((c: Circuit) => void) | null = null;
 
-  private past: Circuit[] = [];
-  private future: Circuit[] = [];
+  private past: Snapshot[] = [];
+  private future: Snapshot[] = [];
   private dragStart: Circuit | null = null;
 
+  /** outX — chiqishlar ustuni (kamida); saqlangan sxema kengroq bo'lsa, unga moslanadi. */
   load(spec: Spec, circuit: Circuit, outX: number) {
     this.spec.value = spec;
-    this.outX.value = outX;
     this.circuit.value = sanitize(spec, circuit);
+    this.outX.value = outputColumnFor(outX, this.circuit.value);
     this.bits.value = spec.inputs.map(() => 0);
     this.history.value = [];
     this.selection.value = null;
@@ -110,12 +120,9 @@ export class Editor {
     this.viewTouched = false;
   }
 
-  /** Qum qutida kirish/chiqishlar sonini o'zgartirish. */
+  /** Qum qutida kirish/chiqishlar sonini o'zgartirish ("bekor qilish" spec'ni ham qaytaradi). */
   setSpec(spec: Spec) {
-    this.spec.value = spec;
-    this.bits.value = spec.inputs.map((_, k) => this.bits.value[k] ?? 0);
-    this.history.value = [];
-    this.commit(sanitize(spec, this.circuit.value));
+    this.commit(sanitize(spec, this.circuit.value), spec);
   }
 
   private syncHistory() {
@@ -123,11 +130,55 @@ export class Editor {
     this.canRedo.value = this.future.length > 0;
   }
 
-  private commit(next: Circuit) {
-    this.past.push(this.circuit.value);
+  private snapshot(): Snapshot {
+    return { circuit: this.circuit.value, spec: this.spec.value };
+  }
+
+  /**
+   * Sxema (va kerak bo'lsa spec) ni o'rnatadi. Tanlov va "ulash" rejimidagi port yangi sxemada
+   * ham bo'lsagina qoladi: o'chirilgan elementning porti tanlangan bo'lib qolsa, keyingi bosish
+   * ko'rinmaydigan sim yaratib, haqiqiy simni almashtirib yuborardi.
+   */
+  private apply(next: Circuit, spec: Spec) {
+    const prev = this.circuit.value;
+    if (spec !== this.spec.value) {
+      this.spec.value = spec;
+      this.bits.value = spec.inputs.map((_, k) => this.bits.value[k] ?? 0);
+      this.history.value = [];
+    }
+    this.circuit.value = next;
+    // Sim tartib raqami bilan tanlanadi — sim o'chsa yoki joyi o'zgarsa, tanlov o'sha simga ergashadi.
+    const sel = this.selection.value;
+    if (sel?.kind === 'wire') {
+      const w = prev.wires[sel.index];
+      const index = w ? next.wires.findIndex((x) => x.from === w.from && x.to === w.to) : -1;
+      this.selection.value = index < 0 ? null : index === sel.index ? sel : { kind: 'wire', index };
+    } else if (sel?.kind === 'gate' && !next.gates.some((g) => g.id === sel.id)) {
+      this.selection.value = null;
+    }
+    const pend = this.pending.value;
+    if (pend && !this.hasPort(pend)) this.pending.value = null;
+  }
+
+  /** Port joriy sxemada va spec'da bormi. */
+  hasPort(p: string): boolean {
+    const spec = this.spec.value;
+    if (p.startsWith('in:')) return spec.inputs.includes(p.slice(3));
+    if (p.startsWith('out:')) return spec.outputs.includes(p.slice(4));
+    const i = p.lastIndexOf(':');
+    const id = i < 0 ? p : p.slice(0, i);
+    const g = this.circuit.value.gates.find((g) => g.id === id);
+    if (!g) return false;
+    if (i < 0) return true;
+    const k = Number(p.slice(i + 1));
+    return Number.isInteger(k) && k >= 0 && k < GATE_ARITY[g.type];
+  }
+
+  private commit(next: Circuit, spec = this.spec.value) {
+    this.past.push(this.snapshot());
     if (this.past.length > MAX_HISTORY) this.past.shift();
     this.future = [];
-    this.circuit.value = next;
+    this.apply(next, spec);
     this.highlight.value = null;
     this.syncHistory();
     this.onChange?.(next);
@@ -136,21 +187,23 @@ export class Editor {
   undo() {
     const prev = this.past.pop();
     if (!prev) return;
-    this.future.push(this.circuit.value);
-    this.circuit.value = prev;
+    this.future.push(this.snapshot());
     this.selection.value = null;
+    this.apply(prev.circuit, prev.spec);
+    this.highlight.value = null;
     this.syncHistory();
-    this.onChange?.(prev);
+    this.onChange?.(prev.circuit);
   }
 
   redo() {
     const next = this.future.pop();
     if (!next) return;
-    this.past.push(this.circuit.value);
-    this.circuit.value = next;
+    this.past.push(this.snapshot());
     this.selection.value = null;
+    this.apply(next.circuit, next.spec);
+    this.highlight.value = null;
     this.syncHistory();
-    this.onChange?.(next);
+    this.onChange?.(next.circuit);
   }
 
   /**
@@ -160,18 +213,15 @@ export class Editor {
   replace(circuit: Circuit, spec?: Spec) {
     this.selection.value = null;
     this.pending.value = null;
-    if (spec) {
-      this.spec.value = spec;
-      this.bits.value = spec.inputs.map((_, k) => this.bits.value[k] ?? 0);
-      this.history.value = [];
-    }
-    this.commit(sanitize(this.spec.value, circuit));
+    const s = spec ?? this.spec.value;
+    this.commit(sanitize(s, circuit), s);
   }
 
   clear() {
     if (!this.circuit.value.gates.length && !this.circuit.value.wires.length) return;
-    this.commit({ gates: [], wires: [] });
     this.selection.value = null;
+    this.pending.value = null;
+    this.commit({ gates: [], wires: [] });
   }
 
   private nextId(): string {
@@ -221,10 +271,21 @@ export class Editor {
     return gate.id;
   }
 
-  /** Ekrandagi ko'rinish markaziga element qo'shish. */
+  /**
+   * Ekrandagi ko'rinish markaziga element qo'shish. Markaz biror pin qatoriga yaqin bo'lsa, element
+   * o'sha qatorga qo'yiladi: chiqishi (va NOT/DFF da kirishi ham) pin ro'parasida — sim to'g'ri chiziq.
+   */
   addGateAtCenter(type: GateType) {
     const c = this.toWorld(this.size.w / 2, (this.size.h + this.insetTop) / 2);
-    this.addGate(type, c.x, c.y);
+    const lay = this.layout.value;
+    let near: number | null = null;
+    for (const p of [...lay.outputs.values(), ...lay.inputs.values()]) {
+      const d = Math.abs(p.y - c.y);
+      if (d < GATE_H && (near === null || d < Math.abs(near - c.y))) near = p.y;
+    }
+    // Element markazi (cy) dan freeSpot y = snap(cy - GATE_H/2) ni oladi; chiqish shundan outputY pastda.
+    const cy = near === null ? c.y : near - outputY(type) + GATE_H / 2;
+    this.addGate(type, c.x, cy);
   }
 
   /** Ekran (board ichidagi px) → dunyo koordinatasi. */
@@ -263,6 +324,7 @@ export class Editor {
 
   /** Ikki portni ulaydi (tartib ahamiyatsiz). Band kirish bo'lsa, eski sim almashtiriladi. */
   connect(a: string, b: string): ConnectResult {
+    if (!this.hasPort(a) || !this.hasPort(b)) return 'invalid';
     const aSrc = isSourcePort(a);
     if (aSrc === isSourcePort(b)) return a === b ? 'same' : 'kind';
     const [from, to] = aSrc ? [a, b] : [b, a];
@@ -289,6 +351,7 @@ export class Editor {
       this.commit({ ...c, wires: c.wires.filter((_, i) => i !== sel.index) });
     }
     this.selection.value = null;
+    this.pending.value = null;
     sfx.remove();
   }
 

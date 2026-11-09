@@ -2,7 +2,7 @@ import { states } from '../achievements';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
-import { CertificateCard } from './CertificateScreen';
+import { CertificateCard } from '../components/CertificateCard';
 
 export function Achievements() {
   const list = states.value;

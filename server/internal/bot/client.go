@@ -196,11 +196,23 @@ func (c *Client) GetUpdates(ctx context.Context, offset int64, timeout int) ([]U
 }
 
 func (c *Client) SendMessage(ctx context.Context, chatID int64, text string, kb *Keyboard) (Message, error) {
+	return c.send(ctx, chatID, text, kb, "")
+}
+
+// SendHTML — parse_mode HTML bilan xabar: text ichidagi tashqi matn html.EscapeString bilan berilishi kerak.
+func (c *Client) SendHTML(ctx context.Context, chatID int64, text string) (Message, error) {
+	return c.send(ctx, chatID, text, nil, "HTML")
+}
+
+func (c *Client) send(ctx context.Context, chatID int64, text string, kb *Keyboard, parseMode string) (Message, error) {
 	params := map[string]any{
 		"chat_id": chatID, "text": text, "link_preview_options": map[string]bool{"is_disabled": true},
 	}
 	if kb != nil {
 		params["reply_markup"] = kb
+	}
+	if parseMode != "" {
+		params["parse_mode"] = parseMode
 	}
 	var m Message
 	return m, c.call(ctx, "sendMessage", params, &m)
@@ -224,31 +236,38 @@ func (c *Client) SetMyCommands(ctx context.Context, cmds []Command, lang string)
 	return c.call(ctx, "setMyCommands", params, nil)
 }
 
-// SendDocument faylni yuboradi (multipart). Bot API chegarasi — 50 MB.
+// SendDocument faylni yuboradi (multipart). Bot API chegarasi — 50 MB. Fayl xotiraga o'qilmaydi:
+// multipart boshi (maydonlar, fayl sarlavhasi) va oxiri kichik buferlarda, fayl esa ular orasida oqim
+// bilan uzatiladi; uzunlik oldindan aniq (Content-Length, chunked emas).
 func (c *Client) SendDocument(ctx context.Context, chatID int64, path, caption string) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	var body bytes.Buffer
-	w := multipart.NewWriter(&body)
-	w.WriteField("chat_id", fmt.Sprint(chatID))
-	w.WriteField("caption", caption)
-	part, err := w.CreateFormFile("document", filepath.Base(path))
+	info, err := f.Stat()
 	if err != nil {
 		return err
 	}
-	if _, err := io.Copy(part, f); err != nil {
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	w.WriteField("chat_id", fmt.Sprint(chatID))
+	w.WriteField("caption", caption)
+	if _, err := w.CreateFormFile("document", filepath.Base(path)); err != nil {
 		return err
 	}
+	headLen := buf.Len()
+	// Close oxirgi chegarani yozadi — fayl mazmuni boshi va shu oxiri orasiga tushadi.
 	if err := w.Close(); err != nil {
 		return err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint("sendDocument"), &body)
+	head, tail := buf.Bytes()[:headLen], buf.Bytes()[headLen:]
+	body := io.MultiReader(bytes.NewReader(head), f, bytes.NewReader(tail))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint("sendDocument"), body)
 	if err != nil {
 		return c.clean(err)
 	}
+	req.ContentLength = int64(len(head)) + info.Size() + int64(len(tail))
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	return c.do(req, "sendDocument", nil)
 }

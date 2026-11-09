@@ -1,4 +1,5 @@
 # main ga push qilinganda: testlar → Docker image → ghcr.io → (ixtiyoriy) Coolify'da qayta joylash.
+# Pull request'da faqat testlar va build (image yig'ilmaydi, hech narsa joylanmaydi).
 #
 # Coolify avtomatik yangilanishi uchun repozitoriy Secrets'iga qo'shing:
 #   COOLIFY_WEBHOOK — Coolify ilovasi → Webhooks → Deploy Webhook URL
@@ -8,6 +9,7 @@ name: Docker image
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -39,6 +41,7 @@ jobs:
 
   image:
     needs: test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

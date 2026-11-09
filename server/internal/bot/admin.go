@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"html"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -166,19 +167,21 @@ func (b *Bot) FlushAlerts(ctx context.Context) {
 		return
 	}
 	text := alertText(n, last, cn, clast)
-	if _, err := b.tg.SendMessage(ctx, b.cfg.Admin, text, nil); err != nil {
+	if _, err := b.tg.SendHTML(ctx, b.cfg.Admin, text); err != nil {
 		b.log.Warn("telegram ogohlantirish yuborilmadi", "err", err)
 	}
 }
 
-// alertText — ogohlantirish matni: server xatolari birinchi, brauzer xatolari alohida qatorda.
+// alertText — ogohlantirish matni (HTML): server xatolari birinchi, brauzer xatolari alohida qatorda.
+// Xato matni (brauzer xatolarida — tashqaridan keladi) <code> ichida: undagi havolalar bosiladigan
+// bo'lmaydi, oldindan ko'rinishi ham o'chirilgan (send).
 func alertText(n int, last string, cn int, clast string) string {
 	var parts []string
 	if n > 0 {
-		parts = append(parts, fmt.Sprintf("⚠️ Logic Gate serverida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: %s", n, last))
+		parts = append(parts, fmt.Sprintf("⚠️ Logic Gate serverida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: <code>%s</code>", n, html.EscapeString(last)))
 	}
 	if cn > 0 {
-		parts = append(parts, fmt.Sprintf("🌐 O'yinchilar brauzerida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: %s", cn, clast))
+		parts = append(parts, fmt.Sprintf("🌐 O'yinchilar brauzerida %d ta xato (oxirgi 10 daqiqada).\nOxirgisi: <code>%s</code>", cn, html.EscapeString(clast)))
 	}
 	return strings.Join(parts, "\n\n")
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net"
 	"sync"
 	"time"
 )
@@ -47,6 +48,17 @@ func (l *limiter) allow(key string) bool {
 	return true
 }
 
+// blocked — token sarflamasdan tekshiradi: shu kalit uchun hozir bitta ham token qolmaganmi.
+func (l *limiter) blocked(key string) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	b, ok := l.buckets[key]
+	if !ok {
+		return false
+	}
+	return min(l.burst, b.tokens+time.Since(b.last).Seconds()*l.rate) < 1
+}
+
 func (l *limiter) gc(now time.Time) {
 	l.lastGC = now
 	full := time.Duration(l.burst / l.rate * float64(time.Second))
@@ -58,4 +70,13 @@ func (l *limiter) gc(now time.Time) {
 	if len(l.buckets) > maxBuckets {
 		l.buckets = make(map[string]*bucket)
 	}
+}
+
+// ipKey — cheklov kaliti: IPv4 o'zi, IPv6 esa /64 tarmog'i. Odatda bitta abonentga butun /64 beriladi —
+// uning ichida manzilni almashtirib, har safar yangi (to'la) bucket olib bo'lmasin.
+func ipKey(ip net.IP) string {
+	if v4 := ip.To4(); v4 != nil {
+		return v4.String()
+	}
+	return (&net.IPNet{IP: ip.Mask(net.CIDRMask(64, 128)), Mask: net.CIDRMask(64, 128)}).String()
 }

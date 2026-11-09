@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -142,6 +144,10 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		s.internal(w, err)
 		return
 	}
+	// Kechagi masala arxivda: uning statistikasi o'zgardi.
+	if improved && day < today {
+		s.dropArchiveCache()
+	}
 	solvers, bestGates, err := s.store.DailyStats(r.Context(), day)
 	if err != nil {
 		s.internal(w, err)
@@ -203,42 +209,73 @@ type archiveDayJSON struct {
 	Open      bool               `json:"open,omitempty"`
 }
 
+// archiveCacheTTL — arxivning umumiy qismi (statistika) shuncha vaqt qayta hisoblanmaydi.
+const archiveCacheTTL = 60 * time.Second
+
 // dailyArchive — o'tgan kunlar ro'yxati (yangisi birinchi): masala turi, statistika va o'yinchi natijasi.
+// Statistika hamma uchun bir xil — keshdan; o'yinchining o'z natijalari esa har safar alohida olinadi.
 func (s *Server) dailyArchive(w http.ResponseWriter, r *http.Request) {
 	today := s.today()
 	from := max(s.daily.FirstDay(), today-archiveDays)
 	to := today - 1
 	days := []archiveDayJSON{}
 	if from <= to {
-		stats, err := s.store.DailyStatsRange(r.Context(), from, to)
-		if err != nil {
+		var err error
+		if days, err = s.archiveDays(r.Context(), today, from, to); err != nil {
 			s.internal(w, err)
 			return
 		}
-		mine := map[int]store.Solution{}
 		if me := s.optionalPlayer(r); me != nil {
-			if mine, err = s.store.PlayerDailies(r.Context(), me.ID, from, to); err != nil {
+			mine, err := s.store.PlayerDailies(r.Context(), me.ID, from, to)
+			if err != nil {
 				s.internal(w, err)
 				return
 			}
-		}
-		for day := to; day >= from; day-- {
-			p, ok := s.daily.For(day)
-			if !ok {
-				continue
+			if len(mine) > 0 {
+				days = slices.Clone(days) // keshdagi ro'yxat o'zgarmasin
+				for i := range days {
+					if m, ok := mine[days[i].Day]; ok {
+						days[i].Me = &archiveResultJSON{Gates: m.Gates, Stars: m.Stars}
+					}
+				}
 			}
-			d := archiveDayJSON{
-				Day: day, Number: s.daily.Number(day), Date: levels.DayStart(day).Format(time.DateOnly),
-				Tier: p.Tier, Seq: p.Seq != nil, Goal: p.Goal,
-				Solvers: stats[day].Solvers, BestGates: stats[day].BestGates, Open: day >= today-1,
-			}
-			if m, ok := mine[day]; ok {
-				d.Me = &archiveResultJSON{Gates: m.Gates, Stars: m.Stars}
-			}
-			days = append(days, d)
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"today": today, "days": days})
+}
+
+// archiveDays — arxivning o'yinchisiz qismi (Me = nil): today kuni uchun archiveCacheTTL davomida
+// keshlanadi (Toshkent yarim tunida kun almashadi — yangisi hisoblanadi). Qaytgan ro'yxatni o'zgartirmang.
+func (s *Server) archiveDays(ctx context.Context, today, from, to int) ([]archiveDayJSON, error) {
+	s.archMu.Lock()
+	defer s.archMu.Unlock()
+	if s.archData != nil && s.archDay == today && time.Since(s.archAt) < archiveCacheTTL {
+		return s.archData, nil
+	}
+	stats, err := s.store.DailyStatsRange(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+	days := []archiveDayJSON{}
+	for day := to; day >= from; day-- {
+		p, ok := s.daily.For(day)
+		if !ok {
+			continue
+		}
+		days = append(days, archiveDayJSON{
+			Day: day, Number: s.daily.Number(day), Date: levels.DayStart(day).Format(time.DateOnly),
+			Tier: p.Tier, Seq: p.Seq != nil, Goal: p.Goal,
+			Solvers: stats[day].Solvers, BestGates: stats[day].BestGates, Open: day >= today-1,
+		})
+	}
+	s.archData, s.archDay, s.archAt = days, today, time.Now()
+	return days, nil
+}
+
+func (s *Server) dropArchiveCache() {
+	s.archMu.Lock()
+	s.archData = nil
+	s.archMu.Unlock()
 }
 
 func (s *Server) dailyLeaderboard(w http.ResponseWriter, r *http.Request) {

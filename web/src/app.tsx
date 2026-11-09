@@ -10,17 +10,21 @@ import { ArchiveScreen } from './screens/ArchiveScreen';
 import { CustomScreen } from './screens/CustomScreen';
 import { DailyScreen } from './screens/DailyScreen';
 import { Home } from './screens/Home';
-import { LessonScreen } from './screens/LessonScreen';
+import { lazy } from './components/lazy';
 import { NewsScreen } from './screens/NewsScreen';
-import { CertificateScreen } from './screens/CertificateScreen';
 import { ClassScreen } from './screens/ClassScreen';
-import { TeacherReport, TeacherScreen } from './screens/TeacherScreen';
 import { Leaderboard } from './screens/Leaderboard';
 import { LevelScreen } from './screens/LevelScreen';
 import { LevelsScreen } from './screens/LevelsScreen';
 import { Sandbox } from './screens/Sandbox';
 import { Settings } from './screens/Settings';
 import { syncProgress } from './sync';
+
+// Kam ochiladigan ekranlar — alohida bo'lakda (components/lazy.tsx).
+const LessonScreen = lazy(() => import('./screens/LessonScreen').then((m) => m.LessonScreen));
+const CertificateScreen = lazy(() => import('./screens/CertificateScreen').then((m) => m.CertificateScreen));
+const TeacherScreen = lazy(() => import('./screens/TeacherScreen').then((m) => m.TeacherScreen));
+const TeacherReport = lazy(() => import('./screens/TeacherScreen').then((m) => m.TeacherReport));
 
 export function App() {
   useEffect(() => {

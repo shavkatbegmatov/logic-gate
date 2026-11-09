@@ -2,7 +2,7 @@ import { useSignal } from '@preact/signals';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { Board } from '../board/Board';
 import { Editor } from '../board/editor';
-import { GATE_W, GRID, outputColumn } from '../board/geometry';
+import { outputColumn } from '../board/geometry';
 import { MAX_LENGTH } from '../boolexpr';
 import { buildFromFormula, type BuildError, type BuildResult } from '../formula-build';
 import { showToast } from '../components/Toast';
@@ -31,10 +31,6 @@ interface Saved {
   circuit: Circuit;
 }
 
-/** Chiqishlar ustuni: saqlangan sxemadagi eng o'ngdagi elementdan o'ngda (formuladan yig'ilgan chuqur sxema). */
-const outXFor = (circuit: Circuit) =>
-  Math.max(outputColumn(4), ...circuit.gates.map((g) => Math.round((g.x + GATE_W + 96) / GRID) * GRID));
-
 const specFor = (inputs: number, outputs: number): Spec => ({
   inputs: INPUT_NAMES.slice(0, inputs),
   outputs: OUTPUT_NAMES.slice(0, outputs),
@@ -47,9 +43,8 @@ export function Sandbox({ formula }: { formula?: string }) {
     const ed = new Editor();
     const ins = Math.min(5, Math.max(1, saved.inputs | 0));
     const outs = Math.min(4, Math.max(1, saved.outputs | 0));
+    // Chiqishlar ustuni — eng o'ngdagi elementdan o'ngda (formuladan yig'ilgan chuqur sxema): load o'zi moslaydi.
     ed.load(specFor(ins, outs), saved.circuit, outputColumn(4));
-    // Chiqishlar ustuni — tozalangan (sanitize) sxemadan: saqlangan ma'lumot buzilgan bo'lishi mumkin.
-    ed.outX.value = outXFor(ed.circuit.value);
     ed.onChange = (circuit) => {
       const spec = ed.spec.value;
       saveLater(KEYS.sandbox, { inputs: spec.inputs.length, outputs: spec.outputs.length, circuit });
@@ -168,7 +163,8 @@ function formulaError(e: BuildError): string {
   }
 }
 
-const FORMULA_SYMBOLS = ['¬', '∧', '∨', '⊕', '(', ')', 'A', 'B', 'C', 'D'];
+// Kirishlar A–E (formula-build.ts) — hammasi tugmada.
+const FORMULA_SYMBOLS = ['¬', '∧', '∨', '⊕', '(', ')', 'A', 'B', 'C', 'D', 'E'];
 
 /** Kutilmagan xato ham ekranni yiqitmasin (masalan, juda chuqur ifoda) — oddiy xato sifatida. */
 function safeBuild(src: string, spec: Spec): BuildResult {

@@ -1,7 +1,7 @@
 {
   "name": "logic-gate-web",
   "private": true,
-  "version": "2.11.1",
+  "version": "2.11.2",
   "type": "module",
   "scripts": {
     "levels": "node ../levels/build.mjs",

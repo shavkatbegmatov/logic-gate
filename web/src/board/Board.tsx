@@ -82,11 +82,11 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
 
   /**
    * Ekrandagi nuqtaga eng yaqin port. Barmoq uchun radius kattaroq: kichik masshtabda ham
-   * portni topish oson bo'ladi. Element tanasi ustida faqat juda yaqin port olinadi,
-   * aks holda element sudraladi.
+   * portni topish oson bo'ladi. Element yoki kirish tumbleri ustida faqat juda yaqin port olinadi,
+   * aks holda element sudraladi yoki tumbler bosiladi (telefonda tumbler portdan ~20 px uzoqda).
    */
-  const nearestPort = (p: Point, e: PointerEvent, onGateBody: boolean): string | null => {
-    const radius = onGateBody ? 10 : e.pointerType === 'mouse' ? 12 : 24;
+  const nearestPort = (p: Point, e: PointerEvent, onBody: boolean): string | null => {
+    const radius = onBody ? 10 : e.pointerType === 'mouse' ? 12 : 24;
     const lay = editor.layout.value;
     let best: string | null = null;
     let bestD = radius;
@@ -155,7 +155,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
 
     const el = targetOf(e);
     const kind = el?.getAttribute('data-kind');
-    const port = kind === 'delete' ? null : nearestPort(p, e, kind === 'gate');
+    const port = kind === 'delete' ? null : nearestPort(p, e, kind === 'gate' || kind === 'pin');
     if (port) {
       drag.current = { kind: 'wire', port, sx: p.x, sy: p.y, moved: false };
     } else if (kind === 'gate') {

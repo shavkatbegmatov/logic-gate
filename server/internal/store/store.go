@@ -297,6 +297,10 @@ func (s *Store) Leaderboard(ctx context.Context, limit int) ([]Entry, error) {
 	return out, rows.Err()
 }
 
+// Ranking — reytingdagi barcha o'yinchilar, o'rni bo'yicha (SQLite'da LIMIT -1 — cheklovsiz). API uni
+// keshlaydi: bitta hisoblashdan ham yuqori qism, ham har bir o'yinchining o'rni olinadi.
+func (s *Store) Ranking(ctx context.Context) ([]Entry, error) { return s.Leaderboard(ctx, -1) }
+
 func (s *Store) Rank(ctx context.Context, playerID string) (*Entry, error) {
 	var e Entry
 	err := s.db.QueryRowContext(ctx, rankedCTE+`

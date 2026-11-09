@@ -178,6 +178,16 @@ h3 {
   height: 100dvh;
 }
 
+/* Alohida bo'lakda yuklanadigan ekran (components/lazy.tsx). */
+.lazy-loading,
+.lazy-failed {
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
 .scroll {
   flex: 1;
   min-height: 0;
@@ -1216,7 +1226,9 @@ input[type='date']:focus {
   border: 1px solid var(--line);
   background: var(--panel);
   cursor: grab;
-  touch-action: none;
+  /* Gorizontal surish — palitrani aylantiradi (telefonda hamma element sig'maydi); yuqoriga
+     sudrash — elementni maydonga olib chiqadi (brauzer surishni boshlasa, pointercancel keladi). */
+  touch-action: pan-x;
   user-select: none;
   -webkit-user-select: none;
 }

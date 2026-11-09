@@ -52,6 +52,66 @@ effect(() => save(KEYS.profile, profile.value));
 effect(() => save(KEYS.settings, settings.value));
 effect(() => setLang(settings.value.lang ?? 'uz'));
 
+/**
+ * Ikki natijalar to'plamini birlashtiradi: har darajada kamroq elementli yechim; teng bo'lsa — a
+ * (server biladigani ustun: ikkinchisi qayta yuborilmasin). O'zgarish bo'lmasa, a ning o'zi qaytadi.
+ */
+export function mergeProgress(
+  a: Record<string, LevelProgress>,
+  b: Record<string, LevelProgress>,
+): Record<string, LevelProgress> {
+  let out = a;
+  for (const [id, p] of Object.entries(b ?? {})) {
+    if (!p || typeof p.gates !== 'number') continue;
+    const mine = out[id];
+    const better = !mine || p.gates < mine.gates || (p.gates === mine.gates && p.synced && !mine.synced);
+    if (better) out = { ...out, [id]: p };
+  }
+  return out;
+}
+
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * Boshqa tabda (yoki oynada) o'zgargan natijalarni olish. Har tab butun progress'ni yozadi — busiz
+ * oldin ochilgan tab yangi yechimni eski holati bilan ustidan yozib, natijani o'chirib yuborardi.
+ */
+function adoptFromStorage(key: string | null) {
+  if (key === null || key === KEYS.progress) {
+    const merged = mergeProgress(progress.value, load(KEYS.progress, {}));
+    if (merged !== progress.value) progress.value = merged;
+  }
+  if (key === null || key === KEYS.profile) {
+    const p = load<Profile | null>(KEYS.profile, null);
+    if (!same(p, profile.value)) profile.value = p;
+  }
+  if (key === null || key === KEYS.settings) {
+    const s = { sound: true, ...load<Partial<Settings>>(KEYS.settings, {}) };
+    if (!same(s, settings.value)) settings.value = s;
+  }
+  if (key === null || key === KEYS.drafts) {
+    // Boshqa tabdagi qoralamalar qo'shiladi; shu tabdagisi (bir xil daraja) o'zgarmaydi.
+    const stored = load<Record<string, Circuit>>(KEYS.drafts, {});
+    let added = false;
+    for (const [id, c] of Object.entries(stored ?? {})) {
+      if (!(id in drafts)) {
+        drafts[id] = c;
+        added = true;
+      }
+    }
+    if (added) saveLater(KEYS.drafts, drafts);
+  }
+}
+
+if (typeof addEventListener === 'function') {
+  addEventListener('storage', (e) => {
+    if (e.storageArea === localStorage) adoptFromStorage(e.key);
+  });
+  // Orqa fonda muzlatilgan yoki keshdan (bfcache) qaytgan sahifa hodisalarni o'tkazib yuborgan bo'lishi mumkin.
+  addEventListener('pageshow', (e) => e.persisted && adoptFromStorage(null));
+  addEventListener('visibilitychange', () => document.visibilityState === 'visible' && adoptFromStorage(null));
+}
+
 export const totalStars = computed(() =>
   Object.entries(progress.value).reduce((sum, [id, p]) => sum + (levelById(id) ? p.stars : 0), 0),
 );

@@ -22,6 +22,15 @@ export function outputColumn(goal: number): number {
   return 680;
 }
 
+/**
+ * Saqlangan sxema uchun chiqishlar ustuni: kamida base, eng o'ngdagi elementdan keyin esa 96 birlik
+ * bo'sh joy (tidy.ts dagi OUT_GAP bilan bir xil). «Tartibga keltirish» kengaytirgan maydon sahifa
+ * qayta ochilganda ham shunday qoladi — oxirgi element chiqish pinlari ustiga tushmaydi.
+ */
+export function outputColumnFor(base: number, circuit: Circuit): number {
+  return Math.max(base, ...circuit.gates.map((g) => Math.round((g.x + GATE_W + 96) / GRID) * GRID));
+}
+
 function pinY(count: number, rows: number, k: number): number {
   const center = PIN_TOP + ((rows - 1) * PIN_SPACING) / 2;
   return center + (k - (count - 1) / 2) * PIN_SPACING;

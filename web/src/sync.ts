@@ -67,9 +67,17 @@ async function doSync() {
     } catch (e) {
       // Server sxemani rad etsa (masalan, daraja o'zgargan), qayta-qayta yubormaslik uchun belgilaymiz.
       if (e instanceof ApiError && e.status === 422) markSynced(id);
+      // Faqat shu natijaga tegishli rad javobi (masalan, keshdagi yangi versiya biladigan, server esa
+      // hali bilmaydigan daraja — 404): keyingi safar yana urinamiz, qolganlari esa kutib qolmasin.
+      else if (skippable(e)) continue;
       else throw e;
     }
   }
+}
+
+/** Boshqa natijalarga ta'sir qilmaydigan xato: 4xx, lekin aloqa, kirish yoki cheklov emas. */
+export function skippable(e: unknown): boolean {
+  return e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 429;
 }
 
 /**

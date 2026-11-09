@@ -1,7 +1,8 @@
 import { useEffect } from 'preact/hooks';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
-import { chapterDone, lessonFor, markLessonRead, type Block } from '../lessons';
+import { lessonFor, type Block } from '../lesson-texts';
+import { chapterDone, markLessonRead } from '../lessons';
 import { chapterLevels, chapters } from '../levels';
 import { go } from '../router';
 import { progress } from '../state';
