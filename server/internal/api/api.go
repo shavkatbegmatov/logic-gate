@@ -102,6 +102,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/classes/{code}/board", s.authed(s.classBoard))
 	mux.HandleFunc("GET /api/classes/{code}/report", s.classReport)
 	mux.HandleFunc("DELETE /api/classes/{code}/members/{id}", s.removeMember)
+	mux.HandleFunc("POST /api/classes/{code}/tasks", s.createTask)
+	mux.HandleFunc("DELETE /api/classes/{code}/tasks/{id}", s.deleteTask)
 	mux.HandleFunc("GET /api/me/classes", s.authed(s.myClasses))
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, "not_found")

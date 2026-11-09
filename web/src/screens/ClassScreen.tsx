@@ -1,8 +1,9 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { api, type ClassEntry, type ClassInfo } from '../api';
-import { normalizeClassCode } from '../classes';
+import { normalizeClassCode, refreshMyTasks } from '../classes';
 import { JoinForm } from '../components/JoinForm';
+import { TaskItem } from '../components/TaskView';
 import { TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
@@ -27,6 +28,7 @@ export function ClassScreen({ code: raw }: { code: string }) {
       const c = await api.classInfo(code);
       info.value = c;
       board.value = c.member ? (await api.classBoard(code)).top : null;
+      refreshMyTasks(true);
     } catch (e) {
       error.value = errorText(e);
     }
@@ -97,6 +99,16 @@ export function ClassScreen({ code: raw }: { code: string }) {
           {c?.member && (
             <>
               <p class="good center">{t.classes.joined}</p>
+              {(c.tasks?.length ?? 0) > 0 && (
+                <>
+                  <h2 class="section-title">{t.tasks.title}</h2>
+                  <div class="task-list">
+                    {c.tasks!.map((task) => (
+                      <TaskItem key={task.id} task={task} />
+                    ))}
+                  </div>
+                </>
+              )}
               <h2 class="section-title">{t.classes.board}</h2>
               {board.value && (
                 <table class="board-table">

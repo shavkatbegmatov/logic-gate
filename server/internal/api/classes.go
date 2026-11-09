@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -22,9 +23,12 @@ import (
 // yulduzlarini ko'radi, o'qituvchi esa har bir darajani va kunlik masalalarni.
 
 const (
-	classCodeLen = 6
-	maxMembers   = 200
-	keyHeader    = "X-Class-Key"
+	classCodeLen  = 6
+	maxMembers    = 200
+	keyHeader     = "X-Class-Key"
+	maxTasks      = 20  // sinfdagi vazifalar
+	maxTaskLevels = 12  // bitta vazifadagi darajalar
+	maxDueDays    = 366 // muddat bugundan ko'pi bilan shuncha kun keyin
 )
 
 func newClassCode() string {
@@ -60,31 +64,60 @@ func normalizeClassCode(s string) string {
 	return sb.String()
 }
 
-var errBadClassName = errors.New("bad_class_name")
+var (
+	errBadClassName = errors.New("bad_class_name")
+	errBadTask      = errors.New("bad_task")
+)
 
 // cleanClassName: 2–50 belgi, harf, raqam va oddiy tinish belgilari; haqoratli so'zlarsiz.
-func cleanClassName(s string) (string, error) {
+func cleanClassName(s string) (string, error) { return cleanText(s, 2, 50, errBadClassName) }
+
+// cleanText — bo'shliqlarni bittaga keltiradi va uzunlik, belgilar, haqoratli so'zlarni tekshiradi.
+func cleanText(s string, min, max int, bad error) (string, error) {
 	s = strings.Join(strings.Fields(s), " ")
-	if n := utf8.RuneCountInString(s); n < 2 || n > 50 {
-		return "", errBadClassName
+	if n := utf8.RuneCountInString(s); n < min || n > max {
+		return "", bad
 	}
 	for _, r := range s {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(" _-.,'ʻʼ`№#()/«»\"", r) {
-			return "", errBadClassName
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(" _-.,:!?'ʻʼ`№#()/«»\"", r) {
+			return "", bad
 		}
 	}
-	if nickname.Offensive(s) {
+	if s != "" && nickname.Offensive(s) {
 		return "", nickname.ErrNotAllowed
 	}
 	return s, nil
 }
 
 type classJSON struct {
-	Code    string `json:"code"`
-	Name    string `json:"name"`
-	Members int    `json:"members"`
-	Member  bool   `json:"member,omitempty"`
-	Key     string `json:"key,omitempty"`
+	Code    string     `json:"code"`
+	Name    string     `json:"name"`
+	Members int        `json:"members"`
+	Member  bool       `json:"member,omitempty"`
+	Key     string     `json:"key,omitempty"`
+	Tasks   []taskJSON `json:"tasks,omitempty"`
+}
+
+type taskJSON struct {
+	ID        int64    `json:"id"`
+	Title     string   `json:"title"`
+	Levels    []string `json:"levels"`
+	Due       int      `json:"due,omitempty"`
+	CreatedAt int64    `json:"createdAt"`
+}
+
+func toTaskJSON(t store.ClassTask) taskJSON {
+	return taskJSON{ID: t.ID, Title: t.Title, Levels: t.Levels, Due: t.Due, CreatedAt: t.CreatedAt.Unix()}
+}
+
+// classTasks — sinf vazifalari JSON ko'rinishida (bo'lmasa — bo'sh ro'yxat).
+func (s *Server) classTasks(r *http.Request, classID string) ([]taskJSON, error) {
+	list, err := s.store.ClassTasks(r.Context(), classID)
+	out := make([]taskJSON, 0, len(list))
+	for _, t := range list {
+		out = append(out, toTaskJSON(t))
+	}
+	return out, err
 }
 
 func (s *Server) createClass(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +190,12 @@ func (s *Server) getClass(w http.ResponseWriter, r *http.Request) {
 	if c == nil {
 		return
 	}
-	out := classJSON{Code: c.ID, Name: c.Name, Members: c.Members}
+	tasks, err := s.classTasks(r, c.ID)
+	if err != nil {
+		s.internal(w, err)
+		return
+	}
+	out := classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Tasks: tasks}
 	if p := s.optionalPlayer(r); p != nil {
 		member, err := s.store.IsClassMember(r.Context(), c.ID, p.ID)
 		if err != nil {
@@ -211,7 +249,12 @@ func (s *Server) myClasses(w http.ResponseWriter, r *http.Request) {
 	}
 	out := make([]classJSON, 0, len(list))
 	for _, c := range list {
-		out = append(out, classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Member: true})
+		tasks, err := s.classTasks(r, c.ID)
+		if err != nil {
+			s.internal(w, err)
+			return
+		}
+		out = append(out, classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Member: true, Tasks: tasks})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"classes": out})
 }
@@ -274,6 +317,11 @@ func (s *Server) classReport(w http.ResponseWriter, r *http.Request) {
 		s.internal(w, err)
 		return
 	}
+	tasks, err := s.classTasks(r, c.ID)
+	if err != nil {
+		s.internal(w, err)
+		return
+	}
 	members := make([]memberJSON, 0, len(list))
 	for _, m := range list {
 		members = append(members, memberJSON{
@@ -283,7 +331,7 @@ func (s *Server) classReport(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"code": c.ID, "name": c.Name, "createdAt": c.CreatedAt.Unix(), "today": today,
-		"now": s.now().Unix(), "members": members,
+		"now": s.now().Unix(), "members": members, "tasks": tasks,
 	})
 }
 
@@ -307,6 +355,81 @@ func (s *Server) deleteClass(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.DeleteClass(r.Context(), c.ID); err != nil {
+		s.internal(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// createTask — o'qituvchi vazifa beradi: {title, levels, due}. Darajalar o'yindagi tartibda saqlanadi.
+func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
+	c := s.teacherClass(w, r)
+	if c == nil {
+		return
+	}
+	var req struct {
+		Title  string   `json:"title"`
+		Levels []string `json:"levels"`
+		Due    int      `json:"due"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	title, err := cleanText(req.Title, 0, 60, errBadTask)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	want := map[string]bool{}
+	for _, id := range req.Levels {
+		if _, ok := s.pack.Level(id); !ok {
+			writeErr(w, http.StatusBadRequest, errBadTask.Error())
+			return
+		}
+		want[id] = true
+	}
+	var ids []string
+	for _, l := range s.pack.Levels {
+		if want[l.ID] {
+			ids = append(ids, l.ID)
+		}
+	}
+	if len(ids) == 0 || len(ids) > maxTaskLevels {
+		writeErr(w, http.StatusBadRequest, errBadTask.Error())
+		return
+	}
+	today := levels.DayOf(s.now())
+	if req.Due != 0 && (req.Due < today || req.Due > today+maxDueDays) {
+		writeErr(w, http.StatusBadRequest, "bad_due")
+		return
+	}
+	t := store.ClassTask{ClassID: c.ID, Title: title, Levels: ids, Due: req.Due}
+	switch err := s.store.CreateTask(r.Context(), &t, maxTasks); {
+	case errors.Is(err, store.ErrTooManyTasks):
+		writeErr(w, http.StatusConflict, err.Error())
+		return
+	case err != nil:
+		s.internal(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, toTaskJSON(t))
+}
+
+// deleteTask — o'qituvchi vazifani o'chiradi (o'quvchilarning yechimlari qoladi).
+func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
+	c := s.teacherClass(w, r)
+	if c == nil {
+		return
+	}
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err == nil {
+		err = s.store.DeleteTask(r.Context(), c.ID, id)
+	}
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) || errors.Is(err, strconv.ErrSyntax) || errors.Is(err, strconv.ErrRange) {
+			writeErr(w, http.StatusNotFound, "no_task")
+			return
+		}
 		s.internal(w, err)
 		return
 	}

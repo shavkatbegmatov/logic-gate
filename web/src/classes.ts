@@ -2,9 +2,11 @@
 // kaliti (serverda faqat xeshi; kalit yo'qolsa, hisobotni ochib bo'lmaydi — shuning uchun ekranda
 // ko'rsatiladi va boshqa qurilmaga ko'chirsa bo'ladi).
 import { signal } from '@preact/signals';
-import type { ClassMember } from './api';
+import { api, type ClassMember } from './api';
 import { chapterLevels, chapters, levels } from './levels';
+import { profile } from './state';
 import { load, save } from './storage';
+import { myTasks, setMyTasks, tasksFromClasses } from './tasks';
 
 export interface TeacherClass {
   code: string;
@@ -40,6 +42,26 @@ export function normalizeClassCode(s: string): string {
     out += ch;
   }
   return out.length === 6 ? out : '';
+}
+
+let lastTasksFetch = 0;
+
+/**
+ * O'quvchi vazifalarini serverdan yangilaydi (bosh sahifa ochilganda — ko'pi bilan daqiqada bir marta;
+ * sinfga qo'shilish/chiqishdan keyin — darhol). Profil yo'q bo'lsa ro'yxat tozalanadi.
+ */
+export async function refreshMyTasks(force = false) {
+  if (!profile.value) {
+    if (myTasks.value.length) setMyTasks([]);
+    return;
+  }
+  if (!force && Date.now() - lastTasksFetch < 60_000) return;
+  lastTasksFetch = Date.now();
+  try {
+    setMyTasks(tasksFromClasses((await api.myClasses()).classes));
+  } catch {
+    // oflayn — saqlangan ro'yxat qoladi
+  }
 }
 
 /** O'quvchilar uchun havola (sayt). */

@@ -150,6 +150,16 @@ export interface ClassInfo {
   members: number;
   member?: boolean;
   key?: string;
+  tasks?: ClassTask[];
+}
+
+/** O'qituvchi bergan vazifa. due — Toshkent kuni (yo'q — muddatsiz). */
+export interface ClassTask {
+  id: number;
+  title: string;
+  levels: string[];
+  due?: number;
+  createdAt: number;
 }
 
 export interface ClassEntry {
@@ -178,6 +188,7 @@ export interface ClassReport {
   today: number;
   now: number;
   members: ClassMember[];
+  tasks?: ClassTask[];
 }
 
 const classPath = (code: string) => `/classes/${encodeURIComponent(code)}`;
@@ -210,6 +221,10 @@ export const api = {
   removeMember: (code: string, key: string, id: string) =>
     request<{ ok: boolean }>('DELETE', `${classPath(code)}/members/${encodeURIComponent(id)}`, undefined, undefined, teacher(key)),
   deleteClass: (code: string, key: string) => request<{ ok: boolean }>('DELETE', classPath(code), undefined, undefined, teacher(key)),
+  createTask: (code: string, key: string, body: { title: string; levels: string[]; due: number }) =>
+    request<ClassTask>('POST', `${classPath(code)}/tasks`, body, undefined, teacher(key)),
+  deleteTask: (code: string, key: string, id: number) =>
+    request<{ ok: boolean }>('DELETE', `${classPath(code)}/tasks/${id}`, undefined, undefined, teacher(key)),
   dailyLeaderboard: (day: number | 'today') =>
     request<{ day: number; number: number; top: DailyEntry[]; me: DailyEntry | null }>('GET', `/daily/${day}/leaderboard`),
 };

@@ -78,6 +78,16 @@ var migrations = []string{
 		PRIMARY KEY (class_id, player_id)
 	) WITHOUT ROWID;
 	CREATE INDEX class_members_player ON class_members(player_id);`,
+	// Sinf vazifalari: o'qituvchi bir nechta darajani beradi; due — Toshkent kuni (0 — muddatsiz).
+	`CREATE TABLE class_tasks (
+		id         INTEGER PRIMARY KEY,
+		class_id   TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+		title      TEXT NOT NULL,
+		levels     TEXT NOT NULL,
+		due        INTEGER NOT NULL DEFAULT 0,
+		created_at INTEGER NOT NULL
+	);
+	CREATE INDEX class_tasks_class ON class_tasks(class_id);`,
 }
 
 type Store struct {

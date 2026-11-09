@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -201,4 +202,78 @@ func (s *Store) ClassReport(ctx context.Context, classID string, today int) ([]C
 		}
 	}
 	return out, sols.Err()
+}
+
+// ErrTooManyTasks — sinfda vazifalar soni chegarasiga yetgan.
+var ErrTooManyTasks = errors.New("too_many_tasks")
+
+// ClassTask — o'qituvchi bergan vazifa: darajalar ro'yxati va ixtiyoriy muddat.
+type ClassTask struct {
+	ID        int64
+	ClassID   string
+	Title     string
+	Levels    []string
+	Due       int // Toshkent kuni (levels.DayOf); 0 — muddatsiz
+	CreatedAt time.Time
+}
+
+// CreateTask vazifani qo'shadi (sinfda max tadan ko'p bo'lsa — ErrTooManyTasks) va t.ID ni to'ldiradi.
+func (s *Store) CreateTask(ctx context.Context, t *ClassTask, max int) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	var n int
+	if err := tx.QueryRowContext(ctx, `SELECT COUNT(*) FROM class_tasks WHERE class_id = ?`, t.ClassID).Scan(&n); err != nil {
+		return err
+	}
+	if n >= max {
+		return ErrTooManyTasks
+	}
+	t.CreatedAt = time.Now()
+	res, err := tx.ExecContext(ctx,
+		`INSERT INTO class_tasks (class_id, title, levels, due, created_at) VALUES (?, ?, ?, ?, ?)`,
+		t.ClassID, t.Title, strings.Join(t.Levels, ","), t.Due, t.CreatedAt.Unix())
+	if err != nil {
+		return err
+	}
+	if t.ID, err = res.LastInsertId(); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+// DeleteTask — sinf vazifasini o'chiradi; bunday vazifa bo'lmasa ErrNotFound.
+func (s *Store) DeleteTask(ctx context.Context, classID string, id int64) error {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM class_tasks WHERE class_id = ? AND id = ?`, classID, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// ClassTasks — sinf vazifalari, yangilari birinchi.
+func (s *Store) ClassTasks(ctx context.Context, classID string) ([]ClassTask, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, title, levels, due, created_at FROM class_tasks WHERE class_id = ? ORDER BY id DESC`, classID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ClassTask
+	for rows.Next() {
+		t := ClassTask{ClassID: classID}
+		var lv string
+		var created int64
+		if err := rows.Scan(&t.ID, &t.Title, &lv, &t.Due, &created); err != nil {
+			return nil, err
+		}
+		t.Levels, t.CreatedAt = strings.Split(lv, ","), time.Unix(created, 0)
+		out = append(out, t)
+	}
+	return out, rows.Err()
 }

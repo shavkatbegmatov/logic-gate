@@ -2,6 +2,7 @@ import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { api, type ClassInfo } from '../api';
 import { normalizeClassCode } from '../classes';
+import { setMyTasks, tasksFromClasses } from '../tasks';
 import { t } from '../i18n';
 import { go } from '../router';
 import { profile } from '../state';
@@ -19,7 +20,10 @@ export function ClassesCard() {
     }
     api
       .myClasses()
-      .then((r) => (mine.value = r.classes))
+      .then((r) => {
+        mine.value = r.classes;
+        setMyTasks(tasksFromClasses(r.classes));
+      })
       .catch(() => {});
   }, [profile.value?.id]);
 

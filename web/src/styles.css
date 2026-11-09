@@ -362,7 +362,8 @@ a.btn {
   animation: pulse 1.4s ease-in-out infinite;
 }
 
-input[type='text'] {
+input[type='text'],
+input[type='date'] {
   height: 44px;
   flex: 1;
   min-width: 0;
@@ -374,7 +375,8 @@ input[type='text'] {
   font: 15px var(--sans);
 }
 
-input[type='text']:focus {
+input[type='text']:focus,
+input[type='date']:focus {
   outline: 2px solid var(--sel);
   outline-offset: 1px;
 }
@@ -2178,6 +2180,279 @@ input[type='text']:focus {
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+}
+
+/* ── Sinf vazifalari ───────────────────────────────────── */
+.home-task {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  background: var(--bg2);
+}
+
+.home-task h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.home-task-head,
+.home-task-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.home-task-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.home-task-class svg {
+  width: 16px;
+  height: 16px;
+}
+
+.task-due {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.task-due.today {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.task-due.over {
+  color: var(--bad);
+}
+
+.task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.task {
+  display: grid;
+  gap: 8px;
+}
+
+.task header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.task.complete {
+  border-color: var(--solved);
+}
+
+.task-count {
+  flex: none;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.task-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.task-level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+button.task-level {
+  cursor: pointer;
+}
+
+button.task-level:hover {
+  border-color: var(--accent);
+}
+
+.task-level b {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.task-level span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-level.done {
+  border-color: var(--solved);
+}
+
+.task-level .task-check {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.teacher-tasks {
+  display: grid;
+  gap: 12px;
+}
+
+.teacher-tasks h2 {
+  margin: 0;
+}
+
+.teacher-tasks-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.teacher-task {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.task-stats p {
+  margin: 6px 0 0;
+}
+
+.task-meter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.task-meter span {
+  display: block;
+  width: calc(var(--fill, 0) * 100%);
+  height: 100%;
+  background: var(--solved);
+}
+
+.task-behind {
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.task-behind summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.task-behind ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  columns: 2 160px;
+}
+
+.task-editor {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.task-editor .field-label {
+  margin: 4px 0 0;
+}
+
+.task-editor input[type='date'] {
+  justify-self: start;
+  flex: none;
+  min-width: 180px;
+}
+
+.task-picker {
+  display: grid;
+  gap: 6px;
+}
+
+.task-picker-row {
+  display: grid;
+  grid-template-columns: minmax(0, 190px) 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-picker-ch {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.task-picker-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.task-picker-levels button {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg2);
+  color: var(--text);
+  font: 600 13px var(--mono);
+  cursor: pointer;
+}
+
+.task-picker-levels button.on {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.18);
+  color: var(--accent);
+}
+
+.task-picker-levels button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.task-editor-actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+  .task-picker-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* Darajalar xaritasida vazifadagi plitka: qulfli bo'limda ham ochiq. */
+.level-tile.assigned:not(.solved) {
+  border-style: dashed;
+  border-color: var(--accent);
 }
 
 /* ── Sinf rejimi ───────────────────────────────────────── */

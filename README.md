@@ -410,6 +410,8 @@ Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi 
 - **sinf kodi** (6 belgi, ochiq) va havola `#/class/<kod>` — o'quvchilarga yuboriladi (Telegram'da `startapp=c_<kod>`); o'quvchi taxallusi bilan qo'shiladi va sinfdoshlar reytingini ko'radi;
 - **o'qituvchi kaliti** (tiklash kodi kabi 16 belgi) — hisobot va boshqaruv uchun; shu qurilmada saqlanadi (`lg.teacher.v1`), serverda faqat SHA-256 xeshi. Boshqa qurilmada «Kod va kalit bilan qo'shish».
 
+**Vazifalar.** Hisobotda «Yangi vazifa»: o'qituvchi 1–12 ta darajani belgilaydi, istasa nom va muddat qo'yadi (sinfda 20 tagacha vazifa). O'quvchi vazifani bosh sahifada ko'radi («Sinf vazifasi», bajarilmagan va muddati o'tmaganlardan eng yaqini) va sinf sahifasida — hammasini. Vazifadagi darajalar o'quvchiga yulduzlar yetmasa ham ochiq (ro'yxat qurilmada `lg.tasks.v1` da, oflayn ham ishlaydi). O'qituvchi har vazifa bo'yicha nechta o'quvchi bajarganini va kim hali bajarmaganini ko'radi.
+
 Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
 
 ## Versiya va yangiliklar
@@ -450,12 +452,14 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | POST | `/api/daily/{day}/solve` | `{circuit}` — kunlik yechim (faqat bugungi va kechagi kun); javobda `spread` ham bor |
 | GET | `/api/daily/{day}/leaderboard` | kun reytingi, top-50 (`{day}` = `today` ham bo'ladi) |
 | POST | `/api/classes` | `{name}` → `{code, name, key}` — o'qituvchi sinf yaratadi (kalit faqat shu javobda) |
-| GET | `/api/classes/{code}` | sinf nomi va o'quvchilar soni; token bo'lsa — `member` |
+| GET | `/api/classes/{code}` | sinf nomi, o'quvchilar soni va vazifalar (`tasks`); token bo'lsa — `member` |
 | POST / DELETE | `/api/classes/{code}/join` | o'quvchi sinfga qo'shiladi / chiqadi (token bilan) |
 | GET | `/api/classes/{code}/board` | sinf reytingi — faqat a'zolar uchun |
-| GET | `/api/me/classes` | o'yinchi a'zo bo'lgan sinflar |
+| GET | `/api/me/classes` | o'yinchi a'zo bo'lgan sinflar (har birida `tasks`) |
 | GET | `/api/classes/{code}/report` | o'qituvchi hisoboti (`X-Class-Key: <kalit>`): har bir o'quvchining darajalari, bugungi va 7 kunlik kunlik masalalari, faolligi |
 | DELETE | `/api/classes/{code}/members/{id}`, `/api/classes/{code}` | o'qituvchi o'quvchini chiqaradi / sinfni o'chiradi (kalit bilan) |
+| POST | `/api/classes/{code}/tasks` | `{title, levels, due}` — o'qituvchi vazifa beradi (kalit bilan); `due` — Toshkent kuni, 0 — muddatsiz |
+| DELETE | `/api/classes/{code}/tasks/{id}` | o'qituvchi vazifani o'chiradi (kalit bilan) |
 | GET | `/healthz` | holat tekshiruvi |
 
 Cheklovlar: Go'da IP bo'yicha 10 so'rov/s (40 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (5 tagacha), noto'g'ri tiklash kodi — 5 soniyada 1 ta; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim.

@@ -1,20 +1,36 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"logicgate/levels"
 	"logicgate/server/internal/store"
 )
 
 // doKey — o'qituvchi kaliti bilan so'rov.
 func (e *testEnv) doKey(method, path, key string) (int, map[string]any) {
 	e.t.Helper()
-	req, _ := http.NewRequest(method, e.srv.URL+path, nil)
+	return e.doKeyBody(method, path, key, nil)
+}
+
+// doKeyBody — o'qituvchi kaliti va JSON tanasi bilan so'rov.
+func (e *testEnv) doKeyBody(method, path, key string, body any) (int, map[string]any) {
+	e.t.Helper()
+	var rd io.Reader
+	if body != nil {
+		b, _ := json.Marshal(body)
+		rd = bytes.NewReader(b)
+	}
+	req, _ := http.NewRequest(method, e.srv.URL+path, rd)
 	if key != "" {
 		req.Header.Set(keyHeader, key)
 	}
@@ -135,6 +151,98 @@ func TestClassFlow(t *testing.T) {
 	// O'quvchining natijasi qoladi.
 	if status, out := e.do("GET", "/api/progress", ali, nil); status != 200 || !strings.Contains(mustJSON(out), "b1") {
 		t.Fatalf("natija yo'qoldi: %d %v", status, out)
+	}
+}
+
+func TestClassTasks(t *testing.T) {
+	e := newEnv(t)
+	_, out := e.do("POST", "/api/classes", "", map[string]string{"name": "9-A sinf"})
+	code, key := out["code"].(string), out["key"].(string)
+	path := "/api/classes/" + code + "/tasks"
+	today := levels.DayOf(time.Now())
+
+	// Faqat o'qituvchi kaliti bilan.
+	if status, _ := e.doKeyBody("POST", path, "", map[string]any{"levels": []string{"b1"}}); status != 403 {
+		t.Fatalf("kalitsiz vazifa: %d", status)
+	}
+	for name, body := range map[string]map[string]any{
+		"bo'sh":      {"levels": []string{}},
+		"noma'lum":   {"levels": []string{"b1", "zz"}},
+		"ko'p":       {"levels": []string{"b1", "b2", "b3", "b4", "b5", "b6", "x1", "x2", "x3", "x4", "x5", "x6", "s1"}},
+		"yomon nom":  {"title": "<script>", "levels": []string{"b1"}},
+		"o'tgan kun": {"levels": []string{"b1"}, "due": today - 1},
+		"juda uzoq":  {"levels": []string{"b1"}, "due": today + 400},
+	} {
+		if status, out := e.doKeyBody("POST", path, key, body); status != 400 {
+			t.Errorf("%s: %d %v", name, status, out)
+		}
+	}
+	// Darajalar o'yindagi tartibda va takrorlarsiz saqlanadi.
+	status, out := e.doKeyBody("POST", path, key, map[string]any{
+		"title": "  Uyga  vazifa: XOR ", "levels": []string{"x2", "b1", "x2"}, "due": today + 3,
+	})
+	if status != 201 || out["title"] != "Uyga vazifa: XOR" || fmt.Sprint(out["levels"]) != "[b1 x2]" || out["due"] != float64(today+3) {
+		t.Fatalf("vazifa: %d %v", status, out)
+	}
+	firstID := int(out["id"].(float64))
+	if status, out := e.doKeyBody("POST", path, key, map[string]any{"levels": []string{"b2"}}); status != 201 || out["title"] != "" || out["due"] != nil {
+		t.Fatalf("nomsiz, muddatsiz: %d %v", status, out)
+	}
+
+	// O'quvchi sinf sahifasida va "mening sinflarim"da ko'radi; yangisi birinchi.
+	ali := e.player("Ali")
+	e.do("POST", "/api/classes/"+code+"/join", ali, nil)
+	status, out = e.do("GET", "/api/classes/"+code, "", nil)
+	if tasks, _ := out["tasks"].([]any); status != 200 || len(tasks) != 2 || fmt.Sprint(tasks[0].(map[string]any)["levels"]) != "[b2]" {
+		t.Fatalf("sinf vazifalari: %d %v", status, out)
+	}
+	status, out = e.do("GET", "/api/me/classes", ali, nil)
+	if cl := out["classes"].([]any); status != 200 || len(cl[0].(map[string]any)["tasks"].([]any)) != 2 {
+		t.Fatalf("mening sinflarim: %d %v", status, out)
+	}
+	if status, out := e.doKey("GET", "/api/classes/"+code+"/report", key); status != 200 || len(out["tasks"].([]any)) != 2 {
+		t.Fatalf("hisobotda vazifalar: %d %v", status, out)
+	}
+
+	// O'chirish: faqat kalit bilan, yo'q vazifa — 404.
+	del := fmt.Sprintf("%s/%d", path, firstID)
+	if status, _ := e.doKey("DELETE", del, ""); status != 403 {
+		t.Fatalf("kalitsiz o'chirish: %d", status)
+	}
+	if status, _ := e.doKey("DELETE", del, key); status != 200 {
+		t.Fatalf("o'chirish: %d", status)
+	}
+	for _, p := range []string{del, path + "/abc", path + "/99999999999999999999"} {
+		if status, _ := e.doKey("DELETE", p, key); status != 404 {
+			t.Fatalf("%s: %d", p, status)
+		}
+	}
+
+	// Sinfda ko'pi bilan maxTasks ta vazifa.
+	for i := 1; i < maxTasks; i++ {
+		if status, out := e.doKeyBody("POST", path, key, map[string]any{"levels": []string{"b1"}}); status != 201 {
+			t.Fatalf("%d-vazifa: %d %v", i, status, out)
+		}
+	}
+	if status, out := e.doKeyBody("POST", path, key, map[string]any{"levels": []string{"b1"}}); status != 409 || out["error"] != "too_many_tasks" {
+		t.Fatalf("chegara: %d %v", status, out)
+	}
+}
+
+func TestClassTasksCascade(t *testing.T) {
+	st, err := store.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	ctx := t.Context()
+	st.CreateClass(ctx, "ABCDEF", "Sinf", []byte("k"))
+	if err := st.CreateTask(ctx, &store.ClassTask{ClassID: "ABCDEF", Levels: []string{"b1"}}, 5); err != nil {
+		t.Fatal(err)
+	}
+	st.DeleteClass(ctx, "ABCDEF")
+	if list, err := st.ClassTasks(ctx, "ABCDEF"); err != nil || len(list) != 0 {
+		t.Fatalf("sinf bilan vazifalar ham o'chishi kerak: %v %v", list, err)
 	}
 }
 

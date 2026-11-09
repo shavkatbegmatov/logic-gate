@@ -1,4 +1,7 @@
+import { useEffect } from 'preact/hooks';
+import { refreshMyTasks } from '../classes';
 import { JoinForm } from '../components/JoinForm';
+import { HomeTaskCard } from '../components/TaskView';
 import { MiniBoard } from '../components/MiniBoard';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon, type IconName } from '../components/ui';
@@ -17,6 +20,9 @@ import { APP_VERSION, markNewsSeen, newsFor } from '../version';
 
 export function Home() {
   const started = solvedCount.value > 0;
+  useEffect(() => {
+    refreshMyTasks();
+  }, [profile.value?.id]);
   return (
     <div class="screen home">
       <div class="home-scroll">
@@ -26,6 +32,7 @@ export function Home() {
           {onOldHost() && hasProgress() && <MoveBanner />}
           <p class="tagline">{profile.value ? t.home.hello(profile.value.nickname) : t.tagline}</p>
           {newsFor(started || !!profile.value) && <NewsBanner />}
+          <HomeTaskCard />
           <ContinueCard />
           <DailyCard />
           <ShareButtons text={t.share.inviteText} label={t.share.invite} />

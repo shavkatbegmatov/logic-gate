@@ -4,6 +4,7 @@ import { setLang, type Lang } from './i18n';
 import { chapterLevels, chapterOf, chapters, levelById, levels } from './levels';
 import type { Chapter, Circuit, Level } from './sim/types';
 import { load, save, saveLater } from './storage';
+import { assignedLevels } from './tasks';
 
 const KEYS = {
   progress: 'lg.progress.v1',
@@ -65,6 +66,8 @@ export function chapterStars(ch: Chapter): number {
 }
 
 export function levelUnlocked(level: Level): boolean {
+  // O'qituvchi bergan vazifadagi daraja yulduzlar yetmasa ham ochiq.
+  if (assignedLevels.value.has(level.id)) return true;
   if (!chapterUnlocked(chapterOf(level))) return false;
   const list = chapterLevels(level.chapter);
   const i = list.indexOf(level);

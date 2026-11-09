@@ -13,6 +13,7 @@ import {
 } from '../classes';
 import { copyText } from '../clipboard';
 import { ShareButtons } from '../components/ShareButtons';
+import { TeacherTasks } from '../components/TeacherTasks';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
@@ -238,6 +239,8 @@ export function TeacherReport({ code }: { code: string }) {
               </button>
             </div>
           </section>
+
+          {r && <TeacherTasks code={code} teacherKey={cls.key} report={r} onChange={load} />}
 
           {error.value && (
             <div class="card">

@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.2.0',
+    date: '2026-11-09',
+    uz: [
+      "Sinf vazifalari: o'qituvchi darajalarni tanlab vazifa beradi (muddat bilan ham), o'quvchilar uni bosh sahifada ko'radi, o'qituvchi esa kim bajarganini kuzatadi.",
+      'Vazifadagi darajalar yulduzlar yetmasa ham ochiladi.',
+    ],
+    ru: [
+      'Задания класса: учитель выбирает уровни и даёт задание (можно со сроком), ученики видят его на главной, а учитель — кто уже выполнил.',
+      'Уровни из задания открываются, даже если не хватает звёзд.',
+    ],
+  },
+  {
     version: '2.1.0',
     date: '2026-11-09',
     uz: [

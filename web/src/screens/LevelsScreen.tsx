@@ -6,6 +6,7 @@ import { mapCell, mapColumns, mapSeen, markMapSeen, TILE_GAP } from '../levelmap
 import { chapterLevels, chapters, levelNumber, levels } from '../levels';
 import { go } from '../router';
 import { chapterStars, chapterUnlocked, continueLevel, levelUnlocked, progress, totalStars } from '../state';
+import { assignedLevels } from '../tasks';
 
 /** Bo'lim kartochkasi va uning ichki chegaralari (styles.css: .chapters, .chapter). */
 const MAP_INSET = 2 * 16 + 2 * 16 + 2;
@@ -69,7 +70,9 @@ export function LevelsScreen() {
                     return (
                       <button
                         key={l.id}
-                        class={`level-tile${p ? ' solved' : ''}${p?.stars === 3 ? ' perfect' : ''}${l === current ? ' current' : ''}`}
+                        class={`level-tile${p ? ' solved' : ''}${p?.stars === 3 ? ' perfect' : ''}${l === current ? ' current' : ''}${
+                          assignedLevels.value.has(l.id) ? ' assigned' : ''
+                        }`}
                         style={{ gridRow: cell.row, gridColumn: cell.col }}
                         disabled={!can}
                         onClick={() => go(`level/${l.id}`)}
