@@ -2,6 +2,7 @@
 //   /mantiqiy-elementlar/, /ru/logicheskie-elementy/        — mantiqiy elementlar qo'llanmasi
 //   /ikkilik-sanoq-sistemasi/, /ru/dvoichnaya-sistema/       — ikkilik sanoq sistemasi (+ public/guide-binary.js)
 //   /bul-algebrasi/, /ru/algebra-logiki/                     — Bul algebrasi (+ /guide-bool.js: src/boolexpr.ts + guide-bool-ui.js)
+//   /sanoq-sistemalari/, /ru/sistemy-schisleniya/            — sanoq sistemalari (+ /guide-base.js: numbase.mjs + guide-base-ui.js)
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
 // JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
@@ -12,6 +13,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from '../src/board/shapes.ts';
 import { calcTableHtml, compareExprs, evalExpr, parseExpr, rowsOf } from '../src/boolexpr.ts';
+import { convert, MAX_BASE, MIN_BASE, stepsHtml, sub } from './numbase.mjs';
+import { BASE_EXAMPLES, BASES } from './pages-base.mjs';
 import { BINARY, binaryAdd, divisionSteps, EXAMPLES } from './pages-binary.mjs';
 import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
@@ -172,6 +175,13 @@ svg.gate text.in-label{fill:var(--text)}
 .legend .g1{color:var(--stroke)}
 .legend .g2{color:var(--copper)}
 .formula-line{font:600 17px var(--mono);overflow-wrap:anywhere}
+.base-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px}
+.base-row label{display:grid;gap:4px}
+.calc select{min-width:150px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:600 15px system-ui,sans-serif}
+.answer{font:600 20px var(--mono);margin:12px 0 0}
+.answer strong{color:var(--on)}
+.groups td{min-width:56px}
+.base-table td:nth-child(n+2){font-family:var(--mono)}
 ol.chapters{padding-left:22px}
 ol.chapters li{margin:6px 0}
 footer{max-width:820px;margin:0 auto;padding:16px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
@@ -186,6 +196,7 @@ const GUIDES = [
   { id: 'elements', text: CONTENT, body: elementsBody },
   { id: 'binary', text: BINARY, body: binaryBody },
   { id: 'bool', text: BOOL, body: boolBody },
+  { id: 'bases', text: BASES, body: basesBody },
 ];
 
 const pageOf = (g, lang) => (g.id === 'elements' ? { ...CONTENT[lang], nav: CONTENT[lang].h1 } : g.text[lang]);
@@ -380,6 +391,7 @@ ${cta(c, ctx)}
 <tr class="sum"><th>=</th>${col(pad(add.sum), 'out')}<td class="dec">${parseInt(add.sum, 2)}</td></tr>
 </tbody></table></div>
 <p class="tip">${BULB} ${esc(b.add.tip)}</p>
+<p><a href="${BASES[lang].path}">${esc(BASES[lang].more)} →</a></p>
 <p><a href="${CONTENT[lang].path}">${esc(b.related)} →</a></p>
 ${cta(c, ctx)}
 </section>
@@ -536,6 +548,79 @@ ${cta(c, ctx, `<a class="btn" href="/#/sandbox">${esc(c.game.features[1].split('
   };
 }
 
+function basesBody(lang, ctx) {
+  const c = CONTENT[lang];
+  const b = BASES[lang];
+  const L = b.calc.steps;
+  const solve = ([n, from, to]) => stepsHtml(convert(n, from, to), L);
+  const [n0, from0, to0] = BASE_EXAMPLES.calc;
+  const option = (base, selected) =>
+    `<option value="${base}"${base === selected ? ' selected' : ''}>${base}${b.calc.names[base] ? ` — ${esc(b.calc.names[base])}` : ''}</option>`;
+  const options = (selected) => Array.from({ length: MAX_BASE - MIN_BASE + 1 }, (_, i) => option(MIN_BASE + i, selected)).join('');
+  const rows = Array.from({ length: 17 }, (_, n) =>
+    `<tr><td>${n}</td><td>${n.toString(2)}</td><td>${n.toString(8)}</td><td>${n.toString(16).toUpperCase()}</td></tr>`,
+  ).join('');
+  const bin = BASE_EXAMPLES.group8[0];
+
+  return {
+    ld: learning(lang, [b.toBase.title, b.toDec.title, b.groups.title], ctx),
+    html: `<h1>${esc(b.h1)}</h1>
+${b.lead.map((p) => `<p class="lead">${esc(p)}</p>`).join('\n')}
+${cta(c, ctx)}
+<section id="calc">
+<h2>${esc(b.calc.title)}</h2>
+<p>${esc(b.calc.text)}</p>
+<div class="calc" id="base-calc" data-labels="${esc(JSON.stringify(L))}" data-errors="${esc(JSON.stringify(b.calc.errors))}">
+<label for="base-num">${esc(b.calc.number)}</label>
+<input id="base-num" type="text" value="${n0}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<div class="base-row">
+<label>${esc(b.calc.from)} <select id="base-from">${options(from0)}</select></label>
+<button type="button" class="sym" id="base-swap" aria-label="${esc(b.calc.swap)}" title="${esc(b.calc.swap)}">⇄</button>
+<label>${esc(b.calc.to)} <select id="base-to">${options(to0)}</select></label>
+</div>
+<p class="verdict bad" id="base-error" role="alert" hidden></p>
+<div id="base-steps" aria-live="polite">${solve(BASE_EXAMPLES.calc)}</div>
+</div>
+</section>
+<section id="table">
+<h2>${esc(b.table.title)}</h2>
+<div class="scroll-x"><table class="wide base-table"><thead><tr>${b.table.cols.map((h, i) => `<th>${esc(h)} (${[10, 2, 8, 16][i]})</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+</section>
+<section id="to-base">
+<h2>${esc(b.toBase.title)}</h2>
+<p>${esc(b.toBase.text)}</p>
+${solve(BASE_EXAMPLES.toBase)}
+</section>
+<section id="to-decimal">
+<h2>${esc(b.toDec.title)}</h2>
+<p>${esc(b.toDec.text)}</p>
+${solve(BASE_EXAMPLES.toDec)}
+</section>
+<section id="groups">
+<h2>${esc(b.groups.title)}</h2>
+<p>${esc(b.groups.text)}</p>
+<p><code>${bin}${sub(2)}</code></p>
+${solve(BASE_EXAMPLES.group8)}
+${solve(BASE_EXAMPLES.group16)}
+<p class="tip">${BULB} ${esc(b.tip)}</p>
+<p><a href="${BINARY[lang].path}">${esc(b.related[0])} →</a></p>
+<p><a href="${CONTENT[lang].path}">${esc(b.related[1])} →</a></p>
+${cta(c, ctx)}
+</section>
+<script src="/guide-base.js" defer></script>`,
+  };
+}
+
+/** Brauzer uchun qo'llanma skripti: kutubxona (export'larsiz) + interfeys, bitta IIFE ichida. */
+function guideScript(title, lib, ui) {
+  return `// Logic Gate — ${title}.\n(function () {\n'use strict';\n${lib.replace(/^export /gm, '')}\n${ui}\n})();\n`;
+}
+
+export function guideBaseScript() {
+  const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
+  return guideScript('sanoq sistemalari kalkulyatori (scripts/numbase.mjs + scripts/guide-base-ui.js)', read('./numbase.mjs'), read('./guide-base-ui.js'));
+}
+
 /** Kalkulyator skripti: src/boolexpr.ts (turlar va export'larsiz) + guide-bool-ui.js, bitta IIFE ichida. */
 export function guideBoolScript() {
   const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
@@ -559,6 +644,7 @@ export function buildPages(ctx) {
     }
   }
   files['guide-bool.js'] = guideBoolScript();
+  files['guide-base.js'] = guideBaseScript();
   files['robots.txt'] = `User-agent: *\nDisallow: /api/\n\nSitemap: ${site}/sitemap.xml\n`;
   files['sitemap.xml'] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`;
   return files;

@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.6.0 — 2026-11-09
+
+- Saytda yangi qo'llanma — «Sanoq sistemalari»: sonni 2, 8, 10, 16 va boshqa sistemalar orasida o'tkazadigan kalkulyator, yechimi bosqichma-bosqich.
+
 ## 2.5.0 — 2026-11-09
 
 - Qum qutida formuladan sxema: mantiqiy ifodani yozing — sxema o'zi yig'iladi va joylashadi.

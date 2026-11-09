@@ -4,6 +4,8 @@ import { ru, uz } from '../src/i18n';
 import { applyGate } from '../src/sim/sim';
 import { GATE_ARITY, GATE_TYPES } from '../src/sim/types';
 import { compareExprs, parseExpr, truthTableOf } from '../src/boolexpr.ts';
+import { convert } from './numbase.mjs';
+import { BASE_EXAMPLES, BASES } from './pages-base.mjs';
 import { BINARY, binaryAdd, divisionSteps } from './pages-binary.mjs';
 import { BOOL, KMAP_COLS, KMAP_GROUPS, SOP_EXAMPLE, SOP_FACTORED, SOP_SIMPLIFIED, sopTerms } from './pages-bool.mjs';
 import { CONTENT } from './pages-content.mjs';
@@ -22,6 +24,7 @@ describe("qo'llanma sahifalari", () => {
   it('har ikki tilda hamma element, sarlavha, canonical va hreflang', () => {
     expect(Object.keys(files).sort()).toEqual([
       'bul-algebrasi/index.html',
+      'guide-base.js',
       'guide-bool.js',
       'ikkilik-sanoq-sistemasi/index.html',
       'mantiqiy-elementlar/index.html',
@@ -29,6 +32,8 @@ describe("qo'llanma sahifalari", () => {
       'ru/algebra-logiki/index.html',
       'ru/dvoichnaya-sistema/index.html',
       'ru/logicheskie-elementy/index.html',
+      'ru/sistemy-schisleniya/index.html',
+      'sanoq-sistemalari/index.html',
       'sitemap.xml',
     ]);
     for (const c of Object.values(CONTENT)) {
@@ -58,7 +63,7 @@ describe("qo'llanma sahifalari", () => {
   it("robots.txt, sitemap va o'yindagi havolalar", () => {
     expect(files['robots.txt']).toContain('Sitemap: https://example.uz/sitemap.xml');
     expect(files['robots.txt']).toContain('Disallow: /api/');
-    expect(files['sitemap.xml'].match(/<loc>/g)).toHaveLength(7);
+    expect(files['sitemap.xml'].match(/<loc>/g)).toHaveLength(9);
     expect(files['sitemap.xml']).toContain('<loc>https://example.uz/</loc>');
     expect(uz.home.guideUrl).toBe(CONTENT.uz.path);
     expect(ru.home.guideUrl).toBe(CONTENT.ru.path);
@@ -141,5 +146,40 @@ describe("qo'llanma sahifalari", () => {
     expect(files['guide-bool.js']).toContain("getElementById('bool-calc')");
     expect(files['guide-bool.js']).not.toMatch(/^export /m);
     expect(() => new Function(files['guide-bool.js'])).not.toThrow();
+  });
+
+  it("sanoq sistemalari: misollar to'g'ri, kalkulyator va havolalar", () => {
+    for (const [n, from, to] of Object.values(BASE_EXAMPLES)) expect(convert(n, from, to).result).toBe(parseInt(n, from).toString(to).toUpperCase());
+    for (const lang of ['uz', 'ru']) {
+      const b = BASES[lang];
+      const html = files[b.path.slice(1) + 'index.html'];
+      expect(b.title.length).toBeLessThanOrEqual(60);
+      expect(b.description.length).toBeLessThanOrEqual(200);
+      expect(html).toContain('<script src="/guide-base.js" defer></script>');
+      expect(html).toContain('<strong>2026₁₀ = 7EA₁₆</strong>');
+      expect(html).toContain('7EA₁₆ = 7·16² + 14·16¹ + 10·16⁰ = 1792 + 224 + 10 = 2026₁₀');
+      expect(html).toContain('<strong>11111101010₂ = 3752₈</strong>');
+      expect(html).toContain('<strong>11111101010₂ = 7EA₁₆</strong>');
+      // Tanlovlar: 2–16, boshlang'ich — 10 dan 16 ga.
+      expect(html.match(/<option value=/g)).toHaveLength(2 * 15);
+      expect(html).toContain('<option value="10" selected>');
+      expect(html).toContain('<option value="16" selected>');
+      // Jadval 0–16 va matnlar ko'rinadigan joyda shablonsiz.
+      expect(html).toContain('<td>16</td><td>10000</td><td>20</td><td>10</td>');
+      expect(html.replace(/data-[a-z-]+="[^"]*"/g, '')).not.toMatch(/undefined|NaN|\[object|\{to\}|\{from\}|\{n\}/);
+      expect(html.match(/<section/g)?.length).toBe(html.match(/<\/section>/g)?.length);
+      // Kalkulyator matnlari skript uchun JSON sifatida.
+      const labels = JSON.parse(html.match(/data-labels="([^"]*)"/)[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&'));
+      expect(labels.division).toBe(b.calc.steps.division);
+      // Ikkilik qo'llanmasi bilan o'zaro havola.
+      expect(html).toContain(`href="${BINARY[lang].path}"`);
+      expect(files[BINARY[lang].path.slice(1) + 'index.html']).toContain(`href="${b.path}"`);
+      expect(Object.keys(b.calc.steps).sort()).toEqual(Object.keys(BASES.uz.calc.steps).sort());
+      expect(Object.keys(b.calc.errors).sort()).toEqual(['base', 'big', 'digit', 'empty']);
+    }
+    expect(files['guide-base.js']).toContain('function convert(');
+    expect(files['guide-base.js']).toContain("getElementById('base-calc')");
+    expect(files['guide-base.js']).not.toMatch(/^export /m);
+    expect(() => new Function(files['guide-base.js'])).not.toThrow();
   });
 });

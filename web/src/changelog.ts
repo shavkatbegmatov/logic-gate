@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.6.0',
+    date: '2026-11-09',
+    uz: [
+      "Saytda yangi qo'llanma — «Sanoq sistemalari»: sonni 2, 8, 10, 16 va boshqa sistemalar orasida o'tkazadigan kalkulyator, yechimi bosqichma-bosqich.",
+    ],
+    ru: [
+      'Новый справочник на сайте — «Системы счисления»: калькулятор перевода между 2, 8, 10, 16 и другими системами с пошаговым решением.',
+    ],
+  },
+  {
     version: '2.5.0',
     date: '2026-11-09',
     uz: [

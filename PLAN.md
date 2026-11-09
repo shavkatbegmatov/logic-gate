@@ -145,6 +145,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+35. **M34 — Qo'llanma: sanoq sistemalari (bajarildi, 2.6.0):** uz/ru statik sahifa — 2–16 asoslar orasida o'tkazish kalkulyatori bosqichma-bosqich yechim bilan, 0–16 jadvali, bo'lish, yoyish va guruhlash misollari; sitemap'da 9 ta manzil.
 34. **M33 — Brauzer xatolari (bajarildi):** o'yindagi kutilmagan xatolar (faqat o'z kodimizdagi) serverga yuboriladi, server log'ga ERROR qilib yozadi, bot admin'ga ogohlantiradi; takrorlar 6 soatda bir marta, shaxsiy ma'lumotsiz.
 33. **M32 — Formuladan sxema (bajarildi, 2.5.0):** Qum qutida Bul ifodasidan sxema (konstantalar soddalashadi, NAND/NOR/XNOR birlashadi, takrorlar bir marta, ustunlarga joylash), `#/sandbox/<formula>` havolasi; qo'llanma kalkulyatoridan o'yinga tugma. Ifoda o'qigich o'yin va qo'llanma uchun bitta (`src/boolexpr.ts`).
 32. **M31 — Qo'llanma: Bul algebrasi (bajarildi, 2.4.0):** uz/ru statik sahifa — amallar, qonunlar, De Morgan, soddalashtirish, MDNSh, Karno kartasi; haqiqat jadvali kalkulyatori (ifodalarni solishtiradi); sitemap'da 7 ta manzil.
