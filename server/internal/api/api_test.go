@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -198,6 +199,14 @@ func TestSolveAndLeaderboard(t *testing.T) {
 	status, out = e.do("GET", "/api/levels/x2/stats", "", nil)
 	if status != 200 || out["solvers"].(float64) != 1 || out["bestGates"].(float64) != 4 {
 		t.Fatalf("stats: %d %v", status, out)
+	}
+	// Taqsimot: har o'yinchining faqat eng yaxshi yechimi hisoblanadi (Ali — 4 element).
+	if sp := fmt.Sprint(out["spread"]); sp != "[[4 1]]" {
+		t.Fatalf("spread: %s", sp)
+	}
+	status, out = e.do("POST", "/api/levels/x2/solve", vali, map[string]any{"circuit": worse})
+	if sp := fmt.Sprint(out["level"].(map[string]any)["spread"]); status != 200 || sp != "[[4 1] [5 1]]" {
+		t.Fatalf("spread 2: %d %s", status, sp)
 	}
 
 	// Xotira darajasi: to'g'ridan-to'g'ri sim kechikish emas — eng qisqa farq (1-taktda A = 1).

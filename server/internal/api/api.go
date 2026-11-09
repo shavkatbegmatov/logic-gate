@@ -373,7 +373,16 @@ func statsJSON(st *store.LevelStats) map[string]any {
 	if by == nil {
 		by = []string{}
 	}
-	return map[string]any{"solvers": st.Solvers, "bestGates": st.BestGates, "bestBy": by}
+	return map[string]any{"solvers": st.Solvers, "bestGates": st.BestGates, "bestBy": by, "spread": spreadJSON(st.Spread)}
+}
+
+// spreadJSON — [[element soni, o'yinchilar], ...]; taxalluslarsiz, faqat sonlar.
+func spreadJSON(sp []store.GateCount) [][2]int {
+	out := make([][2]int, len(sp))
+	for i, g := range sp {
+		out[i] = [2]int{g.Gates, g.Count}
+	}
+	return out
 }
 
 func (s *Server) levelStats(w http.ResponseWriter, r *http.Request) {

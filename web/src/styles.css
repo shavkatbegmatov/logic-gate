@@ -1886,6 +1886,69 @@ input[type='text']:focus {
   justify-content: center;
 }
 
+/* Yechimlar taqsimoti: element soni bo'yicha ustunlar, o'yinchining ustuni — asosiy rangda. */
+.spread {
+  margin: 12px auto 0;
+  max-width: 340px;
+}
+
+.spread figcaption {
+  margin-bottom: 6px;
+}
+
+.spread-bars {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.spread-col {
+  flex: 1 1 0;
+  max-width: 34px;
+  display: grid;
+  grid-template-rows: 16px 56px auto;
+  text-align: center;
+}
+
+.spread-you {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.spread-track {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--line);
+}
+
+.spread-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--solved);
+}
+
+.spread-col.mine .spread-bar {
+  background: var(--accent);
+}
+
+.spread-x {
+  padding-top: 3px;
+  font: 400 11px var(--mono);
+  color: var(--muted);
+}
+
+.spread-col.mine .spread-x {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.spread p {
+  margin: 8px 0 0;
+}
+
 .modal-actions {
   display: flex;
   flex-wrap: wrap;

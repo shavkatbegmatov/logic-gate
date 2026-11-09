@@ -78,6 +78,9 @@ func TestDailyFlow(t *testing.T) {
 	if status != 200 || out["stars"].(float64) != 3 || best["rank"].(float64) != 1 || out["solvers"].(float64) != 2 {
 		t.Fatalf("alice: %d %v", status, out)
 	}
+	if sp, want := fmt.Sprint(out["spread"]), fmt.Sprintf("[[%d 1] [%d 1]]", puzzle.Goal, puzzle.Goal+1); sp != want {
+		t.Fatalf("spread: %s, kutilgan %s", sp, want)
+	}
 	// Yomonroq yechim natijani buzmaydi.
 	status, out = e.do("POST", path, alice, map[string]any{"circuit": padded(sol, puzzle.Gates[0])})
 	if status != 200 || out["improved"].(bool) || out["best"].(map[string]any)["gates"].(float64) != float64(puzzle.Goal) {

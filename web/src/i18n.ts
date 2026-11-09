@@ -108,6 +108,14 @@ export const uz = {
     offline: 'Natija qurilmada saqlandi. Server bilan aloqa tiklanganda yuboriladi.',
   },
 
+  spread: {
+    title: 'Boshqalar nechta element ishlatgan',
+    label: (n: number) => `${n} o'yinchi yechimlari: element soni bo'yicha`,
+    col: (gates: string, n: number) => `${gates} element — ${n} o'yinchi`,
+    you: 'Siz',
+    fewer: (pct: string) => `${pct} o'yinchi sizdan kamroq element bilan yechgan`,
+  },
+
   telegram: {
     play: "Telegram'da o'ynash",
     remindOn: 'Har kuni eslatish',
@@ -571,6 +579,14 @@ export const ru: typeof uz = {
     nextLocked: (need: number) => `Следующий раздел откроется при ${need} ★`,
     allDone: 'Поздравляем! Вы прошли все уровни.',
     offline: 'Результат сохранён на устройстве. Он отправится, когда появится связь с сервером.',
+  },
+
+  spread: {
+    title: 'Сколько элементов использовали другие',
+    label: (n: number) => `Решения ${n} игроков по числу элементов`,
+    col: (gates: string, n: number) => `${gates} эл. — игроков: ${n}`,
+    you: 'Вы',
+    fewer: (pct: string) => `${pct} игроков решили меньшим числом элементов`,
   },
 
   telegram: {

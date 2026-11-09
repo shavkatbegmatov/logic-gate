@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { GateIntro } from '../components/GateIntro';
+import { SpreadChart } from '../components/SpreadChart';
 import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { ShareButtons } from '../components/ShareButtons';
@@ -203,6 +204,7 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
               {server.best.gates > server.bestGates && (
                 <p class="muted">{(past ? t.daily.bestPast : t.daily.best)(server.bestGates)}</p>
               )}
+              <SpreadChart spread={server.spread} mine={server.best.gates} />
             </>
           )
         ) : (

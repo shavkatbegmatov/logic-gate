@@ -102,7 +102,7 @@ Har bir daraja uchun mos yozuvdagi (reference) yechim saqlanadi. Test har bir da
 | GET | `/api/progress` | barcha yechilgan darajalar |
 | POST | `/api/levels/{id}/solve` | sxemani yuborish → server tekshiradi, yulduz qaytaradi |
 | GET | `/api/leaderboard` | top-50 o'yinchi |
-| GET | `/api/levels/{id}/stats` | nechta odam yechgan, eng kam element soni |
+| GET | `/api/levels/{id}/stats` | nechta odam yechgan, eng kam element soni, element soni bo'yicha taqsimot |
 | GET | `/healthz` | holat tekshiruvi |
 
 Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xotirada, token bucket).
@@ -145,6 +145,7 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 24. **M23 — Dizayn, 4-bosqich: darajalar xaritasi (bajarildi):** bo'lim ichida darajalar "ilon" tartibida yo'llar bilan ulangan (6, 3 yoki 2 ustun — ekran kengligiga qarab), yechilgan darajadan keyingisiga yo'l yonadi, yangi yechimdan keyin signal yo'l bo'ylab "oqadi"; navbatdagi daraja chirog'i miltillaydi; bo'limlar ham yo'l bilan ulangan; ochilganda navbatdagi bo'limga o'tadi.
 
+29. **M28 — Yechimlar taqsimoti (bajarildi, 2.1.0):** daraja va kunlik masala yechilgach — boshqa o'yinchilar nechta element ishlatgani (ustunlar, ko'pi bilan 10 ta, ortiqchasi "N+") va o'yinchining ustuni; "X% o'yinchi sizdan kamroq element bilan yechgan". Server faqat sonlarni beradi (taxalluslarsiz).
 28. **M27 — Versiya va yangiliklar (bajarildi):** versiya 2.0.0; o'yinda «Yangiliklar» ekrani (uz/ru), qaytgan o'yinchiga bosh sahifada bir martalik xabar, Sozlamalarda versiya va havola; `CHANGELOG.md`; test versiya va yangiliklar mosligini tekshiradi. Har relizda versiya oshiriladi va sodda tilda yozuv qo'shiladi.
 27. **M26 — Sinf rejimi (bajarildi):** o'qituvchi sinf yaratadi (kod + maxfiy kalit), o'quvchilar havola orqali qo'shiladi va sinf reytingini ko'radi; o'qituvchi hisoboti — darajalar, bo'limlar, kunlik masalalar, faollik; Telegram havolasi `c_<kod>`.
 26. **M25 — Qo'llanma: ikkilik sanoq sistemasi (bajarildi):** uz/ru statik sahifa (o'tkazish usullari, jadval, qo'shish, bitlar o'yinchog'i), qo'llanmalar orasida menyu, sitemap'da 5 ta manzil.

@@ -444,10 +444,10 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | PATCH | `/api/me` | `{nickname}` — taxallusni o'zgartirish |
 | GET | `/api/progress` | o'yinchining eng yaxshi yechimlari |
 | POST | `/api/levels/{id}/solve` | `{circuit}` — server sxemani tekshiradi va saqlaydi |
-| GET | `/api/levels/{id}/stats` | yechganlar soni va eng kam element |
+| GET | `/api/levels/{id}/stats` | yechganlar soni, eng kam element va taqsimot `spread: [[element, o'yinchilar], ...]` |
 | GET | `/api/leaderboard` | top-50 (token bo'lsa, o'yinchining o'rni ham) |
 | GET | `/api/daily` | bugungi masala, statistika; token bo'lsa — o'yinchi natijasi va seriyasi |
-| POST | `/api/daily/{day}/solve` | `{circuit}` — kunlik yechim (faqat bugungi va kechagi kun) |
+| POST | `/api/daily/{day}/solve` | `{circuit}` — kunlik yechim (faqat bugungi va kechagi kun); javobda `spread` ham bor |
 | GET | `/api/daily/{day}/leaderboard` | kun reytingi, top-50 (`{day}` = `today` ham bo'ladi) |
 | POST | `/api/classes` | `{name}` → `{code, name, key}` — o'qituvchi sinf yaratadi (kalit faqat shu javobda) |
 | GET | `/api/classes/{code}` | sinf nomi va o'quvchilar soni; token bo'lsa — `member` |

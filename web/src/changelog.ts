@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.1.0',
+    date: '2026-11-09',
+    uz: [
+      "Yechimlar diagrammasi: daraja yoki kunlik masala yechilgach, boshqa o'yinchilar nechta element ishlatgani va sizning o'rningiz ko'rinadi.",
+    ],
+    ru: [
+      'Диаграмма решений: после уровня или задачи дня видно, сколько элементов использовали другие игроки и где вы среди них.',
+    ],
+  },
+  {
     version: '2.0.0',
     date: '2026-11-09',
     uz: [

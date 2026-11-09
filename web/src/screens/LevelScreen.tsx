@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { GateIntro } from '../components/GateIntro';
+import { SpreadChart } from '../components/SpreadChart';
 import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon, Modal, Stars } from '../components/ui';
@@ -166,6 +167,7 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
                   : t.success.record(server.level.bestGates, server.level.bestBy.join(', '))}
               </p>
               <p class="muted">{t.success.solvers(server.level.solvers)}</p>
+              <SpreadChart spread={server.level.spread} mine={server.best.gates} />
             </>
           )
         ) : (

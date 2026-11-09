@@ -112,6 +112,13 @@ type LevelStats struct {
 	Solvers   int
 	BestGates int // 0 — hali hech kim yechmagan
 	BestBy    []string
+	Spread    []GateCount
+}
+
+// GateCount — eng yaxshi yechimida Gates ta element ishlatgan o'yinchilar soni.
+type GateCount struct {
+	Gates int
+	Count int
 }
 
 func Open(path string) (*Store, error) {
@@ -315,7 +322,39 @@ func (s *Store) LevelStats(ctx context.Context, levelID string) (*LevelStats, er
 		}
 		st.BestBy = append(st.BestBy, n)
 	}
-	return &st, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	st.Spread, err = s.spread(ctx,
+		`SELECT gate_count, COUNT(*) FROM solutions WHERE level_id = ? GROUP BY gate_count ORDER BY gate_count`, levelID)
+	if err != nil {
+		return nil, err
+	}
+	return &st, nil
+}
+
+// DailySpread — kun masalasi yechimlarining element soni bo'yicha taqsimoti.
+func (s *Store) DailySpread(ctx context.Context, day int) ([]GateCount, error) {
+	return s.spread(ctx,
+		`SELECT gate_count, COUNT(*) FROM daily_solutions WHERE day = ? GROUP BY gate_count ORDER BY gate_count`, day)
+}
+
+// spread — (element soni, o'yinchilar) juftliklari, element soni o'sib borishi tartibida.
+func (s *Store) spread(ctx context.Context, query string, arg any) ([]GateCount, error) {
+	rows, err := s.db.QueryContext(ctx, query, arg)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []GateCount
+	for rows.Next() {
+		var g GateCount
+		if err := rows.Scan(&g.Gates, &g.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, g)
+	}
+	return out, rows.Err()
 }
 
 type PlayerRow struct {

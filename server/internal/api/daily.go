@@ -147,6 +147,11 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		s.internal(w, err)
 		return
 	}
+	spread, err := s.store.DailySpread(r.Context(), day)
+	if err != nil {
+		s.internal(w, err)
+		return
+	}
 	streak, err := s.store.DailyStreak(r.Context(), player.ID, today)
 	if err != nil {
 		s.internal(w, err)
@@ -171,6 +176,7 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		"best":        dailyMeJSON{Rank: best.Rank, Gates: best.Gates, Stars: best.Stars},
 		"solvers":     solvers,
 		"bestGates":   bestGates,
+		"spread":      spreadJSON(spread),
 		"streak":      streak,
 		"todaySolved": todaySolved,
 	})

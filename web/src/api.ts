@@ -1,4 +1,5 @@
 import type { Circuit, GateType, Machine } from './sim/types';
+import type { Spread } from './spread';
 import { profile } from './state';
 
 export class ApiError extends Error {
@@ -47,6 +48,8 @@ export interface LevelStats {
   solvers: number;
   bestGates: number;
   bestBy: string[];
+  /** [element soni, o'yinchilar] — har o'yinchining eng yaxshi yechimi bo'yicha. */
+  spread?: Spread;
 }
 
 export interface SolveResult {
@@ -126,6 +129,7 @@ export interface DailySolveResult {
   best: { rank: number; gates: number; stars: number };
   solvers: number;
   bestGates: number;
+  spread?: Spread;
   streak: number;
   /** Seriya bugungi kunni ham o'z ichiga oladimi (bugun yechilganmi). */
   todaySolved?: boolean;
