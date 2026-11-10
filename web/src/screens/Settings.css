@@ -1,0 +1,72 @@
+/* Sozlamalar ekrani uslublari: ekran bilan birga, kerak bo'lganda yuklanadi (bosh yuklamaga kirmaydi). */
+/* ── Mavzu tanlash: har bir mavzuning kichik namunasi, o'z ranglarida (Settings.tsx ThemeSwitch) ── */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.theme-tile {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 6px 6px 8px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.theme-tile:hover {
+  background: var(--raise);
+}
+
+.theme-tile.on {
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.theme-swatch {
+  display: flex;
+  height: 44px;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+/* Namuna bo'lagi: data-theme shu yerda — ichidagi ranglar o'sha mavzuniki. */
+.theme-swatch > span {
+  flex: 1;
+  min-width: 0;
+  background: var(--board);
+}
+
+.theme-swatch svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.swatch-wire {
+  fill: none;
+  stroke: var(--trace-on);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.swatch-gate {
+  fill: var(--gate-fill);
+  stroke: var(--gate-stroke);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.swatch-lamp {
+  fill: var(--lamp-on);
+  stroke: var(--lamp-on-stroke);
+  stroke-width: 1.5;
+}

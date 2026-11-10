@@ -64,7 +64,7 @@ const cleanSettings = (v: unknown): Partial<Settings> | null => {
   if (typeof v.sound === 'boolean') out.sound = v.sound;
   if (v.lang === 'uz' || v.lang === 'ru') out.lang = v.lang;
   // theme.ts dan THEMES olinmaydi: u state.ts ni import qiladi (aylana).
-  if (v.theme === 'plata' || v.theme === 'daftar' || v.theme === 'auto') out.theme = v.theme;
+  if (v.theme === 'plata' || v.theme === 'haqiqiy' || v.theme === 'daftar' || v.theme === 'chizma' || v.theme === 'auto') out.theme = v.theme;
   if (v.motion === 'on' || v.motion === 'off' || v.motion === 'auto') out.motion = v.motion;
   return out;
 };

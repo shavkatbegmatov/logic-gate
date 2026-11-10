@@ -1,16 +1,17 @@
-// Rang mavzusi: Plata (qorong'i, asosiy) yoki Daftar (yorug'). "Avto" — telefon yoki Telegram'ning
-// yorug'/qorong'i rejimiga qarab. Ranglar styles.css da; bu yerda faqat <html data-theme> qo'yiladi.
+// Rang mavzusi: Plata (qorong'i, asosiy), Haqiqiy plata (lak, mikrosxemalar), Daftar (yorug'), Chizma
+// (muhandislik chizmasi). "Avto" — telefon yoki Telegram'ning yorug'/qorong'i rejimiga qarab: Daftar yoki Plata. Ranglar styles.css da; bu yerda faqat <html data-theme> qo'yiladi.
 // Birinchi chizishdan oldin xuddi shuni public/theme.js qiladi (sahifa miltillamasin).
 import { computed, effect, signal } from '@preact/signals';
 import { settings } from './state';
 
-export type Theme = 'plata' | 'daftar' | 'auto';
+export type Theme = 'plata' | 'haqiqiy' | 'daftar' | 'chizma' | 'auto';
 export type ActiveTheme = Exclude<Theme, 'auto'>;
 
-export const THEMES: Theme[] = ['plata', 'daftar', 'auto'];
+/** Sozlamalardagi tartib: avval qorong'ilar, keyin yorug'lar. */
+export const THEMES: Theme[] = ['plata', 'haqiqiy', 'daftar', 'chizma', 'auto'];
 
 /** Mavzu foni: brauzer paneli (theme-color) va Telegram oynasi uchun. styles.css dagi --bg bilan bir xil. */
-export const THEME_BG: Record<ActiveTheme, string> = { plata: '#0b1712', daftar: '#efe9dc' };
+export const THEME_BG: Record<ActiveTheme, string> = { plata: '#0b1712', haqiqiy: '#062a1c', daftar: '#efe9dc', chizma: '#f3f0e7' };
 
 const media = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: light)') : null;
 const systemLight = signal(media?.matches ?? false);
@@ -20,9 +21,8 @@ media?.addEventListener?.('change', (e) => (systemLight.value = e.matches));
 export const telegramScheme = signal<'light' | 'dark' | null>(null);
 
 export function resolveTheme(theme: Theme | undefined, light: boolean): ActiveTheme {
-  if (theme === 'daftar' || theme === 'plata') return theme;
   if (theme === 'auto') return light ? 'daftar' : 'plata';
-  return 'plata';
+  return theme && Object.prototype.hasOwnProperty.call(THEME_BG, theme) ? theme : 'plata';
 }
 
 /** Chop etilayotganda (Ctrl+P yoki "Chop etish") — har doim Daftar: qorong'i fon qog'ozga chiqmasin. */

@@ -14,7 +14,36 @@ function FlipFlop() {
   );
 }
 
-export function GateShape({ type }: { type: GateType }) {
+/** «Haqiqiy plata» mavzusidagi korpus (72×48 maydonda) va mikrosxema markasi — shu elementli haqiqiy 74HC seriyasi. */
+const CHIP = { x: 14, y: 3, w: 44, h: 42 };
+export const CHIP_CODE: Record<GateType, string> = {
+  NOT: '74HC04',
+  AND: '74HC08',
+  OR: '74HC32',
+  XOR: '74HC86',
+  NAND: '74HC00',
+  NOR: '74HC02',
+  XNOR: '74HC7266',
+  DFF: '74HC74',
+};
+
+/** Mikrosxema: qora korpus, kirish va chiqish uchlari o'rnida oyoqchalar, burchakda 1-oyoq belgisi. */
+function Chip({ type }: { type: GateType }) {
+  return (
+    <g class="gate-shape">
+      {inputLeads(type).map((y) => (
+        <rect key={y} class="chip-pin" x={0} y={y - 2.5} width={CHIP.x + 1} height={5} />
+      ))}
+      <rect class="chip-pin" x={CHIP.x + CHIP.w - 1} y={outputY(type) - 2.5} width={SHAPE_W - CHIP.x - CHIP.w + 1} height={5} />
+      <rect class="chip-body" x={CHIP.x} y={CHIP.y} width={CHIP.w} height={CHIP.h} rx={2.5} />
+      <circle class="chip-dot" cx={CHIP.x + 5} cy={CHIP.y + 5} r={1.6} />
+    </g>
+  );
+}
+
+/** chip — «Haqiqiy plata» mavzusida maydondagi element (palitra va yordam oynalarida har doim belgi). */
+export function GateShape({ type, chip }: { type: GateType; chip?: boolean }) {
+  if (chip) return <Chip type={type} />;
   if (type === 'DFF') return <FlipFlop />;
   const s = SHAPES[type];
   const leadStart = s.bubble ? s.tip + 8 : s.tip;

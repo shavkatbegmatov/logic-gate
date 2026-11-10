@@ -9,7 +9,8 @@ import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
 import { GATE_H, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, routeMid, wirePath, type Point } from './geometry';
-import { GateShape } from './GateShape';
+import { activeTheme } from '../theme';
+import { CHIP_CODE, GateShape } from './GateShape';
 import { routeAll, routeD } from './routing';
 
 type Drag =
@@ -375,11 +376,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
   const routed = useMemo(() => routeAll(wires, gmap, lay, quick), [geomKey]);
   const junctions = useMemo(() => new Set(routed.dots.map(({ at }) => `${at.x},${at.y}`)), [routed]);
   const sharp = (p: Point) => junctions.has(`${p.x},${p.y}`);
+  // Mavzuga qarab shakl: «Haqiqiy plata» da element — mikrosxema, «Chizma» da simlar to'g'ri burchakli
+  // (burchak kesilmaydi). Qolgan farqlar — faqat ranglar (styles.css).
+  const chip = activeTheme.value === 'haqiqiy';
+  const cut = activeTheme.value === 'chizma' ? 0 : undefined;
 
   const wireEls = wires.map((w, i) => {
     const route = routed.routes[i];
     if (!route) return null;
-    const d = routeD(route, routed.hops[i], sharp);
+    const d = routeD(route, routed.hops[i], sharp, cut);
     const live = reached(w.from, 1);
     const on = live && values.get(w.from) === 1;
     const front = wave !== null && stepOf(w.from, 1) === wave;
@@ -511,12 +516,18 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                   onKeyDown={(e) => onGateKey(e, g)}
                 >
                   <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
-                  <GateShape type={g.type} />
+                  <GateShape type={g.type} chip={chip} />
                   {g.type === 'DFF' ? (
                     <>
                       {/* Vertikal rejimda (telefon) ham ekranda ustma-ust: DFF tepada, q1 pastda. */}
                       {label('gate-label', 36, GATE_H / 2 - 6, g.type, 29, GATE_H / 2)}
                       {label('gate-sub', 36, GATE_H / 2 + 9, states.get(g.id), 45, GATE_H / 2)}
+                    </>
+                  ) : chip ? (
+                    <>
+                      {/* Korpus o'rtasida: tur nomi, ostida mikrosxema markasi (vertikal rejimda ham ustma-ust). */}
+                      {label('gate-label', 36, 19, g.type, 30, GATE_H / 2)}
+                      {label('chip-code', 36, 33, CHIP_CODE[g.type], 44, GATE_H / 2)}
                     </>
                   ) : (
                     label('gate-label', g.type === 'NOT' ? 28 : 32, GATE_H / 2, g.type)
@@ -592,6 +603,8 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                     <path class="lamp-rays" d="M-9,-11 l-3,-4 M0,-13 v-5 M9,-11 l3,-4" />
                     <circle class="lamp-bezel" r={10} />
                     <circle class="lamp" r={7} />
+                    {/* Chizma: chiroq belgisi — doira ichida xoch. */}
+                    <path class="lamp-x" d="M-7,-7 L7,7 M7,-7 L-7,7" />
                     <circle class="lamp-shine" cx={-2.5} cy={-2.5} r={2} />
                   </g>,
                 )}

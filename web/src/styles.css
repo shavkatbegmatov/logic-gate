@@ -1,8 +1,12 @@
 /* Logic Gate — "ustaxona" uslubi: Plata (qorong'i) va Daftar (yorug') mavzulari. */
-:root {
+:root,
+[data-theme='plata'] {
   /*
    * Mavzular. Plata — asosiy (qorong'i): yashil plata, mis yo'llar, sariq chiroq.
-   * Daftar — yorug': katakli qog'oz va siyoh (pastda). Faqat ranglar farq qiladi, tuzilma bir xil.
+   * Daftar — yorug': katakli qog'oz va siyoh. Haqiqiy plata — lak ostidagi yo'llar, oltin kontaktlar,
+   * qora mikrosxemalar. Chizma — oq qog'oz, qora chiziq, yoniq sim qizil qalamda. Faqat ranglar (va maydondagi
+   * bir nechta shakl) farq qiladi, tuzilma bir xil. Bloklar atribut bo'yicha (:root siz): Sozlamalardagi
+   * mavzu namunasi o'z ranglarini <span data-theme="…"> orqali oladi.
    *
    * Sirtlar (hoshiya o'rniga): --bg — sahifa, --bg2 — karta va panellar, --panel — karta ustidagi
    * boshqaruv elementlari va plitkalar, --raise — ularning ustiga kelganda. Plata'da bloklar bir-biridan
@@ -22,6 +26,10 @@
   --edge: transparent;
   --edge-strong: transparent;
   --line: #223d31;
+  /* Maydon foni va undagi kirish/chiqish qutisi (Haqiqiy plata'da — qora korpus, Chizma'da — qog'oz). */
+  --board: #0b1712;
+  --pin: #19352a;
+  --pin-stroke: #4b7663;
   --grid: #1f3a2c;
   --text: #ecf1e7;
   --muted: #9cb2a5;
@@ -76,7 +84,7 @@
   color-scheme: dark;
 }
 
-:root[data-theme='daftar'] {
+[data-theme='daftar'] {
   --bg: #efe9dc;
   --bg2: #f8f4ea;
   --panel: #fffdf8;
@@ -85,6 +93,9 @@
   --edge: #d9cfba;
   --edge-strong: #b3a686;
   --line: #ddd4c0;
+  --board: #efe9dc;
+  --pin: #fffdf8;
+  --pin-stroke: #8d96a5;
   --grid: #c9d3e0;
   --text: #1d2939;
   --muted: #5a6475;
@@ -132,6 +143,130 @@
   --accent-rgb: 34, 83, 176;
   --bad-rgb: 197, 48, 60;
   --sel-rgb: 31, 127, 214;
+  color-scheme: light;
+}
+
+[data-theme='haqiqiy'] {
+  --bg: #062a1c;
+  --bg2: #0a3a27;
+  --panel: #0f4a33;
+  --raise: #145a3f;
+  --accent-soft: #2c4a26;
+  --edge: transparent;
+  --edge-strong: transparent;
+  --line: #1a5a41;
+  --board: #0c4a33;
+  --pin: #1b1d20;
+  --pin-stroke: #4a4f55;
+  --grid: #116044;
+  --text: #f3f5ee;
+  --muted: #bcd6c6;
+  --dim: #a9c7b6;
+  --accent: #f0c24b;
+  --accent-ink: #261b00;
+  --on: #ffd15c;
+  --off: #2c6a4e;
+  --copper: #e2b84f;
+  --sel: #7fd4ff;
+  --bad: #ff7a6b;
+  --good: #7be3a6;
+  --gold: #f0c24b;
+  --gold-ink: #f0c24b;
+  --star-off: #2f6a50;
+  --gate-fill: #17181a;
+  --gate-stroke: #e9eae4;
+  --gate-on-fill: #17181a;
+  --gate-on-stroke: #ffd15c;
+  --lead: #c9ced3;
+  --trace: #2e8f63;
+  --trace-on: #ffd15c;
+  --trace-w: 4.2px;
+  --glow: rgba(255, 209, 92, 0.2);
+  --glow-w: 11px;
+  --lamp-on: #ffc23e;
+  --lamp-on-stroke: #fff0b8;
+  --bezel: #0a2a1d;
+  --knob: #dfe3e6;
+  --knob-ink: #17181a;
+  --shine: rgba(255, 255, 255, 0.8);
+  --lamp: #2b2a20;
+  --lamp-stroke: #4a4f55;
+  --tint: #24482a;
+  --chip: #135a40;
+  --solved: #3fa06f;
+  --silver: #dfe6e2;
+  --bronze: #e0a060;
+  --tg: #4fb8f0;
+  --scrim: rgba(1, 14, 9, 0.72);
+  --float: rgba(6, 42, 28, 0.94);
+  --shadow: rgba(0, 0, 0, 0.45);
+  --hover: rgba(255, 255, 255, 0.05);
+  --on-rgb: 255, 209, 92;
+  --accent-rgb: 240, 194, 75;
+  --bad-rgb: 255, 122, 107;
+  --sel-rgb: 127, 212, 255;
+  color-scheme: dark;
+}
+
+[data-theme='chizma'] {
+  --bg: #f3f0e7;
+  --bg2: #faf8f2;
+  --panel: #ffffff;
+  --raise: #efece3;
+  --accent-soft: #e9e6dc;
+  --edge: #cfcabb;
+  --edge-strong: #1f2328;
+  --line: #dcd7c9;
+  --board: #f8f6f0;
+  --pin: #f8f6f0;
+  --pin-stroke: #1f2328;
+  --grid: #e4e0d4;
+  --text: #1f2328;
+  --muted: #565c66;
+  --dim: #666c76;
+  --accent: #1f2328;
+  --accent-ink: #ffffff;
+  --on: #d32f2f;
+  --off: #b4b0a4;
+  --copper: #1f2328;
+  --sel: #1565c0;
+  --bad: #b00020;
+  --good: #2e7d32;
+  --gold: #b07d00;
+  --gold-ink: #8a5f00;
+  --star-off: #d9d4c6;
+  --gate-fill: #f8f6f0;
+  --gate-stroke: #1f2328;
+  --gate-on-fill: #fdecea;
+  --gate-on-stroke: #d32f2f;
+  --lead: #1f2328;
+  --trace: #1f2328;
+  --trace-on: #d32f2f;
+  --trace-w: 2px;
+  --glow: rgba(211, 47, 47, 0.16);
+  --glow-w: 8px;
+  --lamp-on: #ffd54a;
+  --lamp-on-stroke: #1f2328;
+  --bezel: #f8f6f0;
+  --knob: #ffffff;
+  --knob-ink: #1f2328;
+  --shine: rgba(255, 255, 255, 0.9);
+  --lamp: #f8f6f0;
+  --lamp-stroke: #1f2328;
+  --tint: #f1ead2;
+  --chip: #e9e6dc;
+  --solved: #9db8a0;
+  --silver: #6f7b88;
+  --bronze: #a8662e;
+  --tg: #229ed9;
+  --scrim: rgba(31, 35, 40, 0.45);
+  --float: rgba(255, 255, 255, 0.96);
+  --shadow: rgba(31, 35, 40, 0.16);
+  --hover: rgba(0, 0, 0, 0.04);
+  --on-rgb: 211, 47, 47;
+  --accent-rgb: 31, 35, 40;
+  --bad-rgb: 176, 0, 32;
+  --sel-rgb: 21, 101, 192;
   color-scheme: light;
 }
 
@@ -669,8 +804,8 @@ input[type='date']:focus {
 }
 
 .mini-pin {
-  fill: var(--panel);
-  stroke: var(--lead);
+  fill: var(--pin);
+  stroke: var(--pin-stroke);
   stroke-width: 2.5;
 }
 
@@ -1274,7 +1409,7 @@ input[type='date']:focus {
   flex: 1;
   min-width: 0;
   position: relative;
-  background: var(--bg);
+  background: var(--board);
 }
 
 .board {
@@ -1583,7 +1718,7 @@ input[type='date']:focus {
 }
 
 .port-dot {
-  fill: var(--bg);
+  fill: var(--board);
   stroke: var(--copper);
   stroke-width: 2;
   pointer-events: none;
@@ -1656,8 +1791,8 @@ input[type='date']:focus {
 
 .pin-body > rect,
 .pin .pin-box {
-  fill: var(--panel);
-  stroke: var(--lead);
+  fill: var(--pin);
+  stroke: var(--pin-stroke);
   stroke-width: 1.6;
 }
 
@@ -1774,11 +1909,13 @@ input[type='date']:focus {
   stroke-width: 0.8;
 }
 
-:root[data-theme='daftar'] .grid-dot {
+:root[data-theme='daftar'] .grid-dot,
+:root[data-theme='chizma'] .grid-dot {
   display: none;
 }
 
-:root[data-theme='daftar'] .grid-line {
+:root[data-theme='daftar'] .grid-line,
+:root[data-theme='chizma'] .grid-line {
   display: inline;
 }
 
@@ -1793,6 +1930,92 @@ input[type='date']:focus {
 :root[data-theme='daftar'] .board-svg:not(.moving) .wires,
 :root[data-theme='daftar'] .board-svg:not(.moving) .gate-shape {
   filter: url(#sketch);
+}
+
+/* ── Haqiqiy plata: element — qora mikrosxema (GateShape chip), chiroq — oltin halqadagi svetodiod ── */
+.chip-body {
+  fill: var(--gate-fill);
+  stroke: var(--knob-ink);
+  stroke-width: 1;
+  transition: stroke 0.12s;
+}
+
+.chip-pin {
+  fill: var(--lead);
+}
+
+.chip-dot {
+  fill: var(--pin-stroke);
+}
+
+/* Mikrosxema markasi (74HC08): bezak — haqiqiy korpusdagi yozuv kabi xira. */
+.chip-code {
+  font: 500 7px var(--mono);
+  fill: var(--pin-stroke);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.gate.on .chip-body {
+  stroke: var(--gate-on-stroke);
+  stroke-width: 1.6;
+}
+
+.gate.sel .chip-body {
+  stroke: var(--sel);
+  stroke-width: 2;
+}
+
+.gate.err .chip-body {
+  stroke: var(--bad);
+  stroke-width: 2;
+  animation: blink 0.5s 4;
+}
+
+:root[data-theme='haqiqiy'] .lamp-bezel {
+  stroke: var(--copper);
+  stroke-width: 2;
+}
+
+/* ── Chizma: ingichka qora chiziq, chiroq — doira ichida xoch, yoniq sim — qizil qalam, varaq ramkasi ── */
+.lamp-x {
+  display: none;
+  fill: none;
+  stroke: var(--lamp-on-stroke);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+
+:root[data-theme='chizma'] .lamp-x {
+  display: inline;
+}
+
+:root[data-theme='chizma'] .lamp {
+  stroke: none;
+}
+
+:root[data-theme='chizma'] .pin-out.on .lamp-halo,
+:root[data-theme='chizma'] .pin-out.on .lamp-shine {
+  opacity: 0;
+}
+
+:root[data-theme='chizma'] .gate-body,
+:root[data-theme='chizma'] .gate-back,
+:root[data-theme='chizma'] .lead {
+  stroke-width: 2;
+}
+
+:root[data-theme='chizma'] .wire.on .wire-line {
+  stroke-width: 2.8px;
+}
+
+:root[data-theme='chizma'] .stage::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.5px solid var(--text);
+  pointer-events: none;
 }
 
 .pin-out.good .pin-box {
@@ -2273,114 +2496,6 @@ input[type='date']:focus {
   border-color: var(--good);
 }
 
-/* ── Reyting ───────────────────────────────────────────── */
-/* Shohsupa: 2-o'rin chapda, 1-o'rin o'rtada va eng baland, 3-o'rin o'ngda. */
-.podium {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 10px;
-  margin: 18px 0 16px;
-}
-
-/* Bir yoki ikki o'yinchi bo'lsa ham shohsupa o'rtada turadi. */
-.podium-col {
-  flex: 0 1 calc((100% - 20px) / 3);
-  display: grid;
-  justify-items: center;
-  gap: 5px;
-  min-width: 0;
-  --medal: var(--gold);
-}
-
-.podium-col.place1 {
-  order: 2;
-}
-
-.podium-col.place2 {
-  order: 1;
-  --medal: var(--silver);
-}
-
-.podium-col.place3 {
-  order: 3;
-  --medal: var(--bronze);
-}
-
-.podium-medal {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 2px solid var(--medal);
-  border-radius: 50%;
-  background: var(--panel);
-  color: var(--medal);
-  font: 600 16px var(--mono);
-}
-
-.place1 .podium-medal {
-  width: 44px;
-  height: 44px;
-  font-size: 19px;
-}
-
-.podium-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 600;
-}
-
-.podium-base {
-  width: 100%;
-  display: grid;
-  align-content: start;
-  justify-items: center;
-  gap: 2px;
-  padding: 12px 4px;
-  border: 1px solid var(--edge);
-  border-radius: 12px;
-  background: var(--bg2);
-}
-
-.place1 .podium-base {
-  min-height: 92px;
-}
-
-.place2 .podium-base {
-  min-height: 72px;
-}
-
-.place3 .podium-base {
-  min-height: 58px;
-}
-
-.podium-base strong {
-  font: 600 16px var(--mono);
-  color: var(--text);
-}
-
-.podium-base span {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.podium-base span.stars-sub {
-  font-size: 15px;
-  letter-spacing: 1px;
-  color: var(--gold-ink);
-}
-
-.podium-col.me .podium-base {
-  background: var(--accent-soft);
-}
-
-.podium .badge {
-  margin: 0;
-}
-
 /* ── Yangiliklar ───────────────────────────────────────── */
 .news-banner {
   position: relative;
@@ -2539,72 +2654,6 @@ input[type='date']:focus {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.cert-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--edge);
-  border-radius: 16px;
-  background: var(--bg2);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.achievements .cert-card {
-  grid-column: 1 / -1;
-}
-
-.cert-card.open {
-  background: var(--accent-soft);
-}
-
-.cert-card .ach-body {
-  flex: 1;
-}
-
-.cert-go {
-  color: var(--accent);
-  font-size: 20px;
-}
-
-/* ── Formuladan sxema (Qum quti) ───────────────────────── */
-.formula-input {
-  width: 100%;
-  font: 600 18px var(--mono);
-}
-
-.formula-syms {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 10px 0 4px;
-}
-
-.formula-sym {
-  min-width: 40px;
-  height: 36px;
-  padding: 0 8px;
-  border: 1px solid var(--edge);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--text);
-  font: 600 16px var(--mono);
-  cursor: pointer;
-}
-
-.formula-sym:hover {
-  background: var(--raise);
-  border-color: var(--edge-strong);
-}
-
-.formula-btn {
-  margin-top: 10px;
 }
 
 /* ── Sinf vazifalari ───────────────────────────────────── */
@@ -3630,161 +3679,6 @@ body:has(.stage.has-check) .toast {
 .modal .text-input {
   width: 100%;
   margin: 12px 0 4px;
-}
-
-/* ── Kunlik masalalar arxivi ───────────────────────────── */
-.archive {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 16px;
-  display: grid;
-  gap: 8px;
-}
-
-.archive-note {
-  margin: 0 0 4px;
-}
-
-.archive-day {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--edge);
-  border-radius: 14px;
-  background: var(--bg2);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.archive-day:hover {
-  background: var(--panel);
-  border-color: var(--edge-strong);
-}
-
-.archive-day.open {
-  background: var(--accent-soft);
-}
-
-.archive-num {
-  flex: none;
-  min-width: 40px;
-  font-family: var(--mono);
-  color: var(--muted);
-}
-
-.archive-body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.archive-body .muted {
-  font-size: 13px;
-}
-
-.archive-open {
-  font-size: 12px;
-  color: var(--accent);
-}
-
-.archive-result {
-  flex: none;
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-}
-
-.archive-day.done .stars-text {
-  color: var(--gold-ink);
-}
-
-/* ── Yutuqlar ──────────────────────────────────────────── */
-.achievements {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 10px;
-}
-
-.achievement {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--edge);
-  border-radius: 14px;
-  background: var(--bg2);
-}
-
-.achievement:not(.done) .ach-icon {
-  opacity: 0.6;
-}
-
-.ach-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--muted);
-}
-
-.ach-icon .icon {
-  width: 24px;
-  height: 24px;
-}
-
-.achievement.done .ach-icon {
-  background: var(--accent-soft);
-  color: var(--gold-ink);
-}
-
-.ach-body {
-  flex: 1;
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-
-.ach-body .muted {
-  font-size: 13px;
-}
-
-.ach-check {
-  flex: none;
-  color: var(--gold-ink);
-  font-size: 18px;
-}
-
-.ach-progress {
-  position: relative;
-  height: 16px;
-  margin-top: 4px;
-  border-radius: 8px;
-  background: var(--panel);
-  overflow: hidden;
-}
-
-.ach-progress i {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: rgba(var(--accent-rgb), 0.35);
-}
-
-.ach-progress b {
-  position: relative;
-  display: block;
-  padding: 0 8px;
-  font: 600 11px/16px var(--mono);
-  color: var(--text);
 }
 
 /* ── Til tanlash ───────────────────────────────────────── */

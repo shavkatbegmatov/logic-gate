@@ -1,3 +1,4 @@
+import './Sandbox.css';
 import { useSignal } from '@preact/signals';
 import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { Board } from '../board/Board';

@@ -1,3 +1,4 @@
+import './ArchiveScreen.css';
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { api, type ArchiveDay } from '../api';

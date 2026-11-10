@@ -2,6 +2,7 @@ import { useSignal } from '@preact/signals';
 import { sfx } from '../audio';
 import { GateShape } from '../board/GateShape';
 import { t } from '../i18n';
+import { activeTheme } from '../theme';
 
 /**
  * Bosh sahifadagi ishlaydigan sxema: ikki kalit, AND elementi va chiroq — o'yinning belgisi ham, birinchi
@@ -13,6 +14,9 @@ export function HeroGate() {
   const bits = useSignal([0, 0]);
   const [a, b] = bits.value;
   const on = a + b === 2;
+  // Maydondagi kabi: «Haqiqiy plata» da mikrosxema, «Chizma» da simlar to'g'ri burchakli.
+  const chip = activeTheme.value === 'haqiqiy';
+  const square = activeTheme.value === 'chizma';
 
   const toggle = (i: number) => {
     bits.value = bits.value.map((v, k) => (k === i ? 1 - v : v));
@@ -36,12 +40,12 @@ export function HeroGate() {
     <div class="hero">
       <svg class="hero-svg" viewBox="0 0 210 60" role="group" aria-label={t.home.heroLabel}>
         {/* Yo'llar: kalitlardan elementga 45° burilish bilan (maydondagi kabi), elementdan chiroqqa. */}
-        {wire('M52,14 H62 L66,18 H84', a)}
-        {wire('M52,46 H62 L66,42 H84', b)}
+        {wire(square ? 'M52,14 H66 V18 H84' : 'M52,14 H62 L66,18 H84', a)}
+        {wire(square ? 'M52,46 H66 V42 H84' : 'M52,46 H62 L66,42 H84', b)}
         {wire('M156,30 H172', on)}
         <g class={`gate${on ? ' on' : ''}`} transform="translate(84,6)">
-          <GateShape type="AND" />
-          <text class="gate-label" x={32} y={24}>
+          <GateShape type="AND" chip={chip} />
+          <text class="gate-label" x={chip ? 36 : 32} y={24}>
             AND
           </text>
           {/* Kontaktlar: sim element uchiga ulangan joy (maydondagi nuqtalar). */}
@@ -54,6 +58,7 @@ export function HeroGate() {
           <path class="lamp-rays" d="M-9,-11 l-3,-4 M0,-13 v-5 M9,-11 l3,-4" />
           <circle class="lamp-bezel" r={10} />
           <circle class="lamp" r={7} />
+          <path class="lamp-x" d="M-7,-7 L7,7 M7,-7 L-7,7" />
           <circle class="lamp-shine" cx={-2.5} cy={-2.5} r={2} />
         </g>
         {['A', 'B'].map((name, i) => {

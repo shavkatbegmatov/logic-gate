@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.17.0',
+    date: '2026-11-11',
+    uz: [
+      "Ikki yangi mavzu: «Haqiqiy plata» — yashil plata, qora mikrosxemalar, oltin kontaktlar va svetodiod; «Chizma» — muhandislik chizmasi: oq qog'oz, qora chiziq, yoniq sim qizil.",
+      "Sozlamalarda mavzu endi kichik namunasi bilan tanlanadi — qanday ko'rinishini oldindan ko'rasiz.",
+    ],
+    ru: [
+      'Две новые темы: «Настоящая плата» — зелёная плата, чёрные микросхемы, золотые контакты и светодиод; «Чертёж» — инженерный чертёж: белый лист, чёрные линии, активный провод красный.',
+      'В настройках тема выбирается по маленькому образцу — сразу видно, как она выглядит.',
+    ],
+  },
+  {
     version: '2.16.0',
     date: '2026-11-11',
     uz: [

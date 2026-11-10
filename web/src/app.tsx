@@ -13,7 +13,6 @@ import { lazy } from './components/lazy';
 import { ClassScreen } from './screens/ClassScreen';
 import { LevelScreen } from './screens/LevelScreen';
 import { LevelsScreen } from './screens/LevelsScreen';
-import { Settings } from './screens/Settings';
 import { syncProgress } from './sync';
 
 // Kam ochiladigan ekranlar — alohida bo'lakda (components/lazy.tsx).
@@ -30,6 +29,8 @@ const Leaderboard = lazy(() => import('./screens/Leaderboard').then((m) => m.Lea
 const ArchiveScreen = lazy(() => import('./screens/ArchiveScreen').then((m) => m.ArchiveScreen));
 const Achievements = lazy(() => import('./screens/Achievements').then((m) => m.Achievements));
 const CustomScreen = lazy(() => import('./screens/CustomScreen').then((m) => m.CustomScreen));
+// Sozlamalar (mavzu tanlagichi, sinflar, qo'llanmalar) — 2.17.0: ikki yangi mavzu bosh yuklamani chegaraga yetkazgach.
+const Settings = lazy(() => import('./screens/Settings').then((m) => m.Settings));
 
 export function App() {
   useEffect(() => {

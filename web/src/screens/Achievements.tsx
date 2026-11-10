@@ -1,3 +1,4 @@
+import './Achievements.css';
 import { states } from '../achievements';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';

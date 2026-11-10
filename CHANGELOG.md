@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.17.0 — 2026-11-11
+
+- Ikki yangi mavzu: «Haqiqiy plata» — yashil plata, qora mikrosxemalar, oltin kontaktlar va svetodiod; «Chizma» — muhandislik chizmasi: oq qog'oz, qora chiziq, yoniq sim qizil.
+- Sozlamalarda mavzu endi kichik namunasi bilan tanlanadi — qanday ko'rinishini oldindan ko'rasiz.
+
 ## 2.16.0 — 2026-11-11
 
 - O'yin ko'rinishi yangilandi: ortiqcha hoshiyalar olib tashlandi, sarlavhalar yirikroq, ranglar sokinroq — asosiy narsa darhol ko'rinadi.

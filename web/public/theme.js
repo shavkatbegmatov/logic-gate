@@ -19,7 +19,8 @@
       }
       theme = light ? 'daftar' : 'plata';
     }
-    if (theme === 'daftar') document.documentElement.setAttribute('data-theme', 'daftar');
+    // Plata — atributsiz (asosiy ranglar); qolganlari — styles.css dagi [data-theme] bloklari.
+    if (theme === 'daftar' || theme === 'haqiqiy' || theme === 'chizma') document.documentElement.setAttribute('data-theme', theme);
   } catch (e) {
     // localStorage yopiq — asosiy mavzu.
   }
@@ -100,7 +101,8 @@
     var box = document.createElement('div');
     box.setAttribute('role', 'alert');
     box.style.cssText = 'max-width:440px;margin:15vh auto;padding:0 20px;font:16px/1.5 system-ui,sans-serif;color:#e8efe9;';
-    if (document.documentElement.getAttribute('data-theme') === 'daftar') box.style.color = '#1f2a24';
+    var th = document.documentElement.getAttribute('data-theme');
+    if (th === 'daftar' || th === 'chizma') box.style.color = '#1f2a24';
     var h = document.createElement('h1');
     h.style.cssText = 'font-size:22px;margin:0 0 10px';
     h.textContent = r ? 'Игра не открылась' : "O'yin ochilmadi";

@@ -1,3 +1,4 @@
+import './Settings.css';
 import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import { copyText, selectContents } from '../clipboard';
@@ -144,10 +145,8 @@ export function Settings() {
           </section>
 
           <section class="card">
-            <div class="row between">
-              <span>{t.settings.theme}</span>
-              <ThemeSwitch />
-            </div>
+            <span>{t.settings.theme}</span>
+            <ThemeSwitch />
           </section>
 
           <section class="card">
@@ -200,19 +199,34 @@ export function Settings() {
   );
 }
 
-/** Mavzu tanlash: Plata, Daftar yoki Avto (telefon/Telegram rejimiga qarab). */
+/**
+ * Mavzu tanlash: har bir mavzu — o'z ranglaridagi kichik namuna (yoniq sim, element, chiroq) va nomi.
+ * Namuna ranglarni <span data-theme="…"> orqali oladi (styles.css dagi mavzu bloklari), shuning uchun
+ * mavzu ranglari o'zgarsa, namuna ham o'zi yangilanadi. Avto — yarmi Plata, yarmi Daftar.
+ */
 function ThemeSwitch() {
   const current = settings.value.theme ?? 'plata';
   return (
-    <div class="lang-switch" role="group" aria-label={t.settings.theme}>
+    <div class="theme-grid" role="group" aria-label={t.settings.theme}>
       {THEMES.map((id) => (
         <button
           key={id}
-          class={id === current ? 'on' : ''}
+          class={`theme-tile${id === current ? ' on' : ''}`}
           aria-pressed={id === current}
           title={t.settings.themeHint[id]}
           onClick={() => (settings.value = { ...settings.value, theme: id })}
         >
+          <span class="theme-swatch" aria-hidden="true">
+            {(id === 'auto' ? (['plata', 'daftar'] as const) : [id]).map((look) => (
+              <span key={look} data-theme={look}>
+                <svg viewBox="0 0 48 30" preserveAspectRatio="xMidYMid slice">
+                  <path class="swatch-wire" d="M3,15 H14 M30,15 H36" />
+                  <path class="swatch-gate" d="M14,7 H22 A8,8 0 0 1 22,23 H14 Z" />
+                  <circle class="swatch-lamp" cx={41} cy={15} r={4.5} />
+                </svg>
+              </span>
+            ))}
+          </span>
           {t.settings.themes[id]}
         </button>
       ))}

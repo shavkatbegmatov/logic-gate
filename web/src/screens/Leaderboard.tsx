@@ -1,3 +1,4 @@
+import './Leaderboard.css';
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { api, type ClassInfo, type DailyEntry, type LeaderEntry } from '../api';
