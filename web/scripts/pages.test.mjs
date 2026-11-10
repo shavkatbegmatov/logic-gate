@@ -143,7 +143,7 @@ describe("qo'llanma sahifalari", () => {
       const html = files[BOOL[lang].path.slice(1) + 'index.html'];
       expect(html).toContain('<script src="/guide-bool.js" defer></script>');
       expect(html).toContain('id="bool-calc"');
-      expect(html).toContain(`href="/#/sandbox/${encodeURIComponent(CALC_DEFAULT[0])}"`);
+      expect(html).toContain(`href="/?lang=${lang}#/sandbox/${encodeURIComponent(CALC_DEFAULT[0])}"`);
       expect(html.match(/class="sym"/g)).toHaveLength(9);
       expect(html.match(/<section/g)?.length).toBe(html.match(/<\/section>/g)?.length);
       // Shablonlar ({n}, {row}) faqat skript uchun data-* atributlarida, ko'rinadigan matnda emas.
@@ -200,7 +200,10 @@ describe("qo'llanma sahifalari", () => {
       const html = files[b.path.slice(1) + 'index.html'];
       expect(b.title.length).toBeLessThanOrEqual(60);
       expect(b.description.length).toBeLessThanOrEqual(200);
-      expect(html).toContain('href="/#/teacher"');
+      expect(html).toContain(`href="/?lang=${lang}#/teacher"`);
+      // O'yinga boshqa havolalar ham sahifa tilida (tilsiz qolgani yo'q).
+      expect(html).toContain(`href="/?lang=${lang}"`);
+      expect(html).not.toMatch(/href="\/(#\/[^"]*)?"/);
       expect(html.match(/<article class="lesson">/g)).toHaveLength(b.lessons.items.length);
       for (const x of b.lessons.items) {
         for (const id of [...x.inClass, ...x.homework]) expect(ids.has(id), id).toBe(true);

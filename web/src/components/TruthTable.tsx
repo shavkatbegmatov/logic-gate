@@ -71,6 +71,15 @@ export function TruthTable({ inputs, outputs, rows, target, current, onRow }: Pr
                 key={r}
                 class={`${r === current ? 'cur' : ''}${ok === true ? ' ok' : ok === false ? ' bad' : ''}`}
                 onClick={() => onRow(r)}
+                // Klaviatura: Tab bilan qatorga, Enter/Probel — shu qator kirishlari maydonga qo'yiladi.
+                tabIndex={0}
+                aria-current={r === current ? 'true' : undefined}
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    onRow(r);
+                  }
+                }}
               >
                 {rowBits(n, r).map((b, k) => (
                   <td key={k} class={b ? 'one' : ''}>

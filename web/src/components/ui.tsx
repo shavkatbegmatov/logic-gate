@@ -15,16 +15,63 @@ export function Stars({ n, max = 3, size = 'md' }: { n: number; max?: number; si
   );
 }
 
+let modalSeq = 0;
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Oyna: ochilganda fokus ichiga o'tadi (autoFocus tugmasiga yoki oynaning o'ziga), Tab oyna ichida
+ * aylanadi, yopilganda fokus oldingi joyiga qaytadi. Birinchi sarlavha — oynaning nomi (ekran o'quvchi).
+ */
 export function Modal({ children, onClose }: { children: ComponentChildren; onClose?: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
-    if (!onClose) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const el = ref.current!;
+    const before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const title = el.querySelector('h1, h2, h3');
+    if (title) {
+      title.id ||= `modal-title-${++modalSeq}`;
+      el.setAttribute('aria-labelledby', title.id);
+    }
+    if (!el.contains(document.activeElement)) (el.querySelector<HTMLElement>('[autofocus]') ?? el).focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close.current?.();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const items = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((x) => x.offsetParent !== null);
+      if (!items.length) {
+        e.preventDefault();
+        el.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (!el.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && (active === first || active === el)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     addEventListener('keydown', onKey);
-    return () => removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      removeEventListener('keydown', onKey);
+      // Oyna ochilishidan oldingi joy (masalan, «Tekshirish» tugmasi) hali sahifada bo'lsa — fokus o'shanga.
+      if (before?.isConnected) before.focus();
+    };
+  }, []);
   return (
     <div class="modal-back" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal" role="dialog" aria-modal="true" tabIndex={-1} ref={ref}>
         {children}
       </div>
     </div>

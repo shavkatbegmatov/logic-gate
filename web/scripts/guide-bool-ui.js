@@ -18,11 +18,12 @@ if (root) {
     return s;
   };
 
-  var show = function (msg, cls) {
+  var show = function (msg, cls, keepTable) {
     verdict.textContent = msg;
     verdict.className = 'verdict' + (cls ? ' ' + cls : '');
-    // Xato bo'lsa — eski jadval qolmasin (boshqa ifodaniki bo'lib ko'rinadi).
-    if (cls === 'bad') table.innerHTML = '';
+    // Ifodada xato bo'lsa — eski jadval qolmasin (boshqa ifodaniki bo'lib ko'rinadi). Ifodalar teng
+    // bo'lmasa esa jadval aynan shu ikki ifodaniki — farq qilgan qatorlar unda ko'rinadi.
+    if (cls === 'bad' && !keepTable) table.innerHTML = '';
   };
 
   var parse = function (input, label) {
@@ -41,8 +42,8 @@ if (root) {
     var a = parse(inA, la);
     if (toSandbox) toSandbox.hidden = !a;
     if (!a) return;
-    // O'yindagi Qum qutida — 1-ifodaning sxemasi.
-    if (toSandbox) toSandbox.href = '/#/sandbox/' + encodeURIComponent(inA.value.trim());
+    // O'yindagi Qum qutida — 1-ifodaning sxemasi (o'yin sahifa tilida ochiladi).
+    if (toSandbox) toSandbox.href = '/?lang=' + document.documentElement.lang + '#/sandbox/' + encodeURIComponent(inA.value.trim());
     var withB = inB.value.trim() !== '';
     var b = withB ? parse(inB, lb) : null;
     if (withB && !b) return;
@@ -59,7 +60,7 @@ if (root) {
       if (outs[0].values[r] !== outs[1].values[r]) {
         var env = rows[r];
         var row = vars.map(function (v) { return v + ' = ' + env[v]; }).join(', ');
-        return show(text('differ', { row: row, p: outs[0].values[r], q: outs[1].values[r] }), 'bad');
+        return show(text('differ', { row: row, p: outs[0].values[r], q: outs[1].values[r] }), 'bad', true);
       }
     }
     show(text('equal', { n: rows.length }), 'ok');

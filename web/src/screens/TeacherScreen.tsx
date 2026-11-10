@@ -1,6 +1,6 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
-import { api, type ClassReport } from '../api';
+import { api, ApiError, type ClassReport } from '../api';
 import {
   classLink,
   forgetTeacherClass,
@@ -25,6 +25,9 @@ import { downloadCSV, reportFileName, reportTable, toCSV, toTSV, type ReportLabe
 import { errorText } from '../sync';
 import { dayToISO } from '../tasks';
 import { inTelegram, openExternal } from '../telegram';
+
+/** Hisobotni avtomatik yangilash oralig'i (dars paytida). */
+const REFRESH_MS = 60_000;
 
 const copy = async (text: string) => {
   if (await copyText(text)) showToast(t.classes.copied, 'ok');
@@ -163,23 +166,59 @@ export function TeacherReport({ code }: { code: string }) {
   const cls = teacherClasses.value.find((c) => c.code === code);
   const report = useSignal<ClassReport | null>(null);
   const error = useSignal('');
+  // Sinf serverda yo'q (boshqa qurilmada o'chirilgan): ro'yxatdan olib tashlashni taklif qilamiz.
+  const gone = useSignal(false);
   const sort = useSignal<ReportSort>('stars');
 
-  const load = async () => {
-    if (!cls) return;
-    error.value = '';
+  /** quiet: dars paytidagi avtomatik yangilash — aloqa uzilsa, ko'rinib turgan hisobot xato bilan almashmaydi. */
+  const load = async (quiet = false) => {
+    if (!cls || gone.value) return;
     try {
       report.value = await api.classReport(code, cls.key);
+      error.value = '';
       // Nom serverdagi bilan bir xil bo'lsin.
       if (report.value.name !== cls.name) saveTeacherClass({ ...cls, name: report.value.name });
     } catch (e) {
-      error.value = errorText(e);
+      if (e instanceof ApiError && e.code === 'no_class') gone.value = true;
+      else if (!quiet || !report.value) error.value = errorText(e);
     }
   };
 
   useEffect(() => {
     load();
+    // Dars paytida o'quvchilar natijalari o'zi yangilanib tursin: daqiqada bir marta va sahifaga qaytilganda.
+    const refresh = () => document.visibilityState === 'visible' && void load(true);
+    const timer = setInterval(refresh, REFRESH_MS);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [code]);
+
+  if (cls && gone.value) {
+    return (
+      <div class="screen">
+        <TopBar title={cls.name} sub={`${t.classes.code}: ${code}`} onBack={() => go('teacher')} />
+        <div class="scroll">
+          <div class="narrow">
+            <div class="card">
+              <p>{t.classes.gone}</p>
+              <button
+                class="btn"
+                onClick={() => {
+                  forgetTeacherClass(code);
+                  go('teacher');
+                }}
+              >
+                {t.classes.forget}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!cls) {
     return (
@@ -229,17 +268,21 @@ export function TeacherReport({ code }: { code: string }) {
     if (!confirm(t.classes.deleteConfirm)) return;
     try {
       await api.deleteClass(code, cls.key);
-      forgetTeacherClass(code);
-      go('teacher');
     } catch (e) {
-      error.value = errorText(e);
+      // Allaqachon o'chirilgan (boshqa qurilmada) — ro'yxatdan baribir olib tashlanadi.
+      if (!(e instanceof ApiError && e.code === 'no_class')) {
+        error.value = errorText(e);
+        return;
+      }
     }
+    forgetTeacherClass(code);
+    go('teacher');
   };
 
   return (
     <div class="screen">
       <TopBar title={cls.name} sub={`${t.classes.code}: ${code}`} onBack={() => go('teacher')}>
-        <button class="icon-btn" onClick={load} aria-label={t.classes.refresh} title={t.classes.refresh}>
+        <button class="icon-btn" onClick={() => load()} aria-label={t.classes.refresh} title={t.classes.refresh}>
           <Icon name="reset" />
         </button>
       </TopBar>
@@ -272,7 +315,7 @@ export function TeacherReport({ code }: { code: string }) {
             </div>
           </section>
 
-          {r && <TeacherTasks code={code} teacherKey={cls.key} report={r} onChange={load} />}
+          {r && <TeacherTasks code={code} teacherKey={cls.key} report={r} onChange={() => load()} />}
 
           {error.value && (
             <div class="card">

@@ -219,8 +219,19 @@ const GUIDES = [
 
 const pageOf = (g, lang) => (g.id === 'elements' ? { ...CONTENT[lang], nav: CONTENT[lang].h1 } : g.text[lang]);
 
+/**
+ * O'yinga havolalar sahifa tilini olib boradi (?lang=): ruscha sahifadagi «Играть» o'yinni ruscha ochadi
+ * (o'yin parametrni o'qib, manzildan olib tashlaydi — src/lang-detect.ts).
+ */
+export const gameLinks = (html, lang) =>
+  html.replaceAll('href="/"', `href="/?lang=${lang}"`).replaceAll('href="/#/', `href="/?lang=${lang}#/`);
+
 /** Umumiy qobiq: head (SEO teglari), sarlavha (qo'llanmalar va til), tana, pastki qism. */
 function shell(g, lang, ctx, ld, body) {
+  return gameLinks(shellHtml(g, lang, ctx, ld, body), lang);
+}
+
+function shellHtml(g, lang, ctx, ld, body) {
   const c = CONTENT[lang];
   const page = pageOf(g, lang);
   const otherLang = c.other.lang;

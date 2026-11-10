@@ -1403,6 +1403,43 @@ input[type='date']:focus {
   transform: scale(1.35);
 }
 
+/* Klaviatura fokusi maydonda: SVG elementlarida chegara (outline) hamma brauzerda chizilmaydi —
+   o'rniga belgilash rangidagi halqa. */
+.board-svg:focus,
+.board-svg [tabindex]:focus {
+  outline: none;
+}
+
+.port:focus-visible .port-hit,
+.delete-btn:focus-visible circle {
+  stroke: var(--sel);
+  stroke-width: 2.5;
+}
+
+.port:focus-visible .port-hit {
+  fill: var(--sel);
+  fill-opacity: 0.18;
+}
+
+.gate > [data-kind='gate']:focus-visible .gate-hit {
+  stroke: var(--sel);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+}
+
+.pin-body:focus-visible > rect {
+  stroke: var(--sel);
+  stroke-width: 3;
+}
+
+.truth tbody tr:focus-visible {
+  outline-offset: -2px;
+}
+
+.modal:focus {
+  outline: none;
+}
+
 .pin-body > rect,
 .pin .pin-box {
   fill: var(--panel);

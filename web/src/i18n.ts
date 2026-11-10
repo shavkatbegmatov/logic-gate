@@ -92,6 +92,18 @@ export const uz = {
     seqOk: "Sxema to'g'ri ishlayapti — endi tekshiring!",
     clockText: "«Takt» tugmasi vaqtni bir qadam oldinga suradi: shu paytda barcha D-triggerlar kirishidagi qiymatni eslab qoladi.",
     nextTick: 'keyingi taktda',
+    // Klaviatura va ekran o'quvchi uchun (maydon va jadval).
+    a11y: {
+      board:
+        "Sxema maydoni. Tab — keyingi nuqta yoki element. Nuqtada Enter: simni boshlash, keyin ikkinchi nuqtada Enter: ulash; Delete — kirishdagi simni o'chirish. Elementda strelkalar — surish, Delete — o'chirish.",
+      source: (name: string) => `${name} kirishi: sim boshlanadigan nuqta`,
+      output: (name: string) => `${name} chiqishi: sim ulanadigan nuqta`,
+      gateIn: (gate: string, i: number) => `${gate}: ${i + 1}-kirish`,
+      gateOut: (gate: string) => `${gate}: chiqish`,
+      gate: (gate: string) => `${gate} elementi`,
+      linked: 'ulangan',
+      wiring: 'simni ulash uchun ikkinchi nuqtani tanlang',
+    },
   },
 
   success: {
@@ -129,6 +141,18 @@ export const uz = {
     remindDenied: 'Bot sizga yozishi uchun ruxsat kerak.',
     remindBlocked: 'Bot sizga yoza olmadi: @LogicGateUzBot ni ochib, /start bosing.',
     restored: (name: string) => `Telegram orqali profil tiklandi: ${name}`,
+    restoring: "Telegram'dagi profilingiz tekshirilmoqda…",
+    restoreFailed:
+      "Telegram'da saqlangan profilingiz bor, lekin uni hozir tiklab bo'lmadi — internetni tekshiring. Yangi profil ochsangiz, eski natijalar unga o'tmaydi.",
+    newProfile: 'Baribir yangi profil ochish',
+  },
+
+  /** Profil ochilgan zahoti ko'rsatiladigan tiklash kodi. */
+  profileCode: {
+    title: 'Profilingiz tayyor!',
+    text: "Bu — tiklash kodingiz. Uni daftaringizga yozib qo'ying: boshqa kompyuter yoki telefonda Sozlamalar → «Progressni tiklash» orqali shu kod bilan davom etasiz.",
+    hint: "Kodni hech kimga bermang. U Sozlamalarda ham turadi.",
+    ok: 'Yozib oldim',
   },
 
   share: {
@@ -296,6 +320,8 @@ Sen ham yechib ko'r!`,
     deleteClass: "Sinfni o'chirish",
     deleteConfirm: "Sinf o'chirilsinmi? O'quvchilarning natijalari o'zlarida qoladi, lekin hisobot yo'qoladi.",
     noKey: "Bu sinfning kaliti shu qurilmada yo'q. Kod va kalit bilan qo'shing.",
+    gone: "Bu sinf serverda topilmadi — u boshqa qurilmada o'chirilgan bo'lishi mumkin.",
+    forget: "Ro'yxatdan olib tashlash",
     joinTitle: 'Sinfga taklif',
     joinText: "Qo'shilsangiz, o'qituvchingiz natijalaringizni ko'radi, siz esa sinfdoshlar reytingini.",
     join: "Sinfga qo'shilish",
@@ -546,6 +572,10 @@ Sen ham urinib ko'r!`,
     resetConfirm: "Haqiqatan ham qurilmadagi progress o'chirilsinmi?",
     resetConfirmProfile:
       "Qurilmadagi progress va profil o'chirilsinmi? Qaytarish uchun tiklash kodi kerak bo'ladi — uni saqlab qo'ydingizmi?",
+    resetTeacher: (n: number) =>
+      `Siz yaratgan ${n} ta sinfning o'qituvchi kalitlari ham shu qurilmadan o'chadi — kerak bo'lsa, avval ularni nusxalab oling.`,
+    switchConfirm: (name: string) =>
+      `Bu qurilmada «${name}» profili ochiq. Boshqa profilga o'tilsa, «${name}» natijalari qurilmadan olib tashlanadi (serverda saqlanib qoladi — o'z tiklash kodi bilan qaytariladi). Davom etilsinmi?`,
     resetDone: "Qurilmadagi progress o'chirildi.",
     about: 'Dastur haqida',
     version: (v: string) => `Versiya ${v}`,
@@ -685,6 +715,17 @@ export const ru: typeof uz = {
     seqOk: 'Схема работает верно — теперь проверьте!',
     clockText: 'Кнопка «Такт» продвигает время на один шаг: в этот момент все D-триггеры запоминают значение на входе.',
     nextTick: 'на следующем такте',
+    a11y: {
+      board:
+        'Поле схемы. Tab — следующая точка или элемент. Enter на точке — начать провод, затем Enter на второй точке — соединить; Delete — удалить провод на входе. Стрелки на элементе — сдвинуть, Delete — удалить.',
+      source: (name: string) => `Вход ${name}: точка, откуда начинается провод`,
+      output: (name: string) => `Выход ${name}: точка, куда подключается провод`,
+      gateIn: (gate: string, i: number) => `${gate}: вход ${i + 1}`,
+      gateOut: (gate: string) => `${gate}: выход`,
+      gate: (gate: string) => `Элемент ${gate}`,
+      linked: 'подключено',
+      wiring: 'выберите вторую точку, чтобы соединить провод',
+    },
   },
 
   success: {
@@ -722,6 +763,17 @@ export const ru: typeof uz = {
     remindDenied: 'Нужно разрешить боту писать вам.',
     remindBlocked: 'Бот не смог вам написать: откройте @LogicGateUzBot и нажмите /start.',
     restored: (name: string) => `Профиль восстановлен через Telegram: ${name}`,
+    restoring: 'Проверяем ваш профиль в Telegram…',
+    restoreFailed:
+      'В Telegram сохранён ваш профиль, но восстановить его сейчас не удалось — проверьте интернет. Если создадите новый профиль, старые результаты в него не перейдут.',
+    newProfile: 'Всё равно создать новый профиль',
+  },
+
+  profileCode: {
+    title: 'Профиль готов!',
+    text: 'Это ваш код восстановления. Запишите его в тетрадь: на другом компьютере или телефоне вы продолжите с ним через Настройки → «Восстановить прогресс».',
+    hint: 'Никому не передавайте код. Он также есть в Настройках.',
+    ok: 'Записал(а)',
   },
 
   share: {
@@ -887,6 +939,8 @@ export const ru: typeof uz = {
     deleteClass: 'Удалить класс',
     deleteConfirm: 'Удалить класс? Результаты учеников останутся у них, но отчёт пропадёт.',
     noKey: 'Ключа этого класса нет на этом устройстве. Добавьте класс по коду и ключу.',
+    gone: 'Этот класс не найден на сервере — возможно, его удалили на другом устройстве.',
+    forget: 'Убрать из списка',
     joinTitle: 'Приглашение в класс',
     joinText: 'Если присоединитесь, учитель увидит ваши результаты, а вы — рейтинг одноклассников.',
     join: 'Присоединиться к классу',
@@ -1135,6 +1189,10 @@ export const ru: typeof uz = {
     resetConfirm: 'Точно удалить прогресс на устройстве?',
     resetConfirmProfile:
       'Удалить прогресс и профиль на устройстве? Для возврата понадобится код восстановления — вы его сохранили?',
+    resetTeacher: (n: number) =>
+      `С устройства удалятся и ключи учителя для созданных вами классов (${n}) — если нужно, сначала скопируйте их.`,
+    switchConfirm: (name: string) =>
+      `На этом устройстве открыт профиль «${name}». При переходе на другой профиль результаты «${name}» будут убраны с устройства (на сервере они сохранятся — их можно вернуть своим кодом восстановления). Продолжить?`,
     resetDone: 'Прогресс на устройстве удалён.',
     about: 'О программе',
     version: (v: string) => `Версия ${v}`,

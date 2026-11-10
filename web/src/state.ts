@@ -1,10 +1,12 @@
 import type { Theme } from './theme';
 import { computed, effect, signal } from '@preact/signals';
 import { setLang, type Lang } from './i18n';
+import { deviceLang, takeUrlLang } from './lang-detect';
 import { chapterLevels, chapterOf, chapters, levelById, levels } from './levels';
 import type { Chapter, Circuit, Level } from './sim/types';
 import { load, save, saveLater } from './storage';
 import { assignedLevels } from './tasks';
+import { launchLanguage } from './telegram';
 
 const KEYS = {
   progress: 'lg.progress.v1',
@@ -39,9 +41,25 @@ export interface Settings {
   theme?: Theme;
 }
 
+/**
+ * Qurilmada o'yin birinchi marta ochilyapti (pastdagi effect'lar progressni darhol yozadi, shuning uchun
+ * keyingi ochilishlarda false). Yangi o'yinchiga "yangi versiya" xabari kerak emas, tili esa qurilmadan olinadi.
+ */
+export const freshDevice = load(KEYS.progress, null) === null && load(KEYS.profile, null) === null;
+
 export const progress = signal<Record<string, LevelProgress>>(load(KEYS.progress, {}));
 export const profile = signal<Profile | null>(load(KEYS.profile, null));
-export const settings = signal<Settings>({ sound: true, ...load<Partial<Settings>>(KEYS.settings, {}) });
+export const settings = signal<Settings>(initialSettings());
+
+/**
+ * Til: qo'llanma sahifasidan kelgan havoladagi (?lang=) — har doim; aks holda saqlangan tanlov; birinchi
+ * ochilishda — Telegram yoki brauzer tili. Avval o'ynab kelgan o'yinchining tili o'zicha o'zgarmaydi.
+ */
+function initialSettings(): Settings {
+  const stored = { sound: true, ...load<Partial<Settings>>(KEYS.settings, {}) };
+  const lang = takeUrlLang() ?? stored.lang ?? (freshDevice ? deviceLang(launchLanguage) : null);
+  return lang ? { ...stored, lang } : stored;
+}
 
 /** Tanishtiruv kartasi ko'rsatilgan elementlar. */
 export const seenIntro = signal<string[]>(load(KEYS.intro, []));

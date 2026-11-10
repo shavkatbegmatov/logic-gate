@@ -86,6 +86,18 @@ export const launchStartParam = inTelegram ? hashParams().get('tgWebAppStartPara
 /** Hash Telegram parametrlarimi (o'yin marshruti emas). */
 export const launchHash = inTelegram && /^#tgWebApp/.test(location.hash);
 
+/** Telegram ilovasining tili (user.language_code): SDK dan oldin, hashdagi tgWebAppData dan. */
+export const launchLanguage: string | null = (() => {
+  if (!launchHash) return null;
+  try {
+    const data = new URLSearchParams(hashParams().get('tgWebAppData') ?? '');
+    const code: unknown = JSON.parse(data.get('user') ?? 'null')?.language_code;
+    return typeof code === 'string' ? code : null;
+  } catch {
+    return null;
+  }
+})();
+
 /** start_param (t.me/bot/app?startapp=…) → o'yin marshruti. */
 export function startRoute(param: string | null | undefined): string {
   if (!param) return '';

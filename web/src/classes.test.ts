@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { ClassMember } from './api';
-import { classLink, forgetTeacherClass, normalizeClassCode, saveTeacherClass, sortSummaries, summarize, teacherClasses } from './classes';
+import {
+  classLink,
+  decodeTeacherClasses,
+  encodeTeacherClasses,
+  forgetAllTeacherClasses,
+  forgetTeacherClass,
+  mergeTeacherClasses,
+  normalizeClassCode,
+  saveTeacherClass,
+  sortSummaries,
+  summarize,
+  teacherClasses,
+} from './classes';
 import { chapterLevels, chapters } from './levels';
 
 const member = (nickname: string, levels: Record<string, number>, lastSeen = 1000): ClassMember => ({
@@ -34,6 +46,55 @@ describe('sinf rejimi', () => {
     const bek = summarize(member('Bek', {}), 1000);
     expect(sortSummaries([vali, bek, ali], 'name').map((s) => s.member.nickname)).toEqual(['Ali', 'Bek', 'vali']);
     expect(sortSummaries([vali, bek, ali], 'stars').map((s) => s.member.nickname)).toEqual(['Ali', 'vali', 'Bek']);
+  });
+
+  it("faollik — Toshkent kalendar kunlari bo'yicha, 24 soatlar emas", () => {
+    // 2026-11-09 23:00 (Toshkent) = 18:00 UTC; ertasi 08:00 (Toshkent) = 03:00 UTC.
+    const evening = Date.UTC(2026, 10, 9, 18) / 1000;
+    const morning = Date.UTC(2026, 10, 10, 3) / 1000;
+    expect(summarize(member('Ali', {}, evening), morning).seenDays).toBe(1);
+    // Bir kunning ertalabi va kechasi — "bugun".
+    expect(summarize(member('Ali', {}, morning), morning + 14 * 3600).seenDays).toBe(0);
+    // Server soati biroz oldinda bo'lsa ham manfiy emas.
+    expect(summarize(member('Ali', {}, morning + 60), morning).seenDays).toBe(0);
+  });
+
+  it("o'qituvchi sinflari Telegram bulutiga ixcham yoziladi va qaytariladi", () => {
+    const list = [
+      { code: 'AAAAAA', name: '8-B «Fizika»', key: 'K1K1-K1K1-K1K1-K1K1', createdAt: 1_700_000_000_000 },
+      { code: 'BBBBBB', name: 'B', key: 'K2K2-K2K2-K2K2-K2K2', createdAt: 1_700_000_100_000 },
+    ];
+    expect(decodeTeacherClasses(encodeTeacherClasses(list))).toEqual(list);
+    // Buzilgan yoki begona yozuvlar e'tiborsiz.
+    expect(decodeTeacherClasses('not json')).toEqual([]);
+    expect(decodeTeacherClasses(null)).toEqual([]);
+    expect(decodeTeacherClasses(JSON.stringify([['abc', 'k', 'n', 1], ['CCCCCC', 'k', 'n', 1], 5]))).toEqual([
+      { code: 'CCCCCC', key: 'k', name: 'n', createdAt: 1000 },
+    ]);
+    // 4096 belgidan oshsa — eng eskilari (ro'yxat oxiri) tushib qoladi.
+    const many = Array.from({ length: 80 }, (_, i) => ({
+      code: `A${String(i).padStart(5, '0')}`,
+      name: 'Sinf nomi juda uzun bo\'lishi mumkin — ellik belgigacha',
+      key: 'XXXX-XXXX-XXXX-XXXX',
+      createdAt: 0,
+    }));
+    const raw = encodeTeacherClasses(many);
+    expect(raw.length).toBeLessThanOrEqual(4096);
+    const back = decodeTeacherClasses(raw);
+    expect(back.length).toBeGreaterThan(20);
+    expect(back[0].code).toBe('A00000');
+  });
+
+  it("bulutdagi sinflar qo'shiladi; qurilmani tozalash kalitlarni ham o'chiradi", () => {
+    teacherClasses.value = [];
+    saveTeacherClass({ code: 'AAAAAA', name: 'Mahalliy', key: 'k1', createdAt: 1 });
+    mergeTeacherClasses([
+      { code: 'AAAAAA', name: 'Bulutdagi eski nom', key: 'k1', createdAt: 1 },
+      { code: 'BBBBBB', name: 'B', key: 'k2', createdAt: 2 },
+    ]);
+    expect(teacherClasses.value.map((c) => c.name)).toEqual(['Mahalliy', 'B']);
+    forgetAllTeacherClasses();
+    expect(teacherClasses.value).toEqual([]);
   });
 
   it("o'qituvchi sinflari qurilmada saqlanadi", () => {

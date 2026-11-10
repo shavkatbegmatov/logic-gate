@@ -15,12 +15,19 @@ export function showToast(text: string, kind: ToastData['kind'] = 'info', ms = 3
   timer = setTimeout(() => (toast.value = null), ms);
 }
 
+/**
+ * Xabarlar doim turadigan "jonli hudud" ichida: ekran o'quvchi hudud sahifada oldindan bo'lgandagina
+ * undagi yangi matnni o'qiydi (xabar bilan birga paydo bo'lgan hududni ko'pincha o'tkazib yuboradi).
+ */
 export function Toast() {
   const t = toast.value;
-  if (!t) return null;
   return (
-    <div key={t.id} class={`toast toast-${t.kind}`} role="status" onClick={() => (toast.value = null)}>
-      {t.text}
+    <div class="toast-region" role="status" aria-live="polite" aria-atomic="true">
+      {t && (
+        <div key={t.id} class={`toast toast-${t.kind}`} onClick={() => (toast.value = null)}>
+          {t.text}
+        </div>
+      )}
     </div>
   );
 }

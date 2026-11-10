@@ -1,10 +1,14 @@
 // Lokal progress va server o'rtasidagi sinxronlash. O'yin serversiz ham to'liq ishlaydi.
+import { signal } from '@preact/signals';
+import { resetAchievements } from './achievements';
 import { api, ApiError, type SolveResult } from './api';
-import { syncDaily } from './daily';
+import { resetCustom } from './custom';
+import { resetDaily, syncDaily } from './daily';
 import { t } from './i18n';
 import { levelById } from './levels';
-import { markSynced, profile, progress } from './state';
+import { markSynced, profile, progress, resetLocalProgress } from './state';
 import type { Circuit } from './sim/types';
+import { setMyTasks } from './tasks';
 
 export function errorText(e: unknown): string {
   if (!(e instanceof ApiError) || e.code === 'network') return t.network;
@@ -16,17 +20,48 @@ export function errorText(e: unknown): string {
   return t.network;
 }
 
+/** Yangi ochilgan profilning tiklash kodi — o'quvchi uni darhol ko'rib, yozib olsin (NewProfileCode). */
+export const newProfileCode = signal<string | null>(null);
+
 export async function createProfile(nickname: string) {
   const p = await api.createPlayer(nickname);
   profile.value = { id: p.id, nickname: p.nickname, code: p.code! };
+  newProfileCode.value = p.code!;
   syncProgress().catch(() => {});
 }
 
-export async function restoreProfile(code: string) {
+/** Tiklash kodi ko'rinishi: XXXX-XXXX-XXXX-XXXX (bo'shliq, chiziqcha va kichik harflar farq qilmaydi). */
+export function formatCode(code: string): string {
+  return (code.replace(/[^0-9a-z]/gi, '').toUpperCase().match(/.{1,4}/g) ?? []).join('-');
+}
+
+/** Qurilmadagi o'yinchi ma'lumotlari: natijalar, qoralamalar, kunlik masalalar, yutuqlar, vazifalar. */
+export function clearPlayerData() {
+  resetLocalProgress();
+  resetDaily();
+  resetCustom();
+  resetAchievements();
+  setMyTasks([]);
+}
+
+/**
+ * Tiklash kodi bilan profilga kirish. Qurilmada boshqa profil ochiq bo'lsa (maktabdagi umumiy kompyuter),
+ * avval uning yuborilmagan natijalari o'z hisobiga jo'natiladi, keyin qurilmadan tozalanadi — ikki
+ * o'quvchining natijalari aralashmaydi. Profilsiz o'ynalgan natijalar esa shu profilga qo'shiladi.
+ * onlyIfEmpty: server javobini kutish paytida profil paydo bo'lsa (o'quvchi yangisini ochdi) — hech narsa
+ * o'zgarmaydi va false qaytadi.
+ */
+export async function restoreProfile(code: string, onlyIfEmpty = false): Promise<boolean> {
   const me = await api.me(code);
-  const clean = code.replace(/[^0-9a-z]/gi, '').toUpperCase();
-  profile.value = { id: me.id, nickname: me.nickname, code: clean.match(/.{1,4}/g)!.join('-') };
+  const current = profile.value;
+  if (onlyIfEmpty && current) return false;
+  if (current && current.id !== me.id) {
+    await syncProgress().catch(() => {});
+    clearPlayerData();
+  }
+  profile.value = { id: me.id, nickname: me.nickname, code: formatCode(code) };
   await syncProgress();
+  return true;
 }
 
 export async function renameProfile(nickname: string) {

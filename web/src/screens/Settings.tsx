@@ -6,17 +6,15 @@ import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
+import { forgetAllTeacherClasses, teacherClasses } from '../classes';
 import { LANGS, t } from '../i18n';
 import { go } from '../router';
-import { resetAchievements } from '../achievements';
-import { resetCustom } from '../custom';
-import { resetDaily } from '../daily';
-import { profile, resetLocalProgress, settings } from '../state';
+import { profile, settings } from '../state';
 import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
 import { THEMES } from '../theme';
 import { APP_VERSION } from '../version';
-import { errorText, renameProfile, restoreProfile } from '../sync';
+import { clearPlayerData, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
 
 
 export function Settings() {
@@ -47,12 +45,23 @@ export function Settings() {
     }
   };
 
+  const restore = () => {
+    // Umumiy kompyuterda boshqa o'quvchining profili ochiq bo'lishi mumkin: uning natijalari qurilmadan
+    // olib tashlanadi (serverda qoladi) — buni oldindan aytamiz.
+    if (p && formatCode(code.value) !== formatCode(p.code) && !confirm(t.settings.switchConfirm(p.nickname))) return;
+    run(async () => void (await restoreProfile(code.value)), t.settings.restored).then(() => {
+      if (profile.value) nick.value = profile.value.nickname;
+    });
+  };
+
+  // O'qituvchi kalitlari ham qurilmada: kompyuterdan keyingi foydalanuvchi sinf hisobotini ochmasin.
+  const teacherCount = teacherClasses.value.length;
+
   const reset = () => {
-    if (!confirm(p ? t.settings.resetConfirmProfile : t.settings.resetConfirm)) return;
-    resetLocalProgress();
-    resetDaily();
-    resetCustom();
-    resetAchievements();
+    const text = p ? t.settings.resetConfirmProfile : t.settings.resetConfirm;
+    if (!confirm(teacherCount ? `${text}\n\n${t.settings.resetTeacher(teacherCount)}` : text)) return;
+    clearPlayerData();
+    forgetAllTeacherClasses();
     // Profil qolsa, keyingi ochilishda serverdagi natijalar qaytib kelardi — qurilma to'liq tozalanadi.
     profile.value = null;
     nick.value = '';
@@ -107,9 +116,7 @@ export function Settings() {
               class="row"
               onSubmit={(e) => {
                 e.preventDefault();
-                run(() => restoreProfile(code.value), t.settings.restored).then(() => {
-                  if (profile.value) nick.value = profile.value.nickname;
-                });
+                restore();
               }}
             >
               <input
@@ -165,6 +172,7 @@ export function Settings() {
           <section class="card">
             <h2>{t.settings.reset}</h2>
             <p class="muted">{p ? t.settings.resetTextProfile : t.settings.resetText}</p>
+            {teacherCount > 0 && <p class="muted small">{t.settings.resetTeacher(teacherCount)}</p>}
             <button class="btn danger" onClick={reset}>
               {t.settings.reset}
             </button>

@@ -64,7 +64,32 @@ addEventListener('hashchange', () => {
   route.value = parse(location.hash);
 });
 
+// Telegram'da birinchi ochilishda hashda ishga tushirish parametrlari turadi va Telegram SDK ularni
+// yuklanayotganda o'qiydi. SDK yuklanguncha (sekin internet) o'yinchi boshqa ekranga o'tsa, hash
+// o'zgarmaydi — ekran faqat ilovada almashadi; SDK yuklangach o'sha ekran hashga yoziladi.
+let holding = false;
+let heldPath: string | undefined;
+
+export function holdHash() {
+  holding = true;
+  heldPath = undefined;
+}
+
+/** Hashni qo'yib yuboradi: o'yinchi kutish paytida tanlagan ekran, tanlamagan bo'lsa — fallback. */
+export function releaseHash(fallback: string) {
+  if (!holding) return;
+  holding = false;
+  const path = heldPath ?? fallback;
+  heldPath = undefined;
+  replaceRoute(path);
+}
+
 export function go(path: string) {
+  if (holding) {
+    heldPath = path;
+    route.value = parse(`#/${path}`);
+    return;
+  }
   location.hash = path ? `#/${path}` : '#/';
 }
 

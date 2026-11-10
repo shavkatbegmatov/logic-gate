@@ -18,6 +18,28 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.12.0',
+    date: '2026-11-10',
+    uz: [
+      "Maktabdagi umumiy kompyuterda: boshqa o'quvchining tiklash kodi kiritilganda oldingi o'quvchining natijalari unga o'tib ketmaydi — o'yin avval ogohlantiradi va qurilmani tozalaydi.",
+      "Profil ochilgan zahoti tiklash kodi ko'rsatiladi — uni daftarga yozib, keyingi darsda boshqa kompyuterda davom etish mumkin.",
+      "Klaviatura bilan o'ynash mumkin: Tab bilan nuqta va elementlarni tanlang, Enter — ulash, strelkalar — surish, Delete — o'chirish; oynalar va xabarlarni ekran o'quvchi dasturlar ham o'qiydi.",
+      "Ruscha qo'llanmadan yoki ruscha telefon va Telegram'dan kelganlarga o'yin birdaniga ruscha ochiladi.",
+      "Telegram: profil tiklanayotganda tasodifan yangi profil ochilib qolmaydi, sekin internetda ekran o'zicha bosh sahifaga qaytmaydi; o'qituvchi sinflari Telegram'ning boshqa qurilmalarida ham ko'rinadi.",
+      "O'qituvchi hisoboti dars paytida daqiqada bir yangilanadi, «faollik» kalendar kuni bo'yicha hisoblanadi, boshqa qurilmada o'chirilgan sinfni ro'yxatdan olib tashlash mumkin, «Progressni o'chirish» esa o'qituvchi kalitlarini ham o'chiradi.",
+      "Qo'llanmalar bir marta ochilgach internetsiz ham ochiladi, Bul algebrasi kalkulyatori teng bo'lmagan ifodalar jadvalini ham ko'rsatadi, shriftlar har yangilanishda qayta yuklanmaydi.",
+    ],
+    ru: [
+      'На общем школьном компьютере: при вводе кода восстановления другого ученика результаты предыдущего не переходят к нему — игра сначала предупреждает и очищает устройство.',
+      'Код восстановления показывается сразу после создания профиля — его можно записать в тетрадь и на следующем уроке продолжить на другом компьютере.',
+      'Можно играть с клавиатуры: Tab выбирает точки и элементы, Enter — соединить, стрелки — сдвинуть, Delete — удалить; окна и сообщения читают и экранные дикторы.',
+      'Тем, кто пришёл с русского руководства или с телефона и Telegram на русском, игра сразу открывается на русском.',
+      'Telegram: пока профиль восстанавливается, случайно не создаётся новый, при медленном интернете экран сам не возвращается на главную; классы учителя видны и на других устройствах с Telegram.',
+      'Отчёт учителя во время урока обновляется раз в минуту, «активность» считается по календарным дням, удалённый на другом устройстве класс можно убрать из списка, а «Удалить прогресс» стирает и ключи учителя.',
+      'Руководства после первого открытия работают без интернета, калькулятор алгебры логики показывает таблицу и для неравных выражений, шрифты не скачиваются заново при каждом обновлении.',
+    ],
+  },
+  {
     version: '2.11.2',
     date: '2026-11-09',
     uz: [

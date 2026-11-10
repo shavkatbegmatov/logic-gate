@@ -10,6 +10,8 @@ Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqo
 - Ro'yxatdan o'tmasdan o'ynash mumkin. Taxallus kiritilsa, natijalar reytingga qo'shiladi, progress esa tiklash kodi orqali boshqa qurilmaga o'tkaziladi.
 - Qum quti: istalgan sxemani erkin yig'ish.
 - Telefon va kompyuterda ishlaydi: sichqoncha, sensorli ekran, pinch-zoom, klaviatura (Delete, Ctrl+Z, Ctrl+Y, Ctrl+Enter). Tik telefonda sxema yuqoridan pastga joylashadi (kirishlar tepada, chiqishlar pastda) — elementlar kattaroq ko'rinadi.
+- Faqat klaviatura bilan ham o'ynasa bo'ladi: Tab — maydondagi nuqtalar, elementlar va kirish tumblerlari; nuqtada Enter/Probel — simni boshlash va ulash, Delete — kirishga kelgan simni o'chirish; elementda strelkalar — surish, Delete — o'chirish; haqiqat jadvali qatorlari ham Tab bilan. Oynalar fokusni ushlaydi va yopilganda qaytaradi, xabarlar (toast) ekran o'quvchiga jonli hudud orqali o'qiladi.
+- Til: o'zbek va rus. Tanlanmagan bo'lsa — qo'llanma sahifasidan kelgan havoladagi `?lang=` (o'qiladi va manzildan olib tashlanadi), birinchi ochilishda esa Telegram yoki brauzer tili (`web/src/lang-detect.ts`).
 
 ## Stek
 
@@ -33,11 +35,11 @@ O'lchov WSL2 (Ubuntu) da, production Linux binari bilan, 50 o'yinchi × 30 daraj
 | CPU bitta so'rovga | ~0,38 ms |
 | Bitta mijozdan o'tkazuvchanlik | ~2000 so'rov/s |
 | Linux binar hajmi | 11 MB |
-| Frontend JS (gzip), ochilishda | 84,7 KB (2.11.2; 1-versiyada 28,3 KB) |
-| Frontend CSS (gzip) | 11,1 KB |
-| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, o'qituvchi 3,9 KB, sertifikat 2,5 KB |
+| Frontend JS (gzip), ochilishda | 84,7 KB, ikki faylda (2.12.0; 1-versiyada 28,3 KB) |
+| Frontend CSS (gzip) | 11,2 KB |
+| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, yangiliklar 6,6 KB, o'qituvchi 4,1 KB, sertifikat 2,5 KB |
 
-Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi.
+Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi. Yangiliklar ro'yxati (`changelog.ts`, har relizda o'sadi) ham alohida: bosh sahifadagi «yangi versiya» banneri birinchi qatorni u yuklangach ko'rsatadi.
 
 Nginx sarfi o'lchanmagan: odatda 1 ta worker bilan 5–10 MB. systemd unit'da `MemoryHigh=64M`, `MemoryMax=96M`, `.env` da `GOMEMLIMIT=40MiB` o'rnatilgan.
 
@@ -335,7 +337,8 @@ O'yin Telegram ichida bot orqali ochiladi. Server tomonida hech narsa kerak emas
 - Telegram SDK (`telegram.org/js/telegram-web-app.js`) faqat Telegram ichida yuklanadi (`web/src/telegram.ts`) — oddiy saytga tashqi skript qo'shilmaydi.
 - `t.me/<bot>/<app>?startapp=daily` — kunlik masala, `startapp=p_<kod>` — do'stlar masalasi (`web/src/telegram-app.ts`).
 - Telegram sarlavhasidagi orqaga tugmasi har ekranning "orqaga" amalini bajaradi; asosiy amallar tebranish bilan; maydonda sudrash ilovani yopib yubormaydi (vertikal surish o'chirilgan).
-- Profil kodi Telegram bulutida (CloudStorage — shu bot va shu foydalanuvchi uchun shaxsiy): boshqa qurilmadagi Telegram'da o'yin ochilsa, profil va natijalar o'zi tiklanadi. Taxallus Telegram'dagi ismdan taklif qilinadi.
+- Profil kodi Telegram bulutida (CloudStorage — shu bot va shu foydalanuvchi uchun shaxsiy): boshqa qurilmadagi Telegram'da o'yin ochilsa, profil va natijalar o'zi tiklanadi. Tiklash tugaguncha taxallus shakli o'rnida «tekshirilmoqda» turadi; aloqa bo'lmasa — «qayta urinish» (yangi profil bulutdagi tiklanmagan profil ustidan yozilmaydi). Taxallus Telegram'dagi ismdan taklif qilinadi.
+- SDK ishga tushirish parametrlarini hashdan o'qiydi: u yuklanguncha o'yinchi boshqa ekranga o'tsa, hash o'zgarmaydi (`holdHash` — `web/src/router.ts`), SDK yuklangach o'sha ekran yoziladi — sekin internetda ekran bosh sahifaga sakramaydi.
 - Ulashish Telegram'ning o'z oynasida; `VITE_TG_APP_URL` sozlangan bo'lsa, havola Mini App'ga (do'st ham Telegram ichida ochadi), saytning bosh sahifasida esa "Telegram'da o'ynash" tugmasi chiqadi.
 - CSP: `script-src` da `https://telegram.org`, `frame-ancestors https://web.telegram.org` (Telegram'ning veb-versiyasi Mini App'ni iframe'da ochadi). Boshqa saytlar o'yinni iframe'ga ola olmaydi.
 
@@ -393,7 +396,7 @@ O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda 
 
 - Ranglar faqat `web/src/styles.css` boshidagi o'zgaruvchilarda (`:root` — Plata, `:root[data-theme='daftar']` — Daftar). Qolgan CSS'da qattiq yozilgan rang bo'lmasligini `theme.test.ts` tekshiradi; yangi rang kerak bo'lsa — ikkala mavzuga o'zgaruvchi qo'shing. `--on` — signal 1 (sim, chiroq), `--accent` — interfeysdagi asosiy tugma; shaffof variant uchun `rgba(var(--on-rgb), 0.2)`.
 - `web/public/theme.js` mavzuni birinchi chizishdan oldin qo'yadi (CSP inline skriptga ruxsat bermaydi), keyin `src/theme.ts` boshqaradi: `<html data-theme>`, brauzer paneli rangi, Telegram oynasi ranglari.
-- Shriftlar — IBM Plex Sans va Plex Mono (`@fontsource`, o'z serverimizdan). Har alifbo `unicode-range` bilan faqat kerak bo'lganda yuklanadi; service worker shriftni birinchi yuklanishda keshga qo'yadi.
+- Shriftlar — IBM Plex Sans va Plex Mono (`@fontsource`, o'z serverimizdan). Har alifbo `unicode-range` bilan faqat kerak bo'lganda yuklanadi; service worker shriftni birinchi yuklanishda keshga qo'yadi (versiyalar orasida saqlanadi).
 - Maydon: simlar plata yo'li kabi — faqat gorizontal, vertikal va 45° qismlar (`geometry.ts` → `wireRoute`, burchaklar `routePath` da kesiladi); kirishlar — tumbler (qiymat dasta ichida), chiqishlar — chiroq. Plata'da yoniq yo'l ostida yorug'lik, Daftar'da — sariq marker, siyoh chiziq, katakli qog'oz va biroz "qo'lda chizilgan" chiziqlar (SVG filtri `#sketch`; sudrash, surish va masshtab paytida o'chadi — telefon sekinlashmasin).
 - Bosh ekran: "davom etish" kartochkasi (`components/MiniBoard.tsx` — navbatdagi darajaning kichik sxemasi: pinlar va o'yinchining qoralamasi; yechim hech qachon ko'rsatilmaydi), kunlik masala, pastki panel. Til — burchakdagi tugma, qo'llanma havolasi — sozlamalarda.
 - Darajalar xaritasi (`levelmap.ts`): bo'lim ichida "ilon" tartibi — ustunlar soni sig'adiganining eng kattasi va iloji bo'lsa darajalar soniga bo'linadigan; har daraja keyingisiga o'ngga, chapga yoki pastga qisqa yo'l bilan ulanadi. Xaritada birinchi marta ko'rilgan yechimlar (`lg.mapSeen.v1`) yo'lni animatsiya bilan "yoqadi".
@@ -419,13 +422,13 @@ Saytni Google Search Console va Yandex Webmaster'ga qo'shish (domen egasi tasdiq
 Sozlamalar → «O'qituvchilar uchun: sinf yaratish» (`#/teacher`). O'qituvchi sinf nomini kiritadi va ikki narsa oladi:
 
 - **sinf kodi** (6 belgi, ochiq) va havola `#/class/<kod>` — o'quvchilarga yuboriladi (Telegram'da `startapp=c_<kod>`); o'quvchi taxallusi bilan qo'shiladi va sinfdoshlar reytingini ko'radi;
-- **o'qituvchi kaliti** (tiklash kodi kabi 16 belgi) — hisobot va boshqaruv uchun; shu qurilmada saqlanadi (`lg.teacher.v1`), serverda faqat SHA-256 xeshi. Boshqa qurilmada «Kod va kalit bilan qo'shish».
+- **o'qituvchi kaliti** (tiklash kodi kabi 16 belgi) — hisobot va boshqaruv uchun; shu qurilmada saqlanadi (`lg.teacher.v1`), serverda faqat SHA-256 xeshi. Boshqa qurilmada «Kod va kalit bilan qo'shish»; Telegram ichida kalitlar Telegram bulutiga ham yoziladi (`teacher` kaliti) va boshqa qurilmadagi Telegram'da ro'yxat o'zi to'ladi. «Progressni o'chirish» kalitlarni ham o'chiradi (ogohlantirish bilan) — umumiy kompyuterda keyingi foydalanuvchi hisobotni ocholmasin.
 
 **Vazifalar.** Hisobotda «Yangi vazifa»: o'qituvchi 1–12 ta darajani belgilaydi, istasa nom va muddat qo'yadi (sinfda 20 tagacha vazifa). O'quvchi vazifani bosh sahifada ko'radi («Sinf vazifasi», bajarilmagan va muddati o'tmaganlardan eng yaqini) va sinf sahifasida — hammasini. Vazifadagi darajalar o'quvchiga yulduzlar yetmasa ham ochiq (ro'yxat qurilmada `lg.tasks.v1` da, oflayn ham ishlaydi). O'qituvchi har vazifa bo'yicha nechta o'quvchi bajarganini va kim hali bajarmaganini ko'radi.
 
 **Hisobotni chiqarish.** Jadval ostida: «Excel (CSV)» — fayl (UTF-8 BOM, `;` ajratgich: Excel o'zbek/rus sozlamalarida shuni kutadi), «Jadvalni nusxalash» — TSV, Excel yoki Google Sheets'ga to'g'ridan-to'g'ri qo'yiladi (Telegram ichida ham ishlaydi), «Chop etish» — faqat hisobot va vazifalar, yorug' mavzuda. Ustunlar: o'quvchi, yulduzlar, darajalar, har bo'lim bo'yicha yechilganlar, bugungi va 7 kunlik kunlik masalalar, oxirgi kirish sanasi, har vazifa bo'yicha yechilgan darajalar. `=`, `+`, `-`, `@` bilan boshlangan matn formula bo'lib qolmasligi uchun oldiga `'` qo'yiladi.
 
-Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik; o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
+Hisobot (`#/teacher/<kod>`): o'quvchi, yulduzlar, darajalar, har bir bo'lim bo'yicha yechilganlar (rang to'yinganligi bilan), bugungi kunlik masala, 7 kunda yechilgan kunlik masalalar, oxirgi faollik (Toshkent kalendar kunlari bo'yicha); o'quvchini chiqarish va sinfni o'chirish (natijalar o'quvchilarda qoladi). Dars paytida hisobot daqiqada bir marta va sahifaga qaytilganda o'zi yangilanadi. Boshqa qurilmada o'chirilgan sinf «ro'yxatdan olib tashlash» bilan tozalanadi. Sinfda 200 tagacha o'quvchi; bir IP dan sinf yaratish — 2 daqiqada 1 ta (5 tagacha birdaniga).
 
 ## Sertifikat
 
@@ -473,7 +476,7 @@ O'yin — PWA (`public/manifest.webmanifest` + service worker). Chrome/Edge/Andr
 
 ## Oflayn rejim
 
-HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. Server 5xx qaytarsa (masalan, deploy paytida proksi 502), sahifa o'rniga keshdagi o'yin ochiladi. `vite dev` da service worker yo'q.
+HTTPS'da (va `localhost` da) `dist/sw.js` service worker ro'yxatdan o'tadi: birinchi ochilishdan keyin o'yin internetsiz ham ochiladi. `sw.js` build oxirida `web/scripts/sw.mjs` tomonidan `sw.template.js` dan yoziladi (fayllar ro'yxati + mazmun xeshi). Har deploy'da xesh o'zgaradi — brauzer yangi versiyani o'zi o'rnatadi va eski keshni o'chiradi. Server 5xx qaytarsa (masalan, deploy paytida proksi 502), sahifa o'rniga keshdagi o'yin ochiladi. Shriftlar alohida `lg-fonts` keshida — yangi versiyada qayta yuklanmaydi. Qo'llanma sahifalari va ularning skriptlari (`lg-pages`) avval tarmoqdan olinadi, nusxasi keshga yoziladi: bir marta ochilgan qo'llanma internetsiz ham ochiladi, hali ochilmagani o'rniga o'yin emas, qisqa oflayn xabar chiqadi. `vite dev` da service worker yo'q.
 
 Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'lumotlarini tozalash"ni maslahat bermang — natijalar ham o'chadi. Buning o'rniga `sw.js` ni o'zini o'chiradigan versiya bilan deploy qiling (`self.addEventListener('install', () => self.skipWaiting()); self.addEventListener('activate', () => self.registration.unregister());`): brauzer `sw.js` ni har ochilishda tekshiradi (`Cache-Control: no-cache`). Ishlab chiqishda: DevTools → Application → Service workers → Unregister.
 

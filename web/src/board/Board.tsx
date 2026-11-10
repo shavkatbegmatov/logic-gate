@@ -8,7 +8,7 @@ import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
-import { GATE_H, GATE_W, inputPortY, isSourcePort, outputPortY, portPoint, routeMid, routePath, wirePath, wireRoute, type Point } from './geometry';
+import { GATE_H, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, routeMid, routePath, wirePath, wireRoute, type Point } from './geometry';
 import { GateShape } from './GateShape';
 
 type Drag =
@@ -256,6 +256,77 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     }
   };
 
+  // ── Klaviatura ─────────────────────────────────────────────
+  // Nuqtalar, elementlar va kirish tumblerlari Tab bilan tanlanadi. Nuqtada Enter/Probel — bosish bilan
+  // bir xil (birinchisi simni boshlaydi, ikkinchisi ulaydi), Delete — kirishga kelgan simni o'chiradi.
+  // Elementda Enter — belgilash, strelkalar — surish, Delete — o'chirish.
+  // Ctrl+Enter — «Tekshirish», Ctrl+Z — bekor qilish: modifikatorli tugmalar umumiy ishlovchilarga qoladi.
+  const plain = (e: KeyboardEvent) => !e.ctrlKey && !e.metaKey && !e.altKey;
+  const activates = (e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && plain(e);
+  const deletes = (e: KeyboardEvent) => (e.key === 'Delete' || e.key === 'Backspace') && plain(e);
+  /**
+   * Tugma shu yerda bajariladi: sahifa aylanmasin va umumiy tugmalar (useEditorKeys) qaytarmasin.
+   * Tekshiruv paytida — hech narsa (Probel tekshiruv animatsiyasini o'tkazib yuboradi, Workbench).
+   */
+  const handled = (e: KeyboardEvent) => {
+    if (editor.busy.value) return false;
+    e.preventDefault();
+    e.stopPropagation();
+    return true;
+  };
+
+  const onPortKey = (e: KeyboardEvent, id: string) => {
+    if (activates(e)) {
+      if (handled(e)) tapPort(id);
+    } else if (deletes(e) && !isSourcePort(id)) {
+      const index = editor.circuit.value.wires.findIndex((w) => w.to === id);
+      if (index < 0 || !handled(e)) return;
+      editor.selection.value = { kind: 'wire', index };
+      editor.removeSelection();
+    }
+  };
+
+  const ARROWS: Record<string, [number, number]> = {
+    ArrowLeft: [-GRID, 0],
+    ArrowRight: [GRID, 0],
+    ArrowUp: [0, -GRID],
+    ArrowDown: [0, GRID],
+  };
+
+  const onGateKey = (e: KeyboardEvent, g: Gate) => {
+    const arrow = ARROWS[e.key];
+    if (activates(e)) {
+      if (!handled(e)) return;
+      const sel = editor.selection.value;
+      editor.selection.value = sel?.kind === 'gate' && sel.id === g.id ? null : { kind: 'gate', id: g.id };
+      editor.pending.value = null;
+    } else if (deletes(e)) {
+      if (!handled(e)) return;
+      editor.selection.value = { kind: 'gate', id: g.id };
+      editor.removeSelection();
+      // Element yo'qoldi — fokus maydonda qoladi (keyingi Tab — maydondagi birinchi nuqta).
+      svgRef.current?.focus();
+    } else if (arrow && plain(e)) {
+      if (!handled(e)) return;
+      // Vertikal rejimda o'qlar almashgan: ekrandagi "o'ngga" — dunyoda pastga.
+      const [dx, dy] = editor.vertical.value ? [arrow[1], arrow[0]] : arrow;
+      editor.beginDrag();
+      editor.dragGate(g.id, g.x + dx, g.y + dy);
+      editor.endDrag();
+    }
+  };
+
+  const onPinKey = (e: KeyboardEvent, k: number) => {
+    if (activates(e) && handled(e)) editor.toggleInput(k);
+  };
+
+  const onDeleteKey = (e: KeyboardEvent) => {
+    if (activates(e) && handled(e)) {
+      editor.removeSelection();
+      svgRef.current?.focus();
+    }
+  };
+
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     moving.value = true;
@@ -323,12 +394,18 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     );
   });
 
-  const port = (id: string, x: number, y: number, src: boolean, connected: boolean, on: boolean) => (
+  const a11y = t.play.a11y;
+  const port = (id: string, x: number, y: number, src: boolean, connected: boolean, on: boolean, name: string) => (
     <g
       class={`port ${src ? 'src' : 'sink'}${connected ? ' linked' : ''}${on ? ' on' : ''}${active === id ? ' active' : ''}`}
       data-kind="port"
       data-port={id}
       transform={`translate(${x},${y})`}
+      tabindex={0}
+      role="button"
+      aria-pressed={pending === id}
+      aria-label={`${name}${connected ? `, ${a11y.linked}` : ''}${pending === id ? `. ${a11y.wiring}` : ''}`}
+      onKeyDown={(e) => onPortKey(e, id)}
     >
       <circle class="port-hit" r={15} />
       <circle class="port-dot" r={5.5} />
@@ -355,12 +432,25 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
   const driven = new Set(wires.map((w) => w.to));
   const states = stateNames({ gates, wires });
   const usedSources = new Set(wires.map((w) => w.from));
+  // Ekran o'quvchi uchun nom: bir xil elementlar raqamlanadi (AND 1, AND 2).
+  const seen = new Map<string, number>();
+  const gateName = new Map(
+    gates.map((g) => {
+      const n = (seen.get(g.type) ?? 0) + 1;
+      seen.set(g.type, n);
+      return [g.id, `${g.type} ${n}`];
+    }),
+  );
 
   return (
     <div class="board" ref={wrapRef}>
       <svg
         ref={svgRef}
         class={`board-svg ${targetClass}${moving.value ? ' moving' : ''}`}
+        role="group"
+        aria-label={a11y.board}
+        // SVG'da atribut kichik harf bilan (Preact SVG prop'larini atribut sifatida o'zgarishsiz yozadi).
+        tabindex={-1}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
@@ -395,7 +485,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                 class={`gate${on ? ' on' : ''}${selected ? ' sel' : ''}${highlight === g.id ? ' err' : ''}${live ? '' : ' idle'}`}
                 transform={`translate(${g.x},${g.y})`}
               >
-                <g data-kind="gate" data-id={g.id}>
+                <g
+                  data-kind="gate"
+                  data-id={g.id}
+                  tabindex={0}
+                  role="button"
+                  aria-pressed={selected}
+                  aria-label={a11y.gate(gateName.get(g.id)!)}
+                  onKeyDown={(e) => onGateKey(e, g)}
+                >
                   <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
                   <GateShape type={g.type} />
                   {g.type === 'DFF' ? (
@@ -409,9 +507,9 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                   )}
                 </g>
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
-                  port(`${g.id}:${i}`, 0, inputPortY(g, i), false, driven.has(`${g.id}:${i}`), false),
+                  port(`${g.id}:${i}`, 0, inputPortY(g, i), false, driven.has(`${g.id}:${i}`), false, a11y.gateIn(gateName.get(g.id)!, i)),
                 )}
-                {port(g.id, GATE_W, outputPortY(g), true, usedSources.has(g.id), on)}
+                {port(g.id, GATE_W, outputPortY(g), true, usedSources.has(g.id), on, a11y.gateOut(gateName.get(g.id)!))}
               </g>
             );
           })}
@@ -421,7 +519,16 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
             const on = bits[k] === 1;
             return (
               <g key={`in:${name}`} class={`pin pin-in${on ? ' on' : ''}`} transform={`translate(${p.x},${p.y})`}>
-                <g data-kind="pin" data-pin={k} class="pin-body">
+                <g
+                  data-kind="pin"
+                  data-pin={k}
+                  class="pin-body"
+                  tabindex={0}
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={name}
+                  onKeyDown={(e) => onPinKey(e, k)}
+                >
                   <rect x={-78} y={-20} width={64} height={40} rx={9} />
                   {label('pin-name', -64, 0, name)}
                   {/* Tumbler: dastagi 1 da o'ngda; qiymat dasta ichida yozilgan. */}
@@ -438,7 +545,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                   )}
                 </g>
                 <line class="lead" x1={-14} y1={0} x2={0} y2={0} />
-                {port(`in:${name}`, 0, 0, true, usedSources.has(`in:${name}`), on)}
+                {port(`in:${name}`, 0, 0, true, usedSources.has(`in:${name}`), on, a11y.source(name))}
               </g>
             );
           })}
@@ -473,7 +580,7 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
                   </g>,
                 )}
                 {exp !== undefined && label('pin-exp', 44, 32, `${t.play.expected.toLowerCase()}: ${exp}`, 90, 0)}
-                {port(`out:${name}`, 0, 0, false, driven.has(`out:${name}`), v === 1)}
+                {port(`out:${name}`, 0, 0, false, driven.has(`out:${name}`), v === 1, a11y.output(name))}
               </g>
             );
           })}
@@ -481,7 +588,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
           {ghost.value && <path class="wire-ghost" d={wirePath(ghost.value.a, ghost.value.b)} />}
 
           {deleteAt && (
-            <g class="delete-btn" data-kind="delete" transform={`translate(${deleteAt.x},${deleteAt.y})`}>
+            <g
+              class="delete-btn"
+              data-kind="delete"
+              transform={`translate(${deleteAt.x},${deleteAt.y})`}
+              tabindex={0}
+              role="button"
+              aria-label={t.play.remove}
+              onKeyDown={onDeleteKey}
+            >
               <title>{t.play.remove}</title>
               <circle r={13} />
               <path d="M-4.5,-4.5 L4.5,4.5 M4.5,-4.5 L-4.5,4.5" />

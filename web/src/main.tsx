@@ -5,8 +5,10 @@ import { App } from './app';
 import { installErrorReporting } from './errors';
 import './install';
 import './theme';
+import { freshDevice } from './state';
 import { inTelegram } from './telegram';
 import { startTelegram } from './telegram-app';
+import { markNewsSeen } from './version';
 // Shriftlar (IBM Plex): o'z serverimizdan, har alifbo kerak bo'lgandagina yuklanadi (unicode-range).
 import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/600.css';
@@ -16,6 +18,10 @@ import './styles.css';
 
 // Kutilmagan xatolar haqida serverga xabar (faqat build'da: dev'da konsol yetarli).
 if (import.meta.env.PROD) installErrorReporting();
+
+// Birinchi ochilish: yangi o'yinchiga hammasi yangi — "yangi versiya" xabari faqat qaytganlarga. Sinf
+// havolasi orqali kelgan o'quvchi bosh sahifani profil ochgandan keyin ko'radi, shuning uchun bu shu yerda.
+if (freshDevice) markNewsSeen();
 
 render(<App />, document.getElementById('app')!);
 
