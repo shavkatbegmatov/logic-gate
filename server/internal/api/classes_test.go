@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"logicgate/levels"
+	"logicgate/server/internal/nickname"
 	"logicgate/server/internal/store"
 )
 
@@ -283,6 +284,21 @@ func TestClassCodeAndName(t *testing.T) {
 		if _, err := cleanClassName(bad); err == nil {
 			t.Errorf("%q qabul qilindi", bad)
 		}
+	}
+	// Taxallusdagidek: to'liq kenglik oddiysiga aylanadi, niqob va ko'rinmas belgilar rad etiladi.
+	if got, err := cleanClassName("８－Ｂ ｓｉｎｆ"); err != nil || got != "8-B sinf" {
+		t.Errorf("to'liq kenglik: %q %v", got, err)
+	}
+	if _, err := cleanClassName("ｆｕｃｋ sinf"); !errors.Is(err, nickname.ErrNotAllowed) {
+		t.Errorf("to'liq kenglikdagi so'kinish: %v", err)
+	}
+	for _, bad := range []string{"\U0001D41F\U0001D42E\U0001D41C\U0001D424 sinf", "8-B\u3164", "\u3164\u3164\u3164", "\u2800\u2800"} {
+		if _, err := cleanClassName(bad); !errors.Is(err, errBadClassName) {
+			t.Errorf("%q: %v", bad, err)
+		}
+	}
+	if _, err := cleanText("ｖａｚｉｆａ\U0001D7CE", 0, 60, errBadTask); !errors.Is(err, errBadTask) {
+		t.Errorf("vazifa nomi: %v", err)
 	}
 	for range 100 {
 		if c := newClassCode(); normalizeClassCode(c) != c {

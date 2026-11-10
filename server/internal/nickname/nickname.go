@@ -14,15 +14,16 @@ var (
 	ErrNotAllowed = errors.New("nickname_not_allowed") // haqoratli yoki band so'z
 )
 
-// Clean bo'shliqlarni tartibga keltiradi va taxallusni tekshiradi (2–20 belgi).
+// Clean bo'shliqlarni tartibga keltiradi va taxallusni tekshiradi (2–20 belgi). To'liq kenglikdagi
+// lotin harf va raqamlar oddiysiga aylantirilib saqlanadi ("Ａｌｉ" → "Ali").
 func Clean(s string) (string, error) {
-	s = strings.Join(strings.Fields(s), " ")
+	s = strings.Join(strings.Fields(Fold(s)), " ")
 	n := utf8.RuneCountInString(s)
 	if n < 2 || n > 20 {
 		return "", ErrInvalid
 	}
 	for _, r := range s {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(" _-.'ʻʼ`", r) {
+		if Disguised(r) || (!unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(" _-.'ʻʼ`", r)) {
 			return "", ErrInvalid
 		}
 	}
@@ -30,6 +31,35 @@ func Clean(s string) (string, error) {
 		return "", ErrNotAllowed
 	}
 	return s, nil
+}
+
+// Fold to'liq kenglikdagi ASCII shakllarini (U+FF01–U+FF5E: "ａｄｍｉｎ") oddiy ASCII ga aylantiradi —
+// ular boshqacha ko'rinmaydi, lekin so'zlar filtridan o'tib ketardi.
+func Fold(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= 0xFF01 && r <= 0xFF5E {
+			return r - 0xFF01 + '!'
+		}
+		return r
+	}, s)
+}
+
+// Disguised — harf yoki raqam hisoblansa ham, taxallus va matnda ruxsat etilmaydigan belgi:
+//   - matematik harf-raqamlar (U+1D400–U+1D7FF, "𝐟𝐮𝐜𝐤") — oddiy harfni niqoblaydi, filtrdan o'tadi;
+//   - bo'sh ko'rinadigan "harflar": hangul to'ldiruvchilari (U+115F, U+1160, U+3164, U+FFA0), Braille bo'sh
+//     katagi (U+2800), Xitan kichik yozuvi to'ldiruvchisi (U+16FE4) va boshqa ko'rinmas belgilar —
+//     taxallus bo'sh yoki "Ali" ga o'xshab, aslida boshqacha bo'lib qoladi.
+func Disguised(r rune) bool {
+	switch {
+	case r >= 0x1D400 && r <= 0x1D7FF:
+		return true
+	case r == 0x115F, r == 0x1160, r == 0x3164, r == 0xFFA0, r == 0x2800, r == 0x16FE4:
+		return true
+	case r == 0x17B4, r == 0x17B5, r == 0x180E: // kxmer ko'rinmas unlilari, mo'g'ul unli ajratgichi
+		return true
+	}
+	// Formatlash va boshqaruv belgilari (nol kenglikdagi bo'shliq, yo'nalish belgilari va h.k.).
+	return unicode.In(r, unicode.Cf, unicode.Cc, unicode.Co)
 }
 
 // Ildizlar normallashtirilgan ko'rinishda: kichik lotin harflari, ajratuvchilarsiz.
@@ -62,7 +92,7 @@ var lookalike = map[rune]rune{
 
 func compact(s string, mapLookalikes bool) string {
 	var b strings.Builder
-	for _, r := range strings.ToLower(s) {
+	for _, r := range strings.ToLower(Fold(s)) {
 		if mapLookalikes {
 			if m, ok := lookalike[r]; ok {
 				r = m

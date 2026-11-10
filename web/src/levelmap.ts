@@ -36,6 +36,12 @@ const KEY = 'lg.mapSeen.v1';
 /** Xaritada allaqachon "yonib bo'lgan" yechimlar: yangilari bir marta animatsiya bilan yonadi. */
 export const mapSeen = signal<string[]>(load(KEY, []));
 
+/** Boshqa o'quvchi (umumiy kompyuter) yoki «Progressni o'chirish»: uning yechimlari ham yonib o'tsin. */
+export function resetMapSeen() {
+  mapSeen.value = [];
+  save(KEY, null);
+}
+
 export function markMapSeen(ids: string[]) {
   const next = [...new Set([...mapSeen.value, ...ids])];
   if (next.length === mapSeen.value.length) return;

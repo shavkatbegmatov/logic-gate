@@ -6,12 +6,15 @@ import { dayLabel, todaySig } from '../daily';
 import { lang, t } from '../i18n';
 import { chapterLevels, chapters } from '../levels';
 import { go } from '../router';
-import { profile, progress } from '../state';
+import { KEYS, profile, progress } from '../state';
 import { load, save } from '../storage';
 import { inTelegram } from '../telegram';
 
-/** Sertifikatdagi ism — faqat shu qurilmada (taxallus emas, haqiqiy ism yozilishi mumkin). */
-const NAME_KEY = 'lg.certName.v1';
+/**
+ * Sertifikatdagi ism — faqat shu qurilmada (taxallus emas, haqiqiy ism yozilishi mumkin). Boshqa o'quvchi
+ * kirganda yoki «Progressni o'chirish»da tozalanadi (sync.clearPlayerData).
+ */
+const NAME_KEY = KEYS.certName;
 const MAX_NAME = 40;
 
 function labels(d: CertData): CertLabels {

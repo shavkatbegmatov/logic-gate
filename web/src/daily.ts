@@ -7,6 +7,7 @@ import type { Circuit, Level } from './sim/types';
 import { profile } from './state';
 import { load, save } from './storage';
 import { exampleFor } from './sim/sim';
+import { cleanRecord, cleanResult, cleanScore, isObj } from './validate';
 
 const KEYS = { history: 'lg.daily.v1', puzzle: 'lg.dailyPuzzle.v1', practice: 'lg.dailyPractice.v1' };
 const HISTORY_DAYS = 400;
@@ -20,7 +21,7 @@ export interface DailyResult {
 }
 
 /** Kun raqami (Toshkent bo'yicha 1970-01-01 dan beri) → eng yaxshi natija. */
-export const dailyHistory = signal<Record<string, DailyResult>>(load(KEYS.history, {}));
+export const dailyHistory = signal<Record<string, DailyResult>>(load(KEYS.history, {}, (v) => cleanRecord(v, cleanResult)));
 effect(() => save(KEYS.history, dailyHistory.value));
 
 /** Arxivdagi yopiq kunlar mashqi: seriya, reyting va yutuqlarga kirmaydi (alohida saqlanadi). */
@@ -30,7 +31,9 @@ export interface PracticeResult {
   at: number;
 }
 
-export const practiceHistory = signal<Record<string, PracticeResult>>(load(KEYS.practice, {}));
+export const practiceHistory = signal<Record<string, PracticeResult>>(
+  load(KEYS.practice, {}, (v) => cleanRecord(v, (x) => cleanScore(x) as PracticeResult | null)),
+);
 effect(() => save(KEYS.practice, practiceHistory.value));
 
 export function recordPractice(day: number, gates: number, stars: number) {
@@ -150,12 +153,41 @@ export async function fetchDaily(): Promise<DailyInfo> {
     save(KEYS.puzzle, info);
     if (profile.value) serverStreak.value = { day: info.day, streak: info.streak, includesToday: !!info.me };
     if (info.me) mergeServerResult(info.day, info.me.gates, info.me.stars);
+    else if (profile.value && dailyHistory.value[info.day]?.synced) {
+      // "Yuborilgan" natijani server bilmaydi (baza zaxiradan tiklangan): qayta yuboriladi.
+      unsyncDay(info.day);
+      void submitDaily(info.day);
+    }
     return info;
   } catch (e) {
-    const cached = load<DailyInfo | null>(KEYS.puzzle, null);
+    const cached = load<DailyInfo | null>(KEYS.puzzle, null, (v) => (isObj(v) && isObj(v.puzzle) ? (v as unknown as DailyInfo) : null));
     if (cached && cached.day === today()) return cached;
     throw e;
   }
+}
+
+let statusAsked = false;
+
+/**
+ * Bosh sahifa uchun: server bilgan bugungi natija va seriya (boshqa qurilmada yechilgan bo'lishi mumkin).
+ * Ilova ochilganda bir marta; kunlik ekran ochilgan bo'lsa — kerak emas.
+ */
+export function refreshDailyStatus() {
+  if (statusAsked || !profile.value || serverStreak.value) return;
+  statusAsked = true;
+  fetchDaily().catch(() => (statusAsked = false));
+}
+
+function unsyncDay(day: number) {
+  const r = dailyHistory.value[day];
+  if (r?.synced) dailyHistory.value = { ...dailyHistory.value, [day]: { ...r, synced: false } };
+}
+
+/** Bugungi va kechagi natijalar qayta yuboriladi (serverda yangi profil ochilganda — sync.ts). */
+export function unsyncRecentDaily() {
+  const now = today();
+  unsyncDay(now - 1);
+  unsyncDay(now);
 }
 
 /** Arxivdagi kun masalasi (internet kerak; keshlanmaydi). */

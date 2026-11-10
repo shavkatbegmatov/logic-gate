@@ -25,12 +25,15 @@ export const TG_APP_URL = ((import.meta.env.VITE_TG_APP_URL as string | undefine
 /**
  * O'yindagi sahifa (#/daily, #/p/<kod>) uchun Mini App havolasi: startapp parametri Telegram ichida
  * ochilganda shu sahifaga olib boradi (telegram-app.ts → startRoute). Faqat A-Z a-z 0-9 _ - va ≤ 512.
+ * Sahifa parametri sig'masa (katta xotirali masala kodi) — bo'sh: ulashishda oddiy sayt havolasi
+ * ishlatiladi, aks holda do'st masalasiz bosh sahifaga tushardi.
  */
 export function tgAppLink(path: string, base = TG_APP_URL): string {
   if (!base) return '';
   const param =
     path === '#/daily' ? 'daily' : path.startsWith('#/p/') ? `p_${path.slice(4)}` : path.startsWith('#/class/') ? `c_${path.slice(8)}` : '';
-  return param && /^[\w-]{1,512}$/.test(param) ? `${base}?startapp=${param}` : base;
+  if (!param) return base;
+  return /^[\w-]{1,512}$/.test(param) ? `${base}?startapp=${param}` : '';
 }
 
 /** Nusxalash uchun to'liq matn (havola bilan). */

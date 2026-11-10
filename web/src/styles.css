@@ -13,7 +13,8 @@
   --grid: #1f3a2c;
   --text: #e6eee4;
   --muted: #8fa697;
-  --dim: #6a8576;
+  /* Jadvaldagi nollar va ikkinchi darajali yozuvlar: panelda ham kamida 4.5:1. */
+  --dim: #7a9585;
   --accent: #f2a93b;
   --accent-ink: #1e1305;
   --on: #ffb340;
@@ -23,6 +24,8 @@
   --bad: #ff6b5b;
   --good: #63d394;
   --gold: #ffd36b;
+  /* Oltin rangli matn (yulduzlar soni, seriya). Daftar'da to'qroq: och qog'ozda o'qilsin. */
+  --gold-ink: #ffd36b;
   --star-off: #2f4a3d;
   --gate-fill: #102a1f;
   --gate-stroke: #63b98d;
@@ -73,7 +76,7 @@
   --grid: #c9d3e0;
   --text: #1d2939;
   --muted: #5a6475;
-  --dim: #7a8392;
+  --dim: #646d7b;
   --accent: #2253b0;
   --accent-ink: #ffffff;
   --on: #e07800;
@@ -81,8 +84,9 @@
   --copper: #a35f2a;
   --sel: #1f7fd6;
   --bad: #c5303c;
-  --good: #2b8a55;
+  --good: #237347;
   --gold: #c08a00;
+  --gold-ink: #8a5f00;
   --star-off: #d5ccb7;
   --gate-fill: #fffdf7;
   --gate-stroke: #2a3550;
@@ -231,7 +235,7 @@ h3 {
 
 .topbar-stars {
   font: 700 15px var(--mono);
-  color: var(--gold);
+  color: var(--gold-ink);
   padding-right: 4px;
 }
 
@@ -534,12 +538,17 @@ input[type='date']:focus {
 .continue-stars {
   flex: none;
   font: 600 13px var(--mono);
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .continue-title {
   margin: 0;
   font-size: 21px;
+}
+
+.continue-hint {
+  margin: 4px 0 0;
+  font-size: 14px;
 }
 
 .continue-board {
@@ -855,7 +864,7 @@ input[type='date']:focus {
 .chapter-stars {
   flex: none;
   font: 700 14px var(--mono);
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .lock-note {
@@ -1045,7 +1054,7 @@ input[type='date']:focus {
 }
 
 .star.on {
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .stars-sm {
@@ -1673,8 +1682,8 @@ input[type='date']:focus {
 }
 
 .lesson-btn.new {
-  border-color: var(--gold);
-  color: var(--gold);
+  border-color: var(--gold-ink);
+  color: var(--gold-ink);
 }
 
 .lesson {
@@ -2171,7 +2180,7 @@ input[type='date']:focus {
 .podium-base span.stars-sub {
   font-size: 15px;
   letter-spacing: 1px;
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .podium-col.me .podium-base {
@@ -2537,7 +2546,7 @@ button.task-level:hover {
 }
 
 .task-level .task-check {
-  color: var(--gold);
+  color: var(--gold-ink);
   font-size: 12px;
 }
 
@@ -2870,7 +2879,7 @@ button.task-level:hover {
 }
 
 .report-table td.gold {
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .report-table th.ch {
@@ -2957,7 +2966,7 @@ button.task-level:hover {
 }
 
 .board-table tr.top1 td:first-child {
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .board-table tr.top2 td:first-child {
@@ -3229,7 +3238,7 @@ button.task-level:hover {
 }
 
 .streak {
-  color: var(--gold);
+  color: var(--gold-ink);
   font-size: 13px;
   font-weight: 600;
 }
@@ -3268,8 +3277,27 @@ button.task-level:hover {
 }
 
 .board-table .stars-cell {
-  color: var(--gold);
+  color: var(--gold-ink);
   letter-spacing: 1px;
+}
+
+/* ── Ekran xatosi (app.tsx Guarded) ────────────────────── */
+.screen.crash {
+  max-width: 460px;
+  margin: 18vh auto 0;
+  padding: 0 20px;
+}
+
+.screen.crash h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+
+.crash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 /* ── Tekshiruv animatsiyasi ────────────────────────────── */
@@ -3558,7 +3586,7 @@ body:has(.stage.has-check) .toast {
 }
 
 .archive-day.done .stars-text {
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 /* ── Yutuqlar ──────────────────────────────────────────── */
@@ -3610,7 +3638,7 @@ body:has(.stage.has-check) .toast {
 
 .achievement.done .ach-icon {
   border-color: rgba(var(--gold-rgb), 0.6);
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .ach-body {
@@ -3625,12 +3653,12 @@ body:has(.stage.has-check) .toast {
 }
 
 .achievement.done strong {
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .ach-check {
   flex: none;
-  color: var(--gold);
+  color: var(--gold-ink);
   font-size: 18px;
 }
 

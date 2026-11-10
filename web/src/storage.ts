@@ -1,9 +1,19 @@
 // localStorage xususiy rejimda yoki bloklangan bo'lishi mumkin — har bir murojaat himoyalangan.
 
-export function load<T>(key: string, fallback: T): T {
+const kind = (v: unknown) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v);
+
+/**
+ * Saqlangan qiymat. clean — shaklini tekshiradi (noto'g'ri qismlarni tashlaydi, umuman yaroqsiz bo'lsa
+ * null). clean bo'lmasa, hech bo'lmasa turi fallback bilan bir xil bo'lishi shart (massiv o'rniga son
+ * kelib qolsa, ilova ochilishidayoq to'xtamasin).
+ */
+export function load<T>(key: string, fallback: T, clean?: (v: unknown) => T | null): T {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    if (!raw) return fallback;
+    const v: unknown = JSON.parse(raw);
+    if (clean) return clean(v) ?? fallback;
+    return fallback === null || kind(v) === kind(fallback) ? (v as T) : fallback;
   } catch {
     return fallback;
   }

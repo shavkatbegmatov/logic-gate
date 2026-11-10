@@ -24,6 +24,8 @@ if (import.meta.env.PROD) installErrorReporting();
 if (freshDevice) markNewsSeen();
 
 render(<App />, document.getElementById('app')!);
+// public/theme.js dagi "o'yin ochilmadi" oynasi endi kerak emas: keyingi xatolarni app.tsx ushlaydi.
+(window as { __lgReady?: boolean }).__lgReady = true;
 
 // Telegram Mini App sifatida ochilgan bo'lsa: Telegram oynasi, marshrut, bulutdagi profil.
 if (inTelegram) void startTelegram();

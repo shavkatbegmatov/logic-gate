@@ -9,6 +9,7 @@ import { t } from './i18n';
 import { chapterLevels, chapters, levelById, levels } from './levels';
 import { allHintSteps, progress } from './state';
 import { load, save } from './storage';
+import { asNumber, cleanRecord } from './validate';
 
 export interface Snapshot {
   progress: Record<string, { stars: number; gates: number }>;
@@ -98,7 +99,7 @@ export function evaluate(s: Snapshot): AchievementState[] {
 // ── Saqlash va e'lon qilish ───────────────────────────────
 
 const KEY = 'lg.achievements.v1';
-const stored = load<Record<string, number> | null>(KEY, null);
+const stored = load<Record<string, number> | null>(KEY, null, (v) => cleanRecord(v, asNumber));
 /** Ochilgan yutuqlar: id → vaqt. */
 export const unlocked = signal<Record<string, number>>(stored ?? {});
 // Birinchi ishga tushishda (yoki yutuqlar paydo bo'lishidan oldingi o'yinchida) xabarlar chiqmaydi —

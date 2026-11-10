@@ -2,12 +2,16 @@
 package api
 
 import (
+	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net"
 	"net/http"
+	"slices"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -19,9 +23,15 @@ import (
 )
 
 const (
-	maxBody          = 64 << 10
-	leaderboardSize  = 50
+	maxBody         = 64 << 10
+	leaderboardSize = 50
+	// Reyting ko'pi bilan shuncha vaqtda bir marta qayta hisoblanadi (taxallus va yechimlar uni majburlay
+	// olmaydi); oraliqda avvalgi holat beriladi.
 	leaderboardCache = 15 * time.Second
+	// Bundan eski holat berilmaydi — yangisi kutiladi (uzoq tanaffusdan keyingi birinchi so'rov).
+	leaderboardMaxStale = 4 * leaderboardCache
+	// Bitta qayta hisoblash uchun muddat.
+	leaderboardBuildTimeout = time.Minute
 )
 
 type Server struct {
@@ -41,10 +51,15 @@ type Server struct {
 	reports *limiter
 	cerr    clientErrors
 
-	lbMu    sync.Mutex
-	lbAt    time.Time
-	lbData  []store.Entry          // reytingning yuqori qismi (leaderboardSize)
-	lbRanks map[string]store.Entry // reytingdagi har bir o'yinchi: id → o'rni (lbData bilan birga tozalanadi)
+	// Umumiy reyting keshi (cachedLeaderboard): oxirgi holat, qayta hisoblash boshlangan payt va davom
+	// etayotgan hisoblash (nil — yo'q; tugaganda yopiladi).
+	lbMu      sync.Mutex
+	lb        *lbSnapshot
+	lbStarted time.Time
+	lbWait    chan struct{}
+	lbErr     error
+	lbRenamed map[string]string // hisoblash paytida almashgan taxalluslar
+	lbBuilds  int               // nechta hisoblash boshlangan (testlar uchun)
 
 	// Kunlik arxivning umumiy qismi (o'yinchi natijalarisiz): archDay kuni uchun, archiveCacheTTL davomida.
 	archMu   sync.Mutex
@@ -185,10 +200,10 @@ func (s *Server) authed(h http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
-		if err := s.store.Touch(r.Context(), p); err != nil {
+		if err := s.store.Touch(r.Context(), p); err != nil && r.Context().Err() == nil {
 			s.log.Warn("touch", "err", err)
 		}
 		h(w, r.WithContext(context.WithValue(r.Context(), ctxKey{}, p)))
@@ -242,7 +257,19 @@ func writeErr(w http.ResponseWriter, status int, code string) {
 	writeJSON(w, status, map[string]string{"error": code})
 }
 
-func (s *Server) internal(w http.ResponseWriter, err error) {
+// statusClientClosed — mijoz javobni kutmasdan uzildi (Nginx'dagi 499 kabi); javobni hech kim o'qimaydi.
+const statusClientClosed = 499
+
+// internal — kutilmagan xato: ERROR log (admin'ga Telegram ogohlantirishi ham) va 500. Mijoz uzilgani
+// (so'rov konteksti bekor qilingan yoki muddati o'tgan) xato emas — bitta SQLite ulanishini kutib
+// turgan so'rovlar odatiy hol, ular ogohlantirish bo'lib kelmasin. Serverning o'z muddati (masalan,
+// reyting hisoblash) o'tgani esa xato bo'lib qoladi.
+func (s *Server) internal(w http.ResponseWriter, r *http.Request, err error) {
+	if r.Context().Err() != nil || errors.Is(err, context.Canceled) {
+		s.log.Debug("so'rov uzildi", "path", r.URL.Path, "err", err)
+		writeErr(w, statusClientClosed, "canceled")
+		return
+	}
 	s.log.Error("ichki xato", "err", err)
 	writeErr(w, http.StatusInternalServerError, "internal")
 }
@@ -255,10 +282,6 @@ type playerJSON struct {
 }
 
 func (s *Server) createPlayer(w http.ResponseWriter, r *http.Request) {
-	if !s.signup.allow(s.clientIP(r)) {
-		writeErr(w, http.StatusTooManyRequests, "rate_limited")
-		return
-	}
 	var req struct {
 		Nickname string `json:"nickname"`
 	}
@@ -270,9 +293,16 @@ func (s *Server) createPlayer(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	// Cheklov faqat profil yaratiladigan so'rovdan olinadi: maktabda rad etilgan taxalluslar (bitta NAT
+	// ortidagi butun sinf) qolgan o'quvchilarning ro'yxatdan o'tishini to'sib qo'ymasin. Rad etiladigan
+	// so'rovlar bazaga tegmaydi va umumiy cheklov ostida.
+	if !s.signup.allow(s.clientIP(r)) {
+		writeErr(w, http.StatusTooManyRequests, "rate_limited")
+		return
+	}
 	id, code := newID(), newCode()
 	if err := s.store.CreatePlayer(r.Context(), id, hashCode(normalizeCode(code)), nick); err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, playerJSON{ID: id, Nickname: nick, CreatedAt: time.Now().Unix(), Code: code})
@@ -296,13 +326,15 @@ func (s *Server) patchMe(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	// Taxallus o'zgarmagan bo'lsa — yozish ham, reyting keshini tozalash ham kerak emas.
+	// Taxallus o'zgarmagan bo'lsa — yozish kerak emas. O'zgarsa, reyting qayta hisoblanmaydi: keshdagi
+	// yozuvdagi taxallus almashtiriladi (aks holda nom almashtirib, reytingni to'xtovsiz qayta hisoblatish
+	// mumkin edi).
 	if nick != p.Nickname {
 		if err := s.store.SetNickname(r.Context(), p.ID, nick); err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
-		s.dropLeaderboardCache()
+		s.renameInLeaderboard(p.ID, nick)
 	}
 	writeJSON(w, http.StatusOK, playerJSON{ID: p.ID, Nickname: nick, CreatedAt: p.CreatedAt.Unix()})
 }
@@ -318,7 +350,7 @@ type solutionJSON struct {
 func (s *Server) getProgress(w http.ResponseWriter, r *http.Request) {
 	sols, err := s.store.Progress(r.Context(), playerFrom(r).ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	out := make([]solutionJSON, 0, len(sols))
@@ -371,28 +403,24 @@ func (s *Server) solve(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnprocessableEntity, wrong)
 		return
 	}
-	// Saqlashdan oldin qayta kodlash: faqat ma'lum maydonlar saqlanadi.
-	if req.Circuit.Gates == nil {
-		req.Circuit.Gates = []sim.Gate{}
-	}
-	if req.Circuit.Wires == nil {
-		req.Circuit.Wires = []sim.Wire{}
-	}
-	circuit, _ := json.Marshal(req.Circuit)
-	stars := sim.Stars(level.Goal, gates)
-	best, improved, err := s.store.SaveSolution(r.Context(), playerFrom(r).ID, store.Solution{
-		LevelID: level.ID, Gates: gates, Stars: stars, Circuit: string(circuit),
-	})
-	if err != nil {
-		s.internal(w, err)
+	circuit, ok := storedCircuit(req.Circuit)
+	if !ok {
+		writeErr(w, http.StatusBadRequest, "circuit_too_large")
 		return
 	}
-	if improved {
-		s.dropLeaderboardCache()
+	stars := sim.Stars(level.Goal, gates)
+	// Reyting keshi tozalanmaydi: yangi natija ko'pi bilan leaderboardCache dan keyin ko'rinadi, o'yinchining
+	// o'z o'rni esa har so'rovda hisoblanadi.
+	best, improved, err := s.store.SaveSolution(r.Context(), playerFrom(r).ID, store.Solution{
+		LevelID: level.ID, Gates: gates, Stars: stars, Circuit: circuit,
+	})
+	if err != nil {
+		s.internal(w, r, err)
+		return
 	}
 	st, err := s.store.LevelStats(r.Context(), level.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -430,7 +458,7 @@ func (s *Server) levelStats(w http.ResponseWriter, r *http.Request) {
 	}
 	st, err := s.store.LevelStats(r.Context(), level.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, statsJSON(st))
@@ -445,39 +473,153 @@ type entryJSON struct {
 	Me       bool   `json:"me,omitempty"`
 }
 
-func (s *Server) dropLeaderboardCache() {
-	s.lbMu.Lock()
-	s.lbData, s.lbRanks = nil, nil
-	s.lbMu.Unlock()
+// lbSnapshot — reytingning bir paytdagi holati. O'zgartirilmaydi: taxallus almashsa, nusxasi yasaladi.
+type lbSnapshot struct {
+	at     time.Time     // hisoblash boshlangan payt
+	top    []store.Entry // yuqori qism (leaderboardSize), taxalluslar bilan
+	scores []store.Score // hammaning ko'rsatkichi, yuqoridan pastga (16 baytdan; id va taxallussiz)
 }
 
-// cachedLeaderboard — reytingning yuqori qismi va har bir o'yinchining o'rni. Ikkalasi bitta hisoblashdan
-// olinadi va leaderboardCache davomida qayta ishlatiladi: bitta SQLite ulanishida har so'rov barcha
-// yechimlarni qayta yig'masin.
-func (s *Server) cachedLeaderboard(ctx context.Context) ([]store.Entry, map[string]store.Entry, error) {
+// rank — shunday ko'rsatkichli o'yinchining o'rni: undan yuqoridagilar soni + 1 (ko'rsatkichlari aynan
+// teng o'yinchilar bir o'rinda). Ikkilik qidiruv: har bir o'yinchi uchun xarita saqlanmaydi.
+func (sn *lbSnapshot) rank(sc store.Score) int {
+	i, _ := slices.BinarySearchFunc(sn.scores, sc, store.Score.Compare)
+	return i + 1
+}
+
+// cachedLeaderboard — umumiy reyting. Qayta hisoblash ko'pi bilan leaderboardCache da bir marta boshlanadi
+// va bir vaqtda bittadan ortiq bo'lmaydi; u fonda ishlaydi, shu payt avvalgi holat beriladi (u juda eski
+// bo'lsa yoki hali yo'q bo'lsa — yangisi kutiladi). Taxallus va yechimlar hisoblashni majburlay olmaydi.
+func (s *Server) cachedLeaderboard(ctx context.Context) (*lbSnapshot, error) {
+	s.lbMu.Lock()
+	snap, wait, err := s.lb, s.lbWait, s.lbErr
+	if wait == nil && time.Since(s.lbStarted) >= leaderboardCache {
+		wait = make(chan struct{})
+		s.lbWait, s.lbStarted = wait, time.Now()
+		s.lbBuilds++
+		hint := 0
+		if snap != nil {
+			hint = len(snap.scores) + len(snap.scores)/16 + 16
+		}
+		go s.rebuildLeaderboard(wait, hint)
+	}
+	s.lbMu.Unlock()
+	if snap != nil && (wait == nil || time.Since(snap.at) < leaderboardMaxStale) {
+		return snap, nil
+	}
+	if wait == nil {
+		// Birinchi hisoblash muvaffaqiyatsiz, qayta urinish vaqti hali kelmagan.
+		return nil, cmp.Or(err, errors.New("reyting hali tayyor emas"))
+	}
+	select {
+	case <-wait:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 	s.lbMu.Lock()
 	defer s.lbMu.Unlock()
-	if s.lbData != nil && time.Since(s.lbAt) < leaderboardCache {
-		return s.lbData, s.lbRanks, nil
+	if s.lb == nil {
+		return nil, s.lbErr
 	}
-	all, err := s.store.Ranking(ctx)
+	return s.lb, nil
+}
+
+// rebuildLeaderboard reytingni so'rovdan mustaqil kontekstda hisoblaydi (mijoz uzilsa ham to'xtamaydi)
+// va natijani keshga yozadi; xato bo'lsa avvalgi holat qoladi.
+func (s *Server) rebuildLeaderboard(done chan struct{}, sizeHint int) {
+	ctx, cancel := context.WithTimeout(context.Background(), leaderboardBuildTimeout)
+	defer cancel()
+	snap, err := s.buildLeaderboard(ctx, sizeHint)
+	s.lbMu.Lock()
+	if err == nil {
+		// Hisoblash paytida almashgan taxalluslar (bazadan eski nom o'qilgan bo'lishi mumkin).
+		for i, e := range snap.top {
+			if nick, ok := s.lbRenamed[e.PlayerID]; ok {
+				snap.top[i].Nickname = nick
+			}
+		}
+		s.lb = snap
+	}
+	s.lbErr, s.lbWait, s.lbRenamed = err, nil, nil
+	s.lbMu.Unlock()
+	close(done)
 	if err != nil {
-		return nil, nil, err
+		s.log.Warn("reyting hisoblanmadi", "err", err)
 	}
-	ranks := make(map[string]store.Entry, len(all))
-	for _, e := range all {
-		ranks[e.PlayerID] = e
+}
+
+// buildLeaderboard reytingni bazadan bitta o'tishda yig'adi: hammaning ko'rsatkichi (saralanadi) va eng
+// yuqori leaderboardSize ta o'yinchi — taxalluslar faqat ular uchun olinadi.
+func (s *Server) buildLeaderboard(ctx context.Context, sizeHint int) (*lbSnapshot, error) {
+	type ranked struct {
+		id string
+		sc store.Score
 	}
-	// Nusxa: to'liq ro'yxat xotirada qolmasin (o'rinlar xaritada bor).
-	top := append([]store.Entry{}, all[:min(len(all), leaderboardSize)]...)
-	s.lbData, s.lbRanks, s.lbAt = top, ranks, time.Now()
-	return top, ranks, nil
+	// Teng ko'rsatkichlilar id bo'yicha: ro'yxat tartibi barqaror bo'lsin.
+	compare := func(sc store.Score, id []byte, r ranked) int {
+		return cmp.Or(sc.Compare(r.sc), bytes.Compare(id, []byte(r.id)))
+	}
+	snap := &lbSnapshot{at: time.Now(), scores: make([]store.Score, 0, sizeHint)}
+	best := make([]ranked, 0, leaderboardSize+1)
+	err := s.store.Scores(ctx, func(id []byte, sc store.Score) {
+		snap.scores = append(snap.scores, sc)
+		if len(best) == leaderboardSize && compare(sc, id, best[len(best)-1]) >= 0 {
+			return
+		}
+		i := sort.Search(len(best), func(k int) bool { return compare(sc, id, best[k]) < 0 })
+		best = slices.Insert(best, i, ranked{string(id), sc})[:min(len(best)+1, leaderboardSize)]
+	})
+	if err != nil {
+		return nil, err
+	}
+	slices.SortFunc(snap.scores, store.Score.Compare)
+	ids := make([]string, len(best))
+	for i, b := range best {
+		ids[i] = b.id
+	}
+	names, err := s.store.Nicknames(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for _, b := range best {
+		nick, ok := names[b.id]
+		if !ok {
+			continue // shu orada o'chirilgan
+		}
+		snap.top = append(snap.top, store.Entry{Rank: snap.rank(b.sc), PlayerID: b.id, Nickname: nick,
+			Stars: int(b.sc.Stars), Solved: int(b.sc.Solved), Gates: int(b.sc.Gates)})
+	}
+	return snap, nil
+}
+
+// renameInLeaderboard — keshdagi yuqori qismdagi o'yinchining taxallusini almashtiradi (nusxada: avvalgi
+// holatni o'qiyotgan so'rovlar o'zgarmaydi). Hisoblash davom etayotgan bo'lsa, yangi nom unga ham qo'llanadi.
+func (s *Server) renameInLeaderboard(id, nick string) {
+	s.lbMu.Lock()
+	defer s.lbMu.Unlock()
+	if s.lbWait != nil {
+		if s.lbRenamed == nil {
+			s.lbRenamed = map[string]string{}
+		}
+		s.lbRenamed[id] = nick
+	}
+	if s.lb == nil {
+		return
+	}
+	i := slices.IndexFunc(s.lb.top, func(e store.Entry) bool { return e.PlayerID == id })
+	if i < 0 {
+		return
+	}
+	snap := *s.lb
+	snap.top = slices.Clone(snap.top)
+	snap.top[i].Nickname = nick
+	s.lb = &snap
 }
 
 func (s *Server) leaderboard(w http.ResponseWriter, r *http.Request) {
-	top, ranks, err := s.cachedLeaderboard(r.Context())
+	snap, err := s.cachedLeaderboard(r.Context())
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	// Token ixtiyoriy: bo'lsa, o'yinchining o'rni ham qaytariladi.
@@ -486,17 +628,35 @@ func (s *Server) leaderboard(w http.ResponseWriter, r *http.Request) {
 	if p != nil {
 		meID = p.ID
 	}
-	out := make([]entryJSON, 0, len(top))
-	for _, e := range top {
+	out := make([]entryJSON, 0, len(snap.top))
+	for _, e := range snap.top {
 		out = append(out, entryJSON{Rank: e.Rank, Nickname: e.Nickname, Stars: e.Stars, Solved: e.Solved, Gates: e.Gates, Me: e.PlayerID == meID})
 	}
 	resp := map[string]any{"top": out, "me": nil}
-	// Keshdagi reytingda yo'q o'yinchi hali hech narsa yechmagan (yaxshilangan har bir yechim keshni
-	// tozalaydi) — avvalgidek me: null. Taxallus — o'yinchining hozirgisi.
+	// O'yinchining o'zi: ko'rsatkichi bazadan (yechimlar kaliti bo'yicha, arzon) — doim yangi, o'rni esa
+	// keshdagi reytingga nisbatan (boshqalarniki leaderboardCache gacha eskirgan bo'lishi mumkin). Hech
+	// narsa yechmagan — me: null. Taxallus — o'yinchining hozirgisi.
 	if p != nil {
-		if e, ok := ranks[p.ID]; ok {
-			resp["me"] = entryJSON{Rank: e.Rank, Nickname: p.Nickname, Stars: e.Stars, Solved: e.Solved, Gates: e.Gates, Me: true}
+		sc, ok, err := s.store.PlayerScore(r.Context(), p.ID)
+		if err != nil {
+			s.internal(w, r, err)
+			return
+		}
+		if ok {
+			resp["me"] = entryJSON{Rank: snap.rank(sc), Nickname: p.Nickname, Stars: int(sc.Stars),
+				Solved: int(sc.Solved), Gates: int(sc.Gates), Me: true}
 		}
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// maxStoredCircuit — saqlanadigan sxema hajmi (ixcham ko'rinishda). Eng katta to'g'ri sxema (64 element,
+// ~130 sim, chekka koordinatalar) ~7 KB bo'ladi: chegara faqat kutilmagan holatda ishlaydi.
+const maxStoredCircuit = 8 << 10
+
+// storedCircuit — tekshiruvdan o'tgan sxemaning saqlanadigan ixcham JSON ko'rinishi (sim.Canonical);
+// ok=false — chegaradan katta.
+func storedCircuit(c sim.Circuit) (string, bool) {
+	b, err := json.Marshal(sim.Canonical(c))
+	return string(b), err == nil && len(b) <= maxStoredCircuit
 }

@@ -43,11 +43,11 @@ func (s *Server) telegramRemind(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if req.On != nil {
 		if err := s.store.SetRemind(ctx, uid, lang, *req.On); err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 		if err := s.store.SetLang(ctx, uid, lang); err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 		blocked, err := tg.RemindChanged(ctx, uid, lang, *req.On)
@@ -57,7 +57,7 @@ func (s *Server) telegramRemind(w http.ResponseWriter, r *http.Request) {
 		}
 		if blocked && *req.On {
 			if err := s.store.SetRemind(ctx, uid, lang, false); err != nil {
-				s.internal(w, err)
+				s.internal(w, r, err)
 				return
 			}
 			writeErr(w, http.StatusConflict, "bot_blocked")
@@ -66,7 +66,7 @@ func (s *Server) telegramRemind(w http.ResponseWriter, r *http.Request) {
 	}
 	if p := s.optionalPlayer(r); p != nil {
 		if err := s.store.LinkChat(ctx, uid, p.ID); err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 	}

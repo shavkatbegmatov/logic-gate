@@ -5,6 +5,7 @@ import { t } from './i18n';
 import { compile, exampleFor, machineOf, truthTable, validate, type SimError } from './sim/sim';
 import { ALL_GATE_TYPES, GATE_ARITY, type Circuit, type GateType, type Level, type Machine, type Spec } from './sim/types';
 import { load, save } from './storage';
+import { cleanRecord, cleanScore, isNum, isObj } from './validate';
 
 export interface CustomPuzzle {
   title: string;
@@ -278,7 +279,14 @@ interface CustomStore {
 }
 
 const KEY = 'lg.custom.v1';
-export const customStore = signal<CustomStore>({ solved: {}, created: 0, ...load<Partial<CustomStore>>(KEY, {}) });
+const cleanStore = (v: unknown): CustomStore | null =>
+  isObj(v)
+    ? {
+        solved: (cleanRecord(v.solved, cleanScore) ?? {}) as CustomStore['solved'],
+        created: isNum(v.created) ? v.created : 0,
+      }
+    : null;
+export const customStore = signal<CustomStore>(load(KEY, { solved: {}, created: 0 }, cleanStore));
 
 function persist(next: CustomStore) {
   customStore.value = next;

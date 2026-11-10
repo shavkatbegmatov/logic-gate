@@ -2,6 +2,7 @@
 package store
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"errors"
@@ -297,9 +298,74 @@ func (s *Store) Leaderboard(ctx context.Context, limit int) ([]Entry, error) {
 	return out, rows.Err()
 }
 
-// Ranking — reytingdagi barcha o'yinchilar, o'rni bo'yicha (SQLite'da LIMIT -1 — cheklovsiz). API uni
-// keshlaydi: bitta hisoblashdan ham yuqori qism, ham har bir o'yinchining o'rni olinadi.
-func (s *Store) Ranking(ctx context.Context) ([]Entry, error) { return s.Leaderboard(ctx, -1) }
+// Score — o'yinchining umumiy reytingdagi ko'rsatkichlari. Tartib rankedCTE dagidek: yulduz ↓, yechilgan
+// daraja ↓, elementlar jami ↑, oxirgi yechim vaqti ↑. Ixcham (16 bayt): API reyting keshida har bir
+// o'yinchi uchun faqat shuni saqlaydi (id va taxallussiz).
+type Score struct {
+	Stars, Solved, Gates int32
+	Last                 uint32 // Unix soniya
+}
+
+// Compare: a reytingda b dan yuqori bo'lsa manfiy, ko'rsatkichlar teng bo'lsa 0.
+func (a Score) Compare(b Score) int {
+	return cmp.Or(cmp.Compare(b.Stars, a.Stars), cmp.Compare(b.Solved, a.Solved),
+		cmp.Compare(a.Gates, b.Gates), cmp.Compare(a.Last, b.Last))
+}
+
+// Scores reytingdagi (kamida bitta yechimi bor) har bir o'yinchi uchun fn ni chaqiradi, tartibsiz.
+// Saralash va oynali funksiyasiz bitta o'tish (yechimlar kaliti bo'yicha). id faqat fn ichida yaroqli:
+// har qator uchun xotira ajratilmaydi.
+func (s *Store) Scores(ctx context.Context, fn func(id []byte, sc Score)) error {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT player_id, SUM(stars), COUNT(*), SUM(gate_count), MAX(solved_at) FROM solutions GROUP BY player_id`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	var id sql.RawBytes
+	var sc Score
+	for rows.Next() {
+		if err := rows.Scan(&id, &sc.Stars, &sc.Solved, &sc.Gates, &sc.Last); err != nil {
+			return err
+		}
+		fn(id, sc)
+	}
+	return rows.Err()
+}
+
+// PlayerScore — bitta o'yinchining ko'rsatkichlari (yechimlar kaliti bo'yicha, arzon); ok — reytingdami.
+func (s *Store) PlayerScore(ctx context.Context, playerID string) (sc Score, ok bool, err error) {
+	err = s.db.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(stars), 0), COUNT(*), COALESCE(SUM(gate_count), 0), COALESCE(MAX(solved_at), 0)
+		 FROM solutions WHERE player_id = ?`, playerID).Scan(&sc.Stars, &sc.Solved, &sc.Gates, &sc.Last)
+	return sc, sc.Solved > 0, err
+}
+
+// Nicknames — id lar bo'yicha taxalluslar (yo'q o'yinchi xaritada bo'lmaydi).
+func (s *Store) Nicknames(ctx context.Context, ids []string) (map[string]string, error) {
+	out := make(map[string]string, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, nickname FROM players WHERE id IN (?`+strings.Repeat(", ?", len(ids)-1)+`)`, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, nick string
+		if err := rows.Scan(&id, &nick); err != nil {
+			return nil, err
+		}
+		out[id] = nick
+	}
+	return out, rows.Err()
+}
 
 func (s *Store) Rank(ctx context.Context, playerID string) (*Entry, error) {
 	var e Entry
@@ -414,6 +480,53 @@ func (s *Store) RenamePlayer(ctx context.Context, id, nickname string) error {
 		return ErrNotFound
 	}
 	return nil
+}
+
+// pruneBatch — bitta DELETE da ko'pi bilan shuncha o'yinchi: yagona ulanish uzoq band bo'lmasin.
+const pruneBatch = 500
+
+// PruneEmptyPlayers tashlab ketilgan bo'sh profillarni o'chiradi: before dan oldin yaratilgan va o'shandan
+// beri kirmagan (last_seen_at), hech qanday yechimi, kunlik natijasi, sinf a'zoligi va Telegram chati
+// bog'lanmagan o'yinchilar. Bunday o'yinchiga boshqa jadvallardan hech narsa bog'lanmagan — faqat players
+// qatori o'chadi. Id bo'yicha bo'laklab yuradi (jadval bir marta ko'rib chiqiladi); o'chirilganlar sonini
+// qaytaradi.
+func (s *Store) PruneEmptyPlayers(ctx context.Context, before time.Time) (int, error) {
+	cut := before.Unix()
+	total, after := 0, ""
+	for {
+		rows, err := s.db.QueryContext(ctx, `DELETE FROM players WHERE id IN (
+			SELECT p.id FROM players p
+			WHERE p.id > ? AND p.created_at < ? AND p.last_seen_at < ?
+			  AND NOT EXISTS (SELECT 1 FROM solutions s WHERE s.player_id = p.id)
+			  AND NOT EXISTS (SELECT 1 FROM daily_solutions d WHERE d.player_id = p.id)
+			  AND NOT EXISTS (SELECT 1 FROM class_members m WHERE m.player_id = p.id)
+			  AND p.id NOT IN (SELECT player_id FROM tg_chats WHERE player_id IS NOT NULL)
+			ORDER BY p.id LIMIT ?
+		) RETURNING id`, after, cut, cut, pruneBatch)
+		if err != nil {
+			return total, err
+		}
+		n := 0
+		for rows.Next() {
+			var id string
+			if err = rows.Scan(&id); err != nil {
+				break
+			}
+			n++
+			after = max(after, id)
+		}
+		if err == nil {
+			err = rows.Err()
+		}
+		rows.Close()
+		if err != nil {
+			return total, err
+		}
+		total += n
+		if n < pruneBatch {
+			return total, nil
+		}
+	}
 }
 
 // Backup bazaning izchil nusxasini dest fayliga yozadi (VACUUM INTO).

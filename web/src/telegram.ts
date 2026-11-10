@@ -181,7 +181,14 @@ export function requestWriteAccess(): Promise<boolean> {
 export function suggestedNickname(): string {
   const u = app?.initDataUnsafe.user;
   if (!u) return '';
-  const clean = (s = '') => s.replace(/[^\p{L}\p{N} _.-]/gu, '').replace(/\s+/g, ' ').trim();
+  // Hangul "to'ldiruvchi" belgilari harf hisoblanadi, lekin ko'rinmaydi ("bo'sh" Telegram ismlari) —
+  // server ularni rad etadi, shuning uchun taklifga qo'shilmaydi.
+  const clean = (s = '') =>
+    s
+      .replace(/[ᅟᅠㅤﾠ]/g, '')
+      .replace(/[^\p{L}\p{N} _.-]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   const full = clean(`${u.first_name ?? ''} ${u.last_name ?? ''}`);
   const name = full.length >= 2 ? full : clean(u.username);
   return name.slice(0, 20).trim();

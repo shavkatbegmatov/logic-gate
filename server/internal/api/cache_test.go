@@ -32,14 +32,36 @@ func (e *testEnv) playerID(code string) string {
 	return out["id"].(string)
 }
 
-func (e *testEnv) lbCached() bool {
+// lbBuilds — nechta reyting hisoblash boshlangan.
+func (e *testEnv) lbBuilds() int {
 	e.api.lbMu.Lock()
 	defer e.api.lbMu.Unlock()
-	return e.api.lbData != nil
+	return e.api.lbBuilds
 }
 
-// Reyting va o'yinchi o'rni bitta keshdan: oynada bazaga qayta murojaat yo'q, yaxshilangan yechim va
-// taxallus o'zgarishi keshni tozalaydi.
+// lbSettle — fonda davom etayotgan hisoblash tugashini kutadi.
+func (e *testEnv) lbSettle() {
+	e.api.lbMu.Lock()
+	wait := e.api.lbWait
+	e.api.lbMu.Unlock()
+	if wait != nil {
+		<-wait
+	}
+}
+
+// lbAge — keshni d ga eskirtiradi (soatni surish o'rniga).
+func (e *testEnv) lbAge(d time.Duration) {
+	e.api.lbMu.Lock()
+	defer e.api.lbMu.Unlock()
+	e.api.lbStarted = e.api.lbStarted.Add(-d)
+	if e.api.lb != nil {
+		e.api.lb.at = e.api.lb.at.Add(-d)
+	}
+}
+
+// Reyting keshi: oynada bazaga qayta murojaat yo'q; yechim va taxallus qayta hisoblashni majburlamaydi
+// (taxallus keshdagi yozuvda almashadi); muddat o'tgach eskisi beriladi va yangisi fonda hisoblanadi;
+// o'yinchining o'z ko'rsatkichi esa har doim yangi.
 func TestLeaderboardCache(t *testing.T) {
 	e := newEnv(t)
 	sols := solutions(t)
@@ -59,42 +81,106 @@ func TestLeaderboardCache(t *testing.T) {
 	if again := e.raw("/api/leaderboard", ali); again != first {
 		t.Fatalf("keshdagi javob boshqacha:\n%s\n%s", first, again)
 	}
-	// Bazaga to'g'ridan-to'g'ri yozilgan natija (keshni tozalamaydi) oynada ko'rinmaydi — ya'ni har so'rov
-	// reytingni qayta hisoblamaydi. Keshda yo'q o'yinchi — me: null.
+	// Bazaga yozilgan yangi natija ro'yxatda darhol ko'rinmaydi (har so'rov qayta hisoblamaydi), lekin
+	// o'yinchining o'z ko'rsatkichi va o'rni (keshdagilarga nisbatan) yangi.
 	for _, lv := range []string{"b2", "b3"} {
 		if _, _, err := e.api.store.SaveSolution(ctx, valiID, store.Solution{LevelID: lv, Gates: 1, Stars: 3, Circuit: "{}"}); err != nil {
 			t.Fatal(err)
 		}
 	}
 	_, out = e.do("GET", "/api/leaderboard", vali, nil)
-	if top := out["top"].([]any); len(top) != 1 || out["me"] != nil {
+	if top, me := out["top"].([]any), out["me"].(map[string]any); len(top) != 1 || me["rank"] != 1.0 || me["stars"] != 6.0 {
 		t.Fatalf("keshdan: %v", out)
 	}
 
-	// API orqali yaxshilangan yechim keshni tozalaydi: Vali (9★) birinchi.
+	// API orqali yaxshilangan yechim ham qayta hisoblashni majburlamaydi.
 	if status, _ := e.do("POST", "/api/levels/b1/solve", vali, map[string]any{"circuit": sols["b1"]}); status != 200 {
 		t.Fatal("yechim 2")
 	}
+	if _, out = e.do("GET", "/api/leaderboard", ali, nil); len(out["top"].([]any)) != 1 || e.lbBuilds() != 1 {
+		t.Fatalf("yechimdan keyin qayta hisoblandi: %d %v", e.lbBuilds(), out)
+	}
+
+	// Muddat o'tdi: bu so'rov eskisini oladi, yangisi fonda hisoblanadi; keyingisi — yangi reyting.
+	e.lbAge(leaderboardCache)
+	if _, out = e.do("GET", "/api/leaderboard", ali, nil); len(out["top"].([]any)) != 1 {
+		t.Fatalf("eskisi kutilgan: %v", out)
+	}
+	e.lbSettle()
 	_, out = e.do("GET", "/api/leaderboard", ali, nil)
 	top := out["top"].([]any)
-	if len(top) != 2 || top[0].(map[string]any)["nickname"] != "TEST_VALI" || out["me"].(map[string]any)["rank"] != 2.0 {
-		t.Fatalf("yangilangan reyting: %v", out)
+	if len(top) != 2 || top[0].(map[string]any)["nickname"] != "TEST_VALI" || out["me"].(map[string]any)["rank"] != 2.0 || e.lbBuilds() != 2 {
+		t.Fatalf("yangilangan reyting: %d %v", e.lbBuilds(), out)
 	}
 	_, out = e.do("GET", "/api/leaderboard", vali, nil)
 	if me := out["me"].(map[string]any); me["rank"] != 1.0 || me["stars"] != 9.0 || me["solved"] != 3.0 {
 		t.Fatalf("Vali o'rni: %v", out)
 	}
 
-	// Taxallus: o'sha nom keshni tozalamaydi, yangisi tozalaydi.
-	if status, _ := e.do("PATCH", "/api/me", ali, map[string]string{"nickname": " TEST_ALI "}); status != 200 || !e.lbCached() {
-		t.Fatalf("o'zgarmagan taxallus keshni tozaladi: %d", status)
+	// Taxallus: yangi nom keshdagi yozuvda darhol almashadi, reyting qayta hisoblanmaydi — nom
+	// almashtirish + reyting so'rovini to'xtovsiz takrorlash bazaga yuk bermaydi.
+	for i := range 20 {
+		nick := fmt.Sprintf("TEST_ALI_%d", i%2)
+		if status, _ := e.do("PATCH", "/api/me", ali, map[string]string{"nickname": nick}); status != 200 {
+			t.Fatalf("taxallus: %d", status)
+		}
+		_, out = e.do("GET", "/api/leaderboard", ali, nil)
+		if top := out["top"].([]any); top[1].(map[string]any)["nickname"] != nick || out["me"].(map[string]any)["nickname"] != nick {
+			t.Fatalf("yangi taxallus: %v", out)
+		}
 	}
-	if status, _ := e.do("PATCH", "/api/me", ali, map[string]string{"nickname": "TEST_ALI_2"}); status != 200 || e.lbCached() {
-		t.Fatalf("yangi taxallus keshni tozalamadi: %d", status)
+	if n := e.lbBuilds(); n != 2 {
+		t.Fatalf("taxallus reytingni qayta hisoblatdi: %d", n)
 	}
-	_, out = e.do("GET", "/api/leaderboard", ali, nil)
-	if top := out["top"].([]any); top[1].(map[string]any)["nickname"] != "TEST_ALI_2" || out["me"].(map[string]any)["nickname"] != "TEST_ALI_2" {
-		t.Fatalf("yangi taxallus: %v", out)
+
+	// Juda eski holat berilmaydi: uzoq tanaffusdan keyingi so'rov yangisini kutadi.
+	if _, _, err := e.api.store.SaveSolution(ctx, e.playerID(ali), store.Solution{LevelID: "b4", Gates: 1, Stars: 3, Circuit: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	e.lbAge(leaderboardMaxStale)
+	if _, out = e.do("GET", "/api/leaderboard", "", nil); out["top"].([]any)[1].(map[string]any)["stars"] != 6.0 || e.lbBuilds() != 3 {
+		t.Fatalf("juda eski holat berildi: %d %v", e.lbBuilds(), out)
+	}
+}
+
+// Keshdagi reyting (bitta o'tish + yuqori 50 tanlash + ikkilik qidiruv) SQL reyting bilan bir xil.
+func TestLeaderboardMatchesSQL(t *testing.T) {
+	e := newEnv(t)
+	ctx := t.Context()
+	levels := e.api.pack.Levels
+	const n = 80
+	for i := range n {
+		id := fmt.Sprintf("p%03d", (i*37)%n) // id tartibi natija tartibiga bog'liq emas
+		if err := e.api.store.CreatePlayer(ctx, id, []byte(id), "TEST_USER_"+id); err != nil {
+			t.Fatal(err)
+		}
+		// Teng ko'rsatkich yo'q: (yechilgan, elementlar) har o'yinchida boshqacha.
+		for k := range i%10 + 1 {
+			if _, _, err := e.api.store.SaveSolution(ctx, id, store.Solution{LevelID: levels[k].ID, Gates: i + 1, Stars: 1, Circuit: "{}"}); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	snap, err := e.api.cachedLeaderboard(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := e.api.store.Leaderboard(ctx, leaderboardSize)
+	if err != nil || len(snap.top) != leaderboardSize || len(snap.scores) != n {
+		t.Fatalf("top %d, scores %d, %v", len(snap.top), len(snap.scores), err)
+	}
+	for i := range want {
+		if snap.top[i] != want[i] {
+			t.Fatalf("%d-o'rin: %+v, SQL %+v", i+1, snap.top[i], want[i])
+		}
+	}
+	for i := range n {
+		id := fmt.Sprintf("p%03d", i)
+		sc, ok, err := e.api.store.PlayerScore(ctx, id)
+		r, err2 := e.api.store.Rank(ctx, id)
+		if err != nil || err2 != nil || !ok || snap.rank(sc) != r.Rank {
+			t.Fatalf("%s: o'rin %d, SQL %+v (%v %v)", id, snap.rank(sc), r, err, err2)
+		}
 	}
 }
 

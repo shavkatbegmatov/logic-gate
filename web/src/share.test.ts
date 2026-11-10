@@ -39,8 +39,8 @@ describe('Telegram Mini App havolalari', () => {
     expect(startRoute(null)).toBe('');
   });
 
-  it("Telegram ruxsat bermaydigan parametr — oddiy ilova havolasi; sozlanmagan — bo'sh", () => {
-    expect(tgAppLink(`#/p/${'a'.repeat(600)}`, app)).toBe(app);
+  it("sig'magan masala kodi — bo'sh (sayt havolasi ishlatiladi, masala yo'qolmaydi); sozlanmagan — bo'sh", () => {
+    expect(tgAppLink(`#/p/${'a'.repeat(600)}`, app)).toBe('');
     expect(tgAppLink('#/daily', '')).toBe('');
   });
 });

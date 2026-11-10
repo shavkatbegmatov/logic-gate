@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"testing"
@@ -258,5 +259,35 @@ func TestDailyArchive(t *testing.T) {
 	// Yopiq kunga yechim qabul qilinmaydi (mashq faqat mijozda).
 	if status, _ := e.do("POST", fmt.Sprintf("/api/daily/%d/solve", first), alice, map[string]any{"circuit": sols[0]}); status != 409 {
 		t.Fatalf("yopiq kun: %d", status)
+	}
+}
+
+// Juda kichik (manfiy) kun raqami: ayirish to'lib, ertangi masala ochilib qolmasligi kerak.
+func TestDailyFarPastOverflow(t *testing.T) {
+	e := newEnv(t)
+	alice := e.player("TEST_ALICE")
+	n, first, today := len(e.daily.Puzzles), e.firstDay(), e.api.today()
+	// Eski formula (day - first + 1, to'lib ketadi) ertangi masalani beradigan kun.
+	days := []int{math.MinInt64, first - 1}
+	for x := range n {
+		day := math.MinInt64 + x
+		if old := day - first + 1; old >= 1 && (old-1)%n == (today+1-first)%n {
+			days = append(days, day)
+			break
+		}
+	}
+	if len(days) != 3 {
+		t.Fatal("hujum kuni topilmadi")
+	}
+	for _, day := range days {
+		for _, p := range []string{"/api/daily/%d", "/api/daily/%d/leaderboard"} {
+			if status, out := e.do("GET", fmt.Sprintf(p, day), alice, nil); status != 404 {
+				t.Fatalf("GET %s: %d %v", fmt.Sprintf(p, day), status, out)
+			}
+		}
+	}
+	if status, _ := e.do("POST", fmt.Sprintf("/api/daily/%d/solve", int64(math.MinInt64)), alice,
+		map[string]any{"circuit": sim.Circuit{}}); status != 404 {
+		t.Fatalf("POST solve: %d", status)
 	}
 }

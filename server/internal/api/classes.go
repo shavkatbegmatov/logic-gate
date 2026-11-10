@@ -72,14 +72,16 @@ var (
 // cleanClassName: 2–50 belgi, harf, raqam va oddiy tinish belgilari; haqoratli so'zlarsiz.
 func cleanClassName(s string) (string, error) { return cleanText(s, 2, 50, errBadClassName) }
 
-// cleanText — bo'shliqlarni bittaga keltiradi va uzunlik, belgilar, haqoratli so'zlarni tekshiradi.
+// cleanText — bo'shliqlarni bittaga keltiradi va uzunlik, belgilar, haqoratli so'zlarni tekshiradi
+// (taxallusdagidek: to'liq kenglikdagi harflar oddiysiga aylanadi, niqob va ko'rinmas belgilar rad etiladi).
 func cleanText(s string, min, max int, bad error) (string, error) {
-	s = strings.Join(strings.Fields(s), " ")
+	s = strings.Join(strings.Fields(nickname.Fold(s)), " ")
 	if n := utf8.RuneCountInString(s); n < min || n > max {
 		return "", bad
 	}
 	for _, r := range s {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(" _-.,:!?'ʻʼ`№#()/«»\"", r) {
+		if nickname.Disguised(r) ||
+			(!unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(" _-.,:!?'ʻʼ`№#()/«»\"", r)) {
 			return "", bad
 		}
 	}
@@ -145,7 +147,7 @@ func (s *Server) createClass(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	s.internal(w, err)
+	s.internal(w, r, err)
 }
 
 // classFrom — {code} bo'yicha sinf; topilmasa javob yoziladi va nil qaytadi.
@@ -166,7 +168,7 @@ func (s *Server) classFrom(w http.ResponseWriter, r *http.Request) *store.Class 
 		return nil
 	}
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return nil
 	}
 	return c
@@ -197,14 +199,14 @@ func (s *Server) getClass(w http.ResponseWriter, r *http.Request) {
 	}
 	tasks, err := s.classTasks(r, c.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	out := classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Tasks: tasks}
 	if p := s.optionalPlayer(r); p != nil {
 		member, err := s.store.IsClassMember(r.Context(), c.ID, p.ID)
 		if err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 		out.Member = member
@@ -223,12 +225,12 @@ func (s *Server) joinClass(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusConflict, "class_full")
 		return
 	case err != nil:
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	c, err := s.store.ClassByID(r.Context(), c.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Member: true})
@@ -240,7 +242,7 @@ func (s *Server) leaveClass(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.LeaveClass(r.Context(), c.ID, playerFrom(r).ID); err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
@@ -249,14 +251,14 @@ func (s *Server) leaveClass(w http.ResponseWriter, r *http.Request) {
 func (s *Server) myClasses(w http.ResponseWriter, r *http.Request) {
 	list, err := s.store.PlayerClasses(r.Context(), playerFrom(r).ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	out := make([]classJSON, 0, len(list))
 	for _, c := range list {
 		tasks, err := s.classTasks(r, c.ID)
 		if err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 		out = append(out, classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Member: true, Tasks: tasks})
@@ -281,7 +283,7 @@ func (s *Server) classBoard(w http.ResponseWriter, r *http.Request) {
 	p := playerFrom(r)
 	member, err := s.store.IsClassMember(r.Context(), c.ID, p.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	if !member {
@@ -290,7 +292,7 @@ func (s *Server) classBoard(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := s.store.ClassBoard(r.Context(), c.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	top := make([]classEntryJSON, 0, len(rows))
@@ -319,12 +321,12 @@ func (s *Server) classReport(w http.ResponseWriter, r *http.Request) {
 	today := levels.DayOf(s.now())
 	list, err := s.store.ClassReport(r.Context(), c.ID, today)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	tasks, err := s.classTasks(r, c.ID)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	members := make([]memberJSON, 0, len(list))
@@ -347,7 +349,7 @@ func (s *Server) removeMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.LeaveClass(r.Context(), c.ID, r.PathValue("id")); err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
@@ -360,7 +362,7 @@ func (s *Server) deleteClass(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.DeleteClass(r.Context(), c.ID); err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
@@ -414,7 +416,7 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusConflict, err.Error())
 		return
 	case err != nil:
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, toTaskJSON(t))
@@ -435,7 +437,7 @@ func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusNotFound, "no_task")
 			return
 		}
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})

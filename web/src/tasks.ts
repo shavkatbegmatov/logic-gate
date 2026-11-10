@@ -6,6 +6,7 @@ import type { ClassInfo, ClassTask } from './api';
 import { levels } from './levels';
 import type { Level } from './sim/types';
 import { load, save } from './storage';
+import { asString, cleanList, isNum, isObj } from './validate';
 
 export interface StudentTask extends ClassTask {
   classCode: string;
@@ -18,7 +19,19 @@ const KEY = 'lg.tasks.v1';
 export const MAX_TASKS = 20;
 export const MAX_TASK_LEVELS = 12;
 
-export const myTasks = signal<StudentTask[]>(load(KEY, []));
+const cleanTask = (v: unknown): StudentTask | null =>
+  isObj(v) && isNum(v.id) && typeof v.classCode === 'string' && Array.isArray(v.levels)
+    ? ({
+        ...v,
+        title: typeof v.title === 'string' ? v.title : '',
+        className: typeof v.className === 'string' ? v.className : '',
+        levels: cleanList(v.levels, asString) ?? [],
+        due: isNum(v.due) ? v.due : undefined,
+        createdAt: isNum(v.createdAt) ? v.createdAt : 0,
+      } as StudentTask)
+    : null;
+
+export const myTasks = signal<StudentTask[]>(load(KEY, [], (v) => cleanList(v, cleanTask)));
 
 export function setMyTasks(list: StudentTask[]) {
   if (JSON.stringify(list) === JSON.stringify(myTasks.value)) return;

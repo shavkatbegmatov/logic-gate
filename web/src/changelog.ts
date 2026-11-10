@@ -18,6 +18,28 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.13.0',
+    date: '2026-11-10',
+    uz: [
+      "Buzilgan havola yoki eski ma'lumot o'yinni oq ekranga aylantirmaydi: o'yin o'zi tiklanadi, kerak bo'lsa «qayta yuklash» va «ma'lumotni tozalash»ni taklif qiladi. Begona saytdan kelgan ko'chirish havolasi profilingizni almashtira olmaydi.",
+      "Maktabdagi umumiy kompyuterda keyingi o'quvchiga oldingisining sertifikatdagi ismi chiqmaydi.",
+      "«Davom etish»: keyingi bo'limga yulduz yetmasa, yana nechta kerakligi va qaysi darajani yaxshilash mumkinligi ko'rsatiladi. O'qituvchi vazifasi orqali ochilgan darajada yangi elementlar ham tanishtiriladi.",
+      "«Yuqoriga-pastga» darajasi maslahatidagi formula tuzatildi, ikki dars matni aniqlashtirildi.",
+      "Tekshiruv paytida sxemani klaviatura bilan ham o'zgartirib bo'lmaydi; Qum qutida katta sxemani sudrash tezlashdi; «Daftar» mavzusida yulduzlar va jadval raqamlari aniqroq.",
+      "Telegram'da katta xotirali masala oddiy havola bilan ulashiladi — do'st masalasiz bosh sahifaga tushmaydi. Bosh sahifa boshqa qurilmada yechilgan kunlik masalani ham ko'rsatadi; server profilni topa olmasa, natijalar shu taxallus bilan yangi profilga o'tadi.",
+      "Server: ertangi kunlik masalani oldindan ochib bo'lmaydi, reyting og'ir yukda ham tez, rad etilgan taxalluslar sinfning ro'yxatdan o'tishini to'smaydi, niqoblangan so'zli taxalluslar qabul qilinmaydi; kunlik masalalar yaqin kunlarda takrorlanmaydi.",
+    ],
+    ru: [
+      'Испорченная ссылка или старые данные больше не превращают игру в белый экран: игра восстанавливается сама, а при необходимости предлагает «перезагрузить» и «очистить данные». Ссылка переноса с чужого сайта не может подменить ваш профиль.',
+      'На общем школьном компьютере следующему ученику не показывается имя предыдущего в сертификате.',
+      '«Продолжить»: если для следующей главы не хватает звёзд, видно, сколько ещё нужно и какой уровень можно улучшить. На уровне, открытом через задание учителя, новые элементы тоже представляются.',
+      'Исправлена формула в подсказке уровня «Вверх-вниз», уточнены тексты двух уроков.',
+      'Во время проверки схему нельзя изменить и с клавиатуры; в Песочнице большие схемы перетаскиваются быстрее; в теме «Тетрадь» звёзды и цифры таблицы чётче.',
+      'В Telegram большая задача с памятью отправляется обычной ссылкой — друг не попадёт на главную без задачи. Главная показывает и ежедневную задачу, решённую на другом устройстве; если сервер не нашёл профиль, результаты переходят в новый профиль с тем же ником.',
+      'Сервер: завтрашнюю ежедневную задачу нельзя открыть заранее, рейтинг быстр и под нагрузкой, отклонённые ники не мешают классу регистрироваться, замаскированные ники не принимаются; ежедневные задачи не повторяются в ближайшие дни.',
+    ],
+  },
+  {
     version: '2.12.1',
     date: '2026-11-10',
     uz: [

@@ -51,7 +51,7 @@ export function Sandbox({ formula }: { formula?: string }) {
     };
     return ed;
   }, []);
-  const hasDff = editor.circuit.value.gates.some((g) => g.type === 'DFF');
+  const hasDff = editor.shape.value.dff;
   useEditorKeys(editor, { clock: hasDff });
   const showSide = useSignal(false);
   const creating = useSignal(false);
@@ -65,6 +65,11 @@ export function Sandbox({ formula }: { formula?: string }) {
   }, [formula]);
 
   const spec = editor.spec.value;
+  // Vaqt diagrammasi butun takt tarixini qayta o'tadi (999 taktgacha) — faqat sxema yoki tarix o'zgarganda.
+  const compiled = editor.compiled.value;
+  const history = editor.history.value;
+  const row = editor.row.value;
+  const steps = useMemo(() => (hasDff ? traceSteps(compiled, [...history, row]) : []), [hasDff, compiled, history, row]);
   const resize = (di: number, dout: number) => {
     const ins = Math.min(5, Math.max(1, spec.inputs.length + di));
     const outs = Math.min(4, Math.max(1, spec.outputs.length + dout));
@@ -117,9 +122,9 @@ export function Sandbox({ formula }: { formula?: string }) {
               title={t.play.yourRun}
               inputs={spec.inputs}
               outputs={spec.outputs}
-              steps={traceSteps(editor.compiled.value, [...editor.history.value, editor.row.value])}
+              steps={steps}
               now
-              note={editor.history.value.length ? undefined : t.play.liveHint}
+              note={history.length ? undefined : t.play.liveHint}
             />
           )}
           <Formula editor={editor} outputs={spec.outputs} />

@@ -10,7 +10,7 @@ export const APP_VERSION: string = typeof __APP_VERSION__ === 'string' ? __APP_V
 const KEY = 'lg.seenVersion.v1';
 
 /** O'yinchi oxirgi marta yangiliklarini ko'rgan versiya (null — hali hech qachon). */
-export const seenVersion = signal<string | null>(load(KEY, null));
+export const seenVersion = signal<string | null>(load(KEY, null, (v) => (typeof v === 'string' ? v : null)));
 
 export function markNewsSeen() {
   if (seenVersion.value === APP_VERSION) return;

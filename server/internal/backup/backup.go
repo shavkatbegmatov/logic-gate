@@ -5,9 +5,12 @@ package backup
 import (
 	"compress/gzip"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -21,8 +24,14 @@ import (
 const (
 	prefix = "logicgate-"
 	suffix = ".db.gz"
-	tmpRaw = ".tmp-" // VACUUM INTO ning vaqtinchalik fayli
-	tmpGz  = ".tmp"  // gzip qilinayotgan nusxa: logicgate-….db.gz.tmp
+	// Vaqtinchalik fayllar: .tmp-<vaqt>-<tasodifiy>.db (VACUUM INTO) va .tmp-<vaqt>-<tasodifiy>.db.gz
+	// (gzip qilinayotgan nusxa). Nomi har ishga tushishda boshqa: bir vaqtda ikki nusxa olinsa (qo'lda `logicgate backup`
+	// rejali nusxa paytida yoki deploy'da eski va yangi konteyner) bir-birining faylini ishlatmaydi.
+	tmpPrefix = ".tmp-"
+	oldTmpGz  = ".tmp" // avvalgi versiyaning gzip fayli: logicgate-….db.gz.tmp
+	// staleTmp — bundan eski vaqtinchalik fayl yarmida uzilgan nusxadan qolgan; yangirog'i boshqa ishlab
+	// turgan nusxa olishniki bo'lishi mumkin — unga tegilmaydi.
+	staleTmp = time.Hour
 )
 
 // ErrPrune — nusxa yozildi, lekin eskilari o'chirilmadi. Nusxaning o'zi yaroqli: faqat ogohlantirish.
@@ -46,19 +55,23 @@ func Once(ctx context.Context, st *store.Store, dir string, keep int, now time.T
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return "", err
 	}
-	removeLeftovers(dir)
+	removeLeftovers(dir, time.Now())
 	final := filepath.Join(dir, prefix+now.UTC().Format("2006-01-02")+suffix)
-	raw := filepath.Join(dir, tmpRaw+now.UTC().Format("20060102T150405")+".db")
-	os.Remove(raw)
+	var rnd [6]byte
+	rand.Read(rnd[:])
+	tmp := filepath.Join(dir, tmpPrefix+now.UTC().Format("20060102T150405")+"-"+hex.EncodeToString(rnd[:]))
+	raw, gz := tmp+".db", tmp+suffix
 	defer os.Remove(raw)
 	if err := st.Backup(ctx, raw); err != nil {
 		return "", fmt.Errorf("VACUUM INTO: %w", err)
 	}
-	if err := gzipFile(raw, final+tmpGz); err != nil {
-		os.Remove(final + tmpGz)
+	if err := gzipFile(raw, gz); err != nil {
+		os.Remove(gz)
 		return "", err
 	}
-	if err := os.Rename(final+tmpGz, final); err != nil {
+	// Bir kunda ikkinchi nusxa (yoki bir vaqtdagi ikkinchisi) o'sha kungi faylni almashtiradi — ikkalasi ham to'liq.
+	if err := os.Rename(gz, final); err != nil {
+		os.Remove(gz)
 		return "", err
 	}
 	if err := prune(dir, keep); err != nil {
@@ -68,14 +81,18 @@ func Once(ctx context.Context, st *store.Store, dir string, keep int, now time.T
 }
 
 // removeLeftovers — avvalgi (yarmida uzilgan) nusxa olishdan qolgan vaqtinchalik fayllarni o'chiradi.
-func removeLeftovers(dir string) {
+// Faqat staleTmp dan eskilarini: yangisi hozir boshqa jarayonda yozilayotgan bo'lishi mumkin.
+func removeLeftovers(dir string, now time.Time) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return
 	}
 	for _, e := range entries {
 		n := e.Name()
-		if !e.IsDir() && (strings.HasPrefix(n, tmpRaw) || (strings.HasPrefix(n, prefix) && strings.HasSuffix(n, suffix+tmpGz))) {
+		if e.IsDir() || !(strings.HasPrefix(n, tmpPrefix) || (strings.HasPrefix(n, prefix) && strings.HasSuffix(n, suffix+oldTmpGz))) {
+			continue
+		}
+		if info, err := e.Info(); err == nil && now.Sub(info.ModTime()) > staleTmp {
 			os.Remove(filepath.Join(dir, n))
 		}
 	}
@@ -132,7 +149,8 @@ func prune(dir string, keep int) error {
 		return err
 	}
 	for _, n := range names[:max(0, len(names)-keep)] {
-		if err := remove(filepath.Join(dir, n)); err != nil {
+		// Bir vaqtdagi boshqa nusxa olish uni allaqachon o'chirgan bo'lishi mumkin — xato emas.
+		if err := remove(filepath.Join(dir, n)); err != nil && !errors.Is(err, fs.ErrNotExist) {
 			return err
 		}
 	}

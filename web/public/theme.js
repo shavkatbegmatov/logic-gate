@@ -21,3 +21,125 @@
     // localStorage yopiq — asosiy mavzu.
   }
 })();
+
+// Ilova umuman ochilmasa (fayl yuklanmadi yoki ishga tushishda xato) — oq ekran o'rniga qayta yuklash va
+// qurilmadagi o'yin ma'lumotini tozalash taklifi. Ilova chizilgach main.tsx window.__lgReady qo'yadi —
+// shundan keyingi xatolarni ilovaning o'zi ushlaydi (app.tsx).
+(function () {
+  var failed = null;
+  var shown = false;
+
+  function ru() {
+    try {
+      var lang = (JSON.parse(localStorage.getItem('lg.settings.v1') || '{}') || {}).lang;
+      if (lang) return lang === 'ru';
+    } catch (e) {
+      // pastda
+    }
+    return /^ru\b/i.test(navigator.language || '');
+  }
+
+  function report(err) {
+    try {
+      var body = JSON.stringify({
+        msg: String((err && err.message) || err || 'boot').slice(0, 300),
+        stack: String((err && err.stack) || '').slice(0, 1500),
+        route: 'boot',
+        version: 'boot',
+        ua: navigator.userAgent.slice(0, 200),
+      });
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/client-errors', new Blob([body], { type: 'application/json' }));
+    } catch (e) {
+      // xabar yuborilmadi — muhim emas
+    }
+  }
+
+  // Profil (tiklash kodi) qoladi: natijalar serverdan qaytadi. Qolgan o'yin yozuvlari o'chiriladi.
+  function clearData() {
+    try {
+      var keep = null;
+      try {
+        var p = JSON.parse(localStorage.getItem('lg.profile.v1') || 'null');
+        if (p && typeof p.id === 'string' && typeof p.code === 'string' && typeof p.nickname === 'string') keep = JSON.stringify(p);
+      } catch (e) {
+        // profil buzuq — u ham o'chadi
+      }
+      var keys = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('lg.') === 0) keys.push(k);
+      }
+      for (var j = 0; j < keys.length; j++) localStorage.removeItem(keys[j]);
+      if (keep) localStorage.setItem('lg.profile.v1', keep);
+    } catch (e) {
+      // localStorage yopiq
+    }
+    location.replace(location.pathname + location.search);
+  }
+
+  function button(text, primary, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = text;
+    b.style.cssText =
+      'font:600 15px system-ui,sans-serif;padding:12px 18px;border-radius:12px;cursor:pointer;margin:6px 6px 0 0;' +
+      (primary ? 'background:#f2b33d;color:#1a1300;border:0;' : 'background:transparent;color:inherit;border:1px solid currentColor;');
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function show() {
+    if (shown || window.__lgReady) return;
+    shown = true;
+    var r = ru();
+    var root = document.getElementById('app') || document.body;
+    root.innerHTML = '';
+    var box = document.createElement('div');
+    box.setAttribute('role', 'alert');
+    box.style.cssText = 'max-width:440px;margin:15vh auto;padding:0 20px;font:16px/1.5 system-ui,sans-serif;color:#e8efe9;';
+    if (document.documentElement.getAttribute('data-theme') === 'daftar') box.style.color = '#1f2a24';
+    var h = document.createElement('h1');
+    h.style.cssText = 'font-size:22px;margin:0 0 10px';
+    h.textContent = r ? 'Игра не открылась' : "O'yin ochilmadi";
+    var p = document.createElement('p');
+    p.style.cssText = 'margin:0 0 14px';
+    p.textContent = r
+      ? 'Перезагрузите страницу. Если не помогло — очистите данные игры на этом устройстве: профиль останется, результаты, отправленные на сервер, вернутся.'
+      : "Sahifani qayta yuklang. Yordam bermasa — shu qurilmadagi o'yin ma'lumotini tozalang: profil qoladi, serverga yuborilgan natijalar qaytib keladi.";
+    var armed = false;
+    var clear = button(r ? 'Очистить данные' : "Ma'lumotni tozalash", false, function () {
+      if (armed) return clearData();
+      armed = true;
+      clear.textContent = r ? 'Точно очистить?' : 'Rostdan ham tozalansinmi?';
+    });
+    box.appendChild(h);
+    box.appendChild(p);
+    box.appendChild(button(r ? 'Перезагрузить' : 'Qayta yuklash', true, function () { location.reload(); }));
+    box.appendChild(clear);
+    root.appendChild(box);
+  }
+
+  function check() {
+    if (failed && !window.__lgReady) {
+      report(failed);
+      show();
+    }
+  }
+
+  // Faqat skript xatolari: rasm yoki shrift yuklanmagani ilovani to'xtatmaydi.
+  addEventListener(
+    'error',
+    function (e) {
+      if (window.__lgReady || failed) return;
+      var el = e.target;
+      if (el && el !== window && el.tagName !== 'SCRIPT') return;
+      failed = e.error || e.message || 'script not loaded: ' + (el && el.src);
+      if (document.readyState === 'complete') setTimeout(check, 0);
+    },
+    true
+  );
+  // Modul skriptlari 'load' dan oldin bajariladi: shu paytgacha ilova chizilmagan bo'lsa — xato bo'lgan.
+  addEventListener('load', function () {
+    setTimeout(check, 0);
+  });
+})();

@@ -3,11 +3,15 @@ import { signal } from '@preact/signals';
 import { resetAchievements } from './achievements';
 import { api, ApiError, type SolveResult } from './api';
 import { resetCustom } from './custom';
-import { resetDaily, syncDaily } from './daily';
+import { showToast } from './components/Toast';
+import { resetDaily, syncDaily, unsyncRecentDaily } from './daily';
 import { t } from './i18n';
+import { resetLessons } from './lessons';
 import { levelById } from './levels';
-import { markSynced, profile, progress, resetLocalProgress } from './state';
+import { resetMapSeen } from './levelmap';
+import { KEYS, markSynced, profile, progress, resetLocalProgress } from './state';
 import type { Circuit } from './sim/types';
+import { save } from './storage';
 import { setMyTasks } from './tasks';
 
 export function errorText(e: unknown): string {
@@ -35,12 +39,18 @@ export function formatCode(code: string): string {
   return (code.replace(/[^0-9a-z]/gi, '').toUpperCase().match(/.{1,4}/g) ?? []).join('-');
 }
 
-/** Qurilmadagi o'yinchi ma'lumotlari: natijalar, qoralamalar, kunlik masalalar, yutuqlar, vazifalar. */
+/**
+ * Qurilmadagi o'yinchi ma'lumotlari: natijalar, qoralamalar, kunlik masalalar, yutuqlar, vazifalar,
+ * o'qilgan xulosalar va sertifikatdagi ism (keyingi o'quvchiga oldingisining haqiqiy ismi chiqmasin).
+ */
 export function clearPlayerData() {
   resetLocalProgress();
   resetDaily();
   resetCustom();
   resetAchievements();
+  resetLessons();
+  resetMapSeen();
+  save(KEYS.certName, null);
   setMyTasks([]);
 }
 
@@ -80,9 +90,18 @@ export function syncProgress(): Promise<void> {
   return syncing;
 }
 
-async function doSync() {
-  const { levels: remote } = await api.progress();
+async function doSync(retried = false) {
+  let remote: Awaited<ReturnType<typeof api.progress>>['levels'];
+  try {
+    remote = (await api.progress()).levels;
+  } catch (e) {
+    // Server profilni bilmaydi (zaxiradan tiklangan baza yoki uzoq vaqt bo'sh turgan profil o'chirilgan):
+    // shu taxallus bilan yangi profil ochiladi va natijalar unga qayta yuboriladi.
+    if (!retried && e instanceof ApiError && e.status === 401 && (await recreateProfile())) return doSync(true);
+    throw e;
+  }
   const next = { ...progress.value };
+  const known = new Map(remote.map((r) => [r.levelId, r.gates]));
   for (const r of remote) {
     if (!levelById(r.levelId)) continue;
     const local = next[r.levelId];
@@ -91,6 +110,12 @@ async function doSync() {
     } else if (r.gates === local.gates) {
       next[r.levelId] = { ...local, synced: true };
     }
+  }
+  // "Yuborilgan" deb belgilangan, lekin server bilmaydigan (yoki yomonrog'ini biladigan) natija — masalan,
+  // baza zaxiradan tiklangandan keyin: qayta yuboriladi.
+  for (const [id, p] of Object.entries(next)) {
+    const g = known.get(id);
+    if (p.synced && levelById(id) && p.circuit.gates.length && (g === undefined || g > p.gates)) next[id] = { ...p, synced: false };
   }
   progress.value = next;
 
@@ -107,6 +132,28 @@ async function doSync() {
       else if (skippable(e)) continue;
       else throw e;
     }
+  }
+}
+
+/**
+ * Serverda yo'q profil o'rniga yangisi (shu taxallus bilan). Yangi tiklash kodi oynada ko'rsatiladi,
+ * barcha natijalar va bugungi/kechagi kunlik masala qayta yuboriladi. Ochilmasa (taxallus endi qabul
+ * qilinmaydi, aloqa yo'q) — false: qurilmadagi profil o'zgarmaydi.
+ */
+async function recreateProfile(): Promise<boolean> {
+  const old = profile.value;
+  if (!old) return false;
+  try {
+    const p = await api.createPlayer(old.nickname);
+    if (profile.value?.id !== old.id) return false; // kutish paytida boshqa profilga o'tildi
+    profile.value = { id: p.id, nickname: p.nickname, code: p.code! };
+    newProfileCode.value = p.code!;
+    progress.value = Object.fromEntries(Object.entries(progress.value).map(([id, r]) => [id, { ...r, synced: false }]));
+    unsyncRecentDaily();
+    showToast(t.profileCode.recreated, 'error', 8000);
+    return true;
+  } catch {
+    return false;
   }
 }
 

@@ -243,12 +243,18 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	} else {
 		close(backups)
 	}
+	prunes := make(chan struct{})
+	go func() {
+		defer close(prunes)
+		pruneLoop(ctx, st, log)
+	}()
 	// Baza yopilishidan oldin nusxa olish to'xtatiladi va boshlangani tugashi kutiladi.
 	// stop() bu yerda ham chaqiriladi: server xato bilan to'xtasa, ctx hali bekor qilinmagan bo'ladi.
 	defer func() {
 		stop()
 		<-backups
 		<-bots
+		<-prunes
 	}()
 
 	errc := make(chan error, 1)
@@ -266,6 +272,31 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return srv.Shutdown(shutdownCtx)
+}
+
+// emptyPlayerAge — shuncha vaqtdan beri bo'sh (hech narsa yechmagan, sinf va Telegram'siz) va kirmagan
+// profil o'chiriladi: ro'yxatdan o'tish cheklovi ostida yaratilgan keraksiz profillar baza hajmini
+// cheksiz oshirmasin.
+const emptyPlayerAge = 90 * 24 * time.Hour
+
+// pruneLoop — bo'sh profillarni ishga tushganda va keyin har kuni o'chiradi (store.PruneEmptyPlayers).
+func pruneLoop(ctx context.Context, st *store.Store, log *slog.Logger) {
+	for {
+		pctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		n, err := st.PruneEmptyPlayers(pctx, time.Now().Add(-emptyPlayerAge))
+		cancel()
+		switch {
+		case err != nil && ctx.Err() == nil:
+			log.Warn("bo'sh profillar o'chirilmadi", "deleted", n, "err", err)
+		case n > 0:
+			log.Info("bo'sh profillar o'chirildi", "deleted", n)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(24 * time.Hour):
+		}
+	}
 }
 
 // withStatic — Nginx bo'lmaganda (Docker, lokal sinov) frontend fayllarini ham shu server uzatadi.

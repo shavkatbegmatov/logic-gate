@@ -5,7 +5,9 @@
 //
 // Generator deterministik (o'zgarmas urug'): qayta ishga tushirish aynan shu faylni beradi. COUNT ni oshirish
 // mavjud kunlarni o'zgartirmaydi, faqat oxiriga qo'shadi. Lekin tanlash qoidalarini o'zgartirish o'tgan kunlar
-// masalalarini ham o'zgartiradi — ularning natijalari bazada qoladi, shuning uchun buni qilmang.
+// masalalarini ham o'zgartiradi — ularning natijalari bazada qoladi, shuning uchun buni qilmang. Qoida
+// o'zgarsa, faqat kelgusi kunlarga ta'sir qilsin (UNIQUE_FROM kabi chegara bilan) va o'tgan kunlar bir xil
+// qolganini tekshiring (daily_test.go: TestPastDailyFrozen).
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -214,6 +216,15 @@ const rand = mulberry32(SEED);
 const startDay = Date.parse(`${START}T00:00:00Z`) / 86400000;
 const puzzles = [];
 const solutions = [];
+// Bir xil masala (bazis va funksiya) yaqin kunlarda takrorlanmasin: maqsad oraliqlari ustma-ust tushgan
+// pullardan bir funksiya 12–29 kun oralig'ida, har safar boshqa qiyinlik nomi bilan chiqardi. UNIQUE_FROM
+// kunidan boshlab takror o'rniga puldagi ishlatilmagan (hammasi ishlatilgan bo'lsa — eng uzoq vaqt oldin
+// ishlatilgan) nomzod olinadi. Kichik pullarda (35–45 nomzod) ikki yil ichida takror muqarrar — u
+// imkon qadar uzoqqa suriladi. Undan oldingi kunlar (o'tgan va ertangi) o'zgarmaydi: qayta tanlash tasodifiy
+// sonlar ketma-ketligini faqat birinchi takrordan keyin o'zgartiradi.
+const UNIQUE_FROM = 5; // 2026-11-12
+const lastUse = new Map(); // masala kaliti → oxirgi kun
+const keyOf = (basis, fns) => `${basis}/${[...fns].sort((a, b) => a - b).join(',')}`;
 for (let i = 0; i < COUNT; i++) {
   const weekday = (startDay + i + 4) % 7; // 1970-01-01 — payshanba
   const tier = i < 2 ? 2 : TIER_BY_WEEKDAY[weekday]; // ishga tushirish dam olish kunlariga to'g'ri keldi
@@ -221,7 +232,28 @@ for (let i = 0; i < COUNT; i++) {
   const [basis, outs, lo, hi] = list[Math.floor(rand() * list.length)];
   const pool = pools.get(`${basis}/${outs}/${lo}-${hi}`);
   if (!pool.left.length) pool.left = pool.all.slice();
-  const pick = pool.left.splice(Math.floor(rand() * pool.left.length), 1)[0];
+  let pick = pool.left.splice(Math.floor(rand() * pool.left.length), 1)[0];
+  if (i >= UNIQUE_FROM && lastUse.has(keyOf(basis, pick.fns)) && pool.left.length) {
+    // Tasodifiy joydan boshlab: birinchi ishlatilmagani, bo'lmasa — eng uzoq vaqt oldin ishlatilgani.
+    const off = Math.floor(rand() * pool.left.length);
+    let best = -1;
+    let bestUse = lastUse.get(keyOf(basis, pick.fns));
+    for (let j = 0; j < pool.left.length; j++) {
+      const k = (off + j) % pool.left.length;
+      const use = lastUse.get(keyOf(basis, pool.left[k].fns)) ?? -1;
+      if (use < bestUse) {
+        best = k;
+        bestUse = use;
+        if (use < 0) break;
+      }
+    }
+    if (best >= 0) {
+      const alt = pool.left.splice(best, 1)[0];
+      pool.left.push(pick);
+      pick = alt;
+    }
+  }
+  lastUse.set(keyOf(basis, pick.fns), i);
   // Juftlikda chiqishlar tartibi ham tasodifiy.
   const fns = outs === 2 && rand() < 0.5 ? [pick.fns[1], pick.fns[0]] : pick.fns;
   const outputs = outs === 1 ? ['Q'] : ['X', 'Y'];

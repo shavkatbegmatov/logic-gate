@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -82,14 +83,21 @@ func testStore(t *testing.T) *store.Store {
 	return st
 }
 
-// Avvalgi (yarmida uzilgan) nusxa olishdan qolgan vaqtinchalik fayllar o'chiriladi, boshqalari qoladi.
+// Avvalgi (yarmida uzilgan) nusxa olishdan qolgan eski vaqtinchalik fayllar o'chiriladi. Yangilari —
+// bir vaqtda ishlayotgan boshqa nusxa olishniki (qo'lda `logicgate backup` rejali nusxa paytida yoki
+// deploy'da ikki konteyner) — qoladi, boshqa fayllarga ham tegilmaydi.
 func TestLeftoversRemoved(t *testing.T) {
 	st := testStore(t)
 	dir := t.TempDir()
-	leftovers := []string{".tmp-20261101T220000.db", "logicgate-2026-11-01.db.gz.tmp"}
+	leftovers := []string{".tmp-20261101T220000.db", ".tmp-20261101T220000-0a1b2c3d4e5f.db.gz", "logicgate-2026-11-01.db.gz.tmp"}
+	inProgress := []string{".tmp-20261102T215959-aaaaaaaaaaaa.db", ".tmp-20261102T215959-aaaaaaaaaaaa.db.gz"}
 	keep := []string{"notes.txt", "logicgate-2026-11-01.db.gz"}
-	for _, n := range append(append([]string{}, leftovers...), keep...) {
+	old := time.Now().Add(-2 * time.Hour)
+	for _, n := range slices.Concat(leftovers, inProgress, keep) {
 		os.WriteFile(filepath.Join(dir, n), []byte("x"), 0o600)
+		if slices.Contains(leftovers, n) || slices.Contains(keep, n) {
+			os.Chtimes(filepath.Join(dir, n), old, old)
+		}
 	}
 	path, err := Once(t.Context(), st, dir, 7, time.Date(2026, 11, 2, 22, 0, 0, 0, time.UTC))
 	if err != nil {
@@ -100,9 +108,43 @@ func TestLeftoversRemoved(t *testing.T) {
 	for _, e := range entries {
 		names = append(names, e.Name())
 	}
-	want := []string{"logicgate-2026-11-01.db.gz", filepath.Base(path), "notes.txt"}
+	want := slices.Sorted(slices.Values(slices.Concat(inProgress, keep, []string{filepath.Base(path)})))
 	if !slices.Equal(names, want) {
 		t.Fatalf("papkada: %v, kutilgan %v", names, want)
+	}
+}
+
+// Bir vaqtda ikki nusxa olish: ikkalasi ham muvaffaqiyatli, natija yaroqli, vaqtinchalik fayl qolmaydi.
+func TestConcurrentOnce(t *testing.T) {
+	st := testStore(t)
+	if err := st.CreatePlayer(t.Context(), "p1", []byte("hash"), "Ali"); err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	now := time.Date(2026, 11, 2, 22, 0, 0, 0, time.UTC)
+	var wg sync.WaitGroup
+	errs := make([]error, 4)
+	for i := range errs {
+		wg.Go(func() { _, errs[i] = Once(t.Context(), st, dir, 7, now) })
+	}
+	wg.Wait()
+	for _, err := range errs {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	entries, _ := os.ReadDir(dir)
+	if len(entries) != 1 || entries[0].Name() != "logicgate-2026-11-02.db.gz" {
+		t.Fatalf("papkada: %v", entries)
+	}
+	f, _ := os.Open(filepath.Join(dir, entries[0].Name()))
+	defer f.Close()
+	zr, err := gzip.NewReader(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(io.Discard, zr); err != nil {
+		t.Fatalf("buzilgan nusxa: %v", err)
 	}
 }
 

@@ -8,11 +8,11 @@ import { MiniBoard } from '../components/MiniBoard';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon, type IconName } from '../components/ui';
 import { states } from '../achievements';
-import { dailyHistory, streak, todaySig } from '../daily';
+import { dailyHistory, refreshDailyStatus, streak, todaySig } from '../daily';
 import { t } from '../i18n';
 import { chapterLevels, chapters, levelNumber, levels, MAX_STARS } from '../levels';
 import { go } from '../router';
-import { chapterStars, continueLevel, getDraft, profile, progress, settings, solvedCount, totalStars } from '../state';
+import { chapterStars, continueLevel, getDraft, profile, progress, settings, solvedCount, starsShortfall, totalStars } from '../state';
 import { hasProgress, moveUrl, onOldHost, siteHost } from '../migrate';
 import { TG_APP_URL } from '../share';
 import { inTelegram } from '../telegram';
@@ -24,6 +24,7 @@ export function Home() {
   const started = solvedCount.value > 0;
   useEffect(() => {
     refreshMyTasks();
+    refreshDailyStatus();
   }, [profile.value?.id]);
   return (
     <div class="screen home">
@@ -65,13 +66,22 @@ function ContinueCard() {
   const list = chapterLevels(ch.id);
   const solved = list.filter((l) => progress.value[l.id]).length;
   const draft = getDraft(level.id);
+  // Ochiq darajalar tugadi, keyingi bo'limga yulduz yetmaydi: yechilgan darajani yaxshilashga yo'llaymiz
+  // (avval bu holatda karta yechilgan 1-darajani "Davom etish" deb ko'rsatardi).
+  const short = allDone ? null : starsShortfall();
+  const head = allDone
+    ? t.home.allDoneSub
+    : short
+      ? t.home.needStars(short.need, chapters.indexOf(short.chapter) + 1)
+      : t.home.chapter(index + 1, ch.title);
   return (
     <section class="continue-card">
       <div class="continue-head">
-        <span class="continue-chapter">{allDone ? t.home.allDoneSub : t.home.chapter(index + 1, ch.title)}</span>
+        <span class="continue-chapter">{head}</span>
         <span class="continue-stars">{t.home.stars(totalStars.value, MAX_STARS)}</span>
       </div>
       <h2 class="continue-title">{allDone ? t.home.allDone : `${levelNumber(level)}. ${level.title}`}</h2>
+      {short && <p class="muted continue-hint">{t.home.improveHint}</p>}
       {!allDone && (
         <button class="continue-board" onClick={() => go(`level/${level.id}`)} aria-label={t.home.continue} tabIndex={-1}>
           <MiniBoard level={level} circuit={draft} />
@@ -85,7 +95,8 @@ function ContinueCard() {
         </span>
         {/* autoFocus yo'q: har ochilishda tugma atrofida fokus halqasi chiqardi. */}
         <button class="btn primary" onClick={() => go(allDone ? 'levels' : `level/${level.id}`)}>
-          <Icon name="play" /> {allDone ? t.home.levels : solvedCount.value > 0 || draft ? t.home.continue : t.home.play}
+          <Icon name="play" />{' '}
+          {allDone ? t.home.levels : short ? t.home.improve : solvedCount.value > 0 || draft ? t.home.continue : t.home.play}
         </button>
       </div>
     </section>

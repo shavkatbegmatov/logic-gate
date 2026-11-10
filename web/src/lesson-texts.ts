@@ -173,7 +173,7 @@ const uz: Record<string, Lesson> = {
         ],
       },
       {
-        p: "Front detektori oldingi qiymatni eslab, o'zgarish paytini topadi. Almashtirgich (T-trigger) va hisoblagich holatni XOR bilan almashtiradi: hisoblagichda kichik bit q0 har taktda, katta bit q1 esa q0 = 1 bo'lganda o'zgaradi. Kod qulfi — triggerlar zanjiri, siljitish registri: har taktda qiymatlar bir katakka suriladi.",
+        p: "Front detektori oldingi qiymatni eslab, o'zgarish paytini topadi. Almashtirgich (T-trigger) va hisoblagich holatni XOR bilan almashtiradi: hisoblagichda E = 1 bo'lgan har taktda kichik bit q0 o'zgaradi, katta bit q1 esa E = 1 va q0 = 1 bo'lganda o'zgaradi. Kod qulfi — triggerlar zanjiri, siljitish registri: har taktda qiymatlar bir katakka suriladi.",
       },
       {
         tip: "Trigger orqali o'tgan teskari bog'lanish (aylana) ruxsat etiladi va xotira hosil qiladi. Triggersiz aylana esa beqaror — o'yinda u sikl deb rad etiladi.",
@@ -202,7 +202,7 @@ const uz: Record<string, Lesson> = {
         p: "Chiqish faqat holatga bog'liq bo'lsa (Tugmali chiroq: Q = q), bu Moore avtomati; hozirgi kirishga ham bog'liq bo'lsa (Navbatchi: X = A ∧ …), Mealy avtomati. O'yindagi tekshiruv sxemangizni kerakli avtomat bilan har bir holat va kirish juftligida solishtiradi.",
       },
       {
-        tip: "Kamroq trigger — har doim ham kamroq element emas: ba'zan bitta qo'shimcha trigger formulalarni ancha soddalashtiradi (Tugmali chiroqda oldingi A ni alohida saqlash).",
+        tip: "Holatlarni chiqishga moslab kodlang: chiqish to'g'ridan-to'g'ri trigger qiymati bo'lsa (Tugmali chiroq: Q = q), chiqish uchun alohida element kerak bo'lmaydi.",
       },
     ],
   },
@@ -369,7 +369,7 @@ const ru: Record<string, Lesson> = {
         ],
       },
       {
-        p: 'Детектор фронта помнит прошлое значение и находит момент изменения. Переключатель (T-триггер) и счётчик меняют состояние через XOR: в счётчике младший бит q0 меняется на каждом такте, а старший q1 — когда q0 = 1. Кодовый замок — цепочка триггеров, сдвиговый регистр: на каждом такте значения сдвигаются на одну ячейку.',
+        p: 'Детектор фронта помнит прошлое значение и находит момент изменения. Переключатель (T-триггер) и счётчик меняют состояние через XOR: в счётчике младший бит q0 меняется на каждом такте с E = 1, а старший q1 — когда E = 1 и q0 = 1. Кодовый замок — цепочка триггеров, сдвиговый регистр: на каждом такте значения сдвигаются на одну ячейку.',
       },
       {
         tip: 'Обратная связь (петля) через триггер разрешена и создаёт память. Петля без триггера неустойчива — в игре она отклоняется как цикл.',
@@ -398,7 +398,7 @@ const ru: Record<string, Lesson> = {
         p: 'Если выход зависит только от состояния (Лампа с кнопкой: Q = q), это автомат Мура; если и от текущего входа (Дежурный: X = A ∧ …) — автомат Мили. Проверка в игре сравнивает вашу схему с нужным автоматом для каждой пары «состояние — вход».',
       },
       {
-        tip: 'Меньше триггеров — не всегда меньше элементов: иногда один лишний триггер сильно упрощает формулы (в «Лампе с кнопкой» прошлое A хранится отдельно).',
+        tip: 'Кодируйте состояния с оглядкой на выход: если выход — это прямо значение триггера (Лампа с кнопкой: Q = q), для выхода не нужен отдельный элемент.',
       },
     ],
   },

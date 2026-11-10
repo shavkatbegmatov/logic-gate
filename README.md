@@ -35,11 +35,13 @@ O'lchov WSL2 (Ubuntu) da, production Linux binari bilan, 50 o'yinchi × 30 daraj
 | CPU bitta so'rovga | ~0,38 ms |
 | Bitta mijozdan o'tkazuvchanlik | ~2000 so'rov/s |
 | Linux binar hajmi | 11 MB |
-| Frontend JS (gzip), ochilishda | 84,7 KB, ikki faylda (2.12.0; 1-versiyada 28,3 KB) |
-| Frontend CSS (gzip) | 11,2 KB |
-| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, yangiliklar 6,6 KB, o'qituvchi 4,1 KB, sertifikat 2,5 KB |
+| Frontend JS (gzip), ochilishda | 86,7 KB, ikki faylda (2.13.0; 1-versiyada 28,3 KB) |
+| Frontend CSS (gzip) | 11,3 KB |
+| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, yangiliklar 6,8 KB, o'qituvchi 4,1 KB, sertifikat 2,5 KB |
 
-Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi. Yangiliklar ro'yxati (`changelog.ts`, har relizda o'sadi) ham alohida: bosh sahifadagi «yangi versiya» banneri birinchi qatorni u yuklangach ko'rsatadi.
+Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi. Yangiliklar ro'yxati (`changelog.ts`, har relizda o'sadi) ham alohida: bosh sahifadagi «yangi versiya» banneri birinchi qatorni u yuklangach ko'rsatadi. 2.13.0 da bosh yuklama 98 KB — chegaraga yaqin: keyingi katta qo'shimchalardan oldin biror qismini alohida bo'lakka chiqarish kerak bo'ladi.
+
+Qurilmadagi ma'lumot (localStorage) har o'qilganda shakli tekshiriladi (`web/src/validate.ts`): buzuq yozuv tashlanadi, ilova to'xtamaydi. Ilova baribir ishga tushmasa, `public/theme.js` oq ekran o'rniga «qayta yuklash» va «ma'lumotni tozalash» (profil qoladi) oynasini ko'rsatadi; ekran chizishda xato bo'lsa — `app.tsx` dagi karta.
 
 Nginx sarfi o'lchanmagan: odatda 1 ta worker bilan 5–10 MB. systemd unit'da `MemoryHigh=64M`, `MemoryMax=96M`, `.env` da `GOMEMLIMIT=40MiB` o'rnatilgan.
 
@@ -506,7 +508,7 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | DELETE | `/api/classes/{code}/tasks/{id}` | o'qituvchi vazifani o'chiradi (kalit bilan) |
 | GET | `/healthz` | holat tekshiruvi |
 
-Cheklovlar (bitta maktab NAT manzili ortidagi 40 o'quvchili sinfga mo'ljallangan): Go'da IP bo'yicha 20 so'rov/s (400 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (50 tagacha birdaniga), noto'g'ri tiklash kodi yoki topilmagan sinf kodi — 5 soniyada 1 ta (10 tagacha); IPv6 manzillar /64 tarmog'i bo'yicha hisoblanadi, `X-Real-IP` faqat haqiqiy IP bo'lsa olinadi; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim. Reyting (o'rinlar bilan) 15 soniya, kunlik arxiv statistikasi 60 soniya keshlanadi.
+Cheklovlar (bitta maktab NAT manzili ortidagi 40 o'quvchili sinfga mo'ljallangan): Go'da IP bo'yicha 20 so'rov/s (400 tagacha portlash), yangi o'yinchi — 30 soniyada 1 ta (50 tagacha birdaniga), noto'g'ri tiklash kodi yoki topilmagan sinf kodi — 5 soniyada 1 ta (10 tagacha); IPv6 manzillar /64 tarmog'i bo'yicha hisoblanadi, `X-Real-IP` faqat haqiqiy IP bo'lsa olinadi; Nginx'da 20 so'rov/s. So'rov tanasi 64 KB gacha, sxemada 64 tagacha element va 256 tagacha sim; yechim ixcham ko'rinishda saqlanadi (element id `g1…gN`, butun koordinatalar, 8 KB gacha — oshsa 400 `circuit_too_large`). Ro'yxatdan o'tish cheklovi faqat profil yaratiladigan so'rovdan olinadi (rad etilgan taxallus uni sarflamaydi). Reyting fonda ko'pi bilan 15 soniyada bir marta qayta hisoblanadi (taxallus va yechimlar uni majburlay olmaydi), o'yinchining o'z o'rni har so'rovda; kunlik arxiv statistikasi 60 soniya keshlanadi. Mijoz javobni kutmay uzilsa — 499, xato sifatida log'ga yozilmaydi. 90 kundan beri kirmagan va hech narsasi (yechim, kunlik natija, sinf, Telegram) yo'q profillar kunda bir marta o'chiriladi.
 
 ## Xavfsizlik
 

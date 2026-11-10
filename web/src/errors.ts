@@ -45,6 +45,11 @@ function report(err: unknown, file?: string) {
   fetch('/api/client-errors', { method: 'POST', body, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {});
 }
 
+/** Ekran chizishda ushlangan xato (app.tsx): window'gacha yetib bormaydi, shuning uchun alohida. */
+export function reportCaught(err: unknown) {
+  if (import.meta.env.PROD) report(err);
+}
+
 export function installErrorReporting() {
   addEventListener('error', (e) => report(e.error ?? e.message, e.filename));
   addEventListener('unhandledrejection', (e) => report(e.reason));

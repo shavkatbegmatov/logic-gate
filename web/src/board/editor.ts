@@ -15,6 +15,7 @@ import {
   type Layout,
 } from './geometry';
 import { outputY } from './shapes';
+import { cleanCircuit } from '../validate';
 
 export type Selection = { kind: 'gate'; id: string } | { kind: 'wire'; index: number } | null;
 
@@ -83,6 +84,15 @@ export class Editor {
     const c = this.circuit.value;
     return JSON.stringify([c.gates.map((g) => [g.id, g.type]), c.wires]);
   });
+  /**
+   * Elementlar va simlar soni, D-trigger bormi. Ekranlar sxemaning o'zi (circuit) o'rniga shuni o'qiydi:
+   * element sudralganda butun ekran (jadval, formula, vaqt diagrammasi) har kadrda qayta chizilmasin.
+   */
+  readonly shape = computed(() => {
+    void this.topology.value;
+    const c = this.circuit.peek();
+    return { gates: c.gates.length, wires: c.wires.length, dff: c.gates.some((g) => g.type === 'DFF') };
+  });
   readonly compiled = computed(() => {
     void this.topology.value;
     return compile(this.spec.value, this.circuit.peek());
@@ -122,6 +132,7 @@ export class Editor {
 
   /** Qum qutida kirish/chiqishlar sonini o'zgartirish ("bekor qilish" spec'ni ham qaytaradi). */
   setSpec(spec: Spec) {
+    if (this.locked) return;
     this.commit(sanitize(spec, this.circuit.value), spec);
   }
 
@@ -174,6 +185,14 @@ export class Editor {
     return Number.isInteger(k) && k >= 0 && k < GATE_ARITY[g.type];
   }
 
+  /**
+   * Tekshiruv ketmoqda: sxema, kirishlar va takt o'zgarmaydi. Tugmalar CSS bilan bosilmaydi, lekin
+   * klaviatura (palitra, «bekor qilish») ham shu yerda to'xtaydi — maydonda tekshirilgani qolsin.
+   */
+  private get locked() {
+    return this.busy.peek();
+  }
+
   private commit(next: Circuit, spec = this.spec.value) {
     this.past.push(this.snapshot());
     if (this.past.length > MAX_HISTORY) this.past.shift();
@@ -185,6 +204,7 @@ export class Editor {
   }
 
   undo() {
+    if (this.locked) return;
     const prev = this.past.pop();
     if (!prev) return;
     this.future.push(this.snapshot());
@@ -196,6 +216,7 @@ export class Editor {
   }
 
   redo() {
+    if (this.locked) return;
     const next = this.future.pop();
     if (!next) return;
     this.past.push(this.snapshot());
@@ -211,6 +232,7 @@ export class Editor {
    * spec — kirishlar ko'paygan bo'lsa (kamaymaydi: eski sxema yangi spec'da ham yaroqli).
    */
   replace(circuit: Circuit, spec?: Spec) {
+    if (this.locked) return;
     this.selection.value = null;
     this.pending.value = null;
     const s = spec ?? this.spec.value;
@@ -218,7 +240,7 @@ export class Editor {
   }
 
   clear() {
-    if (!this.circuit.value.gates.length && !this.circuit.value.wires.length) return;
+    if (this.locked || (!this.circuit.value.gates.length && !this.circuit.value.wires.length)) return;
     this.selection.value = null;
     this.pending.value = null;
     this.commit({ gates: [], wires: [] });
@@ -247,6 +269,7 @@ export class Editor {
 
   /** Elementni markazi (x, y) nuqtada bo'ladigan qilib qo'shadi; joy band bo'lsa pastroqqa suradi. */
   addGate(type: GateType, cx: number, cy: number) {
+    if (this.locked) return;
     const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy) };
     this.commit({ ...this.circuit.value, gates: [...this.circuit.value.gates, gate] });
     this.selection.value = { kind: 'gate', id: gate.id };
@@ -258,6 +281,7 @@ export class Editor {
    * Element va simlar bitta qadam: bir marta "bekor qilish" ularni birga olib tashlaydi.
    */
   placeGate(type: GateType, sources: string[]): string {
+    if (this.locked) return '';
     const lay = this.layout.value;
     const pts = sources.map((s) => lay.inputs.get(s)).filter((p) => p !== undefined);
     const cx = (pts.length ? Math.max(...pts.map((p) => p.x)) : 0) + 150;
@@ -304,10 +328,12 @@ export class Editor {
   }
 
   beginDrag() {
+    if (this.locked) return;
     this.dragStart = this.circuit.value;
   }
 
   dragGate(id: string, x: number, y: number) {
+    if (this.locked) return;
     const c = this.circuit.value;
     this.circuit.value = { ...c, gates: c.gates.map((g) => (g.id === id ? { ...g, x, y } : g)) };
   }
@@ -324,6 +350,7 @@ export class Editor {
 
   /** Ikki portni ulaydi (tartib ahamiyatsiz). Band kirish bo'lsa, eski sim almashtiriladi. */
   connect(a: string, b: string): ConnectResult {
+    if (this.locked) return 'same';
     if (!this.hasPort(a) || !this.hasPort(b)) return 'invalid';
     const aSrc = isSourcePort(a);
     if (aSrc === isSourcePort(b)) return a === b ? 'same' : 'kind';
@@ -339,7 +366,7 @@ export class Editor {
 
   removeSelection() {
     const sel = this.selection.value;
-    if (!sel) return;
+    if (!sel || this.locked) return;
     const c = this.circuit.value;
     if (sel.kind === 'gate') {
       const prefix = `${sel.id}:`;
@@ -356,6 +383,7 @@ export class Editor {
   }
 
   toggleInput(k: number) {
+    if (this.locked) return;
     this.bits.value = this.bits.value.map((b, i) => (i === k ? b ^ 1 : b));
     sfx.toggle();
   }
@@ -366,13 +394,14 @@ export class Editor {
 
   /** Takt: joriy kirishlar tarixga yoziladi, triggerlar kirishidagi qiymatlarni eslab qoladi. */
   tick() {
-    if (this.history.value.length >= MAX_TICKS) return;
+    if (this.locked || this.history.value.length >= MAX_TICKS) return;
     this.history.value = [...this.history.value, this.row.value];
     sfx.tick(this.history.value.length % 8);
   }
 
   /** Vaqtni boshiga qaytarish: barcha triggerlar 0. */
   resetClock() {
+    if (this.locked) return;
     this.history.value = [];
   }
 
@@ -415,8 +444,10 @@ export class Editor {
 }
 
 /** Saqlangan sxemadan joriy spec ga mos kelmaydigan qismlarni olib tashlaydi. */
-function sanitize(spec: Spec, c: Circuit): Circuit {
-  const gates = (c.gates ?? []).filter((g) => g && g.type in GATE_ARITY && Number.isFinite(g.x) && Number.isFinite(g.y));
+function sanitize(spec: Spec, raw: Circuit): Circuit {
+  // Shakli buzuq yozuv (eski versiya, ko'chirish havolasi) ham muharrirni to'xtatmasin.
+  const c = cleanCircuit(raw) ?? { gates: [], wires: [] };
+  const gates = c.gates;
   const ids = new Set(gates.map((g) => g.id));
   const valid = (p: string) => {
     if (p.startsWith('in:')) return spec.inputs.includes(p.slice(3));
@@ -425,8 +456,8 @@ function sanitize(spec: Spec, c: Circuit): Circuit {
     return ids.has(i < 0 ? p : p.slice(0, i));
   };
   const seen = new Set<string>();
-  const wires = (c.wires ?? []).filter((w) => {
-    if (!w || !valid(w.from) || !valid(w.to) || seen.has(w.to)) return false;
+  const wires = c.wires.filter((w) => {
+    if (!valid(w.from) || !valid(w.to) || seen.has(w.to)) return false;
     seen.add(w.to);
     return true;
   });

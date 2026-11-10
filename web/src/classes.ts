@@ -8,6 +8,7 @@ import { chapterLevels, chapters, levels } from './levels';
 import { profile } from './state';
 import { load, save } from './storage';
 import { myTasks, setMyTasks, tasksFromClasses } from './tasks';
+import { cleanList, isNum, isObj } from './validate';
 
 export interface TeacherClass {
   code: string;
@@ -18,7 +19,12 @@ export interface TeacherClass {
 
 const KEY = 'lg.teacher.v1';
 
-export const teacherClasses = signal<TeacherClass[]>(load(KEY, []));
+const cleanClass = (v: unknown): TeacherClass | null =>
+  isObj(v) && typeof v.code === 'string' && typeof v.key === 'string'
+    ? { code: v.code, key: v.key, name: typeof v.name === 'string' ? v.name : '', createdAt: isNum(v.createdAt) ? v.createdAt : 0 }
+    : null;
+
+export const teacherClasses = signal<TeacherClass[]>(load(KEY, [], (v) => cleanList(v, cleanClass)));
 
 export function saveTeacherClass(c: TeacherClass) {
   teacherClasses.value = [c, ...teacherClasses.value.filter((x) => x.code !== c.code)];

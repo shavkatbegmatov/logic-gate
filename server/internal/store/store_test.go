@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"slices"
 	"testing"
+	"time"
 )
 
 // Faqat vaqtinchalik baza va soxta ma'lumotlar (TEST_USER, TEST_TOKEN).
@@ -131,22 +133,99 @@ func TestLeaderboardAndRank(t *testing.T) {
 	if e := top[1]; e.Nickname != "TEST_USER_2" || e.Stars != 6 || e.Solved != 2 || e.Gates != 4 {
 		t.Fatalf("p2 qatori: %+v", e)
 	}
-	// Rank va Ranking reyting bilan mos.
-	all, err := st.Ranking(ctx)
-	if err != nil || !slices.Equal(all, top) {
-		t.Fatalf("Ranking: %+v %v", all, err)
+	// Rank, Scores va PlayerScore reyting bilan mos: Score.Compare bo'yicha saralangan tartib — o'sha.
+	scores := map[string]Score{}
+	if err := st.Scores(ctx, func(id []byte, sc Score) { scores[string(id)] = sc }); err != nil || len(scores) != 4 {
+		t.Fatalf("Scores: %v %v", scores, err)
+	}
+	ids := slices.Collect(maps.Keys(scores))
+	slices.SortFunc(ids, func(a, b string) int { return scores[a].Compare(scores[b]) })
+	if !slices.Equal(ids, order) {
+		t.Fatalf("Scores tartibi: %v", ids)
 	}
 	for _, want := range top {
 		got, err := st.Rank(ctx, want.PlayerID)
 		if err != nil || *got != want {
 			t.Fatalf("Rank(%s): %+v %v, kutilgan %+v", want.PlayerID, got, err, want)
 		}
+		sc, ok, err := st.PlayerScore(ctx, want.PlayerID)
+		if err != nil || !ok || sc != scores[want.PlayerID] ||
+			int(sc.Stars) != want.Stars || int(sc.Solved) != want.Solved || int(sc.Gates) != want.Gates {
+			t.Fatalf("PlayerScore(%s): %+v %v %v", want.PlayerID, sc, ok, err)
+		}
 	}
 	if _, err := st.Rank(ctx, "p5"); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("yechmagan o'yinchi: %v", err)
 	}
+	if sc, ok, err := st.PlayerScore(ctx, "p5"); ok || err != nil || sc != (Score{}) {
+		t.Fatalf("yechmagan o'yinchi ko'rsatkichi: %+v %v %v", sc, ok, err)
+	}
+	if names, err := st.Nicknames(ctx, []string{"p1", "p4", "yo'q"}); err != nil || len(names) != 2 || names["p4"] != "TEST_USER_4" {
+		t.Fatalf("Nicknames: %v %v", names, err)
+	}
 	if top2, _ := st.Leaderboard(ctx, 2); len(top2) != 2 || top2[1].PlayerID != "p2" {
 		t.Fatalf("limit: %+v", top2)
+	}
+}
+
+// Tashlab ketilgan bo'sh profillar o'chadi; biror narsasi bor yoki yaqinda kirgan o'yinchiga tegilmaydi.
+func TestPruneEmptyPlayers(t *testing.T) {
+	st := testStore(t)
+	ctx := t.Context()
+	players(t, st, 8)
+	const empty = 1200 // bir nechta bo'lak (pruneBatch)
+	for i := range empty {
+		if err := st.CreatePlayer(ctx, fmt.Sprintf("e%04d", i), tokenHash(100+i), "TEST_USER"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	now := time.Now()
+	old := now.Add(-100 * 24 * time.Hour).Unix()
+	if _, err := st.db.ExecContext(ctx, `UPDATE players SET created_at = ?, last_seen_at = ?`, old, old); err != nil {
+		t.Fatal(err)
+	}
+	solve(t, st, "p2", "b1", 2, 3)
+	if _, _, err := st.SaveDaily(ctx, "p3", 20400, Solution{Gates: 3, Stars: 3, Circuit: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.CreateClass(ctx, "ABC123", "TEST sinf", []byte("TEST_KEY_HASH")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.JoinClass(ctx, "ABC123", "p4", 10); err != nil {
+		t.Fatal(err)
+	}
+	for _, chat := range []int64{1, 2} { // 2 — o'yinchiga bog'lanmagan chat (player_id NULL)
+		if err := st.UpsertChat(ctx, chat, "uz"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := st.LinkChat(ctx, 1, "p5"); err != nil {
+		t.Fatal(err)
+	}
+	st.db.ExecContext(ctx, `UPDATE players SET last_seen_at = ? WHERE id = 'p6'`, now.Unix())                             // yaqinda kirgan
+	st.db.ExecContext(ctx, `UPDATE players SET created_at = ?, last_seen_at = ? WHERE id = 'p7'`, now.Unix(), now.Unix()) // yangi
+
+	n, err := st.PruneEmptyPlayers(ctx, now.Add(-90*24*time.Hour))
+	if err != nil || n != empty+2 {
+		t.Fatalf("o'chirildi %d, %v", n, err)
+	}
+	var left []string
+	rows, _ := st.db.QueryContext(ctx, `SELECT id FROM players ORDER BY id`)
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		left = append(left, id)
+	}
+	rows.Close()
+	if !slices.Equal(left, []string{"p2", "p3", "p4", "p5", "p6", "p7"}) {
+		t.Fatalf("qolganlar: %v", left)
+	}
+	if c, err := st.Chat(ctx, 1); err != nil || c.PlayerID != "p5" {
+		t.Fatalf("chat: %+v %v", c, err)
+	}
+	// Ikkinchi marta — o'chiradigani yo'q.
+	if n, err := st.PruneEmptyPlayers(ctx, now.Add(-90*24*time.Hour)); n != 0 || err != nil {
+		t.Fatalf("qayta: %d %v", n, err)
 	}
 }
 

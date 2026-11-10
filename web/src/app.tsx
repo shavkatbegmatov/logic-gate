@@ -1,10 +1,11 @@
 import { Fragment } from 'preact';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useErrorBoundary, useRef } from 'preact/hooks';
 import { NewProfileCode } from './components/NewProfileCode';
 import { showToast, Toast } from './components/Toast';
+import { reportCaught } from './errors';
 import { imported } from './migrate';
 import { lang, t } from './i18n';
-import { route } from './router';
+import { go, route } from './router';
 import './achievements';
 import { Achievements } from './screens/Achievements';
 import { ArchiveScreen } from './screens/ArchiveScreen';
@@ -38,10 +39,54 @@ export function App() {
     return () => removeEventListener('online', onOnline);
   }, []);
 
-  const r = route.value;
   // Til almashganda butun daraxt qayta quriladi — keshlangan matnlar ham yangilanadi.
   return (
     <Fragment key={lang.value}>
+      <Guarded />
+      <NewProfileCode />
+      <Toast />
+    </Fragment>
+  );
+}
+
+/**
+ * Ekran chizishda xato chiqsa — oq ekran o'rniga qaytish yo'li. Marshrut almashsa, xato holati
+ * tozalanadi (boshqa ekran ishlashi mumkin).
+ */
+function Guarded() {
+  const [error, resetError] = useErrorBoundary(reportCaught);
+  const name = route.value.name;
+  const failedOn = useRef<string | null>(null);
+  if (error && failedOn.current === null) failedOn.current = name;
+  useEffect(() => {
+    if (error && failedOn.current !== name) {
+      failedOn.current = null;
+      resetError();
+    }
+  }, [name]);
+  if (error) {
+    return (
+      <div class="screen crash" role="alert">
+        <h1>{t.crash.title}</h1>
+        <p class="muted">{t.crash.text}</p>
+        <div class="crash-actions">
+          <button class="btn primary" onClick={() => (route.value.name === 'home' ? location.reload() : go(''))}>
+            {t.crash.home}
+          </button>
+          <button class="btn" onClick={() => location.reload()}>
+            {t.crash.reload}
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return <Routes />;
+}
+
+function Routes() {
+  const r = route.value;
+  return (
+    <Fragment>
       {r.name === 'home' && <Home />}
       {r.name === 'levels' && <LevelsScreen />}
       {r.name === 'level' && <LevelScreen id={r.id} />}
@@ -57,8 +102,6 @@ export function App() {
       {r.name === 'achievements' && <Achievements />}
       {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}
       {r.name === 'settings' && <Settings />}
-      <NewProfileCode />
-      <Toast />
     </Fragment>
   );
 }

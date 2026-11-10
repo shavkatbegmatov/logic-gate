@@ -127,10 +127,11 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     [],
   );
 
-  // Sxema o'zgarsa, oldingi tekshiruv natijasi (qatorlar) yashiriladi.
+  // Sxema o'zgarsa, oldingi tekshiruv natijasi (qatorlar) yashiriladi. Element surilishi — o'zgarish emas
+  // (topology): aks holda har sudrash kadrida butun ekran qayta chizilardi.
   useEffect(() => {
     if (!editor.busy.value) rowStates.value = null;
-  }, [editor.circuit.value]);
+  }, [editor.topology.value]);
 
   const finish = (wrongRows: number[]) => {
     sfx.error();
@@ -315,7 +316,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
 
   const rows = editor.table.value;
   const row = editor.row.value;
-  const used = editor.circuit.value.gates.length;
+  const used = editor.shape.value.gates;
   const seq = level.seq;
   const history = editor.history.value;
   // Ketma-ket masala: to'liq tekshiruv arzon (bir necha holat), shuning uchun har o'zgarishda.
@@ -328,16 +329,17 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   return (
     <div class={`screen play${busy ? ' checking' : ''}`}>
       <TopBar title={title} sub={sub} onBack={onBack}>
-        <button class="icon-btn" onClick={() => editor.undo()} disabled={!editor.canUndo.value} title={t.play.undo} aria-label={t.play.undo}>
+        {/* Tekshiruv paytida sxema o'zgarmaydi (editor.locked) — tugmalar klaviaturadan ham bosilmasin. */}
+        <button class="icon-btn" onClick={() => editor.undo()} disabled={busy || !editor.canUndo.value} title={t.play.undo} aria-label={t.play.undo}>
           <Icon name="undo" />
         </button>
-        <button class="icon-btn" onClick={() => editor.redo()} disabled={!editor.canRedo.value} title={t.play.redo} aria-label={t.play.redo}>
+        <button class="icon-btn" onClick={() => editor.redo()} disabled={busy || !editor.canRedo.value} title={t.play.redo} aria-label={t.play.redo}>
           <Icon name="redo" />
         </button>
         <button
           class="icon-btn"
           onClick={() => confirm(t.play.clearConfirm) && editor.clear()}
-          disabled={!used && !editor.circuit.value.wires.length}
+          disabled={busy || (!used && !editor.shape.value.wires)}
           title={t.play.clear}
           aria-label={t.play.clear}
         >
@@ -490,7 +492,7 @@ export function ClockTools({ editor }: { editor: Editor }) {
 /** Elementlarni ustunlarga joylaydi (simlar o'zgarmaydi); chiqishlar joyiga sig'dirishga harakat qiladi. */
 function arrange(editor: Editor) {
   const c = editor.circuit.value;
-  if (!c.gates.length) return;
+  if (!c.gates.length || editor.busy.peek()) return;
   const r = tidy(editor.spec.value, c, editor.outX.value, { fit: true });
   editor.outX.value = r.outX;
   editor.replace(r.circuit);
@@ -505,7 +507,7 @@ export function ZoomTools({ editor }: { editor: Editor }) {
       <button
         class="icon-btn"
         onClick={() => arrange(editor)}
-        disabled={editor.circuit.value.gates.length < 2}
+        disabled={editor.shape.value.gates < 2 || editor.busy.value}
         title={t.play.tidy}
         aria-label={t.play.tidy}
       >

@@ -11,7 +11,7 @@ import { ShareButtons } from '../components/ShareButtons';
 import { Icon, Modal, Stars } from '../components/ui';
 import { t } from '../i18n';
 import { chapterDone, lessonsRead } from '../lessons';
-import { chapterOf, chapters, levelById, levelNumber, levels, newGates } from '../levels';
+import { chapterOf, chapters, levelById, levelNumber, levels } from '../levels';
 import { go } from '../router';
 import { levelShareText } from '../share';
 import { emptyCircuit, type Level } from '../sim/types';
@@ -24,10 +24,10 @@ import {
   profile,
   progress,
   recordSolve,
-  seenIntro,
   setDraft,
   solvedCount,
   totalStars,
+  unseenGates,
 } from '../state';
 import { submitSolve } from '../sync';
 import { Workbench, type Solved } from './Workbench';
@@ -55,8 +55,8 @@ function Redirect({ to }: { to: string }) {
 function Play({ level }: { level: Level }) {
   const editor = useMemo(() => new Editor(), []);
   const result = useSignal<Result | null>(null);
-  // Daraja yangi element bilan tanishtirsa — bir martalik karta.
-  const intro = useSignal(newGates(level).filter((g) => !seenIntro.value.includes(g)));
+  // Daraja yangi element bilan tanishtirsa — bir martalik karta (vazifa orqali o'tkazib yuborilganlari ham).
+  const intro = useSignal(unseenGates(level));
 
   useMemo(() => {
     editor.load(level, getDraft(level.id) ?? progress.value[level.id]?.circuit ?? emptyCircuit(), outputColumn(level.goal));

@@ -86,6 +86,7 @@ export function moveUrl(store: Store = localStorage): string {
 
 type Rec = Record<string, unknown>;
 const isObj = (v: unknown): v is Rec => !!v && typeof v === 'object' && !Array.isArray(v);
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /**
  * Kalit bo'yicha: elementlari kam (gates) bo'lgani yutadi.
@@ -98,9 +99,10 @@ function mergeBest(a: unknown, b: unknown, resync = false): unknown {
   if (!isObj(a)) return resync ? Object.fromEntries(Object.entries(b).map(([k, v]) => [k, mark(v)])) : b;
   const out: Rec = { ...a };
   for (const [k, v] of Object.entries(b)) {
+    // Natija bo'lmagan yozuv (null, son...) olinmaydi.
+    if (k === '__proto__' || !isObj(v) || !isNum(v.gates)) continue;
     const cur = out[k] as { gates?: number } | undefined;
-    const inc = v as { gates?: number };
-    if (!cur || (typeof inc?.gates === 'number' && inc.gates < (cur.gates ?? Infinity))) out[k] = mark(v);
+    if (!isObj(cur) || v.gates < (isNum(cur.gates) ? cur.gates : Infinity)) out[k] = mark(v);
   }
   return out;
 }
@@ -108,7 +110,8 @@ function mergeBest(a: unknown, b: unknown, resync = false): unknown {
 /** resync — yangi manzilda boshqa profil bor: eski manzil natijalari unga yuborilishi kerak. */
 export function merge(key: string, mine: unknown, theirs: unknown, resync = false): unknown {
   if (key === 'lg.progress.v1' || key === 'lg.daily.v1') {
-    if (mine === null || mine === undefined) return resync ? mergeBest({}, theirs, true) : theirs;
+    // Bo'sh qurilmada ham yozuvlar tekshiriladi: natija bo'lmagan (null) yozuv ilovani to'xtatardi.
+    if (mine === null || mine === undefined) return mergeBest({}, theirs, resync);
     return mergeBest(mine, theirs, resync);
   }
   if (mine === null || mine === undefined) return theirs;
@@ -180,11 +183,26 @@ export function importData(code: string, store: Store = localStorage): number {
 /** Ko'chirilgan natijalar soni (bosh sahifa xabari uchun); -1 — ko'chirish bo'lmadi. */
 export let imported = -1;
 
+/** Eski manzillar: ko'chirish havolasi faqat shulardagi «Ko'chirish» tugmasidan kelganda qabul qilinadi. */
+const OLD_HOSTS = ['logic-gate.170.168.6.82.sslip.io'];
+
+/**
+ * Havola eski manzildan bosilganmi (Referer). Boshqa joydan — masalan, sinf chatidagi havoladan — kelgan
+ * ma'lumot qurilmaga o'z profilini o'rnatib, natijalarni birovning hisobiga yo'naltira olmasin.
+ */
+export function fromOldHost(referrer: string): boolean {
+  try {
+    return OLD_HOSTS.includes(new URL(referrer).host);
+  } catch {
+    return false;
+  }
+}
+
 function boot() {
   if (typeof location === 'undefined') return;
   try {
     if (location.hash.startsWith(IMPORT_HASH)) {
-      imported = importData(location.hash.slice(IMPORT_HASH.length));
+      imported = fromOldHost(document.referrer) ? importData(location.hash.slice(IMPORT_HASH.length)) : 0;
       // Natijalar (ichida tiklash kodi ham bo'lishi mumkin) brauzer tarixida qolmasin.
       history.replaceState(null, '', `${location.pathname}${location.search}#/`);
     } else if (onOldHost() && !hasProgress()) {

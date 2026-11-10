@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -479,6 +482,177 @@ func TestLimiterBlocked(t *testing.T) {
 	}
 	if !l2.allow("ip") {
 		t.Fatal("blocked token sarfladi")
+	}
+}
+
+// Rad etilgan taxallus (va buzuq so'rov) ro'yxatdan o'tish cheklovini sarflamaydi: maktabda bitta NAT
+// ortidagi bir necha o'quvchining xato taxallusi qolganlarini to'sib qo'ymasin.
+func TestSignupLimitOnlyForCreated(t *testing.T) {
+	e := newEnv(t)
+	const school = "203.0.113.7"
+	for i := range 60 {
+		var body any = map[string]string{"nickname": []string{"Ali!", "x", "Vali 🙂", "Sardor#7", "xuy123", "ｆｕｃｋ"}[i%6]}
+		if i%10 == 9 {
+			body = "buzuq so'rov"
+		}
+		if status, out := e.doIP("POST", "/api/players", "", school, body); status != http.StatusBadRequest {
+			t.Fatalf("%d: %d %v", i, status, out)
+		}
+	}
+	for i := range 45 {
+		if status, out := e.doIP("POST", "/api/players", "", school, map[string]string{"nickname": fmt.Sprintf("TEST_USER %d", i)}); status != http.StatusCreated {
+			t.Fatalf("%d-o'quvchi: %d %v", i+1, status, out)
+		}
+	}
+	// Cheklov baribir ishlaydi: yaratilganlar uni sarflaydi.
+	limited := false
+	for range 10 {
+		if status, _ := e.doIP("POST", "/api/players", "", school, map[string]string{"nickname": "TEST_BOT"}); status == http.StatusTooManyRequests {
+			limited = true
+			break
+		}
+	}
+	if !limited {
+		t.Fatal("ro'yxatdan o'tish cheklovi ishlamadi")
+	}
+}
+
+// Mijoz uzilgan (kontekst bekor qilingan) so'rov — 500 va ERROR log (admin'ga ogohlantirish) emas.
+func TestCanceledRequestIsNotAnError(t *testing.T) {
+	st, err := store.Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	pack, _ := levels.Load()
+	daily, _ := levels.LoadDaily()
+	var logs bytes.Buffer
+	var mu sync.Mutex
+	s := New(st, pack, daily, slog.New(slog.NewTextHandler(&lockedWriter{w: &logs, mu: &mu}, &slog.HandlerOptions{Level: slog.LevelDebug})), Options{})
+	h := s.Handler()
+	req := httptest.NewRequest("POST", "/api/players", strings.NewReader(`{"nickname":"TEST_USER"}`))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	var created struct{ Code string }
+	json.Unmarshal(rec.Body.Bytes(), &created)
+	if rec.Code != http.StatusCreated || created.Code == "" {
+		t.Fatalf("o'yinchi: %d", rec.Code)
+	}
+	for _, path := range []string{"/api/me", "/api/progress", "/api/levels/b1/stats", "/api/daily", "/api/daily/archive", "/api/leaderboard"} {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // mijoz bitta SQLite ulanishini kutib turgan paytda uzildi
+		req := httptest.NewRequest("GET", path, nil).WithContext(ctx)
+		req.Header.Set("Authorization", "Bearer "+created.Code)
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code == http.StatusInternalServerError || (path == "/api/me" && rec.Code != statusClientClosed) {
+			t.Errorf("%s: %d %s", path, rec.Code, rec.Body.String())
+		}
+	}
+	// Fondagi reyting hisoblash tugasin (log yozuvchisi test tugaguncha bo'sh qolsin).
+	s.lbMu.Lock()
+	wait := s.lbWait
+	s.lbMu.Unlock()
+	if wait != nil {
+		<-wait
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if out := logs.String(); strings.Contains(out, "level=ERROR") || strings.Contains(out, "level=WARN") || !strings.Contains(out, "so'rov uzildi") {
+		t.Fatalf("log:\n%s", out)
+	}
+}
+
+type lockedWriter struct {
+	w  io.Writer
+	mu *sync.Mutex
+}
+
+func (l *lockedWriter) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.w.Write(p)
+}
+
+// Yechim ixcham ko'rinishda saqlanadi: uzun id lar va o'nlik kasrli koordinatalar bilan to'ldirilgan
+// sxema qisqa id (g1, g2, …) va butun koordinatalar bilan qaytadi, qayta yuborilsa — o'sha natija.
+func TestStoredCircuitCompact(t *testing.T) {
+	e := newEnv(t)
+	sols := solutions(t)
+	code := e.player("TEST_SIZE")
+	base := sols["x2"]
+	ren := map[string]string{}
+	var c sim.Circuit
+	for i, g := range base.Gates {
+		id := fmt.Sprintf("%016d", i)
+		ren[g.ID] = id
+		c.Gates = append(c.Gates, sim.Gate{ID: id, Type: g.Type, X: -99999.99999999999, Y: 12.345678901234567})
+	}
+	port := func(p string) string {
+		id, idx, ok := strings.Cut(p, ":")
+		if n, found := ren[id]; found {
+			if ok {
+				return n + ":" + idx
+			}
+			return n
+		}
+		return p
+	}
+	for _, w := range base.Wires {
+		c.Wires = append(c.Wires, sim.Wire{From: port(w.From), To: port(w.To)})
+	}
+	sent, _ := json.Marshal(c)
+	body := map[string]any{"circuit": map[string]any{"gates": c.Gates, "wires": c.Wires, "junk": strings.Repeat("x", 1000)}}
+	if status, out := e.do("POST", "/api/levels/x2/solve", code, body); status != 200 {
+		t.Fatalf("yechim: %d %v", status, out)
+	}
+	_, out := e.do("GET", "/api/progress", code, nil)
+	stored, _ := json.Marshal(out["levels"].([]any)[0].(map[string]any)["circuit"])
+	var back sim.Circuit
+	json.Unmarshal(stored, &back)
+	for i, g := range back.Gates {
+		if g.ID != fmt.Sprintf("g%d", i+1) || g.X != -sim.StoreCoord || g.Y != 12 {
+			t.Fatalf("saqlangan element: %+v", g)
+		}
+	}
+	if len(stored) >= len(sent) || strings.Contains(string(stored), "junk") || strings.Contains(string(stored), "000000") {
+		t.Fatalf("saqlangan sxema ixcham emas (%d → %d): %s", len(sent), len(stored), stored)
+	}
+	// Ixcham sxema o'sha sxema: qayta yuborilsa ham to'g'ri, o'sha element soni.
+	if status, out := e.do("POST", "/api/levels/x2/solve", code, map[string]any{"circuit": back}); status != 200 || out["gates"].(float64) != float64(len(base.Gates)) {
+		t.Fatalf("qayta yuborish: %d %v", status, out)
+	}
+}
+
+// Hajm chegarasi: eng katta to'g'ri sxema (64 element, hamma kirish ulangan, chekka koordinatalar) sig'adi,
+// undan kattasi rad etiladi.
+func TestStoredCircuitCap(t *testing.T) {
+	long := ""
+	pack, _ := levels.Load()
+	for _, l := range pack.Levels {
+		for _, in := range l.Inputs {
+			if len(in) > len(long) {
+				long = in
+			}
+		}
+	}
+	worst := sim.Circuit{}
+	for i := range sim.MaxGates {
+		id := fmt.Sprintf("gate_%011d", i)
+		worst.Gates = append(worst.Gates, sim.Gate{ID: id, Type: "XNOR", X: -1e5, Y: -1e5})
+		worst.Wires = append(worst.Wires, sim.Wire{From: "in:" + long, To: id + ":0"}, sim.Wire{From: "in:" + long, To: id + ":1"})
+	}
+	for i := range 4 {
+		worst.Wires = append(worst.Wires, sim.Wire{From: fmt.Sprintf("gate_%011d", 63-i), To: fmt.Sprintf("out:%s%d", long, i)})
+	}
+	if s, ok := storedCircuit(worst); !ok {
+		t.Fatalf("eng katta to'g'ri sxema sig'madi: %d bayt", len(s))
+	}
+	for range 3 * sim.MaxGates {
+		worst.Gates = append(worst.Gates, sim.Gate{ID: "x", Type: "XNOR", X: -1e5, Y: -1e5})
+	}
+	if s, ok := storedCircuit(worst); ok {
+		t.Fatalf("chegaradan katta sxema qabul qilindi: %d bayt", len(s))
 	}
 }
 

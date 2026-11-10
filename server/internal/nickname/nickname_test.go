@@ -50,3 +50,46 @@ func TestClean(t *testing.T) {
 		}
 	}
 }
+
+// Filtrni aylanib o'tish: to'liq kenglikdagi harflar oddiysiga aylanadi (va shunday saqlanadi),
+// matematik harflar va bo'sh ko'rinadigan "harflar" rad etiladi.
+func TestCleanDisguise(t *testing.T) {
+	notAllowed := []string{
+		"ｆｕｃｋ",     // to'liq kenglik
+		"ａｄｍｉｎ",    // to'liq kenglik
+		"ＦＵＣＫ ｙｏｕ", // to'liq kenglik, katta harf
+		"аdmin",    // kirillcha a
+		"ｘｕｙ１２３",   // to'liq kenglikdagi raqamlar ham
+	}
+	for _, in := range notAllowed {
+		if _, err := Clean(in); !errors.Is(err, ErrNotAllowed) {
+			t.Errorf("%q: %v", in, err)
+		}
+	}
+	invalid := []string{
+		"\U0001D41F\U0001D42E\U0001D41C\U0001D424", // matematik qalin f u c k
+		"\U0001D400\U0001D401",                     // matematik A B (haqoratsiz ham)
+		"Ali\U0001D7CE",                            // matematik raqam
+		"\u3164\u3164",                             // hangul to'ldiruvchilari: bo'sh ko'rinadi
+		"Ali\u3164",                                // "Ali" ga o'xshaydi
+		"\u115F\u1160",                             // hangul boshlang'ich/o'rta to'ldiruvchilar
+		"Ali\uFFA0",                                // yarim kenglikdagi to'ldiruvchi
+		"\u2800\u2800",                             // Braille bo'sh katagi
+		"a\u200Bdmin",                              // nol kenglikdagi bo'shliq
+		"ad\u0332min",                              // qo'shiluvchi belgi
+		"Ⓐdmin",
+	}
+	for _, in := range invalid {
+		if _, err := Clean(in); !errors.Is(err, ErrInvalid) {
+			t.Errorf("%q: %v", in, err)
+		}
+	}
+	for in, want := range map[string]string{"Ａｌｉ\u3000Ｖａｌｉ": "Ali Vali", "ｐｌａｙｅｒ＿７": "player_7", "Ёқубжон": "Ёқубжон"} {
+		if got, err := Clean(in); err != nil || got != want {
+			t.Errorf("%q: %q %v", in, got, err)
+		}
+	}
+	if !Offensive("ｆｕｃｋ") || Fold("ａ！～") != "a!~" {
+		t.Error("Offensive/Fold to'liq kenglikni ko'rmadi")
+	}
+}

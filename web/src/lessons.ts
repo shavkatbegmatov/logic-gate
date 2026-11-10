@@ -5,6 +5,7 @@ import { computed, effect, signal } from '@preact/signals';
 import { chapterLevels, chapters } from './levels';
 import { progress } from './state';
 import { load, save } from './storage';
+import { asString, cleanList } from './validate';
 
 /** Bo'limning barcha darajalari yechilganmi (xulosa ochiladi). */
 export function chapterDone(chapter: string): boolean {
@@ -14,8 +15,13 @@ export function chapterDone(chapter: string): boolean {
 
 const KEY = 'lg.lessons.v1';
 /** O'qilgan xulosalar (bo'lim id lari) — yangi ochilgani belgi bilan ko'rsatiladi. */
-export const lessonsRead = signal<string[]>(load(KEY, []));
+export const lessonsRead = signal<string[]>(load(KEY, [], (v) => cleanList(v, asString)));
 effect(() => save(KEY, lessonsRead.value));
+
+/** Boshqa o'quvchi (umumiy kompyuter) yoki «Progressni o'chirish». */
+export function resetLessons() {
+  lessonsRead.value = [];
+}
 
 export function markLessonRead(chapter: string) {
   if (!lessonsRead.value.includes(chapter)) lessonsRead.value = [...lessonsRead.value, chapter];

@@ -758,7 +758,7 @@ export const levels = [
     chapter: 'automata',
     title: 'Yuqoriga-pastga',
     task: "Ikki bitli son Q1 Q0 har taktdan keyin o'zgarsin: U = 1 bo'lsa — bittaga oshsin, U = 0 bo'lsa — bittaga kamaysin. 11 dan keyin 00 keladi, 00 dan pastga — 11. Boshida 00.",
-    hint: "Q0 har taktda almashadi. Q1 esa oshishda Q0 = 1 bo'lganda, kamayishda Q0 = 0 bo'lganda almashadi. Q1 ning keyingi qiymati — Q1, U va Q0 ning XOR lari bilan ifodalanadi.",
+    hint: "Q0 har taktda almashadi. Q1 esa oshishda Q0 = 1 bo'lganda, kamayishda Q0 = 0 bo'lganda almashadi. Ya'ni Q1 U = Q0 bo'lganda almashadi: Q1 ning keyingi qiymati — Q1 ⊕ U ⊕ ¬Q0.",
     inputs: ['U'],
     outputs: ['Q1', 'Q0'],
     gates: ['DFF', 'NOT', 'AND', 'OR', 'XOR'],

@@ -33,6 +33,9 @@ export const uz = {
     chapterProgress: (solved: number, total: number, stars: number, max: number) => `${solved}/${total} daraja · ${stars}/${max} ★`,
     allDone: 'Hamma darajalar yechildi!',
     allDoneSub: "Endi yulduzlarni to'plang",
+    needStars: (n: number, chapter: number) => `${chapter}-bo'lim uchun yana ${n} ★ kerak`,
+    improveHint: "Yechilgan darajani kamroq element bilan qayta yeching — yulduz qo'shiladi.",
+    improve: 'Yaxshilash',
     // Statik qo'llanma (scripts/pages.mjs) — qidiruv tizimlari uchun ham.
     guide: "Mantiqiy elementlar qo'llanmasi",
     guideUrl: '/mantiqiy-elementlar/',
@@ -153,6 +156,14 @@ export const uz = {
     text: "Bu — tiklash kodingiz. Uni daftaringizga yozib qo'ying: boshqa kompyuter yoki telefonda Sozlamalar → «Progressni tiklash» orqali shu kod bilan davom etasiz.",
     hint: "Kodni hech kimga bermang. U Sozlamalarda ham turadi.",
     ok: 'Yozib oldim',
+    recreated: "Eski profilingiz serverda topilmadi — shu taxallus bilan yangisi ochildi, natijalaringiz unga yuboriladi. Yangi kodni yozib oling.",
+  },
+
+  crash: {
+    title: 'Bu ekranda xato chiqdi',
+    text: "Natijalaringiz joyida. Bosh sahifaga qayting yoki sahifani qayta yuklang.",
+    home: 'Bosh sahifa',
+    reload: 'Qayta yuklash',
   },
 
   share: {
@@ -658,6 +669,9 @@ export const ru: typeof uz = {
     chapterProgress: (solved: number, total: number, stars: number, max: number) => `${solved}/${total} ур. · ${stars}/${max} ★`,
     allDone: 'Все уровни пройдены!',
     allDoneSub: 'Теперь соберите все звёзды',
+    needStars: (n: number, chapter: number) => `Для главы ${chapter} нужно ещё ${n} ★`,
+    improveHint: 'Решите пройденный уровень меньшим числом элементов — добавятся звёзды.',
+    improve: 'Улучшить',
     guide: 'Справочник: логические элементы',
     guideUrl: '/ru/logicheskie-elementy/',
   },
@@ -774,6 +788,14 @@ export const ru: typeof uz = {
     text: 'Это ваш код восстановления. Запишите его в тетрадь: на другом компьютере или телефоне вы продолжите с ним через Настройки → «Восстановить прогресс».',
     hint: 'Никому не передавайте код. Он также есть в Настройках.',
     ok: 'Записал(а)',
+    recreated: 'Ваш прежний профиль не найден на сервере — создан новый с тем же ником, результаты будут отправлены в него. Запишите новый код.',
+  },
+
+  crash: {
+    title: 'На этом экране произошла ошибка',
+    text: 'Ваши результаты на месте. Вернитесь на главную или перезагрузите страницу.',
+    home: 'На главную',
+    reload: 'Перезагрузить',
   },
 
   share: {
@@ -1270,7 +1292,8 @@ export let t: typeof uz = uz;
 export const lang = signal<Lang>('uz');
 
 export function setLang(l: Lang) {
-  const next: Lang = l in dicts ? l : 'uz';
+  // `in` emas: meros kalitlar ("constructor") ham o'tib, matnlar o'rniga Object qolardi.
+  const next: Lang = Object.prototype.hasOwnProperty.call(dicts, l) ? l : 'uz';
   t = dicts[next];
   try {
     document.documentElement.lang = next;

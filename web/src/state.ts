@@ -2,11 +2,12 @@ import type { Theme } from './theme';
 import { computed, effect, signal } from '@preact/signals';
 import { setLang, type Lang } from './i18n';
 import { deviceLang, takeUrlLang } from './lang-detect';
-import { chapterLevels, chapterOf, chapters, levelById, levels } from './levels';
-import type { Chapter, Circuit, Level } from './sim/types';
+import { chapterLevels, chapterOf, chapters, levelById, levels, newGates } from './levels';
+import type { Chapter, Circuit, GateType, Level } from './sim/types';
 import { load, save, saveLater } from './storage';
 import { assignedLevels } from './tasks';
 import { launchLanguage } from './telegram';
+import { asNumber, asString, cleanCircuit, cleanList, cleanRecord, cleanResult, hasOwn, isObj } from './validate';
 
 const KEYS = {
   progress: 'lg.progress.v1',
@@ -16,6 +17,8 @@ const KEYS = {
   sandbox: 'lg.sandbox.v1',
   intro: 'lg.intro.v1',
   hints: 'lg.hints.v1',
+  /** Sertifikatdagi ism (bolaning haqiqiy ismi bo'lishi mumkin; serverga yuborilmaydi). */
+  certName: 'lg.certName.v1',
 };
 export { KEYS };
 
@@ -47,8 +50,25 @@ export interface Settings {
  */
 export const freshDevice = load(KEYS.progress, null) === null && load(KEYS.profile, null) === null;
 
-export const progress = signal<Record<string, LevelProgress>>(load(KEYS.progress, {}));
-export const profile = signal<Profile | null>(load(KEYS.profile, null));
+// Saqlangan qiymatlar shakli (validate.ts): buzuq yozuv ilovani to'xtatmasin.
+const cleanProgress = (v: unknown) => cleanRecord(v, cleanResult);
+const cleanProfile = (v: unknown): Profile | null =>
+  isObj(v) && typeof v.id === 'string' && typeof v.nickname === 'string' && typeof v.code === 'string'
+    ? { id: v.id, nickname: v.nickname, code: v.code }
+    : null;
+const cleanSettings = (v: unknown): Partial<Settings> | null => {
+  if (!isObj(v)) return null;
+  const out: Partial<Settings> = {};
+  if (typeof v.sound === 'boolean') out.sound = v.sound;
+  if (v.lang === 'uz' || v.lang === 'ru') out.lang = v.lang;
+  // theme.ts dan THEMES olinmaydi: u state.ts ni import qiladi (aylana).
+  if (v.theme === 'plata' || v.theme === 'daftar' || v.theme === 'auto') out.theme = v.theme;
+  return out;
+};
+const loadSettings = (): Settings => ({ sound: true, ...load(KEYS.settings, {}, cleanSettings) });
+
+export const progress = signal<Record<string, LevelProgress>>(load(KEYS.progress, {}, cleanProgress));
+export const profile = signal<Profile | null>(load(KEYS.profile, null, cleanProfile));
 export const settings = signal<Settings>(initialSettings());
 
 /**
@@ -56,13 +76,13 @@ export const settings = signal<Settings>(initialSettings());
  * ochilishda — Telegram yoki brauzer tili. Avval o'ynab kelgan o'yinchining tili o'zicha o'zgarmaydi.
  */
 function initialSettings(): Settings {
-  const stored = { sound: true, ...load<Partial<Settings>>(KEYS.settings, {}) };
+  const stored = loadSettings();
   const lang = takeUrlLang() ?? stored.lang ?? (freshDevice ? deviceLang(launchLanguage) : null);
   return lang ? { ...stored, lang } : stored;
 }
 
 /** Tanishtiruv kartasi ko'rsatilgan elementlar. */
-export const seenIntro = signal<string[]>(load(KEYS.intro, []));
+export const seenIntro = signal<string[]>(load(KEYS.intro, [], (v) => cleanList(v, asString)));
 
 effect(() => save(KEYS.progress, progress.value));
 effect(() => save(KEYS.intro, seenIntro.value));
@@ -96,23 +116,23 @@ const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
  */
 function adoptFromStorage(key: string | null) {
   if (key === null || key === KEYS.progress) {
-    const merged = mergeProgress(progress.value, load(KEYS.progress, {}));
+    const merged = mergeProgress(progress.value, load(KEYS.progress, {}, cleanProgress));
     if (merged !== progress.value) progress.value = merged;
   }
   if (key === null || key === KEYS.profile) {
-    const p = load<Profile | null>(KEYS.profile, null);
+    const p = load(KEYS.profile, null, cleanProfile);
     if (!same(p, profile.value)) profile.value = p;
   }
   if (key === null || key === KEYS.settings) {
-    const s = { sound: true, ...load<Partial<Settings>>(KEYS.settings, {}) };
+    const s = loadSettings();
     if (!same(s, settings.value)) settings.value = s;
   }
   if (key === null || key === KEYS.drafts) {
     // Boshqa tabdagi qoralamalar qo'shiladi; shu tabdagisi (bir xil daraja) o'zgarmaydi.
-    const stored = load<Record<string, Circuit>>(KEYS.drafts, {});
+    const stored = load(KEYS.drafts, {}, cleanDrafts);
     let added = false;
-    for (const [id, c] of Object.entries(stored ?? {})) {
-      if (!(id in drafts)) {
+    for (const [id, c] of Object.entries(stored)) {
+      if (!hasOwn(drafts, id)) {
         drafts[id] = c;
         added = true;
       }
@@ -159,9 +179,34 @@ export function nextLevel(level: Level): Level | undefined {
   return levels[levels.indexOf(level) + 1];
 }
 
-/** "O'ynash" tugmasi uchun: birinchi ochiq, lekin yechilmagan daraja. */
+/**
+ * "O'ynash" tugmasi uchun: birinchi ochiq, lekin yechilmagan daraja. Bunday daraja qolmagan bo'lsa
+ * (keyingi bo'limga yulduz yetmaydi) — yulduzini oshirsa bo'ladigan birinchi yechilgan daraja.
+ */
 export function continueLevel(): Level {
-  return levels.find((l) => levelUnlocked(l) && !progress.value[l.id]) ?? levels[0];
+  return (
+    levels.find((l) => levelUnlocked(l) && !progress.value[l.id]) ??
+    levels.find((l) => (progress.value[l.id]?.stars ?? 3) < 3) ??
+    levels[0]
+  );
+}
+
+/** Ochiq yechilmagan daraja qolmagan, keyingi bo'lim esa yopiq: qaysi bo'lim va yana nechta yulduz kerak. */
+export function starsShortfall(): { chapter: Chapter; need: number } | null {
+  if (levels.some((l) => levelUnlocked(l) && !progress.value[l.id])) return null;
+  const ch = chapters.find((c) => !chapterUnlocked(c));
+  return ch ? { chapter: ch, need: ch.unlockStars - totalStars.value } : null;
+}
+
+/**
+ * Darajadagi hali tanishtirilmagan elementlar. Odatda — shu daraja kiritgan yangilari; o'qituvchi vazifasi
+ * orqali oldingi darajalar o'tkazib yuborilgan bo'lsa, ularniki ham. Yechilgan darajada kiritilgan element
+ * tanish hisoblanadi (tanishtiruv kartalaridan oldingi o'yinchilarga hammasi birdan chiqmasin).
+ */
+export function unseenGates(level: Level): GateType[] {
+  const known = new Set<string>(seenIntro.value);
+  for (const l of levels) if (progress.value[l.id]) for (const g of newGates(l)) known.add(g);
+  return level.gates.filter((g) => !known.has(g));
 }
 
 /** Yechimni saqlaydi, agar u avvalgisidan yaxshiroq bo'lsa. */
@@ -183,7 +228,10 @@ export function markSynced(levelId: string) {
 }
 
 // Har bir daraja uchun tugallanmagan sxema (qoralama).
-const drafts: Record<string, Circuit> = load(KEYS.drafts, {});
+function cleanDrafts(v: unknown): Record<string, Circuit> | null {
+  return cleanRecord(v, cleanCircuit);
+}
+const drafts: Record<string, Circuit> = load(KEYS.drafts, {}, cleanDrafts);
 
 export function getDraft(levelId: string): Circuit | undefined {
   return drafts[levelId];
@@ -223,7 +271,7 @@ export function pruneDailyDrafts(today: number, keep?: string) {
 }
 
 // Har bir daraja uchun ochilgan maslahatlar soni.
-const hintSteps: Record<string, number> = load(KEYS.hints, {});
+const hintSteps: Record<string, number> = load(KEYS.hints, {}, (v) => cleanRecord(v, asNumber));
 
 export function hintStep(levelId: string): number {
   return hintSteps[levelId] ?? 0;

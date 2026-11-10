@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasProgress, importData, merge, moveUrl, onOldHost } from './migrate';
+import { fromOldHost, hasProgress, importData, merge, moveUrl, onOldHost } from './migrate';
 
 /** localStorage o'rnida oddiy xotira. */
 function memStore(init: Record<string, unknown> = {}) {
@@ -92,6 +92,26 @@ describe("eski manzildan ko'chish", () => {
     const same = memStore({ 'lg.profile.v1': { id: 'eski', nickname: 'TEST_USER', code: 'AAAA-AAAA-AAAA-AAAA' } });
     importData(code, same);
     expect(same.dump()['lg.progress.v1']).toEqual({ b1: level(1), b2: level(5) });
+  });
+
+  it("ko'chirish havolasi faqat eski manzildan kelganda qabul qilinadi", () => {
+    expect(fromOldHost('http://logic-gate.170.168.6.82.sslip.io/')).toBe(true);
+    expect(fromOldHost('https://boshqa.example.uz/')).toBe(false);
+    expect(fromOldHost('https://t.me/')).toBe(false);
+    expect(fromOldHost('')).toBe(false);
+  });
+
+  it("natija bo'lmagan yozuvlar (null, son) ko'chirilmaydi — ilova ochilishida to'xtamasin", () => {
+    const code = btoa(JSON.stringify({ 'lg.progress.v1': { b1: level(1), b2: null, b3: 5, __proto__x: 'x' } }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    const fresh = memStore();
+    importData(code, fresh);
+    expect(fresh.dump()['lg.progress.v1']).toEqual({ b1: level(1) });
+    const mine = memStore({ 'lg.progress.v1': { b1: level(2) } });
+    importData(code, mine);
+    expect(mine.dump()['lg.progress.v1']).toEqual({ b1: level(1) });
   });
 
   it('buzilgan kod hech narsani buzmaydi', () => {

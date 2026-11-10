@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"slices"
@@ -33,12 +32,13 @@ type dailyEntryJSON struct {
 func (s *Server) today() int { return levels.DayOf(s.now()) }
 
 // dayParam yo'ldagi {day} ni o'qiydi; masalasi bor kun bo'lmasa, 404 yozib false qaytaradi.
+// Kun [FirstDay, bugun] oralig'ida bo'lishi shart: kelajak masalasi oldindan ko'rinmasin.
 func (s *Server) dayParam(w http.ResponseWriter, r *http.Request) (int, *levels.Puzzle, bool) {
 	day, err := strconv.Atoi(r.PathValue("day"))
 	if r.PathValue("day") == "today" {
 		day, err = s.today(), nil
 	}
-	if err == nil && day <= s.today() {
+	if err == nil && day >= s.daily.FirstDay() && day <= s.today() {
 		if p, ok := s.daily.For(day); ok {
 			return day, p, true
 		}
@@ -72,7 +72,7 @@ func (s *Server) writeDaily(w http.ResponseWriter, r *http.Request, day int, p *
 	today := s.today()
 	solvers, bestGates, err := s.store.DailyStats(r.Context(), day)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	resp := map[string]any{
@@ -92,11 +92,11 @@ func (s *Server) writeDaily(w http.ResponseWriter, r *http.Request, day int, p *
 		if e, err := s.store.DailyRank(r.Context(), day, me.ID); err == nil {
 			resp["me"] = dailyMeJSON{Rank: e.Rank, Gates: e.Gates, Stars: e.Stars}
 		} else if !errors.Is(err, store.ErrNotFound) {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 		if resp["streak"], err = s.store.DailyStreak(r.Context(), me.ID, today); err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 	}
@@ -129,19 +129,17 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnprocessableEntity, wrong)
 		return
 	}
-	if req.Circuit.Gates == nil {
-		req.Circuit.Gates = []sim.Gate{}
+	circuit, ok := storedCircuit(req.Circuit)
+	if !ok {
+		writeErr(w, http.StatusBadRequest, "circuit_too_large")
+		return
 	}
-	if req.Circuit.Wires == nil {
-		req.Circuit.Wires = []sim.Wire{}
-	}
-	circuit, _ := json.Marshal(req.Circuit)
 	player := playerFrom(r)
 	best, improved, err := s.store.SaveDaily(r.Context(), player.ID, day, store.Solution{
-		Gates: gates, Stars: sim.Stars(p.Goal, gates), Circuit: string(circuit),
+		Gates: gates, Stars: sim.Stars(p.Goal, gates), Circuit: circuit,
 	})
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	// Kechagi masala arxivda: uning statistikasi o'zgardi.
@@ -150,17 +148,17 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 	}
 	solvers, bestGates, err := s.store.DailyStats(r.Context(), day)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	spread, err := s.store.DailySpread(r.Context(), day)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	streak, err := s.store.DailyStreak(r.Context(), player.ID, today)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	// Mijoz seriyaga bugungi lokal natijani qo'shish kerakmi, shundan biladi.
@@ -169,7 +167,7 @@ func (s *Server) solveDaily(w http.ResponseWriter, r *http.Request) {
 		if _, err := s.store.DailyRank(r.Context(), today, player.ID); err == nil {
 			todaySolved = true
 		} else if !errors.Is(err, store.ErrNotFound) {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 	}
@@ -222,13 +220,13 @@ func (s *Server) dailyArchive(w http.ResponseWriter, r *http.Request) {
 	if from <= to {
 		var err error
 		if days, err = s.archiveDays(r.Context(), today, from, to); err != nil {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 		if me := s.optionalPlayer(r); me != nil {
 			mine, err := s.store.PlayerDailies(r.Context(), me.ID, from, to)
 			if err != nil {
-				s.internal(w, err)
+				s.internal(w, r, err)
 				return
 			}
 			if len(mine) > 0 {
@@ -285,7 +283,7 @@ func (s *Server) dailyLeaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 	top, err := s.store.DailyLeaderboard(r.Context(), day, dailyBoardSize)
 	if err != nil {
-		s.internal(w, err)
+		s.internal(w, r, err)
 		return
 	}
 	me := s.optionalPlayer(r)
@@ -299,7 +297,7 @@ func (s *Server) dailyLeaderboard(w http.ResponseWriter, r *http.Request) {
 		if e, err := s.store.DailyRank(r.Context(), day, me.ID); err == nil {
 			resp["me"] = dailyEntryJSON{Rank: e.Rank, Nickname: e.Nickname, Gates: e.Gates, Stars: e.Stars, Me: true}
 		} else if !errors.Is(err, store.ErrNotFound) {
-			s.internal(w, err)
+			s.internal(w, r, err)
 			return
 		}
 	}

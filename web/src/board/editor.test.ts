@@ -37,6 +37,47 @@ describe('ekran ↔ dunyo koordinatalari', () => {
   });
 });
 
+describe('tekshiruv paytida sxema qulf', () => {
+  it("klaviaturadan kelgan buyruqlar ham sxema, kirishlar va taktni o'zgartirmaydi", () => {
+    const ed = make(false, 800, 500);
+    ed.connect('in:A', 'g1:0');
+    const before = ed.circuit.value;
+    ed.busy.value = true;
+    ed.addGateAtCenter('AND');
+    ed.connect('in:B', 'g1:1');
+    ed.undo();
+    ed.clear();
+    ed.selection.value = { kind: 'gate', id: 'g1' };
+    ed.removeSelection();
+    ed.toggleInput(0);
+    ed.tick();
+    ed.beginDrag();
+    ed.dragGate('g1', 400, 400);
+    ed.endDrag();
+    expect(ed.circuit.value).toBe(before);
+    expect(ed.bits.value).toEqual([0, 0]);
+    expect(ed.history.value).toEqual([]);
+    // Tekshiruvning o'zi qatorlarni almashtiradi — bu ruxsat.
+    ed.setRow(3);
+    expect(ed.bits.value).toEqual([1, 1]);
+    ed.busy.value = false;
+    ed.undo();
+    expect(ed.circuit.value.wires).toEqual([]);
+  });
+
+  it("element surilishi sxema shaklini (soni, D-trigger) o'zgartirmaydi — ekranlar qayta chizilmaydi", () => {
+    const ed = make(false, 800, 500);
+    const shape = ed.shape.value;
+    ed.beginDrag();
+    ed.dragGate('g1', 300, 200);
+    expect(ed.shape.value).toBe(shape);
+    ed.endDrag();
+    expect(ed.shape.value).toBe(shape);
+    ed.addGateAtCenter('AND');
+    expect(ed.shape.value).toEqual({ gates: 2, wires: 0, dff: false });
+  });
+});
+
 describe('fit', () => {
   it('vertikal rejimda kontent vazifa qatori ostida va ekran ichida, masshtab kattaroq', () => {
     const inset = 60;

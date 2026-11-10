@@ -18,7 +18,15 @@ vi.mock('./api', async (orig) => {
         if (!p) throw new real.ApiError(401, 'unauthorized');
         return { id: p.id, nickname: p.nickname, createdAt: 0 };
       },
-      progress: async () => ({ levels: byCode()?.levels ?? [] }),
+      progress: async () => {
+        const p = byCode();
+        if (!p) throw new real.ApiError(401, 'unauthorized');
+        return { levels: p.levels };
+      },
+      createPlayer: async (nickname: string) => {
+        players.CCCCCCCCCCCCCCCC = { id: 'yangi', nickname, levels: [] };
+        return { id: 'yangi', nickname, code: 'CCCC-CCCC-CCCC-CCCC', createdAt: 0 };
+      },
       solve: async (levelId: string) => {
         solved.push({ by: profile.value?.id, levelId });
         return {};
@@ -29,7 +37,7 @@ vi.mock('./api', async (orig) => {
 vi.mock('./daily', async (orig) => ({ ...(await orig<typeof import('./daily')>()), syncDaily: async () => {} }));
 
 const { profile, progress } = await import('./state');
-const { formatCode, restoreProfile } = await import('./sync');
+const { formatCode, newProfileCode, restoreProfile, syncProgress } = await import('./sync');
 
 const circuit = { gates: [], wires: [] };
 const result = (gates: number, synced: boolean) => ({ stars: 3, gates, circuit, at: 1, synced });
@@ -78,6 +86,24 @@ describe('tiklash kodi: umumiy kompyuter', () => {
     profile.value = { id: 'ali', nickname: 'Ali', code: 'AAAA-AAAA-AAAA-AAAA' };
     expect(await pending).toBe(false);
     expect(profile.value?.id).toBe('ali');
+  });
+
+  it("'yuborilgan' natijani server bilmasa (baza zaxiradan tiklangan) — qayta yuboriladi", async () => {
+    const built = { gates: [{ id: 'g1', type: 'NOT' as const, x: 0, y: 0 }], wires: [] };
+    profile.value = { id: 'ali', nickname: 'Ali', code: 'AAAA-AAAA-AAAA-AAAA' };
+    progress.value = { b1: { ...result(1, true), circuit: built } };
+    await syncProgress();
+    expect(solved).toEqual([{ by: 'ali', levelId: 'b1' }]);
+  });
+
+  it('server profilni bilmasa — shu taxallus bilan yangisi ochiladi, kodi ko\'rsatiladi, natijalar unga ketadi', async () => {
+    const built = { gates: [{ id: 'g1', type: 'NOT' as const, x: 0, y: 0 }], wires: [] };
+    profile.value = { id: 'yoq', nickname: 'Ali', code: 'ZZZZ-ZZZZ-ZZZZ-ZZZZ' };
+    progress.value = { b1: { ...result(1, true), circuit: built } };
+    await syncProgress();
+    expect(profile.value).toEqual({ id: 'yangi', nickname: 'Ali', code: 'CCCC-CCCC-CCCC-CCCC' });
+    expect(newProfileCode.value).toBe('CCCC-CCCC-CCCC-CCCC');
+    expect(solved).toEqual([{ by: 'yangi', levelId: 'b1' }]);
   });
 
   it('kod ko\'rinishi', () => {
