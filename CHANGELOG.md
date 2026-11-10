@@ -5,6 +5,13 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.16.0 — 2026-11-11
+
+- O'yin ko'rinishi yangilandi: ortiqcha hoshiyalar olib tashlandi, sarlavhalar yirikroq, ranglar sokinroq — asosiy narsa darhol ko'rinadi.
+- Bosh sahifada ishlaydigan sxema: ikkala kalitni yoqing — chiroq yonadi.
+- Maydondagi elementlar qalinroq chizilgan, yozuvlari o'qilishi oson.
+- Kompyuterda bosh sahifa ikki ustunli: chapda o'yin, o'ngda kunlik masala va boshqa bo'limlar.
+
 ## 2.15.0 — 2026-11-10
 
 - Tekshiruv animatsiyasi kompyuterda animatsiya effektlari o'chirilgan bo'lsa ham ko'rinadi (ishxona va maktab kompyuterlarida ko'pincha shunday).

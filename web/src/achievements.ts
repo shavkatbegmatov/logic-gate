@@ -3,7 +3,7 @@ import { computed, effect, signal } from '@preact/signals';
 import { sfx } from './audio';
 import { showToast } from './components/Toast';
 import type { IconName } from './components/ui';
-import { customStore } from './custom';
+import { customStore } from './custom-store';
 import { dailyHistory, streak } from './daily';
 import { t } from './i18n';
 import { chapterLevels, chapters, levelById, levels } from './levels';

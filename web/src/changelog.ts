@@ -18,6 +18,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.16.0',
+    date: '2026-11-11',
+    uz: [
+      "O'yin ko'rinishi yangilandi: ortiqcha hoshiyalar olib tashlandi, sarlavhalar yirikroq, ranglar sokinroq — asosiy narsa darhol ko'rinadi.",
+      'Bosh sahifada ishlaydigan sxema: ikkala kalitni yoqing — chiroq yonadi.',
+      "Maydondagi elementlar qalinroq chizilgan, yozuvlari o'qilishi oson.",
+      "Kompyuterda bosh sahifa ikki ustunli: chapda o'yin, o'ngda kunlik masala va boshqa bo'limlar.",
+    ],
+    ru: [
+      'Обновили внешний вид игры: убрали лишние рамки, заголовки стали крупнее, цвета спокойнее — главное видно сразу.',
+      'На главной — работающая схема: включите оба переключателя, и лампа загорится.',
+      'Элементы на поле нарисованы толще, подписи читаются легче.',
+      'На компьютере главная в две колонки: слева игра, справа задача дня и остальные разделы.',
+    ],
+  },
+  {
     version: '2.15.0',
     date: '2026-11-10',
     uz: [

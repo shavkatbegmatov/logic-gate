@@ -107,6 +107,7 @@ export function TopBar({ title, sub, onBack, children }: {
 
 const ICONS = {
   back: 'M15 5 8 12l7 7',
+  chevron: 'M9 5l7 7-7 7',
   undo: 'M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
   redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
   trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',

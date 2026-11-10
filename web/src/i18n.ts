@@ -36,6 +36,10 @@ export const uz = {
     needStars: (n: number, chapter: number) => `${chapter}-bo'lim uchun yana ${n} ★ kerak`,
     improveHint: "Yechilgan darajani kamroq element bilan qayta yeching — yulduz qo'shiladi.",
     improve: 'Yaxshilash',
+    // Bosh sahifadagi ishlaydigan sxema (components/HeroGate.tsx).
+    heroLabel: 'AND elementi: ikki kalit va chiroq',
+    heroHint: 'Ikkala kalitni yoqing — chiroq yonadi',
+    heroOn: 'AND (VA): ikkala kirish 1 — chiqish ham 1',
     // Statik qo'llanma (scripts/pages.mjs) — qidiruv tizimlari uchun ham.
     guide: "Mantiqiy elementlar qo'llanmasi",
     guideUrl: '/mantiqiy-elementlar/',
@@ -683,6 +687,9 @@ export const ru: typeof uz = {
     needStars: (n: number, chapter: number) => `Для главы ${chapter} нужно ещё ${n} ★`,
     improveHint: 'Решите пройденный уровень меньшим числом элементов — добавятся звёзды.',
     improve: 'Улучшить',
+    heroLabel: 'Элемент AND: два переключателя и лампа',
+    heroHint: 'Включите оба переключателя — лампа загорится',
+    heroOn: 'AND (И): оба входа 1 — на выходе тоже 1',
     guide: 'Справочник: логические элементы',
     guideUrl: '/ru/logicheskie-elementy/',
   },

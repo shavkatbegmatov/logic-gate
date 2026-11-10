@@ -2,7 +2,7 @@
 import { signal } from '@preact/signals';
 import { resetAchievements } from './achievements';
 import { api, ApiError, type SolveResult } from './api';
-import { resetCustom } from './custom';
+import { resetCustom } from './custom-store';
 import { showToast } from './components/Toast';
 import { resetDaily, syncDaily, unsyncRecentDaily } from './daily';
 import { t } from './i18n';

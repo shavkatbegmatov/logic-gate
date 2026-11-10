@@ -1,6 +1,7 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { refreshMyTasks } from '../classes';
+import { HeroGate } from '../components/HeroGate';
 import { JoinForm } from '../components/JoinForm';
 import { HomeTaskCard } from '../components/TaskView';
 import { canOfferInstall, dismissInstall, promptInstall } from '../install';
@@ -30,26 +31,48 @@ export function Home() {
     <div class="screen home">
       <div class="home-scroll">
         <div class="home-inner">
-          <LangToggle />
-          <Logo />
-          {onOldHost() && hasProgress() && <MoveBanner />}
-          <p class="tagline">{profile.value ? t.home.hello(profile.value.nickname) : t.tagline}</p>
-          {newsFor(started || !!profile.value) && <NewsBanner />}
-          <HomeTaskCard />
-          {canOfferInstall.value && !inTelegram && solvedCount.value >= 2 && <InstallBanner />}
-          <ContinueCard />
-          <DailyCard />
-          <ShareButtons text={t.share.inviteText} label={t.share.invite} />
-          {TG_APP_URL && !inTelegram && (
-            <a class="tg-link" href={TG_APP_URL} target="_blank" rel="noopener noreferrer">
-              <Icon name="telegram" /> {t.telegram.play}
-            </a>
-          )}
-          {!profile.value && started && (
-            <div class="card">
-              <JoinForm />
+          <header class="home-top">
+            <h1 class="brand">{t.appName}</h1>
+            <LangToggle />
+          </header>
+          {/* O'yin: sxema, navbatdagi daraja va bitta asosiy tugma. */}
+          <div class="home-lead">
+            <HeroGate />
+            <p class="home-hello">{profile.value ? t.home.hello(profile.value.nickname) : t.tagline}</p>
+            {onOldHost() && hasProgress() && <MoveBanner />}
+            <HomeTaskCard />
+            <ContinueCard />
+          </div>
+          {/* Qolgan hammasi: bitta ro'yxat va vaqtinchalik xabarlar. */}
+          <div class="home-more">
+            {newsFor(started || !!profile.value) && <NewsBanner />}
+            {canOfferInstall.value && !inTelegram && solvedCount.value >= 2 && <InstallBanner />}
+            <div class="home-list">
+              <DailyRow />
+              <button class="home-row" onClick={() => go('archive')}>
+                <Icon name="archive" />
+                <span class="home-row-text">{t.daily.archiveLink}</span>
+                <span class="home-row-end">
+                  <Icon name="chevron" />
+                </span>
+              </button>
+              <ShareButtons text={t.share.inviteText} label={t.share.invite} row />
+              {TG_APP_URL && !inTelegram && (
+                <a class="home-row tg" href={TG_APP_URL} target="_blank" rel="noopener noreferrer">
+                  <Icon name="telegram" />
+                  <span class="home-row-text">{t.telegram.play}</span>
+                  <span class="home-row-end">
+                    <Icon name="chevron" />
+                  </span>
+                </a>
+              )}
             </div>
-          )}
+            {!profile.value && started && (
+              <div class="card">
+                <JoinForm />
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <HomeNav />
@@ -57,7 +80,7 @@ export function Home() {
   );
 }
 
-/** Asosiy kartochka: navbatdagi daraja — bo'limi, nomi, kichik sxemasi va bitta katta tugma. */
+/** Navbatdagi daraja: nomi (katta sarlavha), bo'limi, kichik sxemasi, yulduzlar chizig'i va bitta katta tugma. */
 function ContinueCard() {
   const allDone = solvedCount.value === levels.length;
   const level = continueLevel();
@@ -76,29 +99,32 @@ function ContinueCard() {
       : t.home.chapter(index + 1, ch.title);
   return (
     <section class="continue-card">
-      <div class="continue-head">
-        <span class="continue-chapter">{head}</span>
-        <span class="continue-stars">{t.home.stars(totalStars.value, MAX_STARS)}</span>
-      </div>
       <h2 class="continue-title">{allDone ? t.home.allDone : `${levelNumber(level)}. ${level.title}`}</h2>
+      <p class="continue-chapter">{head}</p>
       {short && <p class="muted continue-hint">{t.home.improveHint}</p>}
       {!allDone && (
         <button class="continue-board" onClick={() => go(`level/${level.id}`)} aria-label={t.home.continue} tabIndex={-1}>
           <MiniBoard level={level} circuit={draft} />
         </button>
       )}
-      <div class="continue-foot">
-        <span class="continue-progress">
-          {allDone
-            ? t.home.solved(solvedCount.value, levels.length)
-            : t.home.chapterProgress(solved, list.length, chapterStars(ch), list.length * 3)}
-        </span>
-        {/* autoFocus yo'q: har ochilishda tugma atrofida fokus halqasi chiqardi. */}
-        <button class="btn primary" onClick={() => go(allDone ? 'levels' : `level/${level.id}`)}>
-          <Icon name="play" />{' '}
-          {allDone ? t.home.levels : short ? t.home.improve : solvedCount.value > 0 || draft ? t.home.continue : t.home.play}
-        </button>
+      <div class="continue-meter">
+        <div class="continue-meter-row">
+          <span>
+            {allDone
+              ? t.home.solved(solvedCount.value, levels.length)
+              : t.home.chapterProgress(solved, list.length, chapterStars(ch), list.length * 3)}
+          </span>
+          <span class="continue-stars">{t.home.stars(totalStars.value, MAX_STARS)}</span>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <i style={{ '--fill': totalStars.value / MAX_STARS }} />
+        </div>
       </div>
+      {/* autoFocus yo'q: har ochilishda tugma atrofida fokus halqasi chiqardi. */}
+      <button class="btn primary big" onClick={() => go(allDone ? 'levels' : `level/${level.id}`)}>
+        <Icon name="play" />{' '}
+        {allDone ? t.home.levels : short ? t.home.improve : solvedCount.value > 0 || draft ? t.home.continue : t.home.play}
+      </button>
     </section>
   );
 }
@@ -197,49 +223,23 @@ function MoveBanner() {
   );
 }
 
-function DailyCard() {
+/** Kunlik boshqotirma — ro'yxatning birinchi qatori: holati, seriya; yechilmagan bo'lsa — miltillovchi nuqta. */
+function DailyRow() {
   const done = dailyHistory.value[todaySig.value];
   const days = streak.value;
   return (
-    <div class="daily-wrap">
-      <button class={`daily-card${done ? ' done' : ''}`} onClick={() => go('daily')}>
-        <Icon name="calendar" />
-        <span class="daily-text">
-          <strong>{t.daily.home}</strong>
-          <span class="muted">
-            {done ? t.daily.homeDone('★'.repeat(done.stars) + '☆'.repeat(3 - done.stars), done.gates) : t.daily.homeNew}
+    <button class="home-row" onClick={() => go('daily')}>
+      <Icon name="calendar" />
+      <span class="home-row-text">
+        <strong>{t.daily.home}</strong>
+        <span class="muted">{done ? t.daily.homeDone('★'.repeat(done.stars) + '☆'.repeat(3 - done.stars), done.gates) : t.daily.homeNew}</span>
+        {days > 0 && (
+          <span class="streak">
+            <Icon name="flame" /> {t.daily.streak(days)}
           </span>
-          {days > 0 && (
-            <span class="streak">
-              <Icon name="flame" /> {t.daily.streak(days)}
-            </span>
-          )}
-        </span>
-        {!done && <span class="dot" aria-hidden="true" />}
-      </button>
-      <button class="archive-link" onClick={() => go('archive')}>
-        <Icon name="archive" /> {t.daily.archiveLink}
-      </button>
-    </div>
-  );
-}
-
-function Logo() {
-  // Belgi — public/favicon.svg dagi bilan bir xil (ranglari mavzudan): ikki kontakt, 45° yo'llar,
-  // AND elementi va chiqishda yonib turgan chiroq.
-  return (
-    <div class="logo">
-      <svg viewBox="0 0 64 64" width="54" height="54" aria-hidden="true">
-        <path class="logo-wire" d="M8 15l7 7M8 49l7-7M44 32h6" />
-        <circle class="logo-dot" cx={6} cy={15} r={3.4} />
-        <circle class="logo-dot" cx={6} cy={49} r={3.4} />
-        <path class="logo-gate" d="M15 12h9a20 20 0 0 1 0 40h-9Z" />
-        <rect class="logo-led" x={50} y={26} width={10} height={12} rx={5} />
-        <circle class="logo-shine" cx={53.6} cy={30} r={1.5} />
-      </svg>
-      <h1 class="logo-text">
-        LOGIC<span>GATE</span>
-      </h1>
-    </div>
+        )}
+      </span>
+      <span class="home-row-end">{done ? <Icon name="chevron" /> : <span class="dot" aria-hidden="true" />}</span>
+    </button>
   );
 }

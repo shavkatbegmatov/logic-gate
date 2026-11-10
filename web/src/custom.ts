@@ -1,11 +1,8 @@
 // O'yinchilar yaratgan masalalar: qum qutidagi sxemadan masala, havola orqali ulashish.
 // Masala butunlay havolaning o'zida (#/p/<kod>) — server kerak emas, bazaga hech narsa yozilmaydi.
-import { signal } from '@preact/signals';
 import { t } from './i18n';
 import { compile, exampleFor, machineOf, truthTable, validate, type SimError } from './sim/sim';
 import { ALL_GATE_TYPES, GATE_ARITY, type Circuit, type GateType, type Level, type Machine, type Spec } from './sim/types';
-import { load, save } from './storage';
-import { cleanRecord, cleanScore, isNum, isObj } from './validate';
 
 export interface CustomPuzzle {
   title: string;
@@ -272,38 +269,6 @@ export function customLevel(p: CustomPuzzle, code: string): Level {
 }
 
 // ── Lokal natijalar ────────────────────────────────────────
-
-interface CustomStore {
-  solved: Record<string, { gates: number; stars: number; goal: number; at: number }>;
-  created: number;
-}
-
-const KEY = 'lg.custom.v1';
-const cleanStore = (v: unknown): CustomStore | null =>
-  isObj(v)
-    ? {
-        solved: (cleanRecord(v.solved, cleanScore) ?? {}) as CustomStore['solved'],
-        created: isNum(v.created) ? v.created : 0,
-      }
-    : null;
-export const customStore = signal<CustomStore>(load(KEY, { solved: {}, created: 0 }, cleanStore));
-
-function persist(next: CustomStore) {
-  customStore.value = next;
-  save(KEY, next);
-}
-
-export function recordCustom(id: string, gates: number, stars: number, goal: number) {
-  const prev = customStore.value.solved[id];
-  const improved = !prev || gates < prev.gates;
-  if (improved) persist({ ...customStore.value, solved: { ...customStore.value.solved, [id]: { gates, stars, goal, at: Date.now() } } });
-  return { improved, prev };
-}
-
-export function markCreated() {
-  persist({ ...customStore.value, created: customStore.value.created + 1 });
-}
-
-export function resetCustom() {
-  persist({ solved: {}, created: 0 });
-}
+// custom-store.ts da: o'yin ochilishida faqat natijalar kerak (yutuqlar, sinxronlash), bu modul esa
+// (kodlash, o'qish, tekshirish) kam ochiladigan ekranlar bilan birga yuklanadi.
+export { customStore, markCreated, recordCustom, resetCustom } from './custom-store';
