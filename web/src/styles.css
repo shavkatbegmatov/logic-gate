@@ -574,6 +574,10 @@ input[type='date']:focus {
   stroke-linejoin: round;
 }
 
+.mini-dot {
+  fill: var(--trace);
+}
+
 .mini-pin {
   fill: var(--panel);
   stroke: var(--copper);
@@ -1280,7 +1284,7 @@ input[type='date']:focus {
   cursor: pointer;
 }
 
-/* Sim — plata yo'li: to'g'ri burchak va 45° (geometry.ts wireRoute). Yoniq bo'lsa ostida yorug'lik
+/* Sim — plata yo'li: to'g'ri burchaklar 45° bilan kesilgan, kesishishda ko'prikcha (board/routing.ts). Yoniq bo'lsa ostida yorug'lik
    (Plata) yoki marker (Daftar). */
 .wire-line {
   fill: none;
@@ -1307,6 +1311,20 @@ input[type='date']:focus {
 .wire.sel .wire-line {
   stroke: var(--sel);
   stroke-dasharray: 8 5;
+}
+
+/* Tarmoqlanish nuqtasi (routing.ts): bitta manbadan ketgan simlar ayrilgan joy — ulangan. */
+.wire-dot {
+  fill: var(--trace);
+  pointer-events: none;
+}
+
+.wire-dot.on {
+  fill: var(--trace-on);
+}
+
+.wire-dot.idle {
+  opacity: 0.5;
 }
 
 .wire-ghost {

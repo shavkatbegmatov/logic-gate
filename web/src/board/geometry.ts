@@ -86,8 +86,10 @@ const STUB = 12;
 const CHAMFER = 10;
 
 /**
- * Sim — platadagi mis yo'l kabi: faqat gorizontal, vertikal va 45° qismlar. a — manba (chiqish porti,
- * sim o'ngga ketadi), b — qabul qiluvchi (kirish porti, sim chapdan keladi).
+ * Bitta simning oddiy yo'li (boshqa simlarni hisobga olmasdan). Maydonda simlar birgalikda yo'naltiriladi
+ * (routing.ts); u yerda shu funksiya ro'para portlar orasidagi to'g'ri sim va orqaga qaytuvchi sim uchun
+ * ishlatiladi. Sim — platadagi mis yo'l kabi: faqat gorizontal, vertikal va 45° qismlar. a — manba (chiqish
+ * porti, sim o'ngga ketadi), b — qabul qiluvchi (kirish porti, sim chapdan keladi).
  *  - joy yetsa: gorizontal → 45° qiyalik (o'rtada) → gorizontal;
  *  - yetmasa: gorizontal → vertikal → gorizontal (burchaklari routePath da kesiladi);
  *  - orqaga qaytuvchi sim (xotira sxemalaridagi teskari bog'lanish): o'ngga chiqib, aylanib keladi.

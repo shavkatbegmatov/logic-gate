@@ -7,7 +7,9 @@
 //
 // Bu modul ilova holatini import qilmaydi (audio.ts dan ham chaqiriladi).
 
-const SDK_URL = 'https://telegram.org/js/telegram-web-app.js';
+// Lokal sinov (pnpm dev): Telegram'siz soxta SDK — web/dev/tg-mock.js (VITE_TG_SDK_URL). Build'da yo'q.
+const SDK_URL =
+  (import.meta.env.DEV && (import.meta.env.VITE_TG_SDK_URL as string | undefined)) || 'https://telegram.org/js/telegram-web-app.js';
 const FLAG = 'lg.tg';
 
 /** Ishlatiladigan Telegram.WebApp qismi. */

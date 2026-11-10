@@ -1,6 +1,6 @@
 import { useSignal } from '@preact/signals';
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
 import { sfx } from '../audio';
 import { showToast } from '../components/Toast';
 import { t } from '../i18n';
@@ -8,8 +8,9 @@ import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
 import { GATE_ARITY, type Gate } from '../sim/types';
 import type { Editor } from './editor';
-import { GATE_H, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, routeMid, routePath, wirePath, wireRoute, type Point } from './geometry';
+import { GATE_H, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, routeMid, wirePath, type Point } from './geometry';
 import { GateShape } from './GateShape';
+import { routeAll, routeD } from './routing';
 
 type Drag =
   | { kind: 'pan'; sx: number; sy: number; lx: number; ly: number; moved: boolean }
@@ -366,12 +367,19 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
     if (g) deleteAt = vertical ? { x: g.x + 2, y: g.y + GATE_H + 12 } : { x: g.x + GATE_W - 2, y: g.y - 12 };
   }
 
+  // Simlar birgalikda yo'naltiriladi (routing.ts): faqat geometriya o'zgarganda — kirishlarni almashtirish
+  // yoki tekshiruv animatsiyasi har kadrda qayta hisoblatmaydi.
+  // Katta sxemada (40+ sim) element sudralayotganda har kadrda joy tanlanmaydi — qo'yib yuborilgach.
+  const quick = moving.value && wires.length > 40;
+  const geomKey = `${quick}|${lay.outX}|${spec.inputs.length}|${spec.outputs.length}|${JSON.stringify(gates)}|${JSON.stringify(wires)}`;
+  const routed = useMemo(() => routeAll(wires, gmap, lay, quick), [geomKey]);
+  const junctions = useMemo(() => new Set(routed.dots.map(({ at }) => `${at.x},${at.y}`)), [routed]);
+  const sharp = (p: Point) => junctions.has(`${p.x},${p.y}`);
+
   const wireEls = wires.map((w, i) => {
-    const a = portPoint(w.from, gmap, lay);
-    const b = portPoint(w.to, gmap, lay);
-    if (!a || !b) return null;
-    const route = wireRoute(a, b);
-    const d = routePath(route);
+    const route = routed.routes[i];
+    if (!route) return null;
+    const d = routeD(route, routed.hops[i], sharp);
     const live = reached(w.from, 1);
     const on = live && values.get(w.from) === 1;
     const front = wave !== null && stepOf(w.from, 1) === wave;
@@ -473,7 +481,15 @@ export function Board({ editor, expected, topInset = 0 }: Props) {
         <g transform={`translate(${view.tx},${view.ty}) scale(${view.s})${vertical ? ` ${TRANSPOSE}` : ''}`}>
           <rect class="board-bg" x={-5000} y={-5000} width={10000} height={10000} fill="url(#grid)" />
 
-          <g class="wires">{wireEls}</g>
+          <g class="wires">
+            {wireEls}
+            {/* Tarmoqlanish nuqtalari: bitta manbadan ketgan simlar shu yerda ayriladi (ulangan). */}
+            {routed.dots.map(({ net, at }) => {
+              const live = reached(net, 1);
+              const on = live && values.get(net) === 1;
+              return <circle key={`${net}@${at.x},${at.y}`} class={`wire-dot${on ? ' on' : ''}${live ? '' : ' idle'}`} cx={at.x} cy={at.y} r={4} />;
+            })}
+          </g>
 
           {gates.map((g) => {
             const live = reached(g.id, 0);

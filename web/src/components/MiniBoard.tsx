@@ -1,5 +1,6 @@
 import { GateShape } from '../board/GateShape';
-import { bounds, layout, outputColumn, portPoint, routePath, wireRoute } from '../board/geometry';
+import { bounds, layout, outputColumn } from '../board/geometry';
+import { routeAll, routeD } from '../board/routing';
 import type { Circuit, Gate, Level } from '../sim/types';
 
 const EMPTY: Circuit = { gates: [], wires: [] };
@@ -12,6 +13,10 @@ const EMPTY: Circuit = { gates: [], wires: [] };
 export function MiniBoard({ level, circuit = EMPTY }: { level: Level; circuit?: Circuit }) {
   const lay = layout(level, outputColumn(level.goal));
   const gmap = new Map<string, Gate>(circuit.gates.map((g) => [g.id, g]));
+  // Maydon bilan bir xil yo'llar: ko'prikchalar va tarmoqlanish nuqtalari bilan.
+  const routed = routeAll(circuit.wires, gmap, lay);
+  const junctions = new Set(routed.dots.map(({ at }) => `${at.x},${at.y}`));
+  const sharp = (p: { x: number; y: number }) => junctions.has(`${p.x},${p.y}`);
   const b = bounds(circuit, lay);
   const pad = 10;
   const ys = [...lay.inputs.values(), ...lay.outputs.values()].map((p) => p.y);
@@ -23,11 +28,13 @@ export function MiniBoard({ level, circuit = EMPTY }: { level: Level; circuit?: 
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
-      {circuit.wires.map((w) => {
-        const a = portPoint(w.from, gmap, lay);
-        const z = portPoint(w.to, gmap, lay);
-        return a && z ? <path key={`${w.from}>${w.to}`} class="mini-wire" d={routePath(wireRoute(a, z))} /> : null;
+      {circuit.wires.map((w, i) => {
+        const r = routed.routes[i];
+        return r ? <path key={`${w.from}>${w.to}`} class="mini-wire" d={routeD(r, routed.hops[i], sharp)} /> : null;
       })}
+      {routed.dots.map(({ net, at }) => (
+        <circle key={`${net}@${at.x},${at.y}`} class="mini-dot" cx={at.x} cy={at.y} r={4} />
+      ))}
       {circuit.gates.map((g) => (
         <g key={g.id} transform={`translate(${g.x},${g.y})`}>
           <GateShape type={g.type} />

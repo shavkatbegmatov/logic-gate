@@ -5,6 +5,13 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.14.0 — 2026-11-10
+
+- Simlar endi sxema chizmalaridagidek: kesishgan joyda biri ko'prikcha bilan ustidan o'tadi, bitta manbadan tarmoqlangan joyda nuqta turadi, turli simlar bir chiziq ustiga tushmaydi va elementlar ichidan o'tmaydi.
+- Simlar to'g'ri burchakli yo'llar bilan chiziladi — burchaklari kesilgan, plata ko'rinishi saqlangan.
+- Telegram: internet sekin bo'lsa, Telegram'da saqlangan profil va o'qituvchi sinflari yangisi bilan almashib ketmaydi — javob kelmasa, «qayta urinish» taklif qilinadi.
+- Qum quti, reyting, arxiv, yutuqlar va do'st masalasi ekranlari kerak bo'lganda yuklanadi — o'yin tezroq ochiladi.
+
 ## 2.13.0 — 2026-11-10
 
 - Buzilgan havola yoki eski ma'lumot o'yinni oq ekranga aylantirmaydi: o'yin o'zi tiklanadi, kerak bo'lsa «qayta yuklash» va «ma'lumotni tozalash»ni taklif qiladi. Begona saytdan kelgan ko'chirish havolasi profilingizni almashtira olmaydi.

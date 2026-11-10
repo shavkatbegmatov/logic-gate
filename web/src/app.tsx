@@ -7,17 +7,12 @@ import { imported } from './migrate';
 import { lang, t } from './i18n';
 import { go, route } from './router';
 import './achievements';
-import { Achievements } from './screens/Achievements';
-import { ArchiveScreen } from './screens/ArchiveScreen';
-import { CustomScreen } from './screens/CustomScreen';
 import { DailyScreen } from './screens/DailyScreen';
 import { Home } from './screens/Home';
 import { lazy } from './components/lazy';
 import { ClassScreen } from './screens/ClassScreen';
-import { Leaderboard } from './screens/Leaderboard';
 import { LevelScreen } from './screens/LevelScreen';
 import { LevelsScreen } from './screens/LevelsScreen';
-import { Sandbox } from './screens/Sandbox';
 import { Settings } from './screens/Settings';
 import { syncProgress } from './sync';
 
@@ -28,6 +23,13 @@ const TeacherScreen = lazy(() => import('./screens/TeacherScreen').then((m) => m
 const TeacherReport = lazy(() => import('./screens/TeacherScreen').then((m) => m.TeacherReport));
 // Yangiliklar ro'yxati (changelog.ts) har relizda uzayadi — bosh yuklamada emas.
 const NewsScreen = lazy(() => import('./screens/NewsScreen').then((m) => m.NewsScreen));
+// Qum quti (formula tahlilchisi va yig'uvchisi bilan), reyting, kunlik arxiv, yutuqlar ro'yxati va do'st
+// masalasi — ochilishda kerak emas (2.14.0: simlar yo'naltirgichi bosh yuklamaga qo'shilgach).
+const Sandbox = lazy(() => import('./screens/Sandbox').then((m) => m.Sandbox));
+const Leaderboard = lazy(() => import('./screens/Leaderboard').then((m) => m.Leaderboard));
+const ArchiveScreen = lazy(() => import('./screens/ArchiveScreen').then((m) => m.ArchiveScreen));
+const Achievements = lazy(() => import('./screens/Achievements').then((m) => m.Achievements));
+const CustomScreen = lazy(() => import('./screens/CustomScreen').then((m) => m.CustomScreen));
 
 export function App() {
   useEffect(() => {

@@ -35,11 +35,11 @@ O'lchov WSL2 (Ubuntu) da, production Linux binari bilan, 50 o'yinchi × 30 daraj
 | CPU bitta so'rovga | ~0,38 ms |
 | Bitta mijozdan o'tkazuvchanlik | ~2000 so'rov/s |
 | Linux binar hajmi | 11 MB |
-| Frontend JS (gzip), ochilishda | 86,7 KB, ikki faylda (2.13.0; 1-versiyada 28,3 KB) |
+| Frontend JS (gzip), ochilishda | 87,8 KB, 8 faylda (2.14.0; 1-versiyada 28,3 KB) |
 | Frontend CSS (gzip) | 11,3 KB |
-| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, yangiliklar 6,8 KB, o'qituvchi 4,1 KB, sertifikat 2,5 KB |
+| Kerak bo'lganda yuklanadigan bo'laklar (gzip) | xulosa 8,6 KB, yangiliklar 7,8 KB, o'qituvchi 4,2 KB, qum quti 4,1 KB, sertifikat 2,6 KB, reyting 1,3 KB, do'st masalasi 1,0 KB, arxiv 0,8 KB, yutuqlar 0,7 KB |
 
-Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi. Yangiliklar ro'yxati (`changelog.ts`, har relizda o'sadi) ham alohida: bosh sahifadagi «yangi versiya» banneri birinchi qatorni u yuklangach ko'rsatadi. 2.13.0 da bosh yuklama 98 KB — chegaraga yaqin: keyingi katta qo'shimchalardan oldin biror qismini alohida bo'lakka chiqarish kerak bo'ladi.
+Bosh yuklama (ochilishda kerak bo'ladigan JS + CSS) — gzip'da 100 KB gacha: `web/scripts/compress.mjs` build oxirida tekshiradi, oshsa build to'xtaydi. Kam ochiladigan ekranlar `lazy()` (`web/src/components/lazy.tsx`) bilan alohida bo'lakda; service worker ularni ham oldindan keshlaydi. Yangiliklar ro'yxati (`changelog.ts`, har relizda o'sadi) ham alohida: bosh sahifadagi «yangi versiya» banneri birinchi qatorni u yuklangach ko'rsatadi. 2.14.0 da simlar yo'naltirgichi qo'shilib 101 KB bo'ldi — qum quti, reyting, arxiv, yutuqlar va do'st masalasi ham alohida bo'lakka chiqarildi: 99,1 KB. Bundler (Rolldown) bosh va alohida bo'laklarga umumiy modullarni o'zaro aylanma bog'liqlik bo'lmasligi uchun kichik fayllarga ajratadi — shuning uchun bosh JS bir necha faylda (HTTP/2 va service worker keshi bilan farqi sezilmaydi). Hali ham chegaraga yaqin: keyingi katta qadam — faol bo'lmagan til lug'atini (ruscha ~12 KB) kerak bo'lganda yuklash.
 
 Qurilmadagi ma'lumot (localStorage) har o'qilganda shakli tekshiriladi (`web/src/validate.ts`): buzuq yozuv tashlanadi, ilova to'xtamaydi. Ilova baribir ishga tushmasa, `public/theme.js` oq ekran o'rniga «qayta yuklash» va «ma'lumotni tozalash» (profil qoladi) oynasini ko'rsatadi; ekran chizishda xato bo'lsa — `app.tsx` dagi karta.
 
@@ -86,6 +86,8 @@ pnpm dev
 ```
 
 O'yin: http://localhost:5173 (Vite `/api` so'rovlarini 127.0.0.1:8080 ga yo'naltiradi). Ma'lumotlar bazasi `data/logicgate.db` da yaratiladi.
+
+Telegram Mini App'ni Telegram'siz sinash: `VITE_TG_SDK_URL=/dev/tg-mock.js pnpm dev`, so'ng o'yinni Telegram ochgandek manzil bilan oching — `http://localhost:5173/#tgWebAppData=<user=…&auth_date=…&hash=…>&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop`. Soxta SDK (`web/dev/tg-mock.js`) bulut xotirasini localStorage'da `tgmock.cloud.*` kalitlarida saqlaydi (o'yin ma'lumotini tozalasangiz qoladi — "boshqa qurilma"), javobni `tgmock.delay` ms kechiktiradi (sekin internet; 5000 dan oshsa — javob yo'q), barcha chaqiruvlarni `window.__tgmock.log` ga yozadi. Build'ga kirmaydi; server initData imzosini tekshiradigan joylar (eslatma obunasi) bu rejimda ishlamaydi.
 
 Production build'ni Nginx'siz sinash:
 

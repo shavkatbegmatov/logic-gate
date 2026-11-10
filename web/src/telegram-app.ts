@@ -18,16 +18,19 @@ const TEACHER_KEY = 'teacher';
 
 /**
  * Bulutdagi profil holati (JoinForm ko'rsatadi): 'pending' — tekshirilmoqda yoki tiklanmoqda,
- * 'failed' — bulutda profil bor, lekin aloqa yo'qligidan tiklanmadi. Shu paytda yangi profil
- * ochilsa, bulutdagi eski profil tashlab ketilardi — shuning uchun avval shu holat ko'rsatiladi.
+ * 'failed' — bulutda profil bor, lekin aloqa yo'qligidan tiklanmadi, 'unknown' — bulut javob bermadi
+ * (bor-yo'qligi noma'lum). Shu paytda yangi profil ochilsa, bulutdagi eski profil tashlab ketilardi —
+ * shuning uchun avval shu holat ko'rsatiladi.
  */
-export const cloudRestore = signal<'idle' | 'pending' | 'failed'>('idle');
+export const cloudRestore = signal<'idle' | 'pending' | 'failed' | 'unknown'>('idle');
 
 let retry: (() => void) | null = null;
+let teacherRetry: (() => void) | null = null;
 
-/** JoinForm dagi «Qayta urinish». */
+/** JoinForm dagi «Qayta urinish»: profil va (o'qilmagan bo'lsa) o'qituvchi sinflari. */
 export function retryCloudRestore() {
   retry?.();
+  teacherRetry?.();
 }
 
 export async function startTelegram() {
@@ -71,14 +74,21 @@ export async function startTelegram() {
 
 /** Ba'zi Telegram ilovalarida javob kelmay qolishi mumkin — o'yin kutib qolmasin. */
 const CLOUD_TIMEOUT = 5000;
+/** Javob kelmasa — bir marta o'zi qayta so'raladi (sekin internet). */
+const CLOUD_RETRY = 4000;
 
+/**
+ * Bulutdagi qiymat: { value } — javob keldi (value null — kalit bo'sh), null — javob kelmadi yoki xato.
+ * Ikkalasi farqlanadi: javob kelmaganini "bo'sh" deb hisoblab, bulutdagi profil yoki sinflar ro'yxati
+ * ustidan yozib yuborilardi.
+ */
 const cloudGet = (app: TgWebApp, key: string) =>
-  new Promise<string | null>((resolve) => {
+  new Promise<{ value: string | null } | null>((resolve) => {
     const timer = setTimeout(() => resolve(null), CLOUD_TIMEOUT);
     try {
       app.CloudStorage.getItem(key, (err, value) => {
         clearTimeout(timer);
-        resolve(err ? null : value || null);
+        resolve(err ? null : { value: value || null });
       });
     } catch {
       clearTimeout(timer);
@@ -109,24 +119,41 @@ const cloudRemove = (app: TgWebApp, key: string) =>
  * o'zi tiklanadi. Qurilmada ham, bulutda ham boshqa-boshqa profil bo'lsa — hech biriga tegilmaydi.
  */
 async function syncCloudProfile(app: TgWebApp) {
-  let saved: { code?: string } | null = null;
-  try {
-    saved = JSON.parse((await cloudGet(app, CLOUD_KEY)) ?? 'null');
-  } catch {
-    // Buzilgan yozuv — yo'q deb hisoblanadi.
-  }
-  // Bulutdagi profil (shu qurilmaga tiklanganmi-yo'qmi, farqi yo'q).
-  let cloudCode = typeof saved?.code === 'string' ? saved.code : null;
+  // Bulutdagi profil kodi (shu qurilmaga tiklanganmi-yo'qmi, farqi yo'q): null — bulut bo'sh,
+  // undefined — hali bilinmaydi (javob kelmadi). Noma'lum bulut ustidan hech qachon yozilmaydi.
+  let cloudCode: string | null | undefined;
+  const read = async (): Promise<boolean> => {
+    const r = await cloudGet(app, CLOUD_KEY);
+    if (!r) return false;
+    let saved: { code?: unknown } | null = null;
+    try {
+      saved = JSON.parse(r.value ?? 'null');
+    } catch {
+      // Buzilgan yozuv — yo'q deb hisoblanadi.
+    }
+    cloudCode = typeof saved?.code === 'string' ? saved.code : null;
+    return true;
+  };
 
   let running = false;
+  let retried = false;
   const restore = async () => {
-    const code = cloudCode;
-    if (running || !code || profile.value) return;
+    if (running || profile.value) return;
     running = true;
     cloudRestore.value = 'pending';
     try {
+      if (cloudCode === undefined && !(await read())) {
+        // Bulut javob bermadi: profil bor-yo'qligi noma'lum. Bir marta o'zi qayta so'raydi.
+        cloudRestore.value = profile.peek() ? 'idle' : 'unknown';
+        if (!retried) {
+          retried = true;
+          setTimeout(() => void restore(), CLOUD_RETRY);
+        }
+        return;
+      }
+      const code = cloudCode;
       // Kutish paytida o'quvchi yangi profil ochgan bo'lsa — unga tegilmaydi.
-      if (await restoreProfile(code, true)) {
+      if (code && (await restoreProfile(code, true))) {
         const name = profile.peek()?.nickname;
         if (name) showToast(t.telegram.restored(name), 'ok', 4000);
       }
@@ -143,13 +170,13 @@ async function syncCloudProfile(app: TgWebApp) {
     }
   };
 
-  if (!profile.value && cloudCode) {
+  if (!profile.value) {
     retry = () => void restore();
     addEventListener('online', retry);
     await restore();
   } else {
     cloudRestore.value = 'idle';
-    if (profile.value && !cloudCode) {
+    if ((await read()) && cloudCode === null && profile.value) {
       cloudCode = profile.value.code;
       await cloudSet(app, CLOUD_KEY, JSON.stringify({ code: cloudCode }));
     }
@@ -157,22 +184,26 @@ async function syncCloudProfile(app: TgWebApp) {
 
   // Keyingi o'zgarishlar: yangi yoki tiklangan profil bulutga yoziladi — faqat bulut bo'sh bo'lsa yoki
   // unda shu qurilmadagi oldingi profil turgan bo'lsa (bulutdagi tiklanmagan profil ustidan yozilmaydi).
-  // O'chirilgan profil bulutdan ham o'chiriladi — faqat bulutdagi aynan o'sha bo'lsa.
+  // O'chirilgan profil bulutdan ham o'chiriladi — faqat bulutdagi aynan o'sha bo'lsa. Bulut holati
+  // noma'lum bo'lsa, avval o'qiladi; javob kelmasa — tegilmaydi (keyingi ochilishda yoziladi).
   let last = profile.value?.code ?? null;
   effect(() => {
     const code = profile.value?.code ?? null;
     if (code === last) return;
     const removed = last;
     last = code;
-    if (code) {
-      if (cloudCode !== null && cloudCode !== removed) return;
-      cloudCode = code;
-      cloudRestore.value = 'idle';
-      void cloudSet(app, CLOUD_KEY, JSON.stringify({ code }));
-    } else if (removed && removed === cloudCode) {
-      cloudCode = null;
-      void cloudRemove(app, CLOUD_KEY);
-    }
+    void (async () => {
+      if (cloudCode === undefined && !(await read())) return;
+      if (code) {
+        if (cloudCode !== null && cloudCode !== removed) return;
+        cloudCode = code;
+        cloudRestore.value = 'idle';
+        await cloudSet(app, CLOUD_KEY, JSON.stringify({ code }));
+      } else if (removed && removed === cloudCode) {
+        cloudCode = null;
+        await cloudRemove(app, CLOUD_KEY);
+      }
+    })();
   });
 }
 
@@ -181,12 +212,35 @@ async function syncCloudProfile(app: TgWebApp) {
  * bo'ladi. Ikki tomondagi sinflar birlashtiriladi, keyingi o'zgarishlar bulutga yoziladi.
  */
 async function syncCloudTeacher(app: TgWebApp) {
-  const raw = await cloudGet(app, TEACHER_KEY);
-  mergeTeacherClasses(decodeTeacherClasses(raw));
-  let last = raw ?? encodeTeacherClasses([]);
+  // Bulutdagi ro'yxat o'qilmaguncha unga yozilmaydi: javob kelmaganda shu qurilmadagi ro'yxat boshqa
+  // qurilmalarda yaratilgan sinflar ustidan yozib yuborilardi.
+  const known = signal(false);
+  let last = '';
+  const read = async () => {
+    const r = await cloudGet(app, TEACHER_KEY);
+    if (!r) return false;
+    mergeTeacherClasses(decodeTeacherClasses(r.value));
+    last = r.value ?? encodeTeacherClasses([]);
+    known.value = true;
+    return true;
+  };
+  // Javob kelmasa — oraliq uzayib boradi; «Qayta urinish» va internet qaytishi ham qayta o'qitadi.
+  const delays = [CLOUD_RETRY, 15_000, 60_000];
+  let busy = false;
+  const again = async () => {
+    if (known.value || busy) return;
+    busy = true;
+    const ok = await read();
+    busy = false;
+    const next = delays.shift();
+    if (!ok && next) setTimeout(() => void again(), next);
+  };
+  teacherRetry = () => void again();
+  addEventListener('online', teacherRetry);
+  if (!(await read())) setTimeout(() => void again(), delays.shift());
   effect(() => {
     const value = encodeTeacherClasses(teacherClasses.value);
-    if (value === last) return;
+    if (!known.value || value === last) return;
     last = value;
     void cloudSet(app, TEACHER_KEY, value);
   });

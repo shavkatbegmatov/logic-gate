@@ -42,9 +42,9 @@ export function JoinForm({ compact = false, onJoined }: { compact?: boolean; onJ
       <div class={`join${compact ? ' compact' : ''}`}>
         {!compact && <h2>{t.home.joinTitle}</h2>}
         <p class="muted" role="status">
-          {cloud === 'pending' ? t.telegram.restoring : t.telegram.restoreFailed}
+          {cloud === 'pending' ? t.telegram.restoring : cloud === 'unknown' ? t.telegram.checkFailed : t.telegram.restoreFailed}
         </p>
-        {cloud === 'failed' && (
+        {cloud !== 'pending' && (
           <div class="row wrap">
             <button class="btn" onClick={retryCloudRestore}>
               {t.retry}

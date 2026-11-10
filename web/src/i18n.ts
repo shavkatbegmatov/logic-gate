@@ -148,6 +148,8 @@ export const uz = {
     restoreFailed:
       "Telegram'da saqlangan profilingiz bor, lekin uni hozir tiklab bo'lmadi — internetni tekshiring. Yangi profil ochsangiz, eski natijalar unga o'tmaydi.",
     newProfile: 'Baribir yangi profil ochish',
+    checkFailed:
+      "Telegram'dagi profilingizni tekshirib bo'lmadi — Telegram javob bermadi. Qayta urinib ko'ring: yangi profil ochsangiz, avvalgi natijalaringiz (agar bo'lsa) unga o'tmaydi.",
   },
 
   /** Profil ochilgan zahoti ko'rsatiladigan tiklash kodi. */
@@ -781,6 +783,8 @@ export const ru: typeof uz = {
     restoreFailed:
       'В Telegram сохранён ваш профиль, но восстановить его сейчас не удалось — проверьте интернет. Если создадите новый профиль, старые результаты в него не перейдут.',
     newProfile: 'Всё равно создать новый профиль',
+    checkFailed:
+      'Не удалось проверить ваш профиль в Telegram — Telegram не ответил. Попробуйте ещё раз: если создать новый профиль, прежние результаты (если были) в него не перейдут.',
   },
 
   profileCode: {

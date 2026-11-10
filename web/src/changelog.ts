@@ -18,6 +18,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.14.0',
+    date: '2026-11-10',
+    uz: [
+      "Simlar endi sxema chizmalaridagidek: kesishgan joyda biri ko'prikcha bilan ustidan o'tadi, bitta manbadan tarmoqlangan joyda nuqta turadi, turli simlar bir chiziq ustiga tushmaydi va elementlar ichidan o'tmaydi.",
+      "Simlar to'g'ri burchakli yo'llar bilan chiziladi — burchaklari kesilgan, plata ko'rinishi saqlangan.",
+      "Telegram: internet sekin bo'lsa, Telegram'da saqlangan profil va o'qituvchi sinflari yangisi bilan almashib ketmaydi — javob kelmasa, «qayta urinish» taklif qilinadi.",
+      "Qum quti, reyting, arxiv, yutuqlar va do'st masalasi ekranlari kerak bo'lganda yuklanadi — o'yin tezroq ochiladi.",
+    ],
+    ru: [
+      'Провода теперь как на схемах: в месте пересечения один проходит над другим мостиком, в точке разветвления от одного источника стоит точка, разные провода не ложатся на одну линию и не проходят сквозь элементы.',
+      'Провода рисуются прямоугольными трассами — со срезанными углами, вид платы сохранён.',
+      'Telegram: при медленном интернете сохранённый в Telegram профиль и классы учителя не заменяются новыми — если ответа нет, предлагается «Повторить».',
+      'Песочница, рейтинг, архив, достижения и задача друга загружаются по мере надобности — игра открывается быстрее.',
+    ],
+  },
+  {
     version: '2.13.0',
     date: '2026-11-10',
     uz: [
