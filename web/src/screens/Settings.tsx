@@ -12,7 +12,7 @@ import { go } from '../router';
 import { profile, settings } from '../state';
 import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
-import { THEMES } from '../theme';
+import { MOTIONS, systemReducedMotion, THEMES } from '../theme';
 import { APP_VERSION } from '../version';
 import { clearPlayerData, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
 
@@ -150,6 +150,16 @@ export function Settings() {
             </div>
           </section>
 
+          <section class="card">
+            <div class="row between">
+              <span>{t.settings.motion}</span>
+              <MotionSwitch />
+            </div>
+            {(settings.value.motion ?? 'auto') === 'auto' && systemReducedMotion.value && (
+              <p class="muted small">{t.settings.motionSystem}</p>
+            )}
+          </section>
+
           <InstallCard />
 
           <GuidesCard />
@@ -204,6 +214,26 @@ function ThemeSwitch() {
           onClick={() => (settings.value = { ...settings.value, theme: id })}
         >
           {t.settings.themes[id]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Animatsiya: Yoqilgan, O'chirilgan yoki Avto (qurilma sozlamasiga qarab) — theme.ts. */
+function MotionSwitch() {
+  const current = settings.value.motion ?? 'auto';
+  return (
+    <div class="lang-switch" role="group" aria-label={t.settings.motion}>
+      {MOTIONS.map((id) => (
+        <button
+          key={id}
+          class={id === current ? 'on' : ''}
+          aria-pressed={id === current}
+          title={t.settings.motionHint[id]}
+          onClick={() => (settings.value = { ...settings.value, motion: id })}
+        >
+          {t.settings.motions[id]}
         </button>
       ))}
     </div>

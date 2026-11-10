@@ -16,6 +16,7 @@ import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { check, depths, expected, machineOut, machineReplay, type SimError } from '../sim/sim';
 import type { Circuit, Level } from '../sim/types';
+import { instantCheck } from '../theme';
 import { useEditorKeys } from './useEditorKeys';
 
 type RowState = 'wait' | 'cur' | 'ok' | 'bad';
@@ -24,13 +25,6 @@ type RowState = 'wait' | 'cur' | 'ok' | 'bad';
 const SEQ_WINDOW = 16;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const reducedMotion = () => {
-  try {
-    return matchMedia('(prefers-reduced-motion: reduce)').matches;
-  } catch {
-    return false;
-  }
-};
 
 /**
  * Tekshiruv animatsiyasi vaqtlari: jami ~1,6 s (qatorlar soniga qarab), har qatorda signal to'lqini
@@ -140,9 +134,12 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     explain(t.wrongRows(wrongRows.length));
   };
 
-  /** Qatorlarni birma-bir ko'rsatadi: har birida signal kirishlardan chiqishlarga oqadi. */
+  /**
+   * Qatorlarni birma-bir ko'rsatadi: har birida signal kirishlardan chiqishlarga oqadi. Animatsiya
+   * o'chirilgan bo'lsa (Sozlamalar) — darhol oxiriga sakraydi: natija chizig'i baribir ko'rinadi.
+   */
   const animate = async (total: number, wrong: number) => {
-    const me = { skip: false, dead: false };
+    const me = { skip: instantCheck(), dead: false };
     run.current = me;
     clearTimeout(hideTimer.current);
     stripNote.value = null;
@@ -189,7 +186,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
    * keyin takt bosiladi. Xato bo'lsa, oxirgi (xato) taktda to'xtaydi.
    */
   const animateSeq = async (trace: number[], wrong: number) => {
-    const me = { skip: false, dead: false };
+    const me = { skip: instantCheck(), dead: false };
     run.current = me;
     clearTimeout(hideTimer.current);
     stripNote.value = null;
@@ -270,13 +267,8 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     if (level.seq) {
       const trace = res.ok ? level.seq.example : 'trace' in res ? res.trace : [];
       const wrong = res.ok ? -1 : trace.length - 1;
-      if (!reducedMotion()) {
-        if (!(await animateSeq(trace, wrong))) return;
-        hideRowsLater();
-      } else if (!res.ok) {
-        editor.history.value = trace.slice(0, -1);
-        editor.setRow(trace[trace.length - 1]);
-      }
+      if (!(await animateSeq(trace, wrong))) return;
+      hideRowsLater();
       if (!res.ok) {
         finishSeq(trace);
         return;
@@ -286,10 +278,8 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
       return;
     }
     const wrongRows = res.ok ? [] : 'wrongRows' in res ? res.wrongRows : [];
-    if (!reducedMotion()) {
-      if (!(await animate(1 << level.inputs.length, wrongRows[0] ?? -1))) return;
-      hideRowsLater();
-    }
+    if (!(await animate(1 << level.inputs.length, wrongRows[0] ?? -1))) return;
+    hideRowsLater();
     if (!res.ok) {
       finish(wrongRows);
       return;

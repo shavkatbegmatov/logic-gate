@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.15.0',
+    date: '2026-11-10',
+    uz: [
+      "Tekshiruv animatsiyasi kompyuterda animatsiya effektlari o'chirilgan bo'lsa ham ko'rinadi (ishxona va maktab kompyuterlarida ko'pincha shunday).",
+      "Sozlamalarda «Animatsiya»: Avto, Yoqilgan yoki O'chirilgan. «O'chirilgan» da tekshiruv natijasi darhol chiqadi.",
+    ],
+    ru: [
+      'Анимация проверки видна, даже если на компьютере отключены эффекты анимации (так часто бывает на рабочих и школьных компьютерах).',
+      'В настройках — «Анимация»: Авто, Вкл. или Выкл. При «Выкл.» результат проверки появляется сразу.',
+    ],
+  },
+  {
     version: '2.14.0',
     date: '2026-11-10',
     uz: [

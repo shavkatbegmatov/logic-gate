@@ -1,4 +1,4 @@
-import type { Theme } from './theme';
+import type { Motion, Theme } from './theme';
 import { computed, effect, signal } from '@preact/signals';
 import { setLang, type Lang } from './i18n';
 import { deviceLang, takeUrlLang } from './lang-detect';
@@ -42,6 +42,8 @@ export interface Settings {
   lang?: Lang;
   /** Rang mavzusi (theme.ts); yo'q bo'lsa — Plata. */
   theme?: Theme;
+  /** Animatsiya (theme.ts); yo'q bo'lsa — Avto. */
+  motion?: Motion;
 }
 
 /**
@@ -63,6 +65,7 @@ const cleanSettings = (v: unknown): Partial<Settings> | null => {
   if (v.lang === 'uz' || v.lang === 'ru') out.lang = v.lang;
   // theme.ts dan THEMES olinmaydi: u state.ts ni import qiladi (aylana).
   if (v.theme === 'plata' || v.theme === 'daftar' || v.theme === 'auto') out.theme = v.theme;
+  if (v.motion === 'on' || v.motion === 'off' || v.motion === 'auto') out.motion = v.motion;
   return out;
 };
 const loadSettings = (): Settings => ({ sound: true, ...load(KEYS.settings, {}, cleanSettings) });

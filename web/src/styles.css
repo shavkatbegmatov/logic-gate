@@ -3186,13 +3186,22 @@ button.task-level:hover {
   }
 }
 
+/* Qurilma "kamroq harakat" desa (Sozlamalarda "Avto") — bezak harakatlari yo'q; "Yoqilgan" buni bekor qiladi,
+   "O'chirilgan" esa qurilmadan qat'i nazar o'chiradi (theme.ts). Tekshiruv JS da qadamma-qadam o'ynaydi. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-motion='on']) *,
+  :root:not([data-motion='on']) *::before,
+  :root:not([data-motion='on']) *::after {
     animation: none !important;
     transition: none !important;
   }
+}
+
+:root[data-motion='off'] *,
+:root[data-motion='off'] *::before,
+:root[data-motion='off'] *::after {
+  animation: none !important;
+  transition: none !important;
 }
 
 /* ── Kunlik boshqotirma ────────────────────────────────── */

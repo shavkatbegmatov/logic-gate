@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest';
+import { settings } from './state';
 import css from './styles.css?raw';
-import { resolveTheme, THEME_BG } from './theme';
+import { instantCheck, resolveTheme, THEME_BG } from './theme';
+
+describe('animatsiya', () => {
+  it("tekshiruv faqat «O'chirilgan» da darhol; Avto (qurilma «kamroq harakat» desa ham) — o'ynaydi", () => {
+    for (const [motion, instant] of [[undefined, false], ['auto', false], ['on', false], ['off', true]] as const) {
+      settings.value = { ...settings.value, motion };
+      expect(instantCheck()).toBe(instant);
+    }
+  });
+
+  it("qurilma sozlamasi bezaklarni o'chiradi, «Yoqilgan» buni bekor qiladi, «O'chirilgan» — har doim", () => {
+    const media = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(media.slice(0, media.indexOf('\n}'))).toContain(":root:not([data-motion='on']) *");
+    const off = css.slice(css.indexOf(":root[data-motion='off'] *"));
+    expect(off.slice(0, off.indexOf('}'))).toContain('animation: none !important');
+    // Boshqa joyda qurilma sozlamasiga to'g'ridan-to'g'ri qaralmaydi — aks holda «Yoqilgan» ishlamay qoladi.
+    expect(css.match(/prefers-reduced-motion/g)).toHaveLength(1);
+  });
+});
 
 const block = (selector: string) => {
   const start = css.indexOf(`${selector} {`);

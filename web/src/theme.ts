@@ -47,3 +47,29 @@ if (typeof document !== 'undefined') {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BG[name]);
   });
 }
+
+/**
+ * Animatsiya. "Avto": qurilma "kamroq harakat" desa (Windows'da "Animatsiya effektlari" o'chiq — ishxona
+ * va maktab kompyuterlarida ko'pincha tizim siyosati bilan; telefonda "Harakatni kamaytirish"), bezak
+ * harakatlari (CSS) o'chadi, tekshiruv esa qatorma-qator o'ynayveradi: u bezak emas — natijani ko'rsatadi,
+ * va unda siljish yo'q, faqat rang almashadi. "Yoqilgan" — qurilma sozlamasidan qat'i nazar hammasi,
+ * "O'chirilgan" — hech narsa, tekshiruv natijasi darhol. CSS: <html data-motion> (styles.css oxiri).
+ */
+export type Motion = 'on' | 'off' | 'auto';
+export const MOTIONS: Motion[] = ['on', 'off', 'auto'];
+
+const motionMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+/** Qurilmada animatsiya kamaytirilgan (Sozlamalarda izoh uchun). */
+export const systemReducedMotion = signal(motionMedia?.matches ?? false);
+motionMedia?.addEventListener?.('change', (e) => (systemReducedMotion.value = e.matches));
+
+/** Tekshiruv animatsiyasiz — natija darhol. */
+export const instantCheck = () => settings.peek().motion === 'off';
+
+if (typeof document !== 'undefined') {
+  effect(() => {
+    const m = settings.value.motion;
+    if (m === 'on' || m === 'off') document.documentElement.dataset.motion = m;
+    else delete document.documentElement.dataset.motion;
+  });
+}

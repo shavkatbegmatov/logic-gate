@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.15.0 — 2026-11-10
+
+- Tekshiruv animatsiyasi kompyuterda animatsiya effektlari o'chirilgan bo'lsa ham ko'rinadi (ishxona va maktab kompyuterlarida ko'pincha shunday).
+- Sozlamalarda «Animatsiya»: Avto, Yoqilgan yoki O'chirilgan. «O'chirilgan» da tekshiruv natijasi darhol chiqadi.
+
 ## 2.14.0 — 2026-11-10
 
 - Simlar endi sxema chizmalaridagidek: kesishgan joyda biri ko'prikcha bilan ustidan o'tadi, bitta manbadan tarmoqlangan joyda nuqta turadi, turli simlar bir chiziq ustiga tushmaydi va elementlar ichidan o'tmaydi.

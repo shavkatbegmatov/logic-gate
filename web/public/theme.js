@@ -2,7 +2,10 @@
 // miltillaydi. CSP inline skriptga ruxsat bermaydi, shuning uchun alohida fayl. Keyin src/theme.ts boshqaradi.
 (function () {
   try {
-    var theme = (JSON.parse(localStorage.getItem('lg.settings.v1') || '{}') || {}).theme;
+    var saved = JSON.parse(localStorage.getItem('lg.settings.v1') || '{}') || {};
+    // Animatsiya sozlamasi ham (src/theme.ts): yuklanish belgisi birinchi kadrdanoq to'g'ri bo'lsin.
+    if (saved.motion === 'on' || saved.motion === 'off') document.documentElement.setAttribute('data-motion', saved.motion);
+    var theme = saved.theme;
     if (theme === 'auto') {
       var light = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches;
       // Telegram Mini App: mavzu ranglari manzil hashida keladi (tgWebAppThemeParams).
