@@ -7,7 +7,9 @@
 //   /robots.txt, /sitemap.xml
 // O'yin hash marshrutli SPA: qidiruv tizimi undan faqat bosh sahifani ko'radi. Bu sahifalar esa
 // JavaScript'siz o'qiladigan oddiy HTML — element belgilari o'yindagi bilan bir xil (src/board/shapes.ts),
-// ranglar — o'yinning Plata mavzusi, yorug' tizim rejimida — Daftar (src/styles.css).
+// ranglar va uslub — o'yinning Plata mavzusi, yorug' tizim rejimida — Daftar (src/styles.css): bloklar
+// hoshiya bilan emas, sirt tusi bilan ajraladi (--panel — bo'lim, --ctl — uning ustidagi tugma va
+// katakchalar; --edge Plata'da shaffof, Daftar'da ingichka chiziq), urg'u rangi bitta (--on).
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -80,55 +82,56 @@ function dffTable(c) {
 }
 
 const CSS = `
-:root{--bg:#0b1712;--panel:#13271e;--line:#244232;--text:#e6eee4;--muted:#8fa697;--on:#f2a93b;--on-ink:#1e1305;--copper:#c68a57;--fill:#102a1f;--stroke:#63b98d;--lead:#46705e;--tint:#1f2615;--mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,Menlo,monospace;color-scheme:dark}
-@media (prefers-color-scheme:light){:root{--bg:#efe9dc;--panel:#f8f4ea;--line:#d9cfba;--text:#1d2939;--muted:#5a6475;--on:#2253b0;--on-ink:#ffffff;--copper:#a35f2a;--fill:#fffdf7;--stroke:#2a3550;--lead:#8d96a5;--tint:#fbf0d9;color-scheme:light}}
+:root{--bg:#0b1712;--panel:#11241b;--ctl:#19352a;--edge:transparent;--line:#223d31;--text:#ecf1e7;--muted:#9cb2a5;--on:#ffb23e;--on-ink:#231503;--copper:#c68a57;--fill:#132b21;--stroke:#6fc79b;--lead:#4b7663;--tint:#26291a;--mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,Menlo,monospace;color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--bg:#efe9dc;--panel:#f8f4ea;--ctl:#fffdf8;--edge:#d9cfba;--line:#ddd4c0;--text:#1d2939;--muted:#5a6475;--on:#2253b0;--on-ink:#ffffff;--copper:#a35f2a;--fill:#fffdf7;--stroke:#2a3550;--lead:#8d96a5;--tint:#fbf0d9;color-scheme:light}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font:16px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans',sans-serif}
 a{color:var(--on)}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:820px;margin:0 auto;padding:12px 16px;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:8px;color:var(--text);font-weight:700;text-decoration:none}
 .top nav{display:flex;gap:16px;font-size:15px}
 main{max-width:820px;margin:0 auto;padding:8px 16px 32px}
-h1{font-size:30px;line-height:1.2;margin:24px 0 12px}
-h2{font-size:22px;line-height:1.25;margin:0 0 12px}
-section{margin:28px 0;padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+h1{font-size:36px;line-height:1.12;letter-spacing:-.02em;margin:28px 0 12px;text-wrap:balance}
+h2{font-size:22px;line-height:1.25;letter-spacing:-.01em;margin:0 0 12px}
+section{margin:24px 0;padding:20px;border:1px solid var(--edge);border-radius:16px;background:var(--panel)}
 .lead{font-size:17px;color:var(--text)}
 .muted{color:var(--muted)}
 code{font-family:var(--mono);white-space:nowrap}
 .cta{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
-.btn{display:inline-block;padding:11px 18px;border:1px solid var(--stroke);border-radius:10px;color:var(--text);text-decoration:none;font-weight:600}
+.btn{display:inline-block;padding:12px 20px;border:1px solid var(--edge);border-radius:12px;background:var(--ctl);color:var(--text);text-decoration:none;font-weight:600}
 .btn.primary{background:var(--on);border-color:var(--on);color:var(--on-ink)}
 .toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0;padding:0;list-style:none}
-.toc a{display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:999px;text-decoration:none;font-size:14px}
+.toc a{display:inline-block;padding:5px 12px;border:1px solid var(--edge);border-radius:999px;background:var(--panel);color:var(--text);text-decoration:none;font-size:14px}
+.toc a:hover{background:var(--ctl)}
 .gate-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;margin:4px 0 12px}
 figure{margin:0;text-align:center}
-figcaption,.formula{font:700 18px var(--mono);color:var(--copper)}
+figcaption,.formula{font:600 18px var(--mono);color:var(--on)}
 svg.gate{display:block;max-width:100%;height:auto}
-svg.gate .lead{stroke:var(--lead);stroke-width:2.2}
-svg.gate .body{fill:var(--fill);stroke:var(--stroke);stroke-width:2.2;stroke-linejoin:round}
-svg.gate .back{fill:none;stroke:var(--stroke);stroke-width:2.2;stroke-linecap:round}
+svg.gate .lead{stroke:var(--lead);stroke-width:2.4}
+svg.gate .body{fill:var(--fill);stroke:var(--stroke);stroke-width:2.6;stroke-linejoin:round}
+svg.gate .back{fill:none;stroke:var(--stroke);stroke-width:2.6;stroke-linecap:round}
 svg.gate text{fill:var(--muted);font:700 9px var(--mono);text-anchor:middle;dominant-baseline:central}
 svg.gate text.in-label{fill:var(--text)}
 .truth{border-collapse:collapse;font:15px var(--mono);text-align:center}
 .truth caption{caption-side:top;font:13px system-ui,sans-serif;color:var(--muted);padding-bottom:4px}
 .truth th,.truth td{min-width:40px;padding:5px 10px;border:1px solid var(--line)}
 .truth th{color:var(--muted);font-weight:600}
-.truth .out{color:var(--copper)}
+.truth .out{color:var(--text)}
 .truth td.one{color:var(--on);font-weight:700}
 .steps th{text-align:left}
 .scroll-x{overflow-x:auto;margin:4px 0 12px}
 .laws{display:grid;grid-template-columns:max-content 1fr;gap:8px 16px;margin:0 0 12px}
 .laws dt{color:var(--muted)}
 .laws dd{margin:0;font:15px var(--mono)}
-.tip{margin:0;padding:10px 12px;border-left:3px solid var(--copper);border-radius:8px;background:var(--tint)}
-.tip .ico{vertical-align:-3px;fill:none;stroke:var(--copper);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tip{margin:0;padding:10px 12px;border-radius:10px;background:var(--tint)}
+.tip .ico{vertical-align:-3px;fill:none;stroke:var(--on);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .guides{display:flex;flex-wrap:wrap;gap:8px 18px;max-width:820px;margin:0 auto;padding:10px 16px;font-size:14px;border-bottom:1px solid var(--line)}
 .guides span{color:var(--text);font-weight:600}
 .guides a{color:var(--muted);text-decoration:none}
 .guides a:hover{color:var(--on)}
 .bits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;margin:14px 0 10px}
-.bit{display:grid;justify-items:center;gap:4px;padding:8px 0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--muted);font:600 12px var(--mono);cursor:pointer}
+.bit{display:grid;justify-items:center;gap:4px;padding:8px 0 10px;border:1px solid var(--edge);border-radius:10px;background:var(--ctl);color:var(--muted);font:600 12px var(--mono);cursor:pointer}
 .bit .v{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);color:var(--text);font-size:15px}
 .bit[aria-pressed=true]{border-color:var(--on)}
 .bit[aria-pressed=true] .v{background:var(--on);border-color:var(--on);color:var(--on-ink)}
@@ -137,7 +140,7 @@ svg.gate text.in-label{fill:var(--text)}
 .bits-in{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:14px}
 .bits-in input{width:96px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:600 16px var(--mono)}
 .bin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;margin:4px 0 12px}
-.bin-grid span{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.bin-grid span{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:6px 10px;border:1px solid var(--edge);border-radius:8px;background:var(--ctl)}
 .bin-grid b{font:600 15px var(--mono)}
 .bin-grid code{color:var(--on);font-size:14px}
 .truth.column td{min-width:34px}
@@ -151,11 +154,11 @@ svg.gate text.in-label{fill:var(--text)}
 .calc input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:600 18px var(--mono)}
 .calc input:focus{outline:2px solid var(--on);outline-offset:1px}
 .syms{display:flex;flex-wrap:wrap;gap:6px}
-.sym{min-width:42px;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font:600 17px var(--mono);cursor:pointer}
+.sym{min-width:42px;height:38px;padding:0 10px;border:1px solid var(--edge);border-radius:8px;background:var(--ctl);color:var(--text);font:600 17px var(--mono);cursor:pointer}
 .sym:hover{border-color:var(--on)}
 .verdict{margin:4px 0 0;font-weight:600}
 .verdict.ok{color:var(--stroke)}
-.verdict.bad{color:var(--copper)}
+.verdict.bad{color:var(--on)}
 .calc-table tr.differ td{background:var(--tint)}
 .ops td:nth-child(2),.ops td:nth-child(3){font-family:var(--mono)}
 .wide{border-collapse:collapse;width:100%;font-size:15px}
@@ -185,7 +188,7 @@ svg.gate text.in-label{fill:var(--text)}
 .groups td{min-width:56px}
 .base-table td:nth-child(n+2){font-family:var(--mono)}
 .features{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:0;padding:0;list-style:none}
-.features li{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.features li{padding:12px 14px;border:1px solid var(--edge);border-radius:12px;background:var(--ctl)}
 .features b{display:block;margin-bottom:4px}
 .steps-list{padding-left:22px}
 .steps-list li{margin:6px 0}
@@ -195,14 +198,14 @@ svg.gate text.in-label{fill:var(--text)}
 .lesson h4{margin:12px 0 6px;font-size:15px}
 .plan{border-collapse:collapse;width:100%;font-size:15px}
 .plan td{padding:6px 10px;border:1px solid var(--line);vertical-align:top}
-.plan td:first-child{width:72px;white-space:nowrap;font-family:var(--mono);color:var(--copper)}
-.lvl{font-family:var(--mono);font-size:14px;padding:1px 6px;border:1px solid var(--line);border-radius:6px;white-space:nowrap}
+.plan td:first-child{width:72px;white-space:nowrap;font-family:var(--mono);color:var(--muted)}
+.lvl{font-family:var(--mono);font-size:14px;padding:1px 6px;border:1px solid var(--edge);border-radius:6px;background:var(--ctl);white-space:nowrap}
 .faq dt{font-weight:600;margin-top:10px}
 .faq dd{margin:4px 0 0;color:var(--muted)}
 ol.chapters{padding-left:22px}
 ol.chapters li{margin:6px 0}
 footer{max-width:820px;margin:0 auto;padding:16px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
-@media (max-width:560px){h1{font-size:25px}section{padding:16px}.laws{grid-template-columns:1fr;gap:2px}.laws dd{margin-bottom:8px}}
+@media (max-width:560px){h1{font-size:28px}section{padding:16px}.laws{grid-template-columns:1fr;gap:2px}.laws dd{margin-bottom:8px}}
 `.trim();
 
 const BULB =
@@ -260,7 +263,7 @@ function shellHtml(g, lang, ctx, ld, body) {
 <meta property="og:title" content="${esc(page.h1)}">
 <meta property="og:description" content="${esc(page.description)}">
 <meta property="og:url" content="${esc(url)}">
-<meta property="og:image" content="${esc(ctx.site)}/og.png?v=3">
+<meta property="og:image" content="${esc(ctx.site)}/og.png?v=4">
 <meta property="og:locale" content="${c.locale}">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">${jsonLd(ld(page, url))}</script>

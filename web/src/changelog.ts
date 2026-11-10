@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.17.1',
+    date: '2026-11-11',
+    uz: [
+      "Qo'llanma sahifalari (mantiqiy elementlar, sanoq sistemalari, Bul algebrasi) va Telegram'dagi havola rasmi o'yinning yangi ko'rinishiga o'tdi.",
+    ],
+    ru: [
+      'Справочные страницы (логические элементы, системы счисления, алгебра логики) и картинка ссылки в Telegram переведены на новый вид игры.',
+    ],
+  },
+  {
     version: '2.17.0',
     date: '2026-11-11',
     uz: [
