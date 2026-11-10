@@ -26,6 +26,64 @@
   }
 })();
 
+// Til lug'ati alohida faylda (src/i18n.ts). Ilova uni asosiy JS bajarilgandan keyingina so'rardi va
+// birinchi chizish bitta so'rovga kechikardi — shuning uchun kerakli lug'at shu yerda, asosiy JS bilan
+// parallel so'rab qo'yiladi. Fayl manzillari (nomida xesh) shu skript tegida: build ularni index.html ga
+// yozadi (vite.config.ts). Til src/state.ts dagi tartibda taxmin qilinadi: havoladagi ?lang=, saqlangan
+// til, birinchi ochilishda — Telegram yoki brauzer tili, aks holda o'zbekcha. Tilni baribir ilova
+// tanlaydi: taxmin noto'g'ri chiqsa, bitta ortiqcha fayl yuklanadi, xolos.
+(function () {
+  function known(code) {
+    var base = String(code || '').toLowerCase().split(/[-_]/)[0];
+    return base === 'uz' || base === 'ru' ? base : '';
+  }
+
+  function guess() {
+    var m = /[?&]lang=([^&]*)/.exec(location.search);
+    var lang = known(m && m[1]);
+    if (lang) return lang;
+    var fresh = true;
+    try {
+      lang = known((JSON.parse(localStorage.getItem('lg.settings.v1') || '{}') || {}).lang);
+      if (lang) return lang;
+      fresh = localStorage.getItem('lg.progress.v1') === null && localStorage.getItem('lg.profile.v1') === null;
+    } catch (e) {
+      // localStorage yopiq yoki yozuv buzuq — yangi qurilma kabi.
+    }
+    if (!fresh) return 'uz';
+    var codes = [];
+    try {
+      // Telegram Mini App: ilova tili manzil hashida keladi (tgWebAppData → user.language_code).
+      var data = new URLSearchParams(location.hash.replace(/^#/, '')).get('tgWebAppData');
+      if (data) codes.push(JSON.parse(new URLSearchParams(data).get('user')).language_code);
+    } catch (e) {
+      // Telegram tili yo'q — brauzer tili.
+    }
+    codes = codes.concat(navigator.languages && navigator.languages.length ? [].slice.call(navigator.languages) : [navigator.language]);
+    for (var i = 0; i < codes.length; i++) {
+      lang = known(codes[i]);
+      if (lang) return lang;
+    }
+    return 'uz';
+  }
+
+  try {
+    var lang = guess();
+    // Ilova ochilmasa, pastdagi oyna shu tilda chiqadi; ochilsa — tilni ilova o'zi qo'yadi (src/i18n.ts).
+    document.documentElement.lang = lang;
+    var href = document.currentScript && document.currentScript.getAttribute('data-dict-' + lang);
+    if (href) {
+      var link = document.createElement('link');
+      link.rel = 'modulepreload';
+      link.crossOrigin = '';
+      link.href = href;
+      document.head.appendChild(link);
+    }
+  } catch (e) {
+    // Oldindan so'rab bo'lmadi — lug'atni ilova o'zi yuklaydi.
+  }
+})();
+
 // Ilova umuman ochilmasa (fayl yuklanmadi yoki ishga tushishda xato) — oq ekran o'rniga qayta yuklash va
 // qurilmadagi o'yin ma'lumotini tozalash taklifi. Ilova chizilgach main.tsx window.__lgReady qo'yadi —
 // shundan keyingi xatolarni ilovaning o'zi ushlaydi (app.tsx).
@@ -33,14 +91,9 @@
   var failed = null;
   var shown = false;
 
+  // Til — yuqorida taxmin qilingani, yoki ilova qo'yib ulgurgani.
   function ru() {
-    try {
-      var lang = (JSON.parse(localStorage.getItem('lg.settings.v1') || '{}') || {}).lang;
-      if (lang) return lang === 'ru';
-    } catch (e) {
-      // pastda
-    }
-    return /^ru\b/i.test(navigator.language || '');
+    return document.documentElement.lang === 'ru';
   }
 
   function report(err) {

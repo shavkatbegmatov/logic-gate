@@ -7,7 +7,7 @@ import { customStore } from './custom-store';
 import { dailyHistory, streak } from './daily';
 import { t } from './i18n';
 import { chapterLevels, chapters, levelById, levels } from './levels';
-import { allHintSteps, progress } from './state';
+import { allHintSteps, langReady, progress } from './state';
 import { load, save } from './storage';
 import { asNumber, cleanRecord } from './validate';
 
@@ -136,7 +136,8 @@ effect(() => {
   save(KEY, next);
   if (announce) {
     sfx.achievement();
-    showToast(t.achievements.unlocked(fresh.map((x) => x.a.title())), 'ok', 4500);
+    // Bu effekt modul yuklanayotganda ham ishlaydi, lug'at esa keyinroq keladi (i18n.ts) — xabar undan keyin.
+    void langReady.then((ok) => ok && showToast(t.achievements.unlocked(fresh.map((x) => x.a.title())), 'ok', 4500));
   }
   announce = true;
 });

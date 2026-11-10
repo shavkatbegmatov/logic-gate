@@ -91,7 +91,14 @@ effect(() => save(KEYS.progress, progress.value));
 effect(() => save(KEYS.intro, seenIntro.value));
 effect(() => save(KEYS.profile, profile.value));
 effect(() => save(KEYS.settings, settings.value));
-effect(() => setLang(settings.value.lang ?? 'uz'));
+
+/**
+ * Ochilish tilining lug'ati (alohida bo'lak — i18n.ts): main.tsx ilovani shu tayyor bo'lgach chizadi.
+ * false — lug'at yuklanmadi.
+ */
+export const langReady: Promise<boolean> = setLang(settings.value.lang ?? 'uz');
+// Keyin til sozlamasi o'zgarsa (tugma — lang-switch.ts, yoki boshqa tab) — lug'ati yuklangach til almashadi.
+effect(() => void setLang(settings.value.lang ?? 'uz'));
 
 /**
  * Ikki natijalar to'plamini birlashtiradi: har darajada kamroq elementli yechim; teng bo'lsa — a

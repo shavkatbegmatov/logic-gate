@@ -11,6 +11,7 @@ import { Icon, type IconName } from '../components/ui';
 import { states } from '../achievements';
 import { dailyHistory, refreshDailyStatus, streak, todaySig } from '../daily';
 import { t } from '../i18n';
+import { switchLang } from '../lang-switch';
 import { chapterLevels, chapters, levelNumber, levels, MAX_STARS } from '../levels';
 import { go } from '../router';
 import { chapterStars, continueLevel, getDraft, profile, progress, settings, solvedCount, starsShortfall, totalStars } from '../state';
@@ -202,7 +203,7 @@ function LangToggle() {
     <button
       class="lang-toggle"
       lang={next}
-      onClick={() => (settings.value = { ...settings.value, lang: next })}
+      onClick={() => void switchLang(next)}
       aria-label={next === 'ru' ? 'Русский' : "O'zbekcha"}
     >
       {next.toUpperCase()}

@@ -28,12 +28,20 @@ console.log(`gzip: ${(raw / 1024).toFixed(1)} KB → ${(packed / 1024).toFixed(1
 
 // Byudjet (PLAN.md): o'yin ochilishida yuklanadigan JS + CSS — gzip'da 100 KB gacha. Kam ochiladigan
 // ekranlar alohida bo'lakda (src/components/lazy.tsx); bosh bundle o'sib ketsa, build to'xtaydi.
+// Til lug'ati ham ochilishda kerak, lekin faqat bittasi (src/i18n.ts): eng kattasi qo'shib hisoblanadi.
+// Lug'atlar manzili — index.html dagi theme.js tegida (vite.config.ts).
 const BUDGET = 100 * 1024;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
+const gz = (p) => gzipSync(readFileSync(join(dist, p)), { level: 9 }).length;
 const initial = [...html.matchAll(/(?:src|href)="\/(assets\/[\w.-]+\.(?:js|css))"/g)].map((m) => m[1]);
-const size = initial.reduce((sum, p) => sum + gzipSync(readFileSync(join(dist, p)), { level: 9 }).length, 0);
-console.log(`bosh yuklama: ${(size / 1024).toFixed(1)} KB (byudjet ${BUDGET / 1024} KB): ${initial.join(', ')}`);
-if (!initial.length || size > BUDGET) {
+const dicts = [...html.matchAll(/data-dict-(\w+)="\/(assets\/[\w.-]+\.js)"/g)].map((m) => ({ lang: m[1], path: m[2], size: gz(m[2]) }));
+const dict = dicts.reduce((max, d) => (d.size > max.size ? d : max), { size: 0 });
+const size = initial.reduce((sum, p) => sum + gz(p), 0) + dict.size;
+console.log(
+  `bosh yuklama: ${(size / 1024).toFixed(1)} KB (byudjet ${BUDGET / 1024} KB): ${initial.join(', ')}` +
+    ` + lug'at (${dicts.map((d) => `${d.lang} ${(d.size / 1024).toFixed(1)} KB`).join(', ')} — eng kattasi hisobda)`,
+);
+if (!initial.length || dicts.length < 2 || size > BUDGET) {
   console.error('Bosh bundle byudjetdan oshdi — yangi og\'ir ekranni lazy() bilan alohida yuklang.');
   process.exit(1);
 }

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ru, uz } from '../src/i18n';
+import { ru } from '../src/i18n-ru';
+import { uz } from '../src/i18n-uz';
 import { applyGate } from '../src/sim/sim';
 import { GATE_ARITY, GATE_TYPES } from '../src/sim/types';
 import { compareExprs, parseExpr, truthTableOf } from '../src/boolexpr.ts';

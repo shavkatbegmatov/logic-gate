@@ -9,6 +9,7 @@ import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { forgetAllTeacherClasses, teacherClasses } from '../classes';
 import { LANGS, t } from '../i18n';
+import { switchLang } from '../lang-switch';
 import { go } from '../router';
 import { profile, settings } from '../state';
 import { installed, installPrompt, isIOS, promptInstall } from '../install';
@@ -265,7 +266,7 @@ export function LangSwitch() {
           class={l.id === current ? 'on' : ''}
           aria-pressed={l.id === current}
           lang={l.id}
-          onClick={() => (settings.value = { ...settings.value, lang: l.id })}
+          onClick={() => void switchLang(l.id)}
         >
           {l.name}
         </button>
