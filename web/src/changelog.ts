@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.12.1',
+    date: '2026-11-10',
+    uz: [
+      "«Tekshirish»da xato qator sekinroq ko'rsatiladi va noto'g'ri chiqish qizil miltillaydi — xato birinchi qatorning o'zida bo'lsa ham animatsiya ko'rinadi.",
+    ],
+    ru: [
+      '«Проверка» медленнее показывает неверную строку, а неправильный выход мигает красным — анимация видна, даже если ошибка в самой первой строке.',
+    ],
+  },
+  {
     version: '2.12.0',
     date: '2026-11-10',
     uz: [

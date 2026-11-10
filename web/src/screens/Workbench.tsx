@@ -39,10 +39,23 @@ const reducedMotion = () => {
 export function checkTiming(rows: number, maxDepth: number) {
   const row = Math.min(360, Math.max(50, 1600 / rows));
   const steps = 2 * maxDepth + 3;
-  // Bir kadr ~16 ms: to'lqin qatorga ajratilgan vaqtga sig'masa, qadamlar guruhlab o'tiladi.
-  const frames = Math.max(1, Math.floor((row * 0.65) / 16));
+  return { steps, ...waveTiming(steps, row * 0.65), hold: row * 0.35 };
+}
+
+/**
+ * Xato qator sekinroq o'tadi: to'lqin 0,6–1,2 s, keyin natija biroz ko'rinib turadi. Aks holda
+ * birinchi qatorning o'zi xato bo'lsa, tekshiruv ~0,3 s da tugab, animatsiya sezilmay qolardi.
+ */
+export function badRowTiming(maxDepth: number) {
+  const steps = 2 * maxDepth + 3;
+  return { steps, ...waveTiming(steps, Math.min(1200, Math.max(600, steps * 90))), hold: 500 };
+}
+
+/** Bir kadr ~16 ms: to'lqin ajratilgan vaqtga sig'masa, qadamlar guruhlab o'tiladi. */
+function waveTiming(steps: number, wave: number) {
+  const frames = Math.max(1, Math.floor(wave / 16));
   const stride = Math.ceil(steps / frames);
-  return { steps, stride, step: (row * 0.65) / Math.ceil(steps / stride), hold: row * 0.35 };
+  return { stride, step: wave / Math.ceil(steps / stride) };
 }
 
 export interface Solved {
@@ -137,11 +150,13 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     editor.pending.value = null;
     const last = wrong >= 0 ? wrong : total - 1;
     const maxDepth = Math.max(0, ...depths(editor.compiled.value).values());
-    const time = checkTiming(total, maxDepth);
+    const normal = checkTiming(total, maxDepth);
+    const slow = badRowTiming(maxDepth);
     const rows: RowState[] = Array(total).fill('wait');
     const show = () => (rowStates.value = rows.slice());
     try {
       for (let r = 0; r <= last && !me.skip && !me.dead; r++) {
+        const time = r === wrong ? slow : normal;
         rows[r] = 'cur';
         show();
         editor.setRow(r);
@@ -185,12 +200,14 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     const start = Math.max(0, trace.length - SEQ_WINDOW);
     stripOffset.value = start;
     const maxDepth = Math.max(0, ...depths(editor.compiled.value).values());
-    const time = checkTiming(trace.length - start, maxDepth);
+    const normal = checkTiming(trace.length - start, maxDepth);
+    const slow = badRowTiming(maxDepth);
     const steps: RowState[] = Array(trace.length - start).fill('wait');
     const show = () => (rowStates.value = steps.slice());
     editor.history.value = trace.slice(0, start);
     try {
       for (let i = start; i <= last && !me.skip && !me.dead; i++) {
+        const time = i === wrong ? slow : normal;
         steps[i - start] = 'cur';
         show();
         editor.setRow(trace[i]);

@@ -3405,6 +3405,12 @@ body:has(.stage.has-check) .toast {
   animation: surge 0.3s ease-out;
 }
 
+/* Tekshiruvda xato chiqqan chiqish qizil miltillaydi (natija chizig'i ko'rinib turgan paytda). */
+.stage.has-check .pin-out.bad .pin-box {
+  stroke-width: 3;
+  animation: blink 0.5s 4;
+}
+
 @keyframes surge {
   from {
     stroke-width: 16px;
