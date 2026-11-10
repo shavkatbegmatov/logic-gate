@@ -9,6 +9,7 @@
     "build": "npm run levels && tsc --noEmit && vite build && node scripts/pages.mjs && node scripts/sw.mjs && node scripts/compress.mjs",
     "preview": "vite preview",
     "test": "npm run levels && vitest run",
+    "test:ui": "npm run build && node scripts/ui-smoke.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

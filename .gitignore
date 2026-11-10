@@ -8,4 +8,5 @@ data/
 *.exe
 .vite/
 coverage/
+test-results/
 .claude/

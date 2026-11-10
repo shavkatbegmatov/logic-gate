@@ -113,6 +113,30 @@ cd web
 pnpm test
 ```
 
+Brauzerdagi tutun testi — har mavzuda (Plata, Haqiqiy plata, Daftar, Chizma), telefon (375×812) va kompyuter (1280×800) o'lchamida asosiy ekranlar buzilmay ochilishini tekshiradi:
+
+```bash
+cd web
+pnpm test:ui
+```
+
+Buyruq o'yinni build qiladi, `web/dist` ni vaqtinchalik statik serverdan (127.0.0.1, bo'sh port) ochadi va kompyuterdagi Chrome'ni oynasiz boshqaradi (`web/scripts/ui-smoke.mjs`; ~20 soniya). Kerak bo'ladi: Chrome (bo'lmasa Chromium yoki Edge; boshqa joyda bo'lsa — `CHROME_PATH=/yo'l/chrome`). Qo'shimcha paket o'rnatilmaydi: skript brauzer bilan DevTools protokoli orqali Node'ning ichki `WebSocket` i bilan gaplashadi, shuning uchun `package.json` va o'yin bundle'i o'zgarmaydi. Go serveri kerak emas: `/api` so'rovlariga 503 qaytadi — o'yin serversiz ham ochilishi kerak.
+
+Har juftlik (mavzu × o'lcham) — yangi «qurilma»: o'yin bir marta ochiladi, `localStorage` dagi `lg.settings.v1` ga mavzu yoziladi, keyin har ekran alohida to'liq yuklanadi. Ekranlar: bosh sahifa, darajalar, daraja (`#/level/b1` — tanishtiruv oynasi yopiladi, palitradan bitta element qo'shiladi), Qum quti, Sozlamalar, yutuqlar. Tekshiriladi:
+
+- konsol xatosi, ushlanmagan istisno va yuklanmagan fayl yo'q; o'yin «xato» ekranini ko'rsatmadi va serverga xato xabari (`/api/client-errors`) yubormadi;
+- hech narsa gorizontal toshmaydi — sahifaning o'zi ham, ichki aylantirish joylari ham (`.scroll`, oyna). `body` da `overflow: hidden`, ro'yxatlar ichki konteynerda aylanadi — keng element aynan o'shani toshiradi. Uslubda ataylab `overflow-x: auto` berilgan joylar (palitra, haqiqat jadvali) hisobga olinmaydi;
+- mavzu qo'llangan: `<html data-theme>` (Plata'da atribut yo'q), to'rt mavzuning foni to'rt xil;
+- mavzuga xos belgilar: `.chip-body` (mikrosxema) faqat Haqiqiy plata'da, `.lamp-x` (chiroqdagi xoch) faqat Chizma'da ko'rinadi — bosh sahifadagi sxemada ham, maydonda ham; Sozlamalarda beshta `.theme-tile`, tanlangani — joriy mavzu.
+
+Yiqilsa — nima, qaysi mavzu, o'lcham va ekranda ekani yoziladi, skrinshot `web/test-results/ui/` ga tushadi (git'ga kirmaydi). Tayyor `dist` ustida va tor doirada ishga tushirish:
+
+```bash
+node scripts/ui-smoke.mjs --theme=chizma --size=phone --screen=level,settings
+```
+
+Boshqa parametrlar: `--lang=ru` (ruscha matnlar bilan; odatda o'zbekcha), `--shots` (har ekrandan skrinshot — mavzularni ko'zdan kechirish uchun), `--headed` (brauzer oynasi ko'rinib turadi). CI'da (`.github/workflows/docker.yml`, `test` ishi) build'dan keyin o'tadi; yiqilsa, skrinshotlar `ui-skrinshotlar` artefaktida. Yangi mavzu yoki ekran qo'shilsa — skript boshidagi `THEMES` / `SCREENS` ro'yxatiga qo'shing.
+
 ## Darajalarni tahrirlash
 
 Darajalar `levels/source.mjs` da: har bir daraja uchun maqsad funksiyasi (`fn`), ruxsat etilgan elementlar va mos yozuvdagi yechim (`sol`). Keyin:
@@ -399,7 +423,7 @@ Qum qutida yig'ilgan sxemadan «Masala qilish» masala yaratadi: uning haqiqat j
 O'yin uslubi — "ustaxona": tuzilma bitta, ranglar mavzuga qarab. Sozlamalarda **Plata** (qorong'i, sukut bo'yicha: yashil plata, mis yo'llar, sariq chiroq), **Haqiqiy plata** (lak ostidagi yo'llar, oltin kontaktlar, qora mikrosxemalar, svetodiod), **Daftar** (yorug': katakli qog'oz va siyoh — kunduzi va sinfda proyektorda qulay), **Chizma** (muhandislik chizmasi: oq qog'oz, qora chiziq, yoniq sim qizil) va **Avto** (telefon yoki Telegram rejimiga qarab: Daftar yoki Plata).
 
 - Ranglar faqat `web/src/styles.css` boshidagi o'zgaruvchilarda: `:root, [data-theme='plata']` — Plata, qolganlari — `[data-theme='daftar' | 'haqiqiy' | 'chizma']` (atribut bo'yicha: Sozlamalardagi mavzu namunasi `<span data-theme>` orqali shu bloklardan rang oladi). Qolgan CSS'da (shu jumladan `screens/*.css`) qattiq yozilgan rang bo'lmasligini va har mavzu barcha o'zgaruvchilarni belgilashini `theme.test.ts` tekshiradi; yangi rang kerak bo'lsa — to'rtala mavzuga o'zgaruvchi qo'shing.
-- Yangi mavzu qo'shish: `theme.ts` (`Theme`, `THEMES`, `THEME_BG`), `state.ts` (`cleanSettings`), `public/theme.js` (birinchi chizishdan oldingi atribut), `styles.css` (rang bloki), `i18n.ts` (`settings.themes`, `themeHint`). Mavzular faqat rang bilan farq qilishi kerak; shaklga ta'sir qiladigan ikki istisno `activeTheme` ni o'qiydi — Haqiqiy plata'da maydondagi element mikrosxema (`GateShape` ning `chip` xossasi; palitra va tavsiflarda belgi qoladi), Chizma'da simlar to'g'ri burchakli (`routeD` da burchak kesigi 0).
+- Yangi mavzu qo'shish: `theme.ts` (`Theme`, `THEMES`, `THEME_BG`), `state.ts` (`cleanSettings`), `public/theme.js` (birinchi chizishdan oldingi atribut), `styles.css` (rang bloki), `i18n.ts` (`settings.themes`, `themeHint`). Mavzular faqat rang bilan farq qilishi kerak; shaklga ta'sir qiladigan ikki istisno `activeTheme` ni o'qiydi — Haqiqiy plata'da maydondagi element mikrosxema (`GateShape` ning `chip` xossasi; palitra va tavsiflarda belgi qoladi), Chizma'da simlar to'g'ri burchakli (`routeD` da burchak kesigi 0). Yangi mavzuni brauzerdagi tutun testiga ham qo'shing (`web/scripts/ui-smoke.mjs` dagi `THEMES`; yuqorida — «Lokal ishga tushirish»).
 - Kam ochiladigan ekranlarning uslublari o'z faylida (`web/src/screens/<Ekran>.css`, ekran fayli import qiladi) — ekran `lazy()` bilan yuklanganda uslubi ham birga keladi va bosh yuklamaga kirmaydi. `--on` — signal 1 (sim, chiroq), `--accent` — interfeysdagi asosiy tugma; shaffof variant uchun `rgba(var(--on-rgb), 0.2)`.
 - Bloklar hoshiya bilan emas, sirt tusi bilan ajraladi: `--bg` (sahifa) → `--bg2` (karta, panel) → `--panel` (karta ustidagi tugma, plitka) → `--raise` (ustiga kelganda). To'liq hoshiya kerak bo'lsa — `border: 1px solid var(--edge)`: Plata'da shaffof, Daftar'da ingichka chiziq. `--line` — faqat ajratuvchi chiziq va kiritish maydoni. Urg'uli fon (xabar, joriy qator, faol holat) — `--accent-soft`. Plata'da urg'u rangi bitta (sariq: `--accent`, `--on`, yulduzlar); `--copper` — faqat yo'llar va kontaktlar. Mono shrift — faqat raqam, formula va kodlarda.
 - `web/public/theme.js` mavzuni birinchi chizishdan oldin qo'yadi (CSP inline skriptga ruxsat bermaydi), keyin `src/theme.ts` boshqaradi: `<html data-theme>`, brauzer paneli rangi, Telegram oynasi ranglari.
