@@ -572,6 +572,8 @@ input[type='date']:focus {
 
 .row.between {
   justify-content: space-between;
+  /* Yozuv va tanlagich bir qatorga sig'masa (tor telefon, uzun so'zlar) — tanlagich keyingi qatorga tushadi. */
+  flex-wrap: wrap;
 }
 
 .form-error {
@@ -609,6 +611,9 @@ input[type='date']:focus {
   margin: 0 auto;
   padding: 16px;
   display: grid;
+  /* minmax(0, …): ustun eng keng kartaning ichiga qarab kengaymaydi — aks holda tor ekranda bitta uzun
+     qator (maydon + tugma) hamma kartani ekrandan chiqarib yuboradi. Maydonlar qisqaradi, matn ko'chadi. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 

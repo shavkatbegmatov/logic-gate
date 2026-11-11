@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.17.3',
+    date: '2026-11-12',
+    uz: [
+      "Telefonda Sozlamalar, Reyting va o'qituvchilar sahifalari ekranga to'liq sig'adi: kartalar o'ngdan kesilib qolmaydi (rus tilida bu ko'proq sezilardi).",
+    ],
+    ru: [
+      'На телефоне «Настройки», «Рейтинг» и страница для учителей помещаются на экране целиком: карточки больше не обрезаются справа.',
+    ],
+  },
+  {
     version: '2.17.2',
     date: '2026-11-11',
     uz: ["«Tartibga keltirish» tugmasi bitta elementli sxemada ham ishlaydi: element chiqish ro'parasiga qo'yiladi va sim to'g'ri chiziq bo'ladi."],

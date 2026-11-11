@@ -114,7 +114,7 @@ export function Settings() {
             <h2>{t.settings.restore}</h2>
             <p class="muted">{t.settings.restoreText}</p>
             <form
-              class="row"
+              class="row code-row"
               onSubmit={(e) => {
                 e.preventDefault();
                 restore();

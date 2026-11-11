@@ -70,3 +70,13 @@
   stroke: var(--lamp-on-stroke);
   stroke-width: 1.5;
 }
+
+/* ── Tiklash kodi: kod (19 belgi) maydonda to'liq ko'rinsin — tugma yoniga sig'masa (tor telefon, ruscha
+   «Восстановить»), keyingi qatorga tushadi ── */
+.code-row {
+  flex-wrap: wrap;
+}
+
+.code-row input {
+  flex: 1 1 200px;
+}
