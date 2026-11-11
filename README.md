@@ -122,20 +122,20 @@ pnpm test:ui
 
 Buyruq o'yinni build qiladi, `web/dist` ni vaqtinchalik statik serverdan (127.0.0.1, bo'sh port) ochadi va kompyuterdagi Chrome'ni oynasiz boshqaradi (`web/scripts/ui-smoke.mjs`; ~20 soniya). Kerak bo'ladi: Chrome (bo'lmasa Chromium yoki Edge; boshqa joyda bo'lsa — `CHROME_PATH=/yo'l/chrome`). Qo'shimcha paket o'rnatilmaydi: skript brauzer bilan DevTools protokoli orqali Node'ning ichki `WebSocket` i bilan gaplashadi, shuning uchun `package.json` va o'yin bundle'i o'zgarmaydi. Go serveri kerak emas: `/api` so'rovlariga 503 qaytadi — o'yin serversiz ham ochilishi kerak.
 
-Har juftlik (mavzu × o'lcham) — yangi «qurilma»: o'yin bir marta ochiladi, `localStorage` dagi `lg.settings.v1` ga mavzu yoziladi, keyin har ekran alohida to'liq yuklanadi. Ekranlar: bosh sahifa, darajalar, daraja (`#/level/b1` — tanishtiruv oynasi yopiladi, palitradan bitta element qo'shiladi), Qum quti, Sozlamalar, yutuqlar. Tekshiriladi:
+Har juftlik (mavzu × o'lcham) — yangi «qurilma»: o'yin bir marta ochiladi, `localStorage` dagi `lg.settings.v1` ga mavzu va til yoziladi, keyin har ekran alohida to'liq yuklanadi. Ekranlar: bosh sahifa, darajalar, daraja (`#/level/b1` — tanishtiruv oynasi yopiladi, palitradan bitta element qo'shiladi), Qum quti, Sozlamalar, yutuqlar. Tekshiriladi:
 
 - konsol xatosi, ushlanmagan istisno va yuklanmagan fayl yo'q; o'yin «xato» ekranini ko'rsatmadi va serverga xato xabari (`/api/client-errors`) yubormadi;
 - hech narsa gorizontal toshmaydi — sahifaning o'zi ham, ichki aylantirish joylari ham (`.scroll`, oyna). `body` da `overflow: hidden`, ro'yxatlar ichki konteynerda aylanadi — keng element aynan o'shani toshiradi. Uslubda ataylab `overflow-x: auto` berilgan joylar (palitra, haqiqat jadvali) hisobga olinmaydi;
-- mavzu qo'llangan: `<html data-theme>` (Plata'da atribut yo'q), to'rt mavzuning foni to'rt xil;
+- mavzu qo'llangan: `<html data-theme>` (Plata'da atribut yo'q), to'rt mavzuning foni to'rt xil; til qo'llangan: `<html lang>`;
 - mavzuga xos belgilar: `.chip-body` (mikrosxema) faqat Haqiqiy plata'da, `.lamp-x` (chiroqdagi xoch) faqat Chizma'da ko'rinadi — bosh sahifadagi sxemada ham, maydonda ham; Sozlamalarda beshta `.theme-tile`, tanlangani — joriy mavzu.
 
-Yiqilsa — nima, qaysi mavzu, o'lcham va ekranda ekani yoziladi, skrinshot `web/test-results/ui/` ga tushadi (git'ga kirmaydi). Tayyor `dist` ustida va tor doirada ishga tushirish:
+Yiqilsa — nima, qaysi til, mavzu, o'lcham va ekranda ekani yoziladi, skrinshot `web/test-results/ui/` ga tushadi (git'ga kirmaydi; ruscha o'tishniki — `-ru` qo'shimchasi bilan). Tayyor `dist` ustida va tor doirada ishga tushirish:
 
 ```bash
 node scripts/ui-smoke.mjs --theme=chizma --size=phone --screen=level,settings
 ```
 
-Boshqa parametrlar: `--lang=ru` (ruscha matnlar bilan; odatda o'zbekcha), `--shots` (har ekrandan skrinshot — mavzularni ko'zdan kechirish uchun), `--headed` (brauzer oynasi ko'rinib turadi). CI'da (`.github/workflows/docker.yml`, `test` ishi) build'dan keyin o'tadi; yiqilsa, skrinshotlar `ui-skrinshotlar` artefaktida. Yangi mavzu yoki ekran qo'shilsa — skript boshidagi `THEMES` / `SCREENS` ro'yxatiga qo'shing.
+Boshqa parametrlar: `--lang=uz,ru` (ikkala tilda; `--lang=ru` — faqat ruscha), `--shots` (har ekrandan skrinshot — mavzularni ko'zdan kechirish uchun), `--headed` (brauzer oynasi ko'rinib turadi). `pnpm test:ui` faqat o'zbekchada o'tadi (tezroq); CI'da (`.github/workflows/docker.yml`, `test` ishi) build'dan keyin ikkala tilda — `--lang=uz,ru`, lokalda ~35 soniya: ruscha matnlar uzunroq, tor ekranda sig'maslik ko'proq o'sha tilda chiqadi (2.17.1 dagi Sozlamalar shunday topilgan). Yiqilsa, skrinshotlar `ui-skrinshotlar` artefaktida. Yangi mavzu yoki ekran qo'shilsa — skript boshidagi `THEMES` / `SCREENS` ro'yxatiga qo'shing.
 
 ## Darajalarni tahrirlash
 

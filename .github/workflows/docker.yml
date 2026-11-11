@@ -38,9 +38,10 @@ jobs:
         working-directory: web
       - run: pnpm test && pnpm run build
         working-directory: web
-      # Tutun testi: shu build'ni runner'dagi Chrome'da ochib, har mavzuda asosiy ekranlarni tekshiradi
-      # (web/scripts/ui-smoke.mjs; bog'liqliksiz, ~20-40 soniya). Yiqilsa — skrinshotlar artefaktda.
-      - run: node scripts/ui-smoke.mjs
+      # Tutun testi: shu build'ni runner'dagi Chrome'da ochib, har mavzuda asosiy ekranlarni ikkala tilda
+      # tekshiradi (web/scripts/ui-smoke.mjs; bog'liqliksiz, ~1 daqiqa). Ruscha matnlar uzunroq — tor ekranda
+      # sig'masligi ko'proq o'sha tilda chiqadi. Yiqilsa — skrinshotlar artefaktda.
+      - run: node scripts/ui-smoke.mjs --lang=uz,ru
         working-directory: web
         timeout-minutes: 6
       - uses: actions/upload-artifact@v7

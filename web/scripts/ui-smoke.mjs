@@ -8,9 +8,9 @@
 // qo'shilmaydi. API yo'q: /api so'rovlariga 503 qaytadi — o'yin serversiz ham ochilishi kerak.
 //
 //   pnpm test:ui                                   build + test
-//   node scripts/ui-smoke.mjs                      tayyor dist/ ustida (CI shunday chaqiradi)
+//   node scripts/ui-smoke.mjs                      tayyor dist/ ustida
 //   node scripts/ui-smoke.mjs --theme=chizma --size=phone --screen=level,settings
-//   node scripts/ui-smoke.mjs --lang=ru            ruscha matnlar bilan (odatda — o'zbekcha)
+//   node scripts/ui-smoke.mjs --lang=uz,ru         ikkala tilda (odatda — faqat o'zbekcha; CI shunday chaqiradi)
 //   node scripts/ui-smoke.mjs --shots              har ekrandan skrinshot (mavzularni ko'zdan kechirish uchun)
 //   node scripts/ui-smoke.mjs --headed             brauzer oynasi ko'rinib turadi
 //   CHROME_PATH=/yo'l/chrome node scripts/ui-smoke.mjs
@@ -27,6 +27,8 @@ const SHOTS = join(WEB, 'test-results', 'ui');
 
 /** src/theme.ts dagi ActiveTheme. «Avto» alohida mavzu emas — qurilmaga qarab Daftar yoki Plata. */
 const THEMES = ['plata', 'haqiqiy', 'daftar', 'chizma'];
+/** Odatda faqat birinchisi; ruscha matnlar uzunroq — tor ekranda sig'masligi ko'proq shu tilda chiqadi. */
+const LANGS = ['uz', 'ru'];
 const SIZES = [
   // Telefon: barmoq bilan bosiladi, aylantirish chizig'i joy olmaydi (mobile).
   { id: 'phone', label: 'telefon', width: 375, height: 812, mobile: true },
@@ -50,14 +52,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // ── Buyruq qatori ────────────────────────────────────────────────────────────────────────────────────
 function options() {
-  const opt = { headed: false, shots: false, lang: 'uz' };
+  const opt = { headed: false, shots: false };
   for (const arg of process.argv.slice(2)) {
     const [key, value = ''] = arg.replace(/^--/, '').split('=');
     if (key === 'headed') opt.headed = true;
     else if (key === 'shots') opt.shots = true;
-    else if (key === 'lang' && (value === 'uz' || value === 'ru')) opt.lang = value;
-    else if (['theme', 'size', 'screen'].includes(key) && value) opt[key] = value.split(',');
-    else fail(`Noma'lum parametr: ${arg}\nMisol: node scripts/ui-smoke.mjs --theme=chizma --size=phone --screen=level --lang=ru --shots --headed`);
+    else if (['theme', 'size', 'screen', 'lang'].includes(key) && value) opt[key] = value.split(',');
+    else fail(`Noma'lum parametr: ${arg}\nMisol: node scripts/ui-smoke.mjs --theme=chizma --size=phone --screen=level --lang=uz,ru --shots --headed`);
   }
   const pick = (all, ids, name) => {
     if (!ids) return all;
@@ -71,6 +72,7 @@ function options() {
     themes: pick(THEMES, opt.theme, 'theme'),
     sizes: pick(SIZES, opt.size, 'size'),
     screens: pick(SCREENS, opt.screen, 'screen'),
+    langs: opt.lang ? pick(LANGS, opt.lang, 'lang') : LANGS.slice(0, 1),
   };
 }
 
@@ -430,7 +432,7 @@ async function playLevel(page) {
  * o'sha konteynerni toshiradi. Uslubda ataylab gorizontal aylanadigan qilingan joylar (overflow-x: auto —
  * palitra, haqiqat jadvali) hisobga olinmaydi.
  */
-function inspect({ theme, screen, ready }) {
+function inspect({ theme, lang, screen, ready }) {
   const out = [];
   const root = document.documentElement;
   const visible = (el) => {
@@ -455,6 +457,8 @@ function inspect({ theme, screen, ready }) {
   const want = theme === 'plata' ? null : theme;
   const got = root.getAttribute('data-theme');
   if (got !== want) out.push(`<html data-theme>: ${got ?? "yo'q"}, kutilgan — ${want ?? "yo'q"}`);
+  // Til: i18n.ts <html lang> ni qo'yadi — aks holda ruscha o'tish sezdirmay o'zbekcha matnni tekshirib qo'yardi.
+  if (root.lang !== lang) out.push(`<html lang>: ${root.lang || "yo'q"}, kutilgan — ${lang}`);
 
   // Gorizontal toshish (1 px — kasr o'lchamlarni yaxlitlash).
   if (root.scrollWidth > root.clientWidth + 1) out.push(`sahifa gorizontal toshdi: ${root.scrollWidth} px > ${root.clientWidth} px`);
@@ -510,9 +514,9 @@ function waitScreen(page, selector) {
 }
 
 /** Bitta ekran: ochish → amallar → tekshiruvlar. Kamchiliklar ro'yxatini qaytaradi. */
-async function checkScreen(page, server, theme, screen) {
+async function checkScreen(page, server, lang, theme, screen) {
   const problems = [];
-  const title = `${theme} ${screen.id}`;
+  const title = `${lang} ${theme} ${screen.id}`;
   await page.open(`${server.url}/#/${screen.path}`);
   const state = await waitScreen(page, screen.ready);
   const ready = state === 'ready';
@@ -520,7 +524,7 @@ async function checkScreen(page, server, theme, screen) {
   await page.settle(title);
 
   // Animatsiya tugashi yoki kech chizilgan qism uchun bir oz kutiladi: oxirgi holat hisobga olinadi.
-  const ctx = { theme, screen: screen.id, ready };
+  const ctx = { theme, lang, screen: screen.id, ready };
   const end = Date.now() + (ready && !problems.length ? CHECK_MS : 0);
   let found = await page.evaluate(inspect, ctx);
   while (found.length && Date.now() < end) {
@@ -551,33 +555,33 @@ function reportLines(server, known = []) {
   return lines;
 }
 
-/** Bitta mavzu va o'lcham: yangi «qurilma», mavzu localStorage orqali, keyin barcha ekranlar. */
-async function run(cdp, server, opt, theme, size) {
+/** Bitta til, mavzu va o'lcham: yangi «qurilma», til va mavzu localStorage orqali, keyin barcha ekranlar. */
+async function run(cdp, server, opt, lang, theme, size) {
   const failures = [];
   const page = await openPage(cdp, size, server.url);
   const report = async (screenId, hash, problems) => {
     if (!problems.length && !opt.shots) return;
-    const file = join(SHOTS, `${theme}-${size.id}-${screenId}.png`);
+    const file = join(SHOTS, `${theme}-${size.id}-${screenId}${lang === LANGS[0] ? '' : `-${lang}`}.png`);
     mkdirSync(SHOTS, { recursive: true });
     const shot = await page.screenshot(file).then(() => relative(WEB, file).replaceAll(sep, '/'), (e) => `olinmadi (${e.message})`);
-    if (problems.length) failures.push({ title: `${theme} · ${size.label} ${size.width}×${size.height} · ${screenId} (${hash})`, problems, shot });
+    if (problems.length) failures.push({ title: `${lang} · ${theme} · ${size.label} ${size.width}×${size.height} · ${screenId} (${hash})`, problems, shot });
   };
   try {
     // Birinchi ochilish (yangi o'yinchi, asosiy mavzu): shundan keyin sozlama yoziladi va sahifa qayta yuklanadi.
     await page.open(`${server.url}/`);
     const booted = (await waitScreen(page, '.screen')) === 'ready';
     const first = booted ? [] : ['ilova ishga tushmadi'];
-    await page.settle(`${theme} birinchi ochilish`);
+    await page.settle(`${lang} ${theme} birinchi ochilish`);
     first.push(...page.takeErrors());
     first.push(...reportLines(server, first));
     await report('first-open', '#/', [...new Set(first)]);
     // Ilova umuman ochilmasa, qolgan ekranlar ham xuddi shunday yiqiladi — vaqt ketkazilmaydi.
     if (!booted) return { failures, bg: null, checked: 0 };
     // Shakli — src/state.ts dagi cleanSettings qabul qiladigan.
-    await page.evaluate((s) => localStorage.setItem('lg.settings.v1', JSON.stringify(s)), { theme, lang: opt.lang });
+    await page.evaluate((s) => localStorage.setItem('lg.settings.v1', JSON.stringify(s)), { theme, lang });
 
     for (const screen of opt.screens) {
-      await report(screen.id, `#/${screen.path}`, await checkScreen(page, server, theme, screen));
+      await report(screen.id, `#/${screen.path}`, await checkScreen(page, server, lang, theme, screen));
     }
     // Mavzu ranglari haqiqatan almashganini solishtirish uchun (pastda: to'rt mavzu — to'rt xil fon).
     const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor).catch(() => '');
@@ -607,26 +611,28 @@ async function main() {
     browser = await launchBrowser(browserPath, opt.headed);
     cdp = await connect(browser.ws);
     const { product } = await cdp.send('Browser.getVersion');
-    console.log(`Tutun testi: ${product}, ${server.url}, til — ${opt.lang}`);
+    console.log(`Tutun testi: ${product}, ${server.url}, til — ${opt.langs.join(', ')}`);
     const all = async () => {
-      for (const size of opt.sizes) {
-        const backgrounds = new Map();
-        for (const theme of opt.themes) {
-          const t0 = Date.now();
-          const result = await run(cdp, server, opt, theme, size);
-          checks += result.checked;
-          failures.push(...result.failures);
-          if (result.bg !== null) backgrounds.set(theme, result.bg);
-          const mark = result.failures.length ? '✗' : '✓';
-          console.log(`${mark} ${theme.padEnd(8)} ${size.label.padEnd(10)} ${result.checked} ekran  ${((Date.now() - t0) / 1000).toFixed(1)} s`);
-        }
-        // Atribut qo'yilgani yetarli emas: ranglar ham almashgan bo'lishi kerak (styles.css dagi mavzu bloklari).
-        const distinct = new Set(backgrounds.values());
-        if (distinct.size !== backgrounds.size || distinct.has('')) {
-          failures.push({
-            title: `${size.label} · mavzu ranglari`,
-            problems: [`mavzular foni bir xil chiqdi: ${[...backgrounds].map(([k, v]) => `${k} — ${v || "o'qilmadi"}`).join(', ')}`],
-          });
+      for (const lang of opt.langs) {
+        for (const size of opt.sizes) {
+          const backgrounds = new Map();
+          for (const theme of opt.themes) {
+            const t0 = Date.now();
+            const result = await run(cdp, server, opt, lang, theme, size);
+            checks += result.checked;
+            failures.push(...result.failures);
+            if (result.bg !== null) backgrounds.set(theme, result.bg);
+            const mark = result.failures.length ? '✗' : '✓';
+            console.log(`${mark} ${lang}  ${theme.padEnd(8)} ${size.label.padEnd(10)} ${result.checked} ekran  ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+          }
+          // Atribut qo'yilgani yetarli emas: ranglar ham almashgan bo'lishi kerak (styles.css dagi mavzu bloklari).
+          const distinct = new Set(backgrounds.values());
+          if (distinct.size !== backgrounds.size || distinct.has('')) {
+            failures.push({
+              title: `${lang} · ${size.label} · mavzu ranglari`,
+              problems: [`mavzular foni bir xil chiqdi: ${[...backgrounds].map(([k, v]) => `${k} — ${v || "o'qilmadi"}`).join(', ')}`],
+            });
+          }
         }
       }
     };
