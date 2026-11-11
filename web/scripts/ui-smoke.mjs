@@ -376,6 +376,14 @@ async function openPage(cdp, size, apiOrigin) {
       const center = (sel) => {
         const el = document.querySelector(sel);
         if (!el) return null;
+        // Oyna ochilish animatsiyasi (pop — kattalashib, biroz oshib qaytadi) tugaguncha bosilmaydi: eng
+        // yuqori nuqtasida tugma ikki o'lchovda bir joyda turib qolishi va bosish bo'shliqqa ketishi mumkin.
+        // Cheksiz animatsiyalar (tugma pulsi, chiroq miltillashi) kutilmaydi.
+        const moving = document.getAnimations().some((a) => {
+          const target = a.effect?.target;
+          return a.playState === 'running' && a.effect.getComputedTiming().endTime !== Infinity && target?.contains?.(el);
+        });
+        if (moving) return null;
         el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         const r = el.getBoundingClientRect();
         return r.width && r.height ? { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } : null;
@@ -414,15 +422,32 @@ async function openPage(cdp, size, apiOrigin) {
 
 // ── Ekrandagi amallar va tekshiruvlar ────────────────────────────────────────────────────────────────
 
-/** Birinchi daraja: tanishtiruv oynasi yopiladi va palitradan bitta element qo'shiladi. */
+/**
+ * Birinchi daraja: tanishtiruv oynasi yopiladi, palitradan bitta element qo'shiladi, keyin «Tozalash» —
+ * brauzerniki emas, o'yinning tasdiqlash oynasi (components/Dialogs.tsx). «Bekor qilish» elementni saqlaydi;
+ * qayta ochilgan oyna tekshiruvga ochiq qoladi (inspect): u ham har mavzu, til va o'lchamda ekranga sig'sin.
+ */
 async function playLevel(page) {
   const gotIt = '.modal-back .modal-actions .btn.primary';
   if (!(await page.waitFor((sel) => !!document.querySelector(sel), [gotIt], 5000))) return ['tanishtiruv oynasi chiqmadi'];
   await page.tap(gotIt);
   if (!(await page.waitFor(() => !document.querySelector('.modal-back'), [], 3000))) return ['tanishtiruv oynasi yopilmadi'];
   await page.tap('.palette .palette-item');
-  const added = await page.waitFor(() => document.querySelectorAll('.board [data-kind="gate"]').length === 1, [], 3000);
-  return added ? [] : ["palitradan bosilganda maydonga element qo'shilmadi"];
+  const gate = '.board [data-kind="gate"]';
+  const oneGate = (sel) => document.querySelectorAll(sel).length === 1;
+  if (!(await page.waitFor(oneGate, [gate], 3000))) return ["palitradan bosilganda maydonga element qo'shilmadi"];
+
+  // Til va tugmalar tartibidan qat'i nazar: savat belgili tugma.
+  const trash = '.topbar-actions .icon-btn:has(path[d^="M4 7h16"])';
+  const dialog = '.modal.confirm';
+  const opened = () => page.waitFor((sel) => !!document.querySelector(sel), [dialog], 3000);
+  await page.tap(trash);
+  if (!(await opened())) return ['«Tozalash» bosilganda tasdiqlash oynasi chiqmadi'];
+  await page.tap(`${dialog} .confirm-actions .btn:not(.solid)`);
+  const kept = await page.waitFor((sel) => !document.querySelector('.modal-back') && document.querySelectorAll(sel).length === 1, [gate], 3000);
+  if (!kept) return ["tasdiqlash oynasida «Bekor qilish» bosilganda oyna yopilmadi yoki element o'chdi"];
+  await page.tap(trash);
+  return (await opened()) ? [] : ['tasdiqlash oynasi qayta ochilmadi'];
 }
 
 /**
@@ -488,6 +513,19 @@ function inspect({ theme, lang, screen, ready }) {
   if (screen === 'level') {
     marks('.board');
     if (theme !== 'haqiqiy' && !shown('.board [data-kind="gate"] .gate-body')) out.push("maydondagi element belgisi (.gate-body) ko'rinmaydi");
+    // «Tozalash» oynasi (playLevel uni ochiq qoldiradi): ochilish animatsiyasi tugagach butunligicha ekranda,
+    // ikkala tugmasi ko'rinadi. Animatsiya paytida o'lchami kichik — tekshiruv uni kutadi.
+    const dialog = document.querySelector('.modal.confirm');
+    if (!dialog) out.push('«Tozalash» tasdiqlash oynasi ochiq emas');
+    else if (dialog.getAnimations().some((a) => a.playState === 'running')) out.push('tasdiqlash oynasi hali ochilmoqda');
+    else {
+      const r = dialog.getBoundingClientRect();
+      if (r.left < 0 || r.top < 0 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) {
+        out.push(`tasdiqlash oynasi ekrandan chiqdi: ${Math.round(r.left)},${Math.round(r.top)}–${Math.round(r.right)},${Math.round(r.bottom)} (ekran ${innerWidth}×${innerHeight})`);
+      }
+      const buttons = shown('.modal.confirm .confirm-actions .btn');
+      if (buttons !== 2) out.push(`tasdiqlash oynasida ${buttons} ta tugma ko'rinadi, kutilgan — 2`);
+    }
   }
   if (screen === 'settings') {
     const tiles = document.querySelectorAll('.theme-tile').length;
