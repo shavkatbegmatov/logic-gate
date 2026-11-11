@@ -71,6 +71,8 @@ export const uz = {
     redo: 'Qaytarish',
     clear: 'Tozalash',
     clearConfirm: "Maydondagi barcha elementlar o'chirilsinmi?",
+    clearTitle: 'Maydonni tozalash',
+    clearUndo: "Fikringiz o'zgarsa, ↶ tugmasi bilan qaytarasiz.",
     fit: "Hammasini ko'rsatish",
     tidy: 'Tartibga keltirish',
     tidied: "Elementlar tartibga keltirildi — «Bekor qilish» bilan qaytarsa bo'ladi.",

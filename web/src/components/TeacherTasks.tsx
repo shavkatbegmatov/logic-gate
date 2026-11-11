@@ -6,6 +6,7 @@ import { chapterLevels, chapters, levelNumber } from '../levels';
 import { errorText } from '../sync';
 import { dayToISO, isoToDay, MAX_TASK_LEVELS, MAX_TASKS, taskLevels } from '../tasks';
 import { DueLabel, TaskLevels, taskTitle } from './TaskView';
+import { askConfirm } from './Confirm';
 import { Icon } from './ui';
 
 /** O'qituvchi hisobotidagi "Vazifalar": yangi vazifa berish va har biri bo'yicha kim bajargani. */
@@ -20,7 +21,7 @@ export function TeacherTasks({ code, teacherKey, report, onChange }: {
   const tasks = report.tasks ?? [];
 
   const remove = async (task: ClassTask) => {
-    if (!confirm(t.tasks.deleteConfirm)) return;
+    if (!(await askConfirm({ title: t.tasks.delete, text: t.tasks.deleteConfirm, ok: t.tasks.delete, danger: true, icon: 'trash' }))) return;
     error.value = '';
     try {
       await api.deleteTask(code, teacherKey, task.id);

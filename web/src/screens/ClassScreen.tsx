@@ -4,6 +4,7 @@ import { api, type ClassEntry, type ClassInfo } from '../api';
 import { normalizeClassCode, refreshMyTasks } from '../classes';
 import { JoinForm } from '../components/JoinForm';
 import { TaskItem } from '../components/TaskView';
+import { askConfirm } from '../components/Confirm';
 import { TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';
@@ -54,7 +55,7 @@ export function ClassScreen({ code: raw }: { code: string }) {
   };
 
   const leave = async () => {
-    if (!confirm(t.classes.leaveConfirm)) return;
+    if (!(await askConfirm({ title: t.classes.leave, text: t.classes.leaveConfirm, ok: t.classes.leave, danger: true, icon: 'users' }))) return;
     try {
       await api.leaveClass(code);
       await load();

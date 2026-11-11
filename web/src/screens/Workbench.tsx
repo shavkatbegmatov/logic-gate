@@ -8,6 +8,7 @@ import { tidy } from '../board/tidy';
 import { GateList } from '../components/GateList';
 import { HintPanel } from '../components/HintPanel';
 import { Palette } from '../components/Palette';
+import { askClear } from '../components/Confirm';
 import { showToast } from '../components/Toast';
 import { Formula } from '../components/Formula';
 import { Timeline, traceSteps } from '../components/Timeline';
@@ -328,7 +329,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
         </button>
         <button
           class="icon-btn"
-          onClick={() => confirm(t.play.clearConfirm) && editor.clear()}
+          onClick={async () => (await askClear()) && editor.clear()}
           disabled={busy || (!used && !editor.shape.value.wires)}
           title={t.play.clear}
           aria-label={t.play.clear}

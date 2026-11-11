@@ -1,5 +1,6 @@
 import { Fragment } from 'preact';
 import { useEffect, useErrorBoundary, useRef } from 'preact/hooks';
+import { cancelConfirm, ConfirmHost } from './components/Confirm';
 import { NewProfileCode } from './components/NewProfileCode';
 import { showToast, Toast } from './components/Toast';
 import { reportCaught } from './errors';
@@ -39,7 +40,12 @@ export function App() {
     syncProgress().catch(() => {});
     const onOnline = () => syncProgress().catch(() => {});
     addEventListener('online', onOnline);
-    return () => removeEventListener('online', onOnline);
+    // Boshqa ekranga o'tilsa (orqaga tugmasi, Telegram sarlavhasi), ochiq savol o'z ekrani bilan birga yopiladi.
+    const offRoute = route.subscribe(cancelConfirm);
+    return () => {
+      removeEventListener('online', onOnline);
+      offRoute();
+    };
   }, []);
 
   // Til almashganda butun daraxt qayta quriladi — keshlangan matnlar ham yangilanadi.
@@ -47,6 +53,7 @@ export function App() {
     <Fragment key={lang.value}>
       <Guarded />
       <NewProfileCode />
+      <ConfirmHost />
       <Toast />
     </Fragment>
   );

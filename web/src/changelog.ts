@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.17.4',
+    date: '2026-11-12',
+    uz: [
+      "«Maydonni tozalash», «Progressni o'chirish» va sinfdan chiqish kabi savollar endi brauzerning oddiy oynasida emas, o'yinning o'z oynasida chiqadi — tanlangan mavzuga mos, telefonda va Telegram ichida ham.",
+    ],
+    ru: [
+      'Вопросы вроде «Очистить поле», «Сбросить прогресс» и выхода из класса теперь показываются не в простом окне браузера, а в окне самой игры — в цветах выбранной темы, и на телефоне, и в Telegram.',
+    ],
+  },
+  {
     version: '2.17.3',
     date: '2026-11-12',
     uz: [

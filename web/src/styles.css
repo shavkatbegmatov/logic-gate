@@ -530,6 +530,19 @@ a.btn.primary {
   border-color: var(--bad);
 }
 
+/* To'liq qizil — tasdiqlash oynasidagi o'chirish (components/Confirm.tsx). Yozuv fon rangida: har mavzuda o'qiladi. */
+.btn.danger.solid {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: var(--bg);
+}
+
+.btn.danger.solid:hover:not(:disabled) {
+  background: var(--bad);
+  border-color: var(--bad);
+  filter: brightness(1.08);
+}
+
 .btn.toggle.on {
   background: var(--accent-soft);
   border-color: transparent;
@@ -2474,6 +2487,55 @@ input[type='date']:focus {
   justify-content: center;
   gap: 10px;
   margin-top: 16px;
+}
+
+/* Tasdiqlash oynasi (components/Confirm.tsx): brauzerning confirm() oynasi o'rniga. */
+.modal.confirm {
+  width: min(380px, 100%);
+  padding: 26px 22px 22px;
+}
+
+.confirm-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.confirm-icon.danger {
+  border-color: rgba(var(--bad-rgb), 0.4);
+  background: rgba(var(--bad-rgb), 0.12);
+  color: var(--bad);
+}
+
+.confirm-icon .icon {
+  width: 28px;
+  height: 28px;
+}
+
+.confirm-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.confirm-text {
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.confirm-actions {
+  margin-top: 20px;
+}
+
+.confirm-actions .btn {
+  flex: 1 1 0;
 }
 
 .toast {

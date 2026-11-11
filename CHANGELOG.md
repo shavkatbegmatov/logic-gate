@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.17.4 — 2026-11-12
+
+- «Maydonni tozalash», «Progressni o'chirish» va sinfdan chiqish kabi savollar endi brauzerning oddiy oynasida emas, o'yinning o'z oynasida chiqadi — tanlangan mavzuga mos, telefonda va Telegram ichida ham.
+
 ## 2.17.3 — 2026-11-12
 
 - Telefonda Sozlamalar, Reyting va o'qituvchilar sahifalari ekranga to'liq sig'adi: kartalar o'ngdan kesilib qolmaydi (rus tilida bu ko'proq sezilardi).

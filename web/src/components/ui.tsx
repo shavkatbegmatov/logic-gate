@@ -23,7 +23,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * Oyna: ochilganda fokus ichiga o'tadi (autoFocus tugmasiga yoki oynaning o'ziga), Tab oyna ichida
  * aylanadi, yopilganda fokus oldingi joyiga qaytadi. Birinchi sarlavha — oynaning nomi (ekran o'quvchi).
  */
-export function Modal({ children, onClose }: { children: ComponentChildren; onClose?: () => void }) {
+export function Modal({ children, onClose, class: cls }: { children: ComponentChildren; onClose?: () => void; class?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -71,7 +71,7 @@ export function Modal({ children, onClose }: { children: ComponentChildren; onCl
   }, []);
   return (
     <div class="modal-back" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div class="modal" role="dialog" aria-modal="true" tabIndex={-1} ref={ref}>
+      <div class={cls ? `modal ${cls}` : 'modal'} role="dialog" aria-modal="true" tabIndex={-1} ref={ref}>
         {children}
       </div>
     </div>

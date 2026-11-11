@@ -6,6 +6,7 @@ import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { MAX_LENGTH } from '../boolexpr';
 import { buildFromFormula, type BuildError, type BuildResult } from '../formula-build';
+import { askClear } from '../components/Confirm';
 import { showToast } from '../components/Toast';
 import { GateList } from '../components/GateList';
 import { ShareButtons } from '../components/ShareButtons';
@@ -92,7 +93,7 @@ export function Sandbox({ formula }: { formula?: string }) {
         <button class="icon-btn" onClick={() => editor.redo()} disabled={!editor.canRedo.value} aria-label={t.play.redo} title={t.play.redo}>
           <Icon name="redo" />
         </button>
-        <button class="icon-btn" onClick={() => confirm(t.play.clearConfirm) && editor.clear()} aria-label={t.play.clear} title={t.play.clear}>
+        <button class="icon-btn" onClick={async () => (await askClear()) && editor.clear()} aria-label={t.play.clear} title={t.play.clear}>
           <Icon name="trash" />
         </button>
       </TopBar>

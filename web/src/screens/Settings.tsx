@@ -3,6 +3,7 @@ import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import { copyText, selectContents } from '../clipboard';
 import { ClassesCard } from '../components/ClassesCard';
+import { askConfirm } from '../components/Confirm';
 import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { showToast } from '../components/Toast';
@@ -47,10 +48,16 @@ export function Settings() {
     }
   };
 
-  const restore = () => {
+  const restore = async () => {
     // Umumiy kompyuterda boshqa o'quvchining profili ochiq bo'lishi mumkin: uning natijalari qurilmadan
     // olib tashlanadi (serverda qoladi) — buni oldindan aytamiz.
-    if (p && formatCode(code.value) !== formatCode(p.code) && !confirm(t.settings.switchConfirm(p.nickname))) return;
+    if (
+      p &&
+      formatCode(code.value) !== formatCode(p.code) &&
+      !(await askConfirm({ title: t.settings.restore, text: t.settings.switchConfirm(p.nickname), ok: t.settings.restore, icon: 'users' }))
+    ) {
+      return;
+    }
     run(async () => void (await restoreProfile(code.value)), t.settings.restored).then(() => {
       if (profile.value) nick.value = profile.value.nickname;
     });
@@ -59,9 +66,16 @@ export function Settings() {
   // O'qituvchi kalitlari ham qurilmada: kompyuterdan keyingi foydalanuvchi sinf hisobotini ochmasin.
   const teacherCount = teacherClasses.value.length;
 
-  const reset = () => {
-    const text = p ? t.settings.resetConfirmProfile : t.settings.resetConfirm;
-    if (!confirm(teacherCount ? `${text}\n\n${t.settings.resetTeacher(teacherCount)}` : text)) return;
+  const reset = async () => {
+    const yes = await askConfirm({
+      title: t.settings.reset,
+      text: p ? t.settings.resetConfirmProfile : t.settings.resetConfirm,
+      note: teacherCount ? t.settings.resetTeacher(teacherCount) : undefined,
+      ok: t.settings.reset,
+      danger: true,
+      icon: 'trash',
+    });
+    if (!yes) return;
     clearPlayerData();
     forgetAllTeacherClasses();
     // Profil qolsa, keyingi ochilishda serverdagi natijalar qaytib kelardi — qurilma to'liq tozalanadi.

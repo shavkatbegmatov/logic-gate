@@ -15,6 +15,7 @@ import { copyText } from '../clipboard';
 import { ShareButtons } from '../components/ShareButtons';
 import { taskTitle } from '../components/TaskView';
 import { TeacherTasks } from '../components/TeacherTasks';
+import { askConfirm } from '../components/Confirm';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
@@ -255,7 +256,7 @@ export function TeacherReport({ code }: { code: string }) {
   };
 
   const remove = async (id: string, nick: string) => {
-    if (!confirm(t.classes.removeConfirm(nick))) return;
+    if (!(await askConfirm({ title: t.classes.remove, text: t.classes.removeConfirm(nick), ok: t.classes.remove, danger: true, icon: 'users' }))) return;
     try {
       await api.removeMember(code, cls.key, id);
       await load();
@@ -265,7 +266,7 @@ export function TeacherReport({ code }: { code: string }) {
   };
 
   const destroy = async () => {
-    if (!confirm(t.classes.deleteConfirm)) return;
+    if (!(await askConfirm({ title: t.classes.deleteClass, text: t.classes.deleteConfirm, ok: t.classes.deleteClass, danger: true, icon: 'trash' }))) return;
     try {
       await api.deleteClass(code, cls.key);
     } catch (e) {
