@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.17.5',
+    date: '2026-11-12',
+    uz: [
+      "Matnni avtomatik nusxalab bo'lmasa (ba'zi telefon va brauzerlarda), u endi o'yin oynasida belgilangan holda chiqadi — uni bir bosishda nusxalab olasiz.",
+    ],
+    ru: [
+      'Если текст не удаётся скопировать автоматически (на некоторых телефонах и в браузерах), он теперь показывается в окне игры уже выделенным — скопировать его можно одним нажатием.',
+    ],
+  },
+  {
     version: '2.17.4',
     date: '2026-11-12',
     uz: [

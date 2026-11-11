@@ -530,7 +530,7 @@ a.btn.primary {
   border-color: var(--bad);
 }
 
-/* To'liq qizil — tasdiqlash oynasidagi o'chirish (components/Confirm.tsx). Yozuv fon rangida: har mavzuda o'qiladi. */
+/* To'liq qizil — tasdiqlash oynasidagi o'chirish (components/Dialogs.tsx). Yozuv fon rangida: har mavzuda o'qiladi. */
 .btn.danger.solid {
   background: var(--bad);
   border-color: var(--bad);
@@ -2489,7 +2489,7 @@ input[type='date']:focus {
   margin-top: 16px;
 }
 
-/* Tasdiqlash oynasi (components/Confirm.tsx): brauzerning confirm() oynasi o'rniga. */
+/* Tasdiqlash oynasi (components/Dialogs.tsx): brauzerning confirm() oynasi o'rniga. */
 .modal.confirm {
   width: min(380px, 100%);
   padding: 26px 22px 22px;
@@ -2536,6 +2536,29 @@ input[type='date']:focus {
 
 .confirm-actions .btn {
   flex: 1 1 0;
+}
+
+/* Nusxalab bo'lmagan matn (showCopy): kiritish maydoni kabi botiq, mono, uzun bo'lsa ichida suriladi. */
+.copy-area {
+  display: block;
+  width: 100%;
+  max-height: 40dvh;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 var(--mono);
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  resize: none;
+}
+
+.copy-area:focus {
+  outline: 2px solid var(--sel);
+  outline-offset: 1px;
 }
 
 .toast {

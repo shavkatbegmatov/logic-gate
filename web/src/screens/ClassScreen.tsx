@@ -4,7 +4,7 @@ import { api, type ClassEntry, type ClassInfo } from '../api';
 import { normalizeClassCode, refreshMyTasks } from '../classes';
 import { JoinForm } from '../components/JoinForm';
 import { TaskItem } from '../components/TaskView';
-import { askConfirm } from '../components/Confirm';
+import { askConfirm } from '../components/Dialogs';
 import { TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go } from '../router';

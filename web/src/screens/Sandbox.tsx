@@ -6,7 +6,7 @@ import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { MAX_LENGTH } from '../boolexpr';
 import { buildFromFormula, type BuildError, type BuildResult } from '../formula-build';
-import { askClear } from '../components/Confirm';
+import { askClear } from '../components/Dialogs';
 import { showToast } from '../components/Toast';
 import { GateList } from '../components/GateList';
 import { ShareButtons } from '../components/ShareButtons';

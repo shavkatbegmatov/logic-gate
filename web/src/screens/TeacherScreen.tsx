@@ -15,7 +15,7 @@ import { copyText } from '../clipboard';
 import { ShareButtons } from '../components/ShareButtons';
 import { taskTitle } from '../components/TaskView';
 import { TeacherTasks } from '../components/TeacherTasks';
-import { askConfirm } from '../components/Confirm';
+import { askConfirm, showCopy } from '../components/Dialogs';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
@@ -32,7 +32,7 @@ const REFRESH_MS = 60_000;
 
 const copy = async (text: string) => {
   if (await copyText(text)) showToast(t.classes.copied, 'ok');
-  else window.prompt(t.share.copyManual, text);
+  else showCopy(text);
 };
 
 /** O'qituvchi: sinf yaratish, shu qurilmadagi sinflar, boshqa qurilmadan sinf qo'shish. */
@@ -252,7 +252,7 @@ export function TeacherReport({ code }: { code: string }) {
     if (!r) return;
     const text = toTSV(reportTable(r, rows, labels()));
     if (await copyText(text)) showToast(t.classes.exportCopied, 'ok');
-    else window.prompt(t.share.copyManual, text);
+    else showCopy(text);
   };
 
   const remove = async (id: string, nick: string) => {

@@ -2,6 +2,7 @@ import { copyText } from '../clipboard';
 import { t } from '../i18n';
 import { fullShareText, telegramShareUrl, tgAppLink } from '../share';
 import { inTelegram, openTelegramLink } from '../telegram';
+import { showCopy } from './Dialogs';
 import { showToast } from './Toast';
 import { Icon } from './ui';
 
@@ -17,8 +18,8 @@ export function ShareButtons({ text, label, path = '', row = false }: { text: st
   const copy = async () => {
     const full = fullShareText(url, text);
     if (await copyText(full)) showToast(t.share.copied, 'ok');
-    // Nusxalab bo'lmasa — matn tanlab olinadigan oynada ko'rsatiladi.
-    else window.prompt(t.share.copyManual, full);
+    // Nusxalab bo'lmasa — matn belgilangan holda o'yin oynasida ko'rsatiladi.
+    else showCopy(full);
   };
 
   // Bosh sahifa ro'yxatida (row) — qator: matn chapda, yonida "nusxalash"; boshqa joylarda — tugma.

@@ -175,7 +175,7 @@ export const ru: Dict = {
     invite: 'Пригласить друзей',
     copy: 'Скопировать текст',
     copied: 'Текст скопирован — вставьте его куда угодно.',
-    copyManual: 'Скопируйте текст:',
+    copyManual: 'Не удалось скопировать автоматически. Текст выделен — скопируйте его вручную.',
     level: (num: number, title: string, stars: string, gates: number, goal: number) =>
       `Logic Gate · уровень ${num} «${title}»\n${stars} — ${gates} эл. (цель: ${goal})\nПопробуй и ты!`,
     inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 42 уровня, бесплатно!',

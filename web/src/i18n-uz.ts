@@ -182,7 +182,7 @@ export const uz = {
     invite: "Do'stlarni taklif qilish",
     copy: 'Matnni nusxalash',
     copied: "Matn nusxalandi — xohlagan joyga joylang.",
-    copyManual: "Matnni nusxalab oling:",
+    copyManual: "Avtomatik nusxalab bo'lmadi. Matn belgilandi — uni qo'lda nusxalab oling.",
     level: (num: number, title: string, stars: string, gates: number, goal: number) =>
       `Logic Gate · ${num}-daraja «${title}»
 ${stars} — ${gates} ta element (maqsad: ${goal})

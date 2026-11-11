@@ -6,7 +6,7 @@ import { chapterLevels, chapters, levelNumber } from '../levels';
 import { errorText } from '../sync';
 import { dayToISO, isoToDay, MAX_TASK_LEVELS, MAX_TASKS, taskLevels } from '../tasks';
 import { DueLabel, TaskLevels, taskTitle } from './TaskView';
-import { askConfirm } from './Confirm';
+import { askConfirm } from './Dialogs';
 import { Icon } from './ui';
 
 /** O'qituvchi hisobotidagi "Vazifalar": yangi vazifa berish va har biri bo'yicha kim bajargani. */

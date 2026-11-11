@@ -8,7 +8,7 @@ import { tidy } from '../board/tidy';
 import { GateList } from '../components/GateList';
 import { HintPanel } from '../components/HintPanel';
 import { Palette } from '../components/Palette';
-import { askClear } from '../components/Confirm';
+import { askClear } from '../components/Dialogs';
 import { showToast } from '../components/Toast';
 import { Formula } from '../components/Formula';
 import { Timeline, traceSteps } from '../components/Timeline';

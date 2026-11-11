@@ -16,12 +16,16 @@ export function Stars({ n, max = 3, size = 'md' }: { n: number; max?: number; si
 }
 
 let modalSeq = 0;
+/** Ochiq oynalar, eng ustidagisi oxirida: Esc va Tab faqat o'shanga tegishli. */
+const openModals: number[] = [];
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Oyna: ochilganda fokus ichiga o'tadi (autoFocus tugmasiga yoki oynaning o'ziga), Tab oyna ichida
  * aylanadi, yopilganda fokus oldingi joyiga qaytadi. Birinchi sarlavha — oynaning nomi (ekran o'quvchi).
+ * Oyna ustida ikkinchisi ochilsa (natija oynasidan «nusxalab bo'lmadi» oynasi), klaviatura faqat
+ * ustidagisida ishlaydi — aks holda Esc ikkalasini yopardi, Tab esa fokusni pastdagiga tortardi.
  */
 export function Modal({ children, onClose, class: cls }: { children: ComponentChildren; onClose?: () => void; class?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -29,14 +33,17 @@ export function Modal({ children, onClose, class: cls }: { children: ComponentCh
   close.current = onClose;
   useEffect(() => {
     const el = ref.current!;
+    const id = ++modalSeq;
+    openModals.push(id);
     const before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const title = el.querySelector('h1, h2, h3');
     if (title) {
-      title.id ||= `modal-title-${++modalSeq}`;
+      title.id ||= `modal-title-${id}`;
       el.setAttribute('aria-labelledby', title.id);
     }
     if (!el.contains(document.activeElement)) (el.querySelector<HTMLElement>('[autofocus]') ?? el).focus();
     const onKey = (e: KeyboardEvent) => {
+      if (openModals[openModals.length - 1] !== id) return;
       if (e.key === 'Escape') {
         close.current?.();
         return;
@@ -65,6 +72,7 @@ export function Modal({ children, onClose, class: cls }: { children: ComponentCh
     addEventListener('keydown', onKey);
     return () => {
       removeEventListener('keydown', onKey);
+      openModals.splice(openModals.indexOf(id), 1);
       // Oyna ochilishidan oldingi joy (masalan, «Tekshirish» tugmasi) hali sahifada bo'lsa — fokus o'shanga.
       if (before?.isConnected) before.focus();
     };

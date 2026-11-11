@@ -1,6 +1,6 @@
 import { Fragment } from 'preact';
 import { useEffect, useErrorBoundary, useRef } from 'preact/hooks';
-import { cancelConfirm, ConfirmHost } from './components/Confirm';
+import { cancelConfirm, ConfirmHost } from './components/Dialogs';
 import { NewProfileCode } from './components/NewProfileCode';
 import { showToast, Toast } from './components/Toast';
 import { reportCaught } from './errors';

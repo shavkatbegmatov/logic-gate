@@ -3,7 +3,7 @@ import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import { copyText, selectContents } from '../clipboard';
 import { ClassesCard } from '../components/ClassesCard';
-import { askConfirm } from '../components/Confirm';
+import { askConfirm } from '../components/Dialogs';
 import { JoinForm } from '../components/JoinForm';
 import { RemindToggle } from '../components/RemindToggle';
 import { showToast } from '../components/Toast';
