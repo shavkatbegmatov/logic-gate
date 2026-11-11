@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.17.2',
+    date: '2026-11-11',
+    uz: ["«Tartibga keltirish» tugmasi bitta elementli sxemada ham ishlaydi: element chiqish ro'parasiga qo'yiladi va sim to'g'ri chiziq bo'ladi."],
+    ru: ['Кнопка «Упорядочить» работает и в схеме из одного элемента: элемент встаёт напротив выхода, и провод становится прямым.'],
+  },
+  {
     version: '2.17.1',
     date: '2026-11-11',
     uz: [

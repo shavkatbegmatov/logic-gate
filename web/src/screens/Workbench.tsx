@@ -479,7 +479,10 @@ export function ClockTools({ editor }: { editor: Editor }) {
   );
 }
 
-/** Elementlarni ustunlarga joylaydi (simlar o'zgarmaydi); chiqishlar joyiga sig'dirishga harakat qiladi. */
+/**
+ * Elementlarni ustunlarga joylaydi (simlar o'zgarmaydi); chiqishlar joyiga sig'dirishga harakat qiladi.
+ * Bitta element bo'lsa ham: u chiqish pini ro'parasiga tushadi va chiqish simi to'g'ri chiziq bo'ladi.
+ */
 function arrange(editor: Editor) {
   const c = editor.circuit.value;
   if (!c.gates.length || editor.busy.peek()) return;
@@ -497,7 +500,7 @@ export function ZoomTools({ editor }: { editor: Editor }) {
       <button
         class="icon-btn"
         onClick={() => arrange(editor)}
-        disabled={editor.shape.value.gates < 2 || editor.busy.value}
+        disabled={!editor.shape.value.gates || editor.busy.value}
         title={t.play.tidy}
         aria-label={t.play.tidy}
       >

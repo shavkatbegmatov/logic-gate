@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.17.2 — 2026-11-11
+
+- «Tartibga keltirish» tugmasi bitta elementli sxemada ham ishlaydi: element chiqish ro'parasiga qo'yiladi va sim to'g'ri chiziq bo'ladi.
+
 ## 2.17.1 — 2026-11-11
 
 - Qo'llanma sahifalari (mantiqiy elementlar, sanoq sistemalari, Bul algebrasi) va Telegram'dagi havola rasmi o'yinning yangi ko'rinishiga o'tdi.
