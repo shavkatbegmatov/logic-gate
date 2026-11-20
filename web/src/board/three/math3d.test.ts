@@ -146,8 +146,8 @@ describe('3D sahna geometriyasi', () => {
       outputs: [0],
       bits: [0, 0],
       leverAngles: new Map([
-        ['A', -0.48],
-        ['B', -0.48],
+        ['A', -0.6],
+        ['B', -0.6],
       ]),
     });
     const onScene = buildScene3D({
@@ -161,8 +161,8 @@ describe('3D sahna geometriyasi', () => {
       outputs: [1],
       bits: [1, 1],
       leverAngles: new Map([
-        ['A', 0.48],
-        ['B', 0.48],
+        ['A', 0.6],
+        ['B', 0.6],
       ]),
     });
     expect(offScene.lights.length).toBe(0);
@@ -247,8 +247,8 @@ describe('3D sahna geometriyasi', () => {
       draggingGateId: null,
       ghost: { a: { x: 0, y: 36 }, b: { x: 144, y: 36 } },
       leverAngles: new Map([
-        ['A', 0.48],
-        ['B', 0.48],
+        ['A', 0.6],
+        ['B', 0.6],
       ]),
       stateNames: new Map([['g2', 'q1']]),
       labelUVs,

@@ -186,6 +186,26 @@ export class MeshBuilder {
     this.quad([x0, y1, z0], [x0, y1, z1], [x0, y0, z1], [x0, y0, z0], [-1, 0, 0], col, rough, metal, emissive);
   }
 
+  /** Ichki qismini yopmaydigan to'rt qirrali hoshiya (ramka). */
+  addFrameBox(
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    t: number,
+    col: [number, number, number],
+    rough: number,
+    metal: number,
+    emissive = 0,
+  ) {
+    this.addBox(x0, y0, z1 - t, x1, y1, z1, col, rough, metal, emissive);
+    this.addBox(x0, y0, z0, x1, y1, z0 + t, col, rough, metal, emissive);
+    this.addBox(x0, y0, z0 + t, x0 + t, y1, z1 - t, col, rough, metal, emissive);
+    this.addBox(x1 - t, y0, z0 + t, x1, y1, z1 - t, col, rough, metal, emissive);
+  }
+
   addCylinderY(
     cx: number,
     y0: number,
@@ -231,7 +251,7 @@ export class MeshBuilder {
     }
   }
 
-  /** Tilt qilingan silindr (animatsiyali tumbler dastagi uchun). */
+  /** Ikki rangli sanoat tumbler dastagi (xrom asos + yuqori kontrastli uchlik). */
   addTiltedLever(
     cx: number,
     cy: number,
@@ -239,29 +259,22 @@ export class MeshBuilder {
     angleX: number,
     len: number,
     r: number,
-    col: [number, number, number],
-    rough: number,
-    metal: number,
-    tipCol: [number, number, number] = col,
-    tipEmissive = 0,
+    shaftCol: [number, number, number],
+    gripCol: [number, number, number],
+    gripEmissive = 0,
+    accentCol?: [number, number, number],
   ) {
     // Tumbler X o'qi bo'ylab chap/o'ngga og'adi (0 → chap -X, 1 → o'ng +X).
     const dx = Math.sin(angleX);
     const dy = Math.cos(angleX);
+    const mid: Vec3 = [cx + dx * len * 0.55, cy + dy * len * 0.55, cz];
     const tip: Vec3 = [cx + dx * len, cy + dy * len, cz];
-    this.addTube(
-      [
-        [cx, cy, cz],
-        tip,
-      ],
-      r,
-      8,
-      col,
-      rough,
-      metal,
-      tipEmissive * 0.45,
-    );
-    this.addSphere(tip[0], tip[1], tip[2], r * 1.6, 8, 5, tipCol, rough, tipEmissive > 0 ? 0.1 : metal, tipEmissive);
+    this.addTube([[cx, cy, cz], mid], r, 8, shaftCol, 0.14, 0.92, 0);
+    if (accentCol) {
+      this.addSphere(mid[0], mid[1], mid[2], r * 1.48, 8, 4, accentCol, 0.2, 0.25, gripEmissive * 0.8);
+    }
+    this.addTube([mid, tip], r * 1.38, 10, gripCol, 0.25, 0.08, gripEmissive);
+    this.addSphere(tip[0], tip[1], tip[2], r * 1.65, 10, 5, gripCol, 0.22, 0.08, gripEmissive);
   }
 
   addSphere(
@@ -651,7 +664,8 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       uv,
     );
 
-    // Chiqish mikro-svetodiodi
+    // Chiqish mikro-svetodiodi va gardishi
+    solid.addCylinderY(gx1 - 6, 12.28 + lift, 12.55 + lift, g.y + out, 4.2, 4.0, 10, pal.brass, 0.22, 0.88, 0);
     solid.addSphere(gx1 - 6, 12.35 + lift, g.y + out, 3.6, 8, 4, on ? pal.lampOn : pal.lampOff, 0.18, 0.1, on ? 1.15 : 0, true);
     if (on && lights.length < 8) {
       lights.push({ pos: [g.x + 36, 20 + lift, g.y + 24], color: pal.lampOn, intensity: 0.55 });
@@ -686,38 +700,52 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     addPort(g.id, g.x + GATE_W, g.y + outputPortY(g), true, usedSources.has(g.id), on);
   }
 
-  // 4. Kirish tumblerlari (pin-in)
+  // 4. Kirish tumblerlari (pin-in): botiq to'q panel, yorug' ramka va ikki rangli dasta
   input.spec.inputs.forEach((name, k) => {
     const p = input.layout.inputs.get(name)!;
     const on = input.bits[k] === 1;
-    const x0 = p.x - 76;
+    const x0 = p.x - 78;
     const x1 = p.x - 14;
-    const z0 = p.y - 20;
-    const z1 = p.y + 20;
+    const z0 = p.y - 21;
+    const z1 = p.y + 21;
 
-    solid.addBox(x0, 0, z0, x1, 7.5, z1, pal.pinBox, 0.45, 0.18, 0);
-    if (on) {
-      solid.addBox(x0 + 1, 7.5, z0 + 1, x1 - 1, 8.2, z1 - 1, pal.traceOn, 0.3, 0.2, 0.95);
-    }
+    solid.addBox(x0, 0, z0, x1, 7.2, z1, pal.pinBox, 0.45, 0.18, 0);
+    solid.addBox(x0 + 2.2, 7.2, z0 + 2.2, x1 - 2.2, 7.65, z1 - 2.2, pal.gateBody, 0.55, 0.1, 0);
+    solid.addFrameBox(x0 + 0.6, 7.2, z0 + 0.6, x1 - 0.6, on ? 8.3 : 7.8, z1 - 0.6, 2.0, on ? pal.traceOn : pal.slabSide, 0.3, 0.25, on ? 1.0 : 0);
     solid.addBox(p.x - 14, 1.2, p.y - 2, p.x, 3.4, p.y + 2, on ? pal.traceOn : pal.metal, 0.2, 0.9, on ? 0.8 : 0);
-    // Tumbler gaykasi va animatsiyali dastagi
-    const swX = p.x - 32;
-    solid.addCylinderY(swX, 8.2, 10.6, p.y, 6.2, 5.4, 8, pal.metal, 0.22, 0.9, 0);
-    const angle = input.leverAngles.get(name) ?? (on ? 0.48 : -0.48);
-    solid.addTiltedLever(swX, 9.6, p.y, angle, 15, 2.4, pal.metal, 0.16, 0.94, on ? pal.lampOn : pal.metal, on ? 1.0 : 0);
 
-    // Holat LED
-    solid.addSphere(p.x - 66, 8.25, p.y - 11, 3.8, 8, 4, on ? pal.lampOn : pal.lampOff, 0.2, 0.1, on ? 1.15 : 0, true);
+    // Botiq yo'lak (chap 0 — to'q, o'ng 1 — yoniq), jez gayka va ikki rangli tumbler dastagi
+    const swX = p.x - 29;
+    solid.addBox(swX - 11, 7.6, p.y - 3.6, swX, 7.9, p.y + 3.6, [0.05, 0.06, 0.08], 0.7, 0.05, 0);
+    solid.addBox(swX, 7.6, p.y - 3.6, swX + 11, 7.9, p.y + 3.6, on ? pal.traceOn : [0.05, 0.06, 0.08], 0.4, 0.1, on ? 0.85 : 0);
+    solid.addCylinderY(swX, 7.65, 9.8, p.y, 5.8, 5.0, 6, pal.brass, 0.22, 0.88, 0);
+    solid.addCylinderY(swX, 9.8, 10.1, p.y, 3.5, 3.5, 8, [0.05, 0.06, 0.08], 0.6, 0.1, 0);
 
-    const labelInk: [number, number, number] = input.style === 'breadboard' ? [0.12, 0.15, 0.2] : [0.92, 0.96, 0.98];
-    const labelEm = input.style === 'scifi' ? 0.5 : 0.15;
+    const angle = input.leverAngles.get(name) ?? (on ? 0.6 : -0.6);
+    solid.addTiltedLever(
+      swX,
+      9.8,
+      p.y,
+      angle,
+      16.5,
+      2.35,
+      [0.88, 0.91, 0.95],
+      on ? pal.pulse : [0.68, 0.74, 0.82],
+      on ? 0.92 : 0.12,
+      on ? pal.lampOn : undefined,
+    );
+
+    // Holat LED va gardishi (dasta ustida to'silmaydigan joyda)
+    solid.addCylinderY(swX, 7.65, 7.95, p.y - 13.5, 4.0, 3.8, 10, pal.brass, 0.22, 0.88, 0);
+    solid.addSphere(swX, 7.7, p.y - 13.5, 3.2, 8, 4, on ? pal.lampOn : pal.lampOff, 0.2, 0.1, on ? 1.15 : 0, true);
+
     const uv = input.labelUVs.get(name);
     if (uv) {
-      labels.quad([p.x - 58, 8.35, p.y - 17], [p.x - 41, 8.35, p.y - 17], [p.x - 41, 8.35, p.y - 1], [p.x - 58, 8.35, p.y - 1], [0, 1, 0], on ? pal.traceOn : labelInk, 0.45, 0, on ? 0.85 : labelEm, uv);
+      labels.quad([p.x - 73, 7.78, p.y - 17], [p.x - 49, 7.78, p.y - 17], [p.x - 49, 7.78, p.y - 1], [p.x - 73, 7.78, p.y - 1], [0, 1, 0], [0.95, 0.98, 1.0], 0.45, 0, 0.55, uv);
     }
     const bitUv = input.labelUVs.get(on ? '1' : '0');
     if (bitUv) {
-      labels.quad([p.x - 71, 8.35, p.y + 1], [p.x - 47, 8.35, p.y + 1], [p.x - 47, 8.35, p.y + 17], [p.x - 71, 8.35, p.y + 17], [0, 1, 0], on ? pal.traceOn : labelInk, 0.45, 0, on ? 0.85 : labelEm, bitUv);
+      labels.quad([p.x - 73, 7.78, p.y + 1], [p.x - 49, 7.78, p.y + 1], [p.x - 49, 7.78, p.y + 17], [p.x - 73, 7.78, p.y + 17], [0, 1, 0], on ? pal.pulse : [0.58, 0.64, 0.72], 0.45, 0, on ? 0.95 : 0.2, bitUv);
     }
     addPort(`in:${name}`, p.x, p.y, true, usedSources.has(`in:${name}`), on);
   });
@@ -734,38 +762,37 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const bad = exp !== undefined && v !== null && v !== exp;
 
     const x0 = p.x + 14;
-    const x1 = p.x + 74;
-    const z0 = p.y - 20;
-    const z1 = p.y + 20;
+    const x1 = p.x + 76;
+    const z0 = p.y - 21;
+    const z1 = p.y + 21;
 
     solid.addBox(p.x, 1.2, p.y - 2, x0, 3.4, p.y + 2, on ? pal.traceOn : pal.metal, 0.2, 0.9, on ? 0.8 : 0);
     solid.addBox(x0, 0, z0, x1, 6.5, z1, pal.pinBox, 0.45, 0.18, 0);
-    if (err || bad || good) {
-      const rim = err || bad ? pal.bad : pal.good;
-      solid.addBox(x0 + 1, 6.5, z0 + 1, x1 - 1, 7.4, z1 - 1, rim, 0.35, 0.2, err || bad ? 1.1 : 0.65);
-    }
+    solid.addBox(x0 + 2.2, 6.5, z0 + 2.2, x1 - 2.2, 6.95, z1 - 2.2, pal.gateBody, 0.55, 0.1, 0);
+    const frameCol = err || bad ? pal.bad : good ? pal.good : pal.slabSide;
+    const frameEm = err || bad ? 1.05 : good ? 0.85 : 0;
+    const frameH = err || bad || good ? 7.7 : 7.1;
+    solid.addFrameBox(x0 + 0.6, 6.5, z0 + 0.6, x1 - 0.6, frameH, z1 - 0.6, 2.0, frameCol, 0.3, 0.22, frameEm);
 
     // Metall gardish va 3D yarim sharsimon svetodiod
     const lx = p.x + 56;
     if (on) {
-      solid.addCylinderY(lx, 6.5, 7.8, p.y, 12.2, 12.0, 14, pal.lampOn, 0.25, 0.2, 1.0);
+      solid.addCylinderY(lx, 6.95, 8.1, p.y, 12.2, 12.0, 14, pal.lampOn, 0.25, 0.2, 1.0);
     }
-    solid.addCylinderY(lx, 6.5, 9.5, p.y, 10.5, 9.5, 14, pal.brass, 0.22, 0.88, 0);
-    solid.addSphere(lx, 9.2, p.y, 9.2, 12, 6, on ? pal.lampOn : pal.lampOff, 0.14, 0.05, on ? 1.15 : 0, true);
+    solid.addCylinderY(lx, 6.95, 9.7, p.y, 10.5, 9.5, 14, pal.brass, 0.22, 0.88, 0);
+    solid.addSphere(lx, 9.4, p.y, 9.2, 12, 6, on ? pal.lampOn : pal.lampOff, 0.14, 0.05, on ? 1.15 : 0, true);
     if (on && lights.length < 8) {
       lights.push({ pos: [lx, 24, p.y], color: pal.lampOn, intensity: 1.15 });
     }
 
-    const labelInk: [number, number, number] = input.style === 'breadboard' ? [0.12, 0.15, 0.2] : [0.92, 0.96, 0.98];
-    const labelEm = input.style === 'scifi' ? 0.5 : 0.15;
     const uv = input.labelUVs.get(name);
     if (uv) {
-      labels.quad([x0 + 2, 7.55, p.y - 16], [x0 + 30, 7.55, p.y - 16], [x0 + 30, 7.55, p.y - 1], [x0 + 2, 7.55, p.y - 1], [0, 1, 0], on ? pal.lampOn : labelInk, 0.45, 0, on ? 0.9 : labelEm, uv);
+      labels.quad([x0 + 4, 7.08, p.y - 17], [x0 + 28, 7.08, p.y - 17], [x0 + 28, 7.08, p.y - 1], [x0 + 4, 7.08, p.y - 1], [0, 1, 0], [0.95, 0.98, 1.0], 0.45, 0, 0.55, uv);
     }
     if (v !== null) {
       const bitUv = input.labelUVs.get(on ? '1' : '0');
       if (bitUv) {
-        labels.quad([x0 + 4, 7.55, p.y + 1], [x0 + 28, 7.55, p.y + 1], [x0 + 28, 7.55, p.y + 17], [x0 + 4, 7.55, p.y + 17], [0, 1, 0], on ? pal.lampOn : labelInk, 0.45, 0, on ? 0.9 : labelEm, bitUv);
+        labels.quad([x0 + 4, 7.08, p.y + 1], [x0 + 28, 7.08, p.y + 1], [x0 + 28, 7.08, p.y + 17], [x0 + 4, 7.08, p.y + 17], [0, 1, 0], on ? pal.pulse : [0.58, 0.64, 0.72], 0.45, 0, on ? 0.95 : 0.2, bitUv);
       }
     }
     if (exp !== undefined) {

@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.3',
+    date: '2026-11-20',
+    uz: [
+      "3D rejimda kirish tumbleri va chiqish indikatorida to'q old panel, perimetr hoshiyasi hamda ikki rangli (xrom asos + yorqin uchi) tumbler dastagi kontrasti keskin oshirildi.",
+    ],
+    ru: [
+      'В 3D-режиме усилен контраст входных тумблеров и индикаторов выхода: тёмная лицевая панель, светящаяся рамка по периметру и двухцветный рычаг переключателя.',
+    ],
+  },
+  {
     version: '2.18.2',
     date: '2026-11-20',
     uz: [

@@ -201,7 +201,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       let leversMoving = false;
       const k = 1 - Math.exp(-dt * 18);
       cur.spec.inputs.forEach((name, idx) => {
-        const target = cur.bits[idx] === 1 ? 0.48 : -0.48;
+        const target = cur.bits[idx] === 1 ? 0.6 : -0.6;
         const prev = leverAngles.current.get(name) ?? target;
         if (Math.abs(target - prev) > 0.002) {
           leverAngles.current.set(name, prev + (target - prev) * k);
