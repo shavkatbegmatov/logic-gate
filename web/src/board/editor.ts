@@ -109,6 +109,11 @@ export class Editor {
   el: HTMLElement | null = null;
   viewTouched = false;
   onChange: ((c: Circuit) => void) | null = null;
+  /** 3D rejimda ekran nuqtasini dunyo tekisligiga tushirish (Palette va markazga qo'shish uchun). */
+  worldFromScreen: ((sx: number, sy: number) => { x: number; y: number } | null) | null = null;
+  /** 3D rejimda kamerani sxemaga moslash (fit) va masshtablash (zoomAt). */
+  fitOverride: (() => void) | null = null;
+  zoomOverride: ((factor: number, sx?: number, sy?: number) => void) | null = null;
 
   private past: Snapshot[] = [];
   private future: Snapshot[] = [];
@@ -314,6 +319,10 @@ export class Editor {
 
   /** Ekran (board ichidagi px) → dunyo koordinatasi. */
   toWorld(sx: number, sy: number) {
+    if (this.worldFromScreen) {
+      const hit = this.worldFromScreen(sx, sy);
+      if (hit) return hit;
+    }
     const { tx, ty, s } = this.view.value;
     const a = (sx - tx) / s;
     const b = (sy - ty) / s;
@@ -384,8 +393,9 @@ export class Editor {
 
   toggleInput(k: number) {
     if (this.locked) return;
-    this.bits.value = this.bits.value.map((b, i) => (i === k ? b ^ 1 : b));
-    sfx.toggle();
+    const next = this.bits.value.map((b, i) => (i === k ? b ^ 1 : b));
+    this.bits.value = next;
+    sfx.toggle(next[k] === 1);
   }
 
   setRow(r: number) {
@@ -425,10 +435,16 @@ export class Editor {
       tx: (availW - (maxA - minA) * s) / 2 - minA * s,
       ty: top + (availH - (maxB - minB) * s) / 2 - minB * s,
     };
+    this.fitOverride?.();
   }
 
   /** Ekrandagi (sx, sy) nuqta atrofida masshtablash. */
   zoomAt(factor: number, sx = this.size.w / 2, sy = this.size.h / 2) {
+    if (this.zoomOverride) {
+      this.zoomOverride(factor, sx, sy);
+      this.viewTouched = true;
+      return;
+    }
     const { tx, ty, s } = this.view.value;
     const ns = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, s * factor));
     const k = ns / s;

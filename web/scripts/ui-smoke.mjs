@@ -25,8 +25,9 @@ const WEB = fileURLToPath(new URL('..', import.meta.url));
 const DIST = join(WEB, 'dist');
 const SHOTS = join(WEB, 'test-results', 'ui');
 
-/** src/theme.ts dagi ActiveTheme. «Avto» alohida mavzu emas — qurilmaga qarab Daftar yoki Plata. */
-const THEMES = ['plata', 'haqiqiy', 'daftar', 'chizma'];
+/** src/theme.ts dagi ActiveTheme. «Avto» alohida mavzu emas — qurilmaga qarab Daftar yoki Sanoat PCB. */
+const AAA_THEMES = ['pcb', 'bench', 'breadboard', 'scifi'];
+const THEMES = [...AAA_THEMES, 'plata', 'haqiqiy', 'daftar', 'chizma'];
 /** Odatda faqat birinchisi; ruscha matnlar uzunroq — tor ekranda sig'masligi ko'proq shu tilda chiqadi. */
 const LANGS = ['uz', 'ru'];
 const SIZES = [
@@ -478,10 +479,15 @@ function inspect({ theme, lang, screen, ready }) {
   // Ekran chizilmagan: qolgan tekshiruvlar ma'nosiz (sababi yuqorida yoki chaqiruvchida).
   if (!ready) return out;
 
-  // Mavzu: Plata — atributsiz.
-  const want = theme === 'plata' ? null : theme;
+  const isAaa = ['pcb', 'bench', 'breadboard', 'scifi'].includes(theme);
+
+  // Mavzu: Sanoat PCB (pcb) — atributsiz; boardMode — AAA da real2d, klassikda schematic.
+  const want = theme === 'pcb' ? null : theme;
   const got = root.getAttribute('data-theme');
   if (got !== want) out.push(`<html data-theme>: ${got ?? "yo'q"}, kutilgan — ${want ?? "yo'q"}`);
+  const wantBoard = isAaa ? 'real2d' : 'schematic';
+  const gotBoard = root.getAttribute('data-board');
+  if (gotBoard !== wantBoard) out.push(`<html data-board>: ${gotBoard ?? "yo'q"}, kutilgan — ${wantBoard}`);
   // Til: i18n.ts <html lang> ni qo'yadi — aks holda ruscha o'tish sezdirmay o'zbekcha matnni tekshirib qo'yardi.
   if (root.lang !== lang) out.push(`<html lang>: ${root.lang || "yo'q"}, kutilgan — ${lang}`);
 
@@ -502,17 +508,27 @@ function inspect({ theme, lang, screen, ready }) {
     out.push(`${name(el)} ichida gorizontal toshdi: ${el.scrollWidth} px > ${el.clientWidth} px`);
   }
 
-  // Mavzuga xos belgilar: «Haqiqiy plata» da element — mikrosxema, «Chizma» da chiroq — doira ichida xoch.
+  // Mavzuga xos belgilar: AAA va «Haqiqiy plata» da mikrosxema, «Chizma» da chiroq — doira ichida xoch.
   const marks = (where) => {
     const chips = shown(`${where} .chip-body`);
-    if (theme === 'haqiqiy' ? !chips : chips) out.push(`${where} .chip-body: ${chips} ta ko'rinadi (faqat «haqiqiy» da bo'lishi kerak)`);
+    if (isAaa || theme === 'haqiqiy' ? !chips : chips) out.push(`${where} .chip-body: ${chips} ta ko'rinadi (faqat AAA va «haqiqiy» da bo'lishi kerak)`);
     const crosses = shown(`${where} .lamp-x`);
     if (theme === 'chizma' ? !crosses : crosses) out.push(`${where} .lamp-x: ${crosses} ta ko'rinadi (faqat «chizma» da bo'lishi kerak)`);
   };
-  if (screen === 'home') marks('.hero');
+  if (screen === 'home') {
+    marks('.hero');
+    const slab = shown('.hero .real-slab');
+    if (isAaa ? !slab : slab) out.push(`.hero .real-slab: ${slab} ta ko'rinadi (faqat AAA uslublarida bo'lishi kerak)`);
+  }
   if (screen === 'level') {
-    marks('.board');
-    if (theme !== 'haqiqiy' && !shown('.board [data-kind="gate"] .gate-body')) out.push("maydondagi element belgisi (.gate-body) ko'rinmaydi");
+    if (isAaa) {
+      if (!shown('.board.board-real .real-slab')) out.push("2D Real plata asosi (.board-real .real-slab) ko'rinmaydi");
+      if (!shown('.board [data-kind="gate"] .real-ic-body')) out.push("2D Real mikrosxema korpusi (.real-ic-body) ko'rinmaydi");
+      if (shown('.board .lamp-x')) out.push("2D Real maydonida .lamp-x ko'rinmasligi kerak");
+    } else {
+      marks('.board');
+      if (theme !== 'haqiqiy' && !shown('.board [data-kind="gate"] .gate-body')) out.push("maydondagi element belgisi (.gate-body) ko'rinmaydi");
+    }
     // «Tozalash» oynasi (playLevel uni ochiq qoldiradi): ochilish animatsiyasi tugagach butunligicha ekranda,
     // ikkala tugmasi ko'rinadi. Animatsiya paytida o'lchami kichik — tekshiruv uni kutadi.
     const dialog = document.querySelector('.modal.confirm');
@@ -528,8 +544,10 @@ function inspect({ theme, lang, screen, ready }) {
     }
   }
   if (screen === 'settings') {
+    const modes = document.querySelectorAll('.mode-tile').length;
+    if (modes !== 3) out.push(`.mode-tile: ${modes} ta, kutilgan — 3`);
     const tiles = document.querySelectorAll('.theme-tile').length;
-    if (tiles !== 5) out.push(`.theme-tile: ${tiles} ta, kutilgan — 5`);
+    if (tiles !== 9) out.push(`.theme-tile: ${tiles} ta, kutilgan — 9`);
     const on = [...document.querySelectorAll('.theme-tile.on [data-theme]')].map((el) => el.getAttribute('data-theme'));
     if (on.join() !== theme) out.push(`tanlangan mavzu kartasi: ${on.join('+') || "yo'q"}, kutilgan — ${theme}`);
   }
@@ -545,6 +563,9 @@ function waitScreen(page, selector) {
     (sel) => {
       if (document.querySelector('.screen.crash, .lazy-failed')) return 'broken';
       if (!window.__lgReady) return document.querySelector('#app [role="alert"]') ? 'broken' : null;
+      if (document.documentElement.dataset.board === 'real2d' && sel.includes('.board svg')) {
+        return document.querySelector(sel.replace('.board svg', '.board.board-real svg')) ? 'ready' : null;
+      }
       return document.querySelector(sel) ? 'ready' : null;
     },
     [selector],
@@ -616,7 +637,11 @@ async function run(cdp, server, opt, lang, theme, size) {
     // Ilova umuman ochilmasa, qolgan ekranlar ham xuddi shunday yiqiladi — vaqt ketkazilmaydi.
     if (!booted) return { failures, bg: null, checked: 0 };
     // Shakli — src/state.ts dagi cleanSettings qabul qiladigan.
-    await page.evaluate((s) => localStorage.setItem('lg.settings.v1', JSON.stringify(s)), { theme, lang });
+    await page.evaluate((s) => localStorage.setItem('lg.settings.v1', JSON.stringify(s)), {
+      theme,
+      lang,
+      boardMode: AAA_THEMES.includes(theme) ? 'real2d' : 'schematic',
+    });
 
     for (const screen of opt.screens) {
       await report(screen.id, `#/${screen.path}`, await checkScreen(page, server, lang, theme, screen));

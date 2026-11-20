@@ -13,6 +13,7 @@ import { showToast } from '../components/Toast';
 import { Formula } from '../components/Formula';
 import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
+import { ViewTools } from '../components/ViewTools';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { check, depths, expected, machineOut, machineReplay, type SimError } from '../sim/sim';
@@ -341,6 +342,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
       <div class="play-body">
         <div class={`stage${states ? ' has-check' : ''}`}>
           <Board editor={editor} expected={want} topInset={topInset} />
+          <ViewTools />
           <button class="task-strip" onClick={() => (showSide.value = !showSide.value)}>
             <span class="task-text">{level.task}</span>
             <span class={`count${used && used <= level.goal ? ' good' : ''}`}>

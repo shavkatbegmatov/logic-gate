@@ -2,7 +2,7 @@ import { GateShape } from '../board/GateShape';
 import { bounds, layout, outputColumn } from '../board/geometry';
 import { routeAll, routeD } from '../board/routing';
 import type { Circuit, Gate, Level } from '../sim/types';
-import { activeTheme } from '../theme';
+import { activeBoardMode, activeTheme, isAaaTheme } from '../theme';
 
 const EMPTY: Circuit = { gates: [], wires: [] };
 
@@ -19,9 +19,10 @@ export function MiniBoard({ level, circuit = EMPTY }: { level: Level; circuit?: 
   const junctions = new Set(routed.dots.map(({ at }) => `${at.x},${at.y}`));
   const sharp = (p: { x: number; y: number }) => junctions.has(`${p.x},${p.y}`);
   const b = bounds(circuit, lay);
-  // Maydondagi kabi: «Haqiqiy plata» da mikrosxemalar, «Chizma» da to'g'ri burchakli simlar.
-  const chip = activeTheme.value === 'haqiqiy';
-  const cut = activeTheme.value === 'chizma' ? 0 : undefined;
+  const theme = activeTheme.value;
+  // Maydondagi kabi: real va «Haqiqiy plata» da mikrosxemalar, «Chizma» da to'g'ri burchakli simlar.
+  const chip = theme === 'haqiqiy' || (activeBoardMode.value !== 'schematic' && isAaaTheme(theme));
+  const cut = theme === 'chizma' ? 0 : undefined;
   const pad = 10;
   const ys = [...lay.inputs.values(), ...lay.outputs.values()].map((p) => p.y);
   const midY = (Math.min(...ys) + Math.max(...ys)) / 2;

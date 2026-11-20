@@ -113,7 +113,7 @@ cd web
 pnpm test
 ```
 
-Brauzerdagi tutun testi — har mavzuda (Plata, Haqiqiy plata, Daftar, Chizma), telefon (375×812) va kompyuter (1280×800) o'lchamida asosiy ekranlar buzilmay ochilishini tekshiradi:
+Brauzerdagi tutun testi — har mavzuda (4 ta AAA uslubi + Plata, Haqiqiy plata, Daftar, Chizma), telefon (375×812) va kompyuter (1280×800) o'lchamida asosiy ekranlar buzilmay ochilishini tekshiradi:
 
 ```bash
 cd web
@@ -126,8 +126,8 @@ Har juftlik (mavzu × o'lcham) — yangi «qurilma»: o'yin bir marta ochiladi, 
 
 - konsol xatosi, ushlanmagan istisno va yuklanmagan fayl yo'q; o'yin «xato» ekranini ko'rsatmadi va serverga xato xabari (`/api/client-errors`) yubormadi;
 - hech narsa gorizontal toshmaydi — sahifaning o'zi ham, ichki aylantirish joylari ham (`.scroll`, oyna). `body` da `overflow: hidden`, ro'yxatlar ichki konteynerda aylanadi — keng element aynan o'shani toshiradi. Uslubda ataylab `overflow-x: auto` berilgan joylar (palitra, haqiqat jadvali) hisobga olinmaydi;
-- mavzu qo'llangan: `<html data-theme>` (Plata'da atribut yo'q), to'rt mavzuning foni to'rt xil; til qo'llangan: `<html lang>`;
-- mavzuga xos belgilar: `.chip-body` (mikrosxema) faqat Haqiqiy plata'da, `.lamp-x` (chiroqdagi xoch) faqat Chizma'da ko'rinadi — bosh sahifadagi sxemada ham, maydonda ham; Sozlamalarda beshta `.theme-tile`, tanlangani — joriy mavzu.
+- mavzu qo'llangan: `<html data-theme>` (Sanoat PCB `pcb` da atribut yo'q), sakkizta mavzuning foni sakkiz xil; til qo'llangan: `<html lang>`;
+- mavzuga xos belgilar: AAA uslublarda 2D Real plata/mikrosxemalar, `.chip-body` AAA va «Haqiqiy plata» da, `.lamp-x` faqat «Chizma» da ko'rinadi; Sozlamalarda 3 ta `.mode-tile` va 9 ta `.theme-tile`, tanlangani — joriy mavzu.
 - «Tozalash» tasdiqlash oynasi ochilish animatsiyasi tugagach butunligicha ekranda, ikkala tugmasi ko'rinadi.
 
 Yiqilsa — nima, qaysi til, mavzu, o'lcham va ekranda ekani yoziladi, skrinshot `web/test-results/ui/` ga tushadi (git'ga kirmaydi; ruscha o'tishniki — `-ru` qo'shimchasi bilan). Tayyor `dist` ustida va tor doirada ishga tushirish:

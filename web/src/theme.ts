@@ -1,17 +1,49 @@
-// Rang mavzusi: Plata (qorong'i, asosiy), Haqiqiy plata (lak, mikrosxemalar), Daftar (yorug'), Chizma
-// (muhandislik chizmasi). "Avto" — telefon yoki Telegram'ning yorug'/qorong'i rejimiga qarab: Daftar yoki Plata. Ranglar styles.css da; bu yerda faqat <html data-theme> qo'yiladi.
+// Rang mavzusi va sxema ko'rinishi:
+// 4 ta AAA studiya uslubi (Sanoat PCB, Laboratoriya stoli, Maket platasi, Kiber Sci-Fi) hamda
+// 4 ta klassik o'quv mavzusi (Plata, Haqiqiy plata, Daftar, Chizma) + Avto.
+// Sxema ko'rinishi (boardMode): 2D Real (sukut bo'yicha), 3D Real (WebGL) va Klassik sxema.
+// Ranglar styles.css da; bu yerda <html data-theme> va <html data-board> qo'yiladi.
 // Birinchi chizishdan oldin xuddi shuni public/theme.js qiladi (sahifa miltillamasin).
 import { computed, effect, signal } from '@preact/signals';
 import { settings } from './state';
 
-export type Theme = 'plata' | 'haqiqiy' | 'daftar' | 'chizma' | 'auto';
-export type ActiveTheme = Exclude<Theme, 'auto'>;
+export type ActiveTheme = 'pcb' | 'bench' | 'breadboard' | 'scifi' | 'plata' | 'haqiqiy' | 'daftar' | 'chizma';
+export type Theme = ActiveTheme | 'auto';
 
-/** Sozlamalardagi tartib: avval qorong'ilar, keyin yorug'lar. */
-export const THEMES: Theme[] = ['plata', 'haqiqiy', 'daftar', 'chizma', 'auto'];
+export const AAA_THEMES: ActiveTheme[] = ['pcb', 'bench', 'breadboard', 'scifi'];
+export const CLASSIC_THEMES: Theme[] = ['plata', 'haqiqiy', 'daftar', 'chizma', 'auto'];
+export const THEMES: Theme[] = [...AAA_THEMES, ...CLASSIC_THEMES];
 
 /** Mavzu foni: brauzer paneli (theme-color) va Telegram oynasi uchun. styles.css dagi --bg bilan bir xil. */
-export const THEME_BG: Record<ActiveTheme, string> = { plata: '#0b1712', haqiqiy: '#062a1c', daftar: '#efe9dc', chizma: '#f3f0e7' };
+export const THEME_BG: Record<ActiveTheme, string> = {
+  pcb: '#07130f',
+  bench: '#101418',
+  breadboard: '#ebe6da',
+  scifi: '#060b16',
+  plata: '#0b1712',
+  haqiqiy: '#062a1c',
+  daftar: '#efe9dc',
+  chizma: '#f3f0e7',
+};
+
+export type BoardMode = 'real2d' | 'real3d' | 'schematic';
+export const BOARD_MODES: BoardMode[] = ['real2d', 'real3d', 'schematic'];
+export type RealStyle = 'pcb' | 'bench' | 'breadboard' | 'scifi';
+
+export function resolveBoardMode(mode: BoardMode | undefined): BoardMode {
+  return mode === 'real2d' || mode === 'real3d' || mode === 'schematic' ? mode : 'real2d';
+}
+
+export function resolveRealStyle(theme: ActiveTheme): RealStyle {
+  if (theme === 'bench' || theme === 'chizma') return 'bench';
+  if (theme === 'breadboard' || theme === 'daftar') return 'breadboard';
+  if (theme === 'scifi') return 'scifi';
+  return 'pcb';
+}
+
+export function isAaaTheme(theme: ActiveTheme): boolean {
+  return theme === 'pcb' || theme === 'bench' || theme === 'breadboard' || theme === 'scifi';
+}
 
 const media = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: light)') : null;
 const systemLight = signal(media?.matches ?? false);
@@ -21,8 +53,8 @@ media?.addEventListener?.('change', (e) => (systemLight.value = e.matches));
 export const telegramScheme = signal<'light' | 'dark' | null>(null);
 
 export function resolveTheme(theme: Theme | undefined, light: boolean): ActiveTheme {
-  if (theme === 'auto') return light ? 'daftar' : 'plata';
-  return theme && Object.prototype.hasOwnProperty.call(THEME_BG, theme) ? theme : 'plata';
+  if (theme === 'auto') return light ? 'daftar' : 'pcb';
+  return theme && Object.prototype.hasOwnProperty.call(THEME_BG, theme) ? theme : 'pcb';
 }
 
 /** Chop etilayotganda (Ctrl+P yoki "Chop etish") — har doim Daftar: qorong'i fon qog'ozga chiqmasin. */
@@ -38,13 +70,20 @@ export const activeTheme = computed(() =>
     : resolveTheme(settings.value.theme, telegramScheme.value ? telegramScheme.value === 'light' : systemLight.value),
 );
 
+export const activeBoardMode = computed<BoardMode>(() =>
+  printing.value ? 'schematic' : resolveBoardMode(settings.value.boardMode),
+);
+
 if (typeof document !== 'undefined') {
   effect(() => {
     const name = activeTheme.value;
     const root = document.documentElement;
-    if (name === 'plata') delete root.dataset.theme;
+    if (name === 'pcb') delete root.dataset.theme;
     else root.dataset.theme = name;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BG[name]);
+  });
+  effect(() => {
+    document.documentElement.dataset.board = activeBoardMode.value;
   });
 }
 

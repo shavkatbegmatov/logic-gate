@@ -2,9 +2,10 @@ import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
 import { capture } from '../board/Board';
 import type { Editor } from '../board/editor';
-import { GateIcon } from '../board/GateShape';
+import { CHIP_CODE, GateIcon } from '../board/GateShape';
 import { t } from '../i18n';
 import type { GateType } from '../sim/types';
+import { activeBoardMode, activeTheme, isAaaTheme } from '../theme';
 
 interface Props {
   editor: Editor;
@@ -44,6 +45,7 @@ export function Palette({ editor, gates }: Props) {
     }
   };
 
+  const showCode = activeBoardMode.value !== 'schematic' && isAaaTheme(activeTheme.value);
   return (
     <div class="palette" role="toolbar" aria-label={t.play.allowed}>
       {gates.map((type) => (
@@ -65,6 +67,7 @@ export function Palette({ editor, gates }: Props) {
           <GateIcon type={type} size={44} />
           <span class="palette-name">{type}</span>
           <span class="palette-sub">{t.gates[type].name}</span>
+          {showCode && <span class="palette-code">{CHIP_CODE[type]}</span>}
         </button>
       ))}
       {ghost.value && (

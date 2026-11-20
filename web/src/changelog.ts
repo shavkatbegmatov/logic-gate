@@ -18,6 +18,22 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.0',
+    date: '2026-11-20',
+    uz: [
+      "Yangi AAA studiya ko'rinishi: o'yin sukut bo'yicha jonli «2D Real — Sanoat PCB» uslubida ochiladi, endi «3D Real» rejimi ham bor!",
+      "3D rejimda kamerani aylantirish, egish va yaqinlashtirish, hajmli chiplar, egilgan jumper simlar, jonli soya va porlaydigan svetodiodlar bilan bevosita sxema yig'ing.",
+      "To'rtta alohida apparat uslubi Sozlamalar va maydonning o'zida tanlanadi: Sanoat PCB, Laboratoriya stoli, Maket platasi (Breadboard) va Kiber Sci-Fi — klassik Plata, Daftar va Chizma mavzulari ham saqlab qolindi.",
+      "Yoniq simlarda tok oqimi animatsiyasi va mexanik tumbler/mikrosxema ovozlari qo'shildi.",
+    ],
+    ru: [
+      'Новый внешний вид AAA-студии: игра теперь открывается в детальном режиме «2D Real — Промышленная PCB», а также появился интерактивный режим «3D Real»!',
+      'В 3D-режиме вращайте и наклоняйте камеру, собирайте схемы прямо на объёмных микросхемах с изогнутыми перемычками, живыми тенями и светящимися светодиодами.',
+      'Четыре аппаратных стиля на выбор в Настройках и прямо на поле: Промышленная PCB, Лабораторный стол, Макетная плата (Breadboard) и Кибер Sci-Fi — классические темы Плата, Тетрадь и Чертёж также сохранены.',
+      'Добавлены анимация бегущего сигнала в активных проводах и объёмные механические звуки тумблеров и микросхем.',
+    ],
+  },
+  {
     version: '2.17.5',
     date: '2026-11-12',
     uz: [

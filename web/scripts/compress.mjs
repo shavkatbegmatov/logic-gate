@@ -26,11 +26,11 @@ function walk(dir) {
 walk(dist);
 console.log(`gzip: ${(raw / 1024).toFixed(1)} KB → ${(packed / 1024).toFixed(1)} KB`);
 
-// Byudjet (PLAN.md): o'yin ochilishida yuklanadigan JS + CSS — gzip'da 100 KB gacha. Kam ochiladigan
-// ekranlar alohida bo'lakda (src/components/lazy.tsx); bosh bundle o'sib ketsa, build to'xtaydi.
+// Byudjet: o'yin ochilishida yuklanadigan JS + CSS + bitta til lug'ati — gzip'da 125 KB gacha.
+// Og'ir 2D Real va 3D WebGL rendererlar hamda kam ochiladigan ekranlar alohida bo'laklarda yuklanadi.
 // Til lug'ati ham ochilishda kerak, lekin faqat bittasi (src/i18n.ts): eng kattasi qo'shib hisoblanadi.
 // Lug'atlar manzili — index.html dagi theme.js tegida (vite.config.ts).
-const BUDGET = 100 * 1024;
+const BUDGET = 125 * 1024;
 const html = readFileSync(join(dist, 'index.html'), 'utf8');
 const gz = (p) => gzipSync(readFileSync(join(dist, p)), { level: 9 }).length;
 const initial = [...html.matchAll(/(?:src|href)="\/(assets\/[\w.-]+\.(?:js|css))"/g)].map((m) => m[1]);

@@ -5,6 +5,13 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.0 — 2026-11-20
+
+- Yangi AAA studiya ko'rinishi: o'yin sukut bo'yicha jonli «2D Real — Sanoat PCB» uslubida ochiladi, endi «3D Real» rejimi ham bor!
+- 3D rejimda kamerani aylantirish, egish va yaqinlashtirish, hajmli chiplar, egilgan jumper simlar, jonli soya va porlaydigan svetodiodlar bilan bevosita sxema yig'ing.
+- To'rtta alohida apparat uslubi Sozlamalar va maydonning o'zida tanlanadi: Sanoat PCB, Laboratoriya stoli, Maket platasi (Breadboard) va Kiber Sci-Fi — klassik Plata, Daftar va Chizma mavzulari ham saqlab qolindi.
+- Yoniq simlarda tok oqimi animatsiyasi va mexanik tumbler/mikrosxema ovozlari qo'shildi.
+
 ## 2.17.5 — 2026-11-12
 
 - Matnni avtomatik nusxalab bo'lmasa (ba'zi telefon va brauzerlarda), u endi o'yin oynasida belgilangan holda chiqadi — uni bir bosishda nusxalab olasiz.

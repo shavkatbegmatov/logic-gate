@@ -1,0 +1,622 @@
+import { useSignal } from '@preact/signals';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { sfx } from '../../audio';
+import { showToast } from '../../components/Toast';
+import { t } from '../../i18n';
+import { stateNames } from '../../sim/formula';
+import { depths } from '../../sim/sim';
+import { GATE_ARITY, type Gate } from '../../sim/types';
+import { activeTheme, instantCheck, resolveRealStyle, systemReducedMotion } from '../../theme';
+import { settings } from '../../state';
+import { cam3d } from '../cam3d';
+import type { Editor } from '../editor';
+import { bounds, GATE_H, GATE_W, GRID, inputPortY, outputPortY, portPoint, routeMid, type Point } from '../geometry';
+import { routeAll } from '../routing';
+import { capture } from '../useBoard2D';
+import { Engine3D } from './engine3d';
+import { OrbitCamera, projectPoint, rayAABB, rayPlaneY, rayPolylineDist, unprojectRay, type Vec3 } from './math3d';
+import { buildScene3D, type Scene3DData } from './meshes3d';
+
+interface Props {
+  editor: Editor;
+  expected?: number[] | null;
+  topInset?: number;
+  onUnsupported?: () => void;
+}
+
+type Drag3D =
+  | { kind: 'pan'; lx: number; ly: number; sx: number; sy: number; moved: boolean }
+  | { kind: 'orbit'; lx: number; ly: number; sx: number; sy: number; moved: boolean }
+  | { kind: 'pinch'; dist: number; cx: number; cy: number }
+  | { kind: 'gate'; id: string; ox: number; oz: number; sx: number; sy: number; moved: boolean }
+  | { kind: 'wire'; port: string; sx: number; sy: number; moved: boolean }
+  | { kind: 'pin'; k: number; sx: number; sy: number; moved: boolean }
+  | { kind: 'wireSel'; index: number; sx: number; sy: number; moved: boolean };
+
+const MOVE_THRESHOLD = 6;
+
+export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const delBtnRef = useRef<HTMLButtonElement>(null);
+
+  const camera = useMemo(() => new OrbitCamera(), []);
+  const engineRef = useRef<Engine3D | null>(null);
+  const sceneRef = useRef<Scene3DData | null>(null);
+  const leverAngles = useRef(new Map<string, number>());
+  const drag = useRef<Drag3D | null>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const ghost = useSignal<{ a: Point; b: Point } | null>(null);
+  const wiring = useSignal<string | null>(null);
+  const draggingGate = useSignal<string | null>(null);
+  const sizeRef = useRef({ w: 800, h: 500 });
+  const unsupportedRef = useRef(onUnsupported);
+  unsupportedRef.current = onUnsupported;
+
+  const style = resolveRealStyle(activeTheme.value);
+  const { gates, wires } = editor.circuit.value;
+  const lay = editor.layout.value;
+  const spec = editor.spec.value;
+  const gmap = useMemo(() => new Map<string, Gate>(gates.map((g) => [g.id, g])), [gates]);
+  const { values, outputs } = editor.evaluation.value;
+  const bits = editor.bits.value;
+  const sel = editor.selection.value;
+  const pending = editor.pending.value;
+  const highlight = editor.highlight.value;
+  const wave = editor.wave.value;
+  const active = wiring.value ?? pending;
+
+  const routed = useMemo(
+    () => routeAll(wires, gmap, lay, draggingGate.value !== null && wires.length > 40),
+    [wires, gmap, lay, draggingGate.value],
+  );
+  const states = useMemo(() => stateNames({ gates, wires }), [gates, wires]);
+
+  const depth = wave === null ? null : depths(editor.compiled.value);
+  const stepOf = (src: string, extra: number) => 2 * (depth?.get(src) ?? 0) + extra;
+  const reached = (src: string, extra: number) => wave === null || stepOf(src, extra) <= wave;
+  const drivers = editor.compiled.value.drivers;
+
+  // Eng so'nggi holatni rAF tsikli o'qishi uchun
+  const stateRef = useRef({
+    style,
+    spec,
+    circuit: editor.circuit.value,
+    layout: lay,
+    routed,
+    values,
+    outputs,
+    bits,
+    expected,
+    drivers,
+    reached,
+    selection: sel,
+    activePort: active,
+    highlight,
+    draggingGateId: draggingGate.value,
+    ghost: ghost.value,
+    stateNames: states,
+    dirty: true,
+  });
+
+  stateRef.current = {
+    style,
+    spec,
+    circuit: editor.circuit.value,
+    layout: lay,
+    routed,
+    values,
+    outputs,
+    bits,
+    expected,
+    drivers,
+    reached,
+    selection: sel,
+    activePort: active,
+    highlight,
+    draggingGateId: draggingGate.value,
+    ghost: ghost.value,
+    stateNames: states,
+    dirty: true,
+  };
+
+  // Kamera burchagi va tiklash buyruqlarini kuzatish
+  const camAngle = cam3d.value.angle;
+  const camReset = cam3d.value.resetSeq;
+  useEffect(() => {
+    camera.setAngle(camAngle, true);
+  }, [camAngle]);
+  useEffect(() => {
+    if (camReset > 0) {
+      camera.setAngle(cam3d.value.angle, true);
+      editor.viewTouched = false;
+      editor.fit();
+    }
+  }, [camReset]);
+
+  // WebGL dvigateli, ResizeObserver, Editor 3D hooklari va 60 FPS kadr tsikli
+  useEffect(() => {
+    const wrap = wrapRef.current!;
+    const canvas = canvasRef.current!;
+    const eng = Engine3D.create(canvas);
+    if (!eng) {
+      unsupportedRef.current?.();
+      return;
+    }
+    engineRef.current = eng;
+    editor.el = wrap;
+
+    const fit3D = (animate: boolean) => {
+      const { w, h } = sizeRef.current;
+      const b = bounds(editor.circuit.peek(), editor.layout.peek(), false);
+      camera.fitBounds(b.minX - 24, b.minY - 26, b.maxX + 24, b.maxY + 26, w, h, editor.insetTop, animate);
+    };
+
+    editor.worldFromScreen = (sx, sy) => {
+      const { w, h } = sizeRef.current;
+      const { invVP } = camera.matrices(w, h);
+      const hit = rayPlaneY(unprojectRay(sx, sy, w, h, invVP), 0);
+      return hit ? { x: hit.x, y: hit.z } : null;
+    };
+    editor.fitOverride = () => fit3D(true);
+    editor.zoomOverride = (factor, sx, sy) => {
+      const { w, h } = sizeRef.current;
+      camera.zoomAtScreen(factor, sx ?? w / 2, sy ?? h / 2, w, h);
+    };
+
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width < 10 || height < 10) return;
+      const big = Math.abs(width - sizeRef.current.w) > 40 || Math.abs(height - sizeRef.current.h) > 40;
+      sizeRef.current = { w: width, h: height };
+      editor.size = { w: width, h: height };
+      editor.vertical.value = false;
+      editor.insetTop = width <= 820 ? topInset : 0;
+      eng.resize(width, height);
+      if (!editor.viewTouched || big) fit3D(false);
+    });
+    ro.observe(wrap);
+    if (wrap.clientWidth > 10 && wrap.clientHeight > 10) {
+      sizeRef.current = { w: wrap.clientWidth, h: wrap.clientHeight };
+      editor.size = { w: wrap.clientWidth, h: wrap.clientHeight };
+      editor.vertical.value = false;
+      editor.insetTop = wrap.clientWidth <= 820 ? topInset : 0;
+      eng.resize(wrap.clientWidth, wrap.clientHeight);
+      fit3D(false);
+    }
+
+    let raf = 0;
+    let lastT = performance.now();
+    const startT = lastT;
+
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      const dt = Math.min(0.05, (now - lastT) / 1000);
+      lastT = now;
+
+      const cur = stateRef.current;
+      const camMoved = camera.step(dt);
+
+      // Tumbler dastaklarini silliq aylantirish
+      let leversMoving = false;
+      const k = 1 - Math.exp(-dt * 18);
+      cur.spec.inputs.forEach((name, idx) => {
+        const target = cur.bits[idx] === 1 ? 0.48 : -0.48;
+        const prev = leverAngles.current.get(name) ?? target;
+        if (Math.abs(target - prev) > 0.002) {
+          leverAngles.current.set(name, prev + (target - prev) * k);
+          leversMoving = true;
+        } else if (prev !== target) {
+          leverAngles.current.set(name, target);
+        }
+      });
+
+      const motionSetting = settings.peek().motion ?? 'auto';
+      const motionOn = motionSetting === 'on' || (motionSetting === 'auto' && !systemReducedMotion.peek() && !instantCheck());
+
+      if (cur.dirty || leversMoving || !sceneRef.current) {
+        const labelStrings = [
+          ...cur.spec.inputs,
+          ...cur.spec.outputs,
+          ...cur.stateNames.values(),
+          ...(cur.expected ? cur.expected.map((v) => `exp:${v}`) : []),
+        ];
+        eng.syncTextures(cur.style, labelStrings, t.play.expected.toLowerCase());
+        const built = buildScene3D({
+          style: cur.style,
+          spec: cur.spec,
+          circuit: cur.circuit,
+          layout: cur.layout,
+          routed: cur.routed,
+          values: cur.values,
+          outputs: cur.outputs,
+          bits: cur.bits,
+          expected: cur.expected,
+          drivers: cur.drivers,
+          reached: cur.reached,
+          selection: cur.selection,
+          activePort: cur.activePort,
+          highlight: cur.highlight,
+          draggingGateId: cur.draggingGateId,
+          ghost: cur.ghost,
+          leverAngles: leverAngles.current,
+          stateNames: cur.stateNames,
+          labelUVs: eng.labelUVs,
+        });
+        sceneRef.current = built;
+        eng.uploadScene(built);
+        cur.dirty = false;
+      }
+
+      // Tanlangan element/sim uchun suzuvchi o'chirish tugmasini 3D dan ekranga proyeksiya qilish
+      const delBtn = delBtnRef.current;
+      if (delBtn) {
+        let wp: Vec3 | null = null;
+        if (cur.selection?.kind === 'gate') {
+          const gid = cur.selection.id;
+          const g = cur.circuit.gates.find((x) => x.id === gid);
+          if (g) wp = [g.x + GATE_W - 2, 16, g.y - 6];
+        } else if (cur.selection?.kind === 'wire') {
+          const r = cur.routed.routes[cur.selection.index];
+          if (r) {
+            const m = routeMid(r);
+            wp = [m.x, 12, m.y];
+          }
+        }
+        const sp = wp ? projectPoint(wp, camera.matrices(sizeRef.current.w, sizeRef.current.h).vp, sizeRef.current.w, sizeRef.current.h) : null;
+        if (sp && sp.z >= -1 && sp.z <= 1) {
+          delBtn.style.display = 'grid';
+          delBtn.style.left = `${sp.x}px`;
+          delBtn.style.top = `${sp.y}px`;
+        } else {
+          delBtn.style.display = 'none';
+        }
+      }
+
+      if (sceneRef.current) {
+        eng.render(camera, sceneRef.current, cur.style, (now - startT) / 1000, motionOn);
+      }
+      void camMoved;
+    };
+    raf = requestAnimationFrame(frame);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      if (editor.el === wrap) editor.el = null;
+      editor.worldFromScreen = null;
+      editor.fitOverride = null;
+      editor.zoomOverride = null;
+      eng.dispose();
+      engineRef.current = null;
+    };
+  }, [editor, camera, topInset]);
+
+  const local = (e: PointerEvent | WheelEvent) => {
+    const r = canvasRef.current!.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+
+  /** Ekrandagi nuqtadan port, element, tumbler yoki simni aniqlash. */
+  const hitTest = (sx: number, sy: number, isTouch: boolean) => {
+    const { w, h } = sizeRef.current;
+    const { vp, invVP } = camera.matrices(w, h);
+    const ray = unprojectRay(sx, sy, w, h, invVP);
+
+    // 1. Portlar (ekran masofasi bo'yicha aniq tanlash)
+    let bestPort: string | null = null;
+    let bestPortD = isTouch ? 24 : 14;
+    const ports: [string, number, number][] = [];
+    const layNow = editor.layout.value;
+    const cNow = editor.circuit.value;
+    for (const [name, p] of layNow.inputs) ports.push([`in:${name}`, p.x, p.y]);
+    for (const [name, p] of layNow.outputs) ports.push([`out:${name}`, p.x, p.y]);
+    for (const g of cNow.gates) {
+      ports.push([g.id, g.x + GATE_W, g.y + outputPortY(g)]);
+      for (let i = 0; i < GATE_ARITY[g.type]; i++) ports.push([`${g.id}:${i}`, g.x, g.y + inputPortY(g, i)]);
+    }
+    for (const [id, x, y] of ports) {
+      const sp = projectPoint([x, 2.5, y], vp, w, h);
+      if (!sp || sp.z > 1) continue;
+      const d = Math.hypot(sp.x - sx, sp.y - sy);
+      if (d < bestPortD) {
+        bestPortD = d;
+        bestPort = id;
+      }
+    }
+    if (bestPort) return { kind: 'port' as const, port: bestPort };
+
+    // 2. Elementlar (AABB)
+    let bestGate: { id: string; t: number } | null = null;
+    for (const g of cNow.gates) {
+      const tHit = rayAABB(ray, g.x + 8, 0, g.y + 2, g.x + GATE_W - 8, 15, g.y + GATE_H - 2);
+      if (tHit !== null && (!bestGate || tHit < bestGate.t)) bestGate = { id: g.id, t: tHit };
+    }
+
+    // 3. Kirish tumblerlari (AABB)
+    let bestPin: { k: number; t: number } | null = null;
+    const ins = editor.spec.value.inputs;
+    for (let k = 0; k < ins.length; k++) {
+      const p = layNow.inputs.get(ins[k])!;
+      const tHit = rayAABB(ray, p.x - 78, 0, p.y - 22, p.x - 12, 24, p.y + 22);
+      if (tHit !== null && (!bestPin || tHit < bestPin.t)) bestPin = { k, t: tHit };
+    }
+
+    if (bestGate && (!bestPin || bestGate.t <= bestPin.t)) return { kind: 'gate' as const, id: bestGate.id };
+    if (bestPin) return { kind: 'pin' as const, k: bestPin.k };
+
+    // 4. Simlar (3D siniq chiziq)
+    let bestWire: { index: number; t: number } | null = null;
+    for (const wh of sceneRef.current?.wireHits ?? []) {
+      const hit = rayPolylineDist(ray, wh.pts, isTouch ? 12 : 8);
+      if (hit && (!bestWire || hit.t < bestWire.t)) bestWire = { index: wh.index, t: hit.t };
+    }
+    if (bestWire) return { kind: 'wire' as const, index: bestWire.index };
+
+    return { kind: 'empty' as const };
+  };
+
+  const connect = (a: string, b: string, fromDrag: boolean) => {
+    const res = editor.connect(a, b);
+    if (res === 'cycle') {
+      sfx.error();
+      showToast(t.play.cycle, 'error');
+    } else if (res === 'kind' && fromDrag) {
+      showToast(t.play.sameKind, 'error');
+    }
+    return res;
+  };
+
+  const tapPort = (port: string) => {
+    const pend = editor.pending.value;
+    if (!pend) {
+      editor.pending.value = port;
+      sfx.click();
+    } else if (pend === port) {
+      editor.pending.value = null;
+    } else {
+      const res = connect(pend, port, false);
+      editor.pending.value = res === 'kind' ? port : null;
+    }
+  };
+
+  const onDown = (e: PointerEvent) => {
+    if (editor.busy.value) return;
+    capture(canvasRef.current!, e.pointerId);
+    const p = local(e);
+    pointers.current.set(e.pointerId, p);
+
+    if (pointers.current.size === 2) {
+      if (drag.current?.kind === 'gate') {
+        draggingGate.value = null;
+        editor.endDrag();
+      }
+      ghost.value = null;
+      wiring.value = null;
+      const [a, b] = [...pointers.current.values()];
+      drag.current = { kind: 'pinch', dist: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2 };
+      return;
+    }
+    if (pointers.current.size > 2) return;
+
+    // O'ng/o'rta tugma yoki Shift/Alt yoki Burish rejimi — 3D orbita
+    if (e.button === 2 || e.button === 1 || e.altKey || e.shiftKey) {
+      drag.current = { kind: 'orbit', lx: p.x, ly: p.y, sx: p.x, sy: p.y, moved: false };
+      return;
+    }
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+    const hit = hitTest(p.x, p.y, e.pointerType !== 'mouse');
+    if (hit.kind === 'port') {
+      drag.current = { kind: 'wire', port: hit.port, sx: p.x, sy: p.y, moved: false };
+    } else if (hit.kind === 'gate') {
+      const g = editor.circuit.value.gates.find((x) => x.id === hit.id)!;
+      const w = editor.toWorld(p.x, p.y);
+      editor.beginDrag();
+      drag.current = { kind: 'gate', id: hit.id, ox: w.x - g.x, oz: w.y - g.y, sx: p.x, sy: p.y, moved: false };
+    } else if (hit.kind === 'pin') {
+      drag.current = { kind: 'pin', k: hit.k, sx: p.x, sy: p.y, moved: false };
+    } else if (hit.kind === 'wire') {
+      drag.current = { kind: 'wireSel', index: hit.index, sx: p.x, sy: p.y, moved: false };
+    } else {
+      drag.current = {
+        kind: cam3d.value.orbitMode ? 'orbit' : 'pan',
+        lx: p.x,
+        ly: p.y,
+        sx: p.x,
+        sy: p.y,
+        moved: false,
+      };
+    }
+  };
+
+  const onMove = (e: PointerEvent) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    const p = local(e);
+    pointers.current.set(e.pointerId, p);
+    const d = drag.current;
+    if (!d) return;
+
+    if (d.kind === 'pinch') {
+      if (pointers.current.size !== 2) return;
+      const [a, b] = [...pointers.current.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      const cx = (a.x + b.x) / 2;
+      const cy = (a.y + b.y) / 2;
+      const { w, h } = sizeRef.current;
+      if (d.dist > 0) camera.zoomAtScreen(dist / d.dist, cx, cy, w, h);
+      camera.panByScreenDelta(cx - d.cx, cy - d.cy, w, h);
+      editor.viewTouched = true;
+      drag.current = { kind: 'pinch', dist, cx, cy };
+      return;
+    }
+
+    if (!d.moved && Math.hypot(p.x - d.sx, p.y - d.sy) > MOVE_THRESHOLD) d.moved = true;
+    if (!d.moved) return;
+
+    const { w, h } = sizeRef.current;
+    if (d.kind === 'orbit') {
+      camera.orbitByDelta(p.x - d.lx, p.y - d.ly);
+      editor.viewTouched = true;
+      d.lx = p.x;
+      d.ly = p.y;
+    } else if (d.kind === 'pan') {
+      camera.panByScreenDelta(p.x - d.lx, p.y - d.ly, w, h);
+      editor.viewTouched = true;
+      d.lx = p.x;
+      d.ly = p.y;
+    } else if (d.kind === 'gate') {
+      draggingGate.value = d.id;
+      const wpt = editor.toWorld(p.x, p.y);
+      editor.dragGate(d.id, wpt.x - d.ox, wpt.y - d.oz);
+    } else if (d.kind === 'wire') {
+      const a = portPoint(d.port, gmap, lay);
+      if (a) ghost.value = { a, b: editor.toWorld(p.x, p.y) };
+      wiring.value = d.port;
+    }
+  };
+
+  const onUp = (e: PointerEvent) => {
+    if (!pointers.current.delete(e.pointerId)) return;
+    const d = drag.current;
+    if (!d) return;
+    if (d.kind === 'pinch') {
+      if (pointers.current.size === 0) drag.current = null;
+      return;
+    }
+    drag.current = null;
+
+    if (d.kind === 'gate') {
+      draggingGate.value = null;
+      editor.endDrag();
+      if (!d.moved) {
+        const curSel = editor.selection.value;
+        editor.selection.value = curSel?.kind === 'gate' && curSel.id === d.id ? null : { kind: 'gate', id: d.id };
+        editor.pending.value = null;
+      }
+    } else if (d.kind === 'wire') {
+      ghost.value = null;
+      wiring.value = null;
+      if (!d.moved) {
+        tapPort(d.port);
+      } else if (e.type === 'pointerup') {
+        const p = local(e);
+        const target = hitTest(p.x, p.y, e.pointerType !== 'mouse');
+        if (target.kind === 'port' && target.port !== d.port) connect(d.port, target.port, true);
+        editor.pending.value = null;
+      }
+    } else if (d.kind === 'pin' && !d.moved && e.type === 'pointerup') {
+      editor.toggleInput(d.k);
+    } else if (d.kind === 'wireSel' && !d.moved && e.type === 'pointerup') {
+      const curSel = editor.selection.value;
+      editor.selection.value = curSel?.kind === 'wire' && curSel.index === d.index ? null : { kind: 'wire', index: d.index };
+      editor.pending.value = null;
+    } else if ((d.kind === 'pan' || d.kind === 'orbit') && !d.moved) {
+      editor.selection.value = null;
+      editor.pending.value = null;
+    }
+  };
+
+  const onWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    const p = local(e);
+    const { w, h } = sizeRef.current;
+    camera.zoomAtScreen(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), p.x, p.y, w, h);
+    editor.viewTouched = true;
+  };
+
+  const onDoubleClick = (e: MouseEvent) => {
+    const r = canvasRef.current!.getBoundingClientRect();
+    const hit = hitTest(e.clientX - r.left, e.clientY - r.top, false);
+    if (hit.kind === 'empty') {
+      editor.viewTouched = false;
+      editor.fit();
+    }
+  };
+
+  const a11y = t.play.a11y;
+  const plain = (e: KeyboardEvent) => !e.ctrlKey && !e.metaKey && !e.altKey;
+  const activates = (e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && plain(e);
+  const deletes = (e: KeyboardEvent) => (e.key === 'Delete' || e.key === 'Backspace') && plain(e);
+
+  return (
+    <div class="board-3d-wrap" ref={wrapRef}>
+      <canvas
+        ref={canvasRef}
+        class="board-3d-canvas"
+        aria-label={a11y.board}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        onWheel={onWheel}
+        onDblClick={onDoubleClick}
+        onContextMenu={(e) => e.preventDefault()}
+      />
+      <div class="board-3d-hint">{t.play.view.tiltHint}</div>
+      <button
+        ref={delBtnRef}
+        class="delete-3d-btn"
+        style={{ display: 'none' }}
+        aria-label={t.play.remove}
+        title={t.play.remove}
+        onClick={() => editor.removeSelection()}
+      >
+        ×
+      </button>
+
+      {/* Klaviatura va ekran o'quvchi uchun 3D sahnaning to'liq boshqaruv ro'yxati */}
+      <div class="a11y-3d-list" role="group" aria-label={a11y.board}>
+        {spec.inputs.map((name, k) => (
+          <button
+            key={`in:${name}`}
+            role="switch"
+            aria-checked={bits[k] === 1}
+            aria-label={name}
+            onClick={() => editor.toggleInput(k)}
+          />
+        ))}
+        {gates.map((g, gi) => (
+          <button
+            key={g.id}
+            aria-label={a11y.gate(`${g.type} ${gi + 1}`)}
+            onKeyDown={(e) => {
+              if (deletes(e)) {
+                e.preventDefault();
+                editor.selection.value = { kind: 'gate', id: g.id };
+                editor.removeSelection();
+              } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                const dx = e.key === 'ArrowLeft' ? -GRID : e.key === 'ArrowRight' ? GRID : 0;
+                const dy = e.key === 'ArrowUp' ? -GRID : e.key === 'ArrowDown' ? GRID : 0;
+                editor.beginDrag();
+                editor.dragGate(g.id, g.x + dx, g.y + dy);
+                editor.endDrag();
+              }
+            }}
+            onClick={() => (editor.selection.value = { kind: 'gate', id: g.id })}
+          />
+        ))}
+        {spec.outputs.map((name) => (
+          <button
+            key={`out:${name}`}
+            aria-label={a11y.output(name)}
+            onKeyDown={(e) => {
+              if (activates(e)) {
+                e.preventDefault();
+                tapPort(`out:${name}`);
+              } else if (deletes(e)) {
+                const idx = wires.findIndex((w) => w.to === `out:${name}`);
+                if (idx >= 0) {
+                  e.preventDefault();
+                  editor.selection.value = { kind: 'wire', index: idx };
+                  editor.removeSelection();
+                }
+              }
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}

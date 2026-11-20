@@ -1,4 +1,4 @@
-import type { Motion, Theme } from './theme';
+import type { BoardMode, Motion, Theme } from './theme';
 import { computed, effect, signal } from '@preact/signals';
 import { setLang, type Lang } from './i18n';
 import { deviceLang, takeUrlLang } from './lang-detect';
@@ -40,8 +40,10 @@ export interface Profile {
 export interface Settings {
   sound: boolean;
   lang?: Lang;
-  /** Rang mavzusi (theme.ts); yo'q bo'lsa — Plata. */
+  /** Rang mavzusi (theme.ts); yo'q bo'lsa — Sanoat PCB. */
   theme?: Theme;
+  /** Sxema ko'rinishi (theme.ts): 2D Real, 3D Real yoki Klassik sxema; yo'q bo'lsa — 2D Real. */
+  boardMode?: BoardMode;
   /** Animatsiya (theme.ts); yo'q bo'lsa — Avto. */
   motion?: Motion;
 }
@@ -64,7 +66,20 @@ const cleanSettings = (v: unknown): Partial<Settings> | null => {
   if (typeof v.sound === 'boolean') out.sound = v.sound;
   if (v.lang === 'uz' || v.lang === 'ru') out.lang = v.lang;
   // theme.ts dan THEMES olinmaydi: u state.ts ni import qiladi (aylana).
-  if (v.theme === 'plata' || v.theme === 'haqiqiy' || v.theme === 'daftar' || v.theme === 'chizma' || v.theme === 'auto') out.theme = v.theme;
+  if (
+    v.theme === 'pcb' ||
+    v.theme === 'bench' ||
+    v.theme === 'breadboard' ||
+    v.theme === 'scifi' ||
+    v.theme === 'plata' ||
+    v.theme === 'haqiqiy' ||
+    v.theme === 'daftar' ||
+    v.theme === 'chizma' ||
+    v.theme === 'auto'
+  ) {
+    out.theme = v.theme;
+  }
+  if (v.boardMode === 'real2d' || v.boardMode === 'real3d' || v.boardMode === 'schematic') out.boardMode = v.boardMode;
   if (v.motion === 'on' || v.motion === 'off' || v.motion === 'auto') out.motion = v.motion;
   return out;
 };

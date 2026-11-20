@@ -15,6 +15,7 @@ import { Palette } from '../components/Palette';
 import { Formula } from '../components/Formula';
 import { Timeline, traceSteps } from '../components/Timeline';
 import { TruthTable } from '../components/TruthTable';
+import { ViewTools } from '../components/ViewTools';
 import { Icon, Modal, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go, replaceRoute } from '../router';
@@ -100,6 +101,7 @@ export function Sandbox({ formula }: { formula?: string }) {
       <div class="play-body">
         <div class="stage">
           <Board editor={editor} />
+          <ViewTools />
           <ZoomTools editor={editor} />
           {hasDff && <ClockTools editor={editor} />}
         </div>

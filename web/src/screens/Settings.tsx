@@ -1,6 +1,7 @@
 import './Settings.css';
 import { useSignal } from '@preact/signals';
 import { useRef } from 'preact/hooks';
+import { sfx } from '../audio';
 import { copyText, selectContents } from '../clipboard';
 import { ClassesCard } from '../components/ClassesCard';
 import { askConfirm } from '../components/Dialogs';
@@ -15,7 +16,7 @@ import { go } from '../router';
 import { profile, settings } from '../state';
 import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
-import { MOTIONS, systemReducedMotion, THEMES } from '../theme';
+import { AAA_THEMES, activeBoardMode, BOARD_MODES, CLASSIC_THEMES, isAaaTheme, MOTIONS, systemReducedMotion, type BoardMode, type Theme } from '../theme';
 import { APP_VERSION } from '../version';
 import { clearPlayerData, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
 
@@ -160,6 +161,11 @@ export function Settings() {
           </section>
 
           <section class="card">
+            <span>{t.settings.boardMode}</span>
+            <BoardModeSwitch />
+          </section>
+
+          <section class="card">
             <span>{t.settings.theme}</span>
             <ThemeSwitch />
           </section>
@@ -214,38 +220,110 @@ export function Settings() {
   );
 }
 
+const MODE_ICONS: Record<BoardMode, 'layers' | 'cube' | 'schematic'> = {
+  real2d: 'layers',
+  real3d: 'cube',
+  schematic: 'schematic',
+};
+
+/** Sxema ko'rinishi: 2D Real, 3D Real yoki Klassik sxema. */
+function BoardModeSwitch() {
+  const current = settings.value.boardMode ?? 'real2d';
+  return (
+    <>
+      <div class="mode-grid" role="group" aria-label={t.settings.boardMode}>
+        {BOARD_MODES.map((id) => (
+          <button
+            key={id}
+            class={`mode-tile${id === current ? ' on' : ''}`}
+            aria-pressed={id === current}
+            title={t.settings.boardModeHint[id]}
+            onClick={() => {
+              settings.value = { ...settings.value, boardMode: id };
+              sfx.mode();
+            }}
+          >
+            <Icon name={MODE_ICONS[id]} />
+            <span>{t.settings.boardModes[id]}</span>
+          </button>
+        ))}
+      </div>
+      <p class="mode-hint">{t.settings.boardModeHint[current]}</p>
+    </>
+  );
+}
+
 /**
- * Mavzu tanlash: har bir mavzu — o'z ranglaridagi kichik namuna (yoniq sim, element, chiroq) va nomi.
- * Namuna ranglarni <span data-theme="…"> orqali oladi (styles.css dagi mavzu bloklari), shuning uchun
- * mavzu ranglari o'zgarsa, namuna ham o'zi yangilanadi. Avto — yarmi Plata, yarmi Daftar.
+ * Mavzu va uslub tanlash: 4 ta AAA studiya uslubi + klassik o'quv mavzulari.
+ * Har bir namuna ranglarni <span data-theme="…"> orqali styles.css dan oladi.
  */
 function ThemeSwitch() {
-  const current = settings.value.theme ?? 'plata';
+  const current = settings.value.theme ?? 'pcb';
+  const mode = activeBoardMode.value;
+  const pickTheme = (next: Theme) => {
+    const nextMode: BoardMode | undefined =
+      next !== 'auto' && !isAaaTheme(next)
+        ? 'schematic'
+        : next !== 'auto' && isAaaTheme(next) && mode === 'schematic'
+          ? 'real2d'
+          : undefined;
+    settings.value = nextMode ? { ...settings.value, theme: next, boardMode: nextMode } : { ...settings.value, theme: next };
+    sfx.mode();
+  };
+  const tile = (id: Theme) => (
+    <button
+      key={id}
+      class={`theme-tile${id === current ? ' on' : ''}`}
+      aria-pressed={id === current}
+      title={t.settings.themeHint[id]}
+      onClick={() => pickTheme(id)}
+    >
+      <span class="theme-swatch" aria-hidden="true">
+        {(id === 'auto' ? (['pcb', 'daftar'] as const) : [id]).map((look) => {
+          const aaa = isAaaTheme(look);
+          return (
+            <span key={look} data-theme={look}>
+              <svg viewBox="0 0 48 30" preserveAspectRatio="xMidYMid slice">
+                {aaa ? (
+                  <>
+                    <rect class="swatch-mat" x={2} y={2} width={44} height={26} rx={3} />
+                    <path class="swatch-wire-off" d="M3,11 H14 M3,19 H14" />
+                    <path class="swatch-wire" d="M30,15 H37" />
+                    <rect class="swatch-pin" x={12} y={9.5} width={4} height={3} />
+                    <rect class="swatch-pin" x={12} y={17.5} width={4} height={3} />
+                    <rect class="swatch-pin" x={29} y={13.5} width={4} height={3} />
+                    <rect class="swatch-gate" x={15} y={6} width={15} height={18} rx={2} />
+                    <circle class="swatch-pad" cx={18} cy={10} r={1.2} />
+                    <circle class="swatch-lamp" cx={41} cy={15} r={4.2} />
+                  </>
+                ) : (
+                  <>
+                    <path class="swatch-wire" d="M3,15 H14 M30,15 H36" />
+                    <path class="swatch-gate" d="M14,7 H22 A8,8 0 0 1 22,23 H14 Z" />
+                    <circle class="swatch-lamp" cx={41} cy={15} r={4.5} />
+                  </>
+                )}
+              </svg>
+            </span>
+          );
+        })}
+      </span>
+      {t.settings.themes[id]}
+    </button>
+  );
+
   return (
-    <div class="theme-grid" role="group" aria-label={t.settings.theme}>
-      {THEMES.map((id) => (
-        <button
-          key={id}
-          class={`theme-tile${id === current ? ' on' : ''}`}
-          aria-pressed={id === current}
-          title={t.settings.themeHint[id]}
-          onClick={() => (settings.value = { ...settings.value, theme: id })}
-        >
-          <span class="theme-swatch" aria-hidden="true">
-            {(id === 'auto' ? (['plata', 'daftar'] as const) : [id]).map((look) => (
-              <span key={look} data-theme={look}>
-                <svg viewBox="0 0 48 30" preserveAspectRatio="xMidYMid slice">
-                  <path class="swatch-wire" d="M3,15 H14 M30,15 H36" />
-                  <path class="swatch-gate" d="M14,7 H22 A8,8 0 0 1 22,23 H14 Z" />
-                  <circle class="swatch-lamp" cx={41} cy={15} r={4.5} />
-                </svg>
-              </span>
-            ))}
-          </span>
-          {t.settings.themes[id]}
-        </button>
-      ))}
-    </div>
+    <>
+      <div class="theme-group-title">{t.settings.styleGroups.aaa}</div>
+      <div class="theme-grid" role="group" aria-label={t.settings.styleGroups.aaa}>
+        {AAA_THEMES.map(tile)}
+      </div>
+      <div class="theme-group-title">{t.settings.styleGroups.classic}</div>
+      <div class="theme-grid" role="group" aria-label={t.settings.styleGroups.classic}>
+        {CLASSIC_THEMES.map(tile)}
+      </div>
+      <p class="mode-hint">{t.settings.themeHint[current]}</p>
+    </>
   );
 }
 

@@ -1,23 +1,78 @@
 /* Sozlamalar ekrani uslublari: ekran bilan birga, kerak bo'lganda yuklanadi (bosh yuklamaga kirmaydi). */
-/* ── Mavzu tanlash: har bir mavzuning kichik namunasi, o'z ranglarida (Settings.tsx ThemeSwitch) ── */
-.theme-grid {
+/* ── Ko'rinish va mavzu tanlash (Settings.tsx BoardModeSwitch & ThemeSwitch) ── */
+.mode-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 10px;
+}
+
+.mode-tile {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 6px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: inset 0 1px 0 var(--bevel-top), inset 0 -2px 0 var(--bevel-bottom);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: center;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.mode-tile:hover {
+  background: var(--raise);
+}
+
+.mode-tile.on {
+  color: var(--text);
+  font-weight: 600;
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.mode-tile .icon {
+  color: var(--accent);
+}
+
+.mode-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.theme-group-title {
+  margin: 12px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
 }
 
 .theme-tile {
   display: grid;
   align-content: start;
   gap: 6px;
+  min-width: 0;
   padding: 6px 6px 8px;
   border: 1px solid var(--edge);
   border-radius: 12px;
   background: var(--panel);
+  box-shadow: inset 0 1px 0 var(--bevel-top), inset 0 -2px 0 var(--bevel-bottom);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12.5px;
   line-height: 1.2;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
@@ -36,6 +91,7 @@
   height: 44px;
   border-radius: 7px;
   overflow: hidden;
+  border: 1px solid var(--line);
 }
 
 /* Namuna bo'lagi: data-theme shu yerda — ichidagi ranglar o'sha mavzuniki. */
@@ -51,6 +107,12 @@
   height: 100%;
 }
 
+.swatch-mat {
+  fill: var(--board-mat);
+  stroke: var(--board-frame);
+  stroke-width: 1;
+}
+
 .swatch-wire {
   fill: none;
   stroke: var(--trace-on);
@@ -58,11 +120,26 @@
   stroke-linecap: round;
 }
 
+.swatch-wire-off {
+  fill: none;
+  stroke: var(--trace);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
 .swatch-gate {
   fill: var(--gate-fill);
   stroke: var(--gate-stroke);
-  stroke-width: 2;
+  stroke-width: 1.8;
   stroke-linejoin: round;
+}
+
+.swatch-pin {
+  fill: var(--lead);
+}
+
+.swatch-pad {
+  fill: var(--copper);
 }
 
 .swatch-lamp {

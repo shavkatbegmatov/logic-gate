@@ -17,10 +17,22 @@
           light = 0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 128;
         }
       }
-      theme = light ? 'daftar' : 'plata';
+      theme = light ? 'daftar' : 'pcb';
     }
-    // Plata — atributsiz (asosiy ranglar); qolganlari — styles.css dagi [data-theme] bloklari.
-    if (theme === 'daftar' || theme === 'haqiqiy' || theme === 'chizma') document.documentElement.setAttribute('data-theme', theme);
+    // Sanoat PCB (pcb) — atributsiz (asosiy ranglar); qolganlari — styles.css dagi [data-theme] bloklari.
+    if (
+      theme === 'bench' ||
+      theme === 'breadboard' ||
+      theme === 'scifi' ||
+      theme === 'plata' ||
+      theme === 'haqiqiy' ||
+      theme === 'daftar' ||
+      theme === 'chizma'
+    ) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    var mode = saved.boardMode;
+    document.documentElement.setAttribute('data-board', mode === 'real3d' || mode === 'schematic' ? mode : 'real2d');
   } catch (e) {
     // localStorage yopiq — asosiy mavzu.
   }
@@ -155,7 +167,7 @@
     box.setAttribute('role', 'alert');
     box.style.cssText = 'max-width:440px;margin:15vh auto;padding:0 20px;font:16px/1.5 system-ui,sans-serif;color:#e8efe9;';
     var th = document.documentElement.getAttribute('data-theme');
-    if (th === 'daftar' || th === 'chizma') box.style.color = '#1f2a24';
+    if (th === 'daftar' || th === 'chizma' || th === 'breadboard') box.style.color = '#1f2a24';
     var h = document.createElement('h1');
     h.style.cssText = 'font-size:22px;margin:0 0 10px';
     h.textContent = r ? 'Игра не открылась' : "O'yin ochilmadi";
