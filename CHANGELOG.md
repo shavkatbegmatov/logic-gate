@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.2 — 2026-11-20
+
+- 3D rejimda bitta manbadan tarmoqlangan simlar ustidagi tugun (post va mufta), burilish tirsaklari hamda element kirish portlari jips ulandi.
+
 ## 2.18.1 — 2026-11-20
 
 - 3D rejimda barcha simlar, tumbler dastaklari va element korpuslari ikkinchi kadrda yo'qolib ketishi tuzatildi.

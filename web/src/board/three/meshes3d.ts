@@ -276,6 +276,7 @@ export class MeshBuilder {
     metal: number,
     emissive = 0,
     halfOnly = false,
+    pulseCoord = 0,
   ) {
     const maxLat = halfOnly ? Math.PI * 0.5 : Math.PI;
     const grid: number[][] = [];
@@ -289,7 +290,7 @@ export class MeshBuilder {
         const nx = sp * Math.cos(theta);
         const ny = cp;
         const nz = sp * Math.sin(theta);
-        row.push(this.vert(cx + nx * r, cy + ny * r, cz + nz * r, nx, ny, nz, i / segs, j / rings, col, rough, metal, emissive));
+        row.push(this.vert(cx + nx * r, cy + ny * r, cz + nz * r, nx, ny, nz, i / segs, j / rings, col, rough, metal, emissive, pulseCoord));
       }
       grid.push(row);
     }
@@ -305,7 +306,7 @@ export class MeshBuilder {
     }
   }
 
-  /** Silliq 3D sim trubasi (pulseCoord bilan signal to'lqini oqimi uchun). */
+  /** Silliq 3D sim trubasi: mustaqil segment silindrlari va burchak shar bo'g'inlari bilan. */
   addTube(
     pts: Vec3[],
     radius: number,
@@ -316,16 +317,14 @@ export class MeshBuilder {
     emissive = 0,
   ) {
     if (pts.length < 2) return;
-    const rings: number[][] = [];
     let dist = 0;
-    for (let p = 0; p < pts.length; p++) {
-      if (p > 0) dist += Math.hypot(pts[p][0] - pts[p - 1][0], pts[p][1] - pts[p - 1][1], pts[p][2] - pts[p - 1][2]);
-      const dir =
-        p === 0
-          ? normalize3(sub3(pts[1], pts[0]))
-          : p === pts.length - 1
-            ? normalize3(sub3(pts[p], pts[p - 1]))
-            : normalize3(sub3(pts[p + 1], pts[p - 1]));
+    for (let p = 0; p < pts.length - 1; p++) {
+      const aPt = pts[p];
+      const bPt = pts[p + 1];
+      const segVec = sub3(bPt, aPt);
+      const segLen = Math.hypot(segVec[0], segVec[1], segVec[2]);
+      if (segLen < 1e-4) continue;
+      const dir: Vec3 = [segVec[0] / segLen, segVec[1] / segLen, segVec[2] / segLen];
       const up: Vec3 = Math.abs(dir[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0];
       const t1 = normalize3([
         up[1] * dir[2] - up[2] * dir[1],
@@ -337,7 +336,12 @@ export class MeshBuilder {
         dir[2] * t1[0] - dir[0] * t1[2],
         dir[0] * t1[1] - dir[1] * t1[0],
       ];
-      const ring: number[] = [];
+      const d0 = dist;
+      const d1 = dist + segLen;
+      dist = d1;
+
+      const r0: number[] = [];
+      const r1: number[] = [];
       for (let s = 0; s <= segs; s++) {
         const a = (s / segs) * Math.PI * 2;
         const ca = Math.cos(a);
@@ -345,34 +349,19 @@ export class MeshBuilder {
         const nx = t1[0] * ca + t2[0] * sa;
         const ny = t1[1] * ca + t2[1] * sa;
         const nz = t1[2] * ca + t2[2] * sa;
-        ring.push(
-          this.vert(
-            pts[p][0] + nx * radius,
-            pts[p][1] + ny * radius,
-            pts[p][2] + nz * radius,
-            nx,
-            ny,
-            nz,
-            s / segs,
-            dist * 0.02,
-            col,
-            rough,
-            metal,
-            emissive,
-            dist,
-          ),
+        r0.push(
+          this.vert(aPt[0] + nx * radius, aPt[1] + ny * radius, aPt[2] + nz * radius, nx, ny, nz, s / segs, d0 * 0.02, col, rough, metal, emissive, d0),
+        );
+        r1.push(
+          this.vert(bPt[0] + nx * radius, bPt[1] + ny * radius, bPt[2] + nz * radius, nx, ny, nz, s / segs, d1 * 0.02, col, rough, metal, emissive, d1),
         );
       }
-      rings.push(ring);
-    }
-    for (let p = 0; p < rings.length - 1; p++) {
       for (let s = 0; s < segs; s++) {
-        const a = rings[p][s];
-        const b = rings[p + 1][s];
-        const c = rings[p + 1][s + 1];
-        const d = rings[p][s + 1];
-        this.tri(a, b, c);
-        this.tri(a, c, d);
+        this.tri(r0[s], r1[s], r1[s + 1]);
+        this.tri(r0[s], r1[s + 1], r0[s + 1]);
+      }
+      if (p < pts.length - 2) {
+        this.addSphere(bPt[0], bPt[1], bPt[2], radius, segs, 4, col, rough, metal, emissive, false, dist);
       }
     }
   }
@@ -430,34 +419,31 @@ function wirePath3D(route: Point[], hops: Point[][], style: RealStyle): Vec3[] {
   if (style === 'pcb') {
     return route.map((p) => [p.x, 0.2, p.y]);
   }
-  const baseH = style === 'scifi' ? 2.8 : 7.5;
-  const out: Vec3[] = [[route[0].x, 1.0, route[0].y]];
+  const baseH = style === 'scifi' ? 3.2 : 7.5;
+  const p0 = route[0];
+  const out: Vec3[] = [
+    [p0.x, 1.4, p0.y],
+    [p0.x, baseH, p0.y],
+  ];
   for (let i = 0; i < route.length - 1; i++) {
     const a = route[i];
     const b = route[i + 1];
     const dx = b.x - a.x;
     const dz = b.y - a.y;
     const len = Math.hypot(dx, dz);
-    if (i === 0 && len > 8) {
-      out.push([a.x + (dx / len) * 5, baseH, a.y + (dz / len) * 5]);
-    }
     const segHops = (hops[i] ?? []).slice().sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y));
     for (const h of segHops) {
       const d = Math.hypot(h.x - a.x, h.y - a.y);
       const t0 = clamp((d - 9) / Math.max(1, len), 0.05, 0.95);
       const t1 = clamp((d + 9) / Math.max(1, len), 0.05, 0.95);
       out.push([a.x + dx * t0, baseH, a.y + dz * t0]);
-      out.push([h.x, baseH + 9.5, h.y]);
+      out.push([h.x, baseH + 8.5, h.y]);
       out.push([a.x + dx * t1, baseH, a.y + dz * t1]);
     }
-    if (i === route.length - 2 && len > 8) {
-      out.push([b.x - (dx / len) * 5, baseH, b.y - (dz / len) * 5]);
-    } else if (i < route.length - 2) {
-      out.push([b.x, baseH, b.y]);
-    }
+    out.push([b.x, baseH, b.y]);
   }
   const last = route[route.length - 1];
-  out.push([last.x, 1.0, last.y]);
+  out.push([last.x, 1.4, last.y]);
   return out;
 }
 
@@ -553,9 +539,9 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       });
     } else {
       solid.addTube(pts, on || sel ? 2.65 : 1.65, 8, baseCol, on ? 0.25 : 0.48, input.style === 'scifi' ? 0.35 : 0.08, em);
-      solid.addCylinderY(pts[0][0], 0, 2.2, pts[0][2], 2.5, 2.0, 8, pal.metal, 0.2, 0.9, 0);
+      solid.addCylinderY(pts[0][0], 0, 3.2, pts[0][2], 2.7, 2.2, 8, pal.metal, 0.2, 0.9, 0);
       const endP = pts[pts.length - 1];
-      solid.addCylinderY(endP[0], 0, 2.2, endP[2], 2.5, 2.0, 8, pal.metal, 0.2, 0.9, 0);
+      solid.addCylinderY(endP[0], 0, 3.2, endP[2], 2.7, 2.2, 8, pal.metal, 0.2, 0.9, 0);
     }
   });
 
@@ -563,7 +549,30 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
   for (const { net, at } of input.routed.dots) {
     const live = input.reached(net, 1);
     const on = live && input.values.get(net) === 1;
-    solid.addCylinderY(at.x, 0, 2.2, at.y, 4.6, 3.8, 10, on ? pal.traceOn : pal.brass, 0.25, 0.85, on ? 0.9 : 0);
+    const sel = input.selection?.kind === 'wire' && input.circuit.wires[input.selection.index]?.from === net;
+    const jCol = sel
+      ? pal.sel
+      : on
+        ? pal.traceOn
+        : input.style === 'breadboard' || input.style === 'bench'
+          ? mixMuted(pal.traceOff, jumperColor(net))
+          : pal.traceOff;
+    const jEm = sel ? 1.15 : on ? 1.08 : 0;
+
+    if (input.style === 'pcb') {
+      solid.addCylinderY(at.x, 0, 1.2, at.y, 5.2, 4.8, 12, pal.brass, 0.25, 0.88, 0);
+      const r = on || sel ? 4.0 : 3.0;
+      const topY = on || sel ? 2.3 : 1.5;
+      solid.addCylinderY(at.x, 0.8, topY, at.y, r, r * 0.9, 12, jCol, 0.22, 0.8, jEm);
+      solid.addSphere(at.x, topY, at.y, r * 0.85, 10, 5, jCol, 0.2, 0.82, jEm, true);
+    } else {
+      const baseH = input.style === 'scifi' ? 3.2 : 7.5;
+      solid.addCylinderY(at.x, 0, 2.4, at.y, 4.8, 3.9, 12, pal.brass, 0.25, 0.85, 0);
+      solid.addCylinderY(at.x, 1.6, baseH, at.y, on || sel ? 2.2 : 1.75, on || sel ? 2.2 : 1.75, 10, sel ? pal.sel : on ? pal.traceOn : pal.metal, 0.2, 0.88, jEm * 0.85);
+      const hubR = (on || sel ? 2.65 : 1.65) * 1.45;
+      solid.addCylinderY(at.x, baseH - 1.4, baseH + 1.4, at.y, hubR * 1.06, hubR * 1.06, 12, sel ? pal.sel : on ? pal.traceOn : pal.brass, 0.22, 0.85, jEm);
+      solid.addSphere(at.x, baseH, at.y, hubR, 12, 6, jCol, on ? 0.22 : 0.35, on ? 0.2 : 0.6, jEm);
+    }
   }
 
   // Tortilayotgan sim (3D egri kamalak)
@@ -669,7 +678,10 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     }
 
     for (let k = 0; k < ins.length; k++) {
-      addPort(`${g.id}:${k}`, g.x, g.y + inputPortY(g, k), false, driven.has(`${g.id}:${k}`), false);
+      const pid = `${g.id}:${k}`;
+      const drv = input.drivers.get(pid);
+      const inOn = drv !== undefined && input.reached(drv, 1) && input.values.get(drv) === 1;
+      addPort(pid, g.x, g.y + inputPortY(g, k), false, driven.has(pid), inOn);
     }
     addPort(g.id, g.x + GATE_W, g.y + outputPortY(g), true, usedSources.has(g.id), on);
   }

@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.2',
+    date: '2026-11-20',
+    uz: [
+      "3D rejimda bitta manbadan tarmoqlangan simlar ustidagi tugun (post va mufta), burilish tirsaklari hamda element kirish portlari jips ulandi.",
+    ],
+    ru: [
+      'В 3D-режиме узел разветвления проводов (стойка и муфта), угловые сгибы и входные порты элементов теперь соединяются плотно и без разрывов.',
+    ],
+  },
+  {
     version: '2.18.1',
     date: '2026-11-20',
     uz: [

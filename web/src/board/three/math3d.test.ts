@@ -170,6 +170,59 @@ describe('3D sahna geometriyasi', () => {
     expect(onScene.solid.vertCount).toBeGreaterThan(offScene.solid.vertCount);
   });
 
+  it('tarmoqlangan simlarda 3D tugun nuqtasi wireHits ga mos tushadi va chelaklar yaroqli', () => {
+    const branchSpec: Spec = { inputs: ['A'], outputs: ['Q'], gates: ALL_GATE_TYPES };
+    const branchCircuit: Circuit = {
+      gates: [
+        { id: 'g1', type: 'NOT', x: 168, y: 24 },
+        { id: 'g2', type: 'NOT', x: 168, y: 120 },
+      ],
+      wires: [
+        { from: 'in:A', to: 'g1:0' },
+        { from: 'in:A', to: 'g2:0' },
+        { from: 'g2', to: 'out:Q' },
+      ],
+    };
+    const branchLay = layout(branchSpec, outputColumn(2));
+    const branchMap = new Map<string, Gate>(branchCircuit.gates.map((g) => [g.id, g]));
+    const branchRouted = routeAll(branchCircuit.wires, branchMap, branchLay);
+    expect(branchRouted.dots.length).toBeGreaterThan(0);
+    const dot = branchRouted.dots[0];
+
+    for (const style of ['breadboard', 'pcb'] as const) {
+      const scene = buildScene3D({
+        style,
+        spec: branchSpec,
+        circuit: branchCircuit,
+        layout: branchLay,
+        routed: branchRouted,
+        values: new Map([['in:A', 1], ['g1', 0], ['g2', 0]]),
+        outputs: [0],
+        bits: [1],
+        expected: [1],
+        drivers: new Map([['g1:0', 'in:A'], ['g2:0', 'in:A'], ['out:Q', 'g2']]),
+        reached: () => true,
+        selection: null,
+        activePort: null,
+        highlight: null,
+        draggingGateId: null,
+        ghost: null,
+        leverAngles: new Map([['A', 0.48]]),
+        stateNames: new Map(),
+        labelUVs,
+      });
+      const targetY = style === 'pcb' ? 0.2 : 7.5;
+      for (let wi = 0; wi < 2; wi++) {
+        expect(scene.wireHits[wi].pts.some(([x, y, z]) => Math.hypot(x - dot.at.x, z - dot.at.y) < 1 && Math.abs(y - targetY) < 0.01)).toBe(true);
+      }
+      for (const bucket of [scene.solid, scene.boardTop, scene.chipTops, scene.labels]) {
+        expect(bucket.vertCount).toBeGreaterThan(0);
+        for (let i = 0; i < bucket.verts.length; i++) expect(Number.isFinite(bucket.verts[i])).toBe(true);
+        for (let i = 0; i < bucket.indexCount; i++) expect(bucket.indices[i]).toBeLessThan(bucket.vertCount);
+      }
+    }
+  });
+
   it.each(['pcb', 'bench', 'breadboard', 'scifi'] as const)('%s uslubida barcha mesh chelaklari yaroqli va NaN yo\'q', (style) => {
     const scene = buildScene3D({
       style,
