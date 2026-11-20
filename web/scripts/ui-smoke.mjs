@@ -543,6 +543,26 @@ function inspect({ theme, lang, screen, ready }) {
       if (buttons !== 2) out.push(`tasdiqlash oynasida ${buttons} ta tugma ko'rinadi, kutilgan — 2`);
     }
   }
+  if (screen === 'level' || screen === 'sandbox') {
+    const stage = document.querySelector('.stage');
+    const vt = document.querySelector('.view-tools');
+    const zt = document.querySelector('.zoom-tools');
+    if (stage && vt && zt) {
+      const sr = stage.getBoundingClientRect();
+      const vr = vt.getBoundingClientRect();
+      const zr = zt.getBoundingClientRect();
+      if (vr.height > 96) out.push(`.view-tools balandligi katta (${Math.round(vr.height)}px): maydon o'rtasiga cho'zilgan`);
+      if (vr.bottom > sr.bottom + 2 || sr.bottom - vr.bottom > 76) {
+        out.push(`.view-tools pastga yopishmagan: bottom=${Math.round(vr.bottom)}, stageBottom=${Math.round(sr.bottom)}`);
+      }
+      const overlapX = Math.min(vr.right, zr.right) - Math.max(vr.left, zr.left);
+      const overlapY = Math.min(vr.bottom, zr.bottom) - Math.max(vr.top, zr.top);
+      if (overlapX > 0 && overlapY > 0) {
+        out.push(`.view-tools va .zoom-tools ustma-ust tushdi (${Math.round(overlapX)}×${Math.round(overlapY)}px)`);
+      }
+    }
+    if (shown('.view-tools .style-dot') < 1) out.push(".view-tools ichidagi uslub nuqtasi (.style-dot) ko'rinmaydi");
+  }
   if (screen === 'settings') {
     const modes = document.querySelectorAll('.mode-tile').length;
     if (modes !== 3) out.push(`.mode-tile: ${modes} ta, kutilgan — 3`);

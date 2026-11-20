@@ -6,6 +6,7 @@
 // SDK yuklangandan keyingina o'yin marshrutiga almashtiriladi (telegram-app.ts).
 //
 // Bu modul ilova holatini import qilmaydi (audio.ts dan ham chaqiriladi).
+import { signal } from '@preact/signals';
 
 // Lokal sinov (pnpm dev): Telegram'siz soxta SDK — web/dev/tg-mock.js (VITE_TG_SDK_URL). Build'da yo'q.
 const SDK_URL =
@@ -27,7 +28,9 @@ export interface TgWebApp {
   setBottomBarColor?(color: string): void;
   /** Telegram'ning yorug'/qorong'i rejimi (6.0+); o'zgarsa — 'themeChanged' hodisasi. */
   colorScheme?: 'light' | 'dark';
-  onEvent?(event: 'themeChanged', cb: () => void): void;
+  safeAreaInset?: { top?: number; bottom?: number; left?: number; right?: number };
+  contentSafeAreaInset?: { top?: number; bottom?: number; left?: number; right?: number };
+  onEvent?(event: string, cb: () => void): void;
   openTelegramLink(url: string): void;
   /** Oddiy havola (sayt) — Telegram'ning brauzerida, Mini App yopilmaydi. */
   openLink?(url: string): void;
@@ -200,11 +203,13 @@ export function suggestedNickname(): string {
 // Har bir ekranning TopBar dagi "orqaga" amali ro'yxatga yoziladi; Telegram sarlavhasidagi
 // orqaga tugmasi (va Android'dagi tizim tugmasi) eng oxirgisini bajaradi.
 
+export const nativeBack = signal(false);
 const backStack: (() => void)[] = [];
 let backBound = false;
 
 function syncBack() {
   if (!app || !app.isVersionAtLeast('6.1')) return;
+  nativeBack.value = true;
   if (!backBound) {
     backBound = true;
     app.BackButton.onClick(() => backStack[backStack.length - 1]?.());

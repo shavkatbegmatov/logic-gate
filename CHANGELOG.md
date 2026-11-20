@@ -5,6 +5,12 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.4 — 2026-11-20
+
+- Telegram Mini App va telefonda ko'rinish tugmalari (2D/3D/Sxema, uslub va 3D kamera) maydon o'rtasiga chiqib qolishi hamda palitra bilan to'qnashishi tuzatildi.
+- Tor vertikal ekranlarda 3D plata kamerasi va burchagi maydon bo'ylab kattaroq va markazroq joylashtirildi, sensorli ulash/bosish zonasi kengaytirildi.
+- Telegram ichida takroriy «Orqaga» tugmasi olib tashlandi va xavfsiz chegaralar (safe-area) hamda ixcham palitra moslashtirildi.
+
 ## 2.18.3 — 2026-11-20
 
 - 3D rejimda kirish tumbleri va chiqish indikatorida to'q old panel, perimetr hoshiyasi hamda ikki rangli (xrom asos + yorqin uchi) tumbler dastagi kontrasti keskin oshirildi.

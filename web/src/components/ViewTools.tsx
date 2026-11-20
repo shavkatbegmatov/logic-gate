@@ -71,11 +71,12 @@ export function ViewTools() {
             type="button"
             class={m === mode ? 'on' : ''}
             aria-pressed={m === mode}
+            aria-label={MODE_LABEL[m]()}
             title={t.settings.boardModeHint[m]}
             onClick={() => setMode(m)}
           >
             <Icon name={MODE_ICON[m]} />
-            <span>{MODE_LABEL[m]()}</span>
+            <span class="view-label">{MODE_LABEL[m]()}</span>
           </button>
         ))}
       </div>
@@ -86,6 +87,7 @@ export function ViewTools() {
             type="button"
             class={open.value ? 'on' : ''}
             aria-expanded={open.value}
+            aria-label={t.play.view.style}
             title={t.play.view.style}
             onClick={() => (open.value = !open.value)}
           >
@@ -129,24 +131,26 @@ export function ViewTools() {
       </div>
 
       {mode === 'real3d' && (
-        <div class="view-seg">
+        <div class="view-seg view-cam">
           <button
             type="button"
             class={c3.orbitMode ? 'on' : ''}
             aria-pressed={c3.orbitMode}
+            aria-label={c3.orbitMode ? t.play.view.orbit : t.play.view.pan}
             title={c3.orbitMode ? t.play.view.orbit : t.play.view.pan}
             onClick={() => {
               cam3d.value = { ...c3, orbitMode: !c3.orbitMode };
-              sfx.click();
+              sfx.mode();
             }}
           >
             <Icon name="orbit" />
-            <span>{c3.orbitMode ? t.play.view.orbit : t.play.view.pan}</span>
+            <span class="view-label">{c3.orbitMode ? t.play.view.orbit : t.play.view.pan}</span>
           </button>
           <button
             type="button"
             class={c3.angle === 'top' ? 'on' : ''}
             aria-pressed={c3.angle === 'top'}
+            aria-label={c3.angle === 'top' ? t.play.view.resetCam : t.play.view.topCam}
             title={c3.angle === 'top' ? t.play.view.resetCam : t.play.view.topCam}
             onClick={() => {
               cam3d.value = {

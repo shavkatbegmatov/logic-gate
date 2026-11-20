@@ -34,6 +34,7 @@ export function retryCloudRestore() {
 }
 
 export async function startTelegram() {
+  if (typeof document !== 'undefined') document.documentElement.dataset.tg = '1';
   // SDK ishga tushirish parametrlarini hashdan o'qiydi — u yuklanguncha hash o'zgarmasin.
   if (launchHash) holdHash();
   if (!profile.value) cloudRestore.value = 'pending';
@@ -46,6 +47,16 @@ export async function startTelegram() {
   try {
     app.ready();
     app.expand();
+    const syncSafeArea = () => {
+      if (typeof document === 'undefined') return;
+      const top = Math.max(0, Math.round((app.safeAreaInset?.top ?? 0) + (app.contentSafeAreaInset?.top ?? 0)));
+      const bottom = Math.max(0, Math.round((app.safeAreaInset?.bottom ?? 0) + (app.contentSafeAreaInset?.bottom ?? 0)));
+      document.documentElement.style.setProperty('--tg-safe-top', `${top}px`);
+      document.documentElement.style.setProperty('--tg-safe-bottom', `${bottom}px`);
+    };
+    syncSafeArea();
+    app.onEvent?.('safeAreaChanged', syncSafeArea);
+    app.onEvent?.('contentSafeAreaChanged', syncSafeArea);
     // Maydonda sudrash pastga surish bilan ilovani yopib yubormasin.
     if (app.isVersionAtLeast('7.7')) app.disableVerticalSwipes?.();
     // "Avto" mavzu Telegram rejimiga qaraydi; Telegram oynasining ranglari — mavzu fonida.

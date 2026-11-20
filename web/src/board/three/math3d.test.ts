@@ -72,6 +72,29 @@ describe('3D matematika va orbita kamerasi', () => {
     expect(cam.targetX).toBeLessThan(tx0);
   });
 
+  it('fitBounds tor Telegram/mobil ekranda platani ko\'rinadigan maydon ichida yirikroq joylashtiradi', () => {
+    const cam = new OrbitCamera();
+    cam.setAngle('studio', false, true);
+    cam.fitBounds(-104, -34, 484, 210, 380, 390, 64, false, 46, 0);
+    const { vp } = cam.matrices(380, 390);
+    const corners: Vec3[] = [
+      [-104, 0, -34],
+      [484, 0, -34],
+      [-104, 0, 210],
+      [484, 0, 210],
+    ];
+    const pts = corners.map((pt) => projectPoint(pt, vp, 380, 390)!);
+    for (const sp of pts) {
+      expect(sp).not.toBeNull();
+      expect(sp.x).toBeGreaterThanOrEqual(4);
+      expect(sp.x).toBeLessThanOrEqual(376);
+      expect(sp.y).toBeGreaterThanOrEqual(60);
+      expect(sp.y).toBeLessThanOrEqual(348);
+    }
+    const spanW = Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x));
+    expect(spanW).toBeGreaterThanOrEqual(380 * 0.8);
+  });
+
   it('rayAABB, raySphere va rayPolylineDist aniq kesishishni topadi', () => {
     const ray = { origin: [0, 100, 0] as Vec3, dir: [0, -1, 0] as Vec3 };
     expect(rayAABB(ray, -10, 0, -10, 10, 15, 10)).toBeCloseTo(85, 4);

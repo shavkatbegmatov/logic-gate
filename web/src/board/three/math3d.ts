@@ -14,6 +14,8 @@ export const MIN_CAM_PITCH = 0.36;
 export const MAX_CAM_PITCH = 1.48;
 export const STUDIO_YAW = -0.2;
 export const STUDIO_PITCH = 0.94;
+export const PORTRAIT_STUDIO_YAW = -0.08;
+export const PORTRAIT_STUDIO_PITCH = 1.02;
 export const TOP_YAW = 0;
 export const TOP_PITCH = 1.46;
 
@@ -345,34 +347,79 @@ export class OrbitCamera {
     height: number,
     topInset = 0,
     animate = false,
+    bottomInset = 0,
+    rightInset = 0,
   ) {
     const cx = (minX + maxX) / 2;
     const cz = (minZ + maxZ) / 2;
-    const spanX = Math.max(160, maxX - minX + 48);
-    const spanZ = Math.max(120, maxZ - minZ + 48);
+    const cy = 4;
+    const yaw = animate && this.goalYaw !== null ? this.goalYaw : this.yaw;
+    const pitch = animate && this.goalPitch !== null ? this.goalPitch : this.pitch;
+
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
+    const zAxis: Vec3 = [cp * Math.sin(yaw), sp, cp * Math.cos(yaw)];
+    const xAxis = normalize3(cross3([0, 1, 0], zAxis));
+    const yAxis = cross3(zAxis, xAxis);
+
+    const pad = width <= 560 ? 10 : 20;
+    const leftPad = pad;
+    const rightPad = Math.max(pad, rightInset);
+    const topPad = Math.max(pad, topInset + 6);
+    const bottomPad = Math.max(pad, bottomInset + 6);
+
+    const usableW = clamp((width - leftPad - rightPad) / Math.max(1, width), 0.42, 0.96);
+    const usableH = clamp((height - topPad - bottomPad) / Math.max(1, height), 0.38, 0.96);
     const aspect = Math.max(0.2, width / Math.max(1, height));
-    const tanHalf = Math.tan(this.fov / 2);
-    const usableH = Math.max(0.55, 1 - topInset / Math.max(200, height));
-    const distV = (spanZ * Math.max(0.45, Math.sin(this.pitch))) / (2 * tanHalf * usableH) + spanZ * 0.25;
-    const distH = spanX / (2 * tanHalf * aspect * 0.86);
-    const dist = clamp(Math.max(distV, distH), 260, MAX_CAM_DIST);
-    const zBias = topInset > 0 ? -spanZ * 0.06 : 0;
+    const tanY = Math.tan(this.fov / 2);
+    const tanX = tanY * aspect;
+
+    let reqDist = MIN_CAM_DIST;
+    for (const x of [minX, maxX]) {
+      for (const y of [-6, 18]) {
+        for (const z of [minZ, maxZ]) {
+          const rel: Vec3 = [x - cx, y - cy, z - cz];
+          const vx = dot3(rel, xAxis);
+          const vy = dot3(rel, yAxis);
+          const vz = dot3(rel, zAxis);
+          reqDist = Math.max(reqDist, vz + Math.abs(vx) / (tanX * usableW), vz + Math.abs(vy) / (tanY * usableH));
+        }
+      }
+    }
+    const dist = clamp(reqDist, MIN_CAM_DIST, MAX_CAM_DIST);
+
+    // Kadrda plata yuqori/pastki va o'ng panellar orasidagi bo'sh maydon markaziga joylashtiriladi.
+    const sxGoal = (leftPad + width - rightPad) / 2;
+    const syGoal = (topPad + height - bottomPad) / 2;
+    let tx = cx;
+    let tz = cz;
+    const eye0: Vec3 = [cx + dist * zAxis[0], dist * zAxis[1], cz + dist * zAxis[2]];
+    const vp0 = mat4Multiply(mat4Perspective(this.fov, aspect, 12, 4800), mat4LookAt(eye0, [cx, 0, cz], [0, 1, 0]));
+    const inv0 = mat4Invert(vp0);
+    if (inv0) {
+      const midHit = rayPlaneY(unprojectRay(width / 2, height / 2, width, height, inv0), 0);
+      const goalHit = rayPlaneY(unprojectRay(sxGoal, syGoal, width, height, inv0), 0);
+      if (midHit && goalHit) {
+        tx = cx + (midHit.x - goalHit.x);
+        tz = cz + (midHit.z - goalHit.z);
+      }
+    }
 
     if (animate) {
-      this.goalTX = cx;
-      this.goalTZ = cz + zBias;
+      this.goalTX = tx;
+      this.goalTZ = tz;
       this.goalDist = dist;
     } else {
       this.stopAnim();
-      this.targetX = cx;
-      this.targetZ = cz + zBias;
+      this.targetX = tx;
+      this.targetZ = tz;
       this.distance = dist;
     }
   }
 
-  setAngle(preset: 'studio' | 'top', animate = true) {
-    const yaw = preset === 'top' ? TOP_YAW : STUDIO_YAW;
-    const pitch = preset === 'top' ? TOP_PITCH : STUDIO_PITCH;
+  setAngle(preset: 'studio' | 'top', animate = true, narrow = false) {
+    const yaw = preset === 'top' ? TOP_YAW : narrow ? PORTRAIT_STUDIO_YAW : STUDIO_YAW;
+    const pitch = preset === 'top' ? TOP_PITCH : narrow ? PORTRAIT_STUDIO_PITCH : STUDIO_PITCH;
     if (animate) {
       this.goalYaw = yaw;
       this.goalPitch = pitch;
@@ -380,6 +427,13 @@ export class OrbitCamera {
       this.yaw = yaw;
       this.pitch = pitch;
     }
+  }
+
+  targetAngles(animate = true): { yaw: number; pitch: number } {
+    return {
+      yaw: animate && this.goalYaw !== null ? this.goalYaw : this.yaw,
+      pitch: animate && this.goalPitch !== null ? this.goalPitch : this.pitch,
+    };
   }
 
   step(dt: number): boolean {

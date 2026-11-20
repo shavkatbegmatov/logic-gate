@@ -124,11 +124,11 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   const camAngle = cam3d.value.angle;
   const camReset = cam3d.value.resetSeq;
   useEffect(() => {
-    camera.setAngle(camAngle, true);
+    camera.setAngle(camAngle, true, sizeRef.current.w <= 560);
   }, [camAngle]);
   useEffect(() => {
     if (camReset > 0) {
-      camera.setAngle(cam3d.value.angle, true);
+      camera.setAngle(cam3d.value.angle, true, sizeRef.current.w <= 560);
       editor.viewTouched = false;
       editor.fit();
     }
@@ -148,8 +148,37 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
 
     const fit3D = (animate: boolean) => {
       const { w, h } = sizeRef.current;
+      const narrow = w <= 560;
+      if (!editor.viewTouched) camera.setAngle(cam3d.peek().angle, animate, narrow);
       const b = bounds(editor.circuit.peek(), editor.layout.peek(), false);
-      camera.fitBounds(b.minX - 24, b.minY - 26, b.maxX + 24, b.maxY + 26, w, h, editor.insetTop, animate);
+      const bx0 = b.minX - 24;
+      const bz0 = b.minY - 26;
+      const bx1 = b.maxX + 24;
+      const bz1 = b.maxY + 26;
+      const hasClock = editor.spec.peek().gates.includes('DFF');
+      const bottomInset = w <= 820 ? (hasClock ? 96 : 46) : (hasClock ? 64 : 50);
+
+      let rightInset = w > 820 ? 52 : 0;
+      if (w <= 820) {
+        const probe = new OrbitCamera();
+        const ang = camera.targetAngles(animate);
+        probe.yaw = ang.yaw;
+        probe.pitch = ang.pitch;
+        probe.fitBounds(bx0, bz0, bx1, bz1, w, h, editor.insetTop, false, bottomInset, 0);
+        const { vp } = probe.matrices(w, h);
+        const hitsZoom = (
+          [
+            [bx1, 16, bz0],
+            [bx1, 0, bz1],
+            [bx1, 16, (bz0 + bz1) / 2],
+          ] as Vec3[]
+        ).some((pt) => {
+          const sp = projectPoint(pt, vp, w, h);
+          return !!sp && sp.x > w - 48 && sp.y > h - 164;
+        });
+        if (hitsZoom) rightInset = 46;
+      }
+      camera.fitBounds(bx0, bz0, bx1, bz1, w, h, editor.insetTop, animate, bottomInset, rightInset);
     };
 
     editor.worldFromScreen = (sx, sy) => {
@@ -171,9 +200,10 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       sizeRef.current = { w: width, h: height };
       editor.size = { w: width, h: height };
       editor.vertical.value = false;
+      const prevInset = editor.insetTop;
       editor.insetTop = width <= 820 ? topInset : 0;
       eng.resize(width, height);
-      if (!editor.viewTouched || big) fit3D(false);
+      if (!editor.viewTouched || big || prevInset !== editor.insetTop) fit3D(false);
     });
     ro.observe(wrap);
     if (wrap.clientWidth > 10 && wrap.clientHeight > 10) {
@@ -305,7 +335,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
 
     // 1. Portlar (ekran masofasi bo'yicha aniq tanlash)
     let bestPort: string | null = null;
-    let bestPortD = isTouch ? 24 : 14;
+    let bestPortD = isTouch ? 28 : 15;
     const ports: [string, number, number][] = [];
     const layNow = editor.layout.value;
     const cNow = editor.circuit.value;
@@ -329,7 +359,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     // 2. Elementlar (AABB)
     let bestGate: { id: string; t: number } | null = null;
     for (const g of cNow.gates) {
-      const tHit = rayAABB(ray, g.x + 8, 0, g.y + 2, g.x + GATE_W - 8, 15, g.y + GATE_H - 2);
+      const tHit = rayAABB(ray, g.x + 4, -2, g.y - 2, g.x + GATE_W - 4, 17, g.y + GATE_H + 2);
       if (tHit !== null && (!bestGate || tHit < bestGate.t)) bestGate = { id: g.id, t: tHit };
     }
 
@@ -338,7 +368,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     const ins = editor.spec.value.inputs;
     for (let k = 0; k < ins.length; k++) {
       const p = layNow.inputs.get(ins[k])!;
-      const tHit = rayAABB(ray, p.x - 78, 0, p.y - 22, p.x - 12, 24, p.y + 22);
+      const tHit = rayAABB(ray, p.x - 82, -2, p.y - 26, p.x - 10, 26, p.y + 26);
       if (tHit !== null && (!bestPin || tHit < bestPin.t)) bestPin = { k, t: tHit };
     }
 
@@ -348,7 +378,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     // 4. Simlar (3D siniq chiziq)
     let bestWire: { index: number; t: number } | null = null;
     for (const wh of sceneRef.current?.wireHits ?? []) {
-      const hit = rayPolylineDist(ray, wh.pts, isTouch ? 12 : 8);
+      const hit = rayPolylineDist(ray, wh.pts, isTouch ? 14 : 9);
       if (hit && (!bestWire || hit.t < bestWire.t)) bestWire = { index: wh.index, t: hit.t };
     }
     if (bestWire) return { kind: 'wire' as const, index: bestWire.index };

@@ -18,6 +18,20 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.4',
+    date: '2026-11-20',
+    uz: [
+      "Telegram Mini App va telefonda ko'rinish tugmalari (2D/3D/Sxema, uslub va 3D kamera) maydon o'rtasiga chiqib qolishi hamda palitra bilan to'qnashishi tuzatildi.",
+      "Tor vertikal ekranlarda 3D plata kamerasi va burchagi maydon bo'ylab kattaroq va markazroq joylashtirildi, sensorli ulash/bosish zonasi kengaytirildi.",
+      "Telegram ichida takroriy «Orqaga» tugmasi olib tashlandi va xavfsiz chegaralar (safe-area) hamda ixcham palitra moslashtirildi.",
+    ],
+    ru: [
+      'Исправлена панель переключения режимов (2D/3D/Схема, стиль и 3D-камера) в Telegram Mini App и на телефонах: она больше не наезжает на центр поля и кнопки масштаба.',
+      'На узких вертикальных экранах 3D-плата теперь крупнее и точнее центрируется в видимой области, а сенсорные зоны портов и тумблеров увеличены.',
+      'В Telegram убрана дублирующая кнопка «Назад», учтены системные отступы safe-area и сделана более компактная нижняя панель.',
+    ],
+  },
+  {
     version: '2.18.3',
     date: '2026-11-20',
     uz: [

@@ -35,9 +35,9 @@ export interface StylePalette3D {
 
 export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
   pcb: {
-    slabTop: [0.04, 0.16, 0.11],
+    slabTop: [0.055, 0.2, 0.135],
     slabSide: [0.22, 0.28, 0.18],
-    floor: [0.02, 0.05, 0.04],
+    floor: [0.042, 0.088, 0.068],
     gateBody: [0.09, 0.1, 0.12],
     gateAccent: [1.0, 0.75, 0.26],
     traceOff: [0.13, 0.33, 0.24],
@@ -51,9 +51,9 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
     bad: [1.0, 0.36, 0.32],
     metal: [0.78, 0.82, 0.85],
     brass: [0.85, 0.65, 0.28],
-    ambientSky: [0.24, 0.34, 0.3],
-    ambientGround: [0.06, 0.1, 0.08],
-    clearColor: [0.024, 0.055, 0.043],
+    ambientSky: [0.3, 0.42, 0.36],
+    ambientGround: [0.08, 0.13, 0.1],
+    clearColor: [0.036, 0.076, 0.058],
   },
   bench: {
     slabTop: [0.08, 0.11, 0.14],

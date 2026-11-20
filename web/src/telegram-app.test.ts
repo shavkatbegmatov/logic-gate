@@ -43,12 +43,18 @@ vi.mock('./router', () => ({ holdHash() {}, releaseHash() {} }));
 // Node'da window hodisalari yo'q ('online' tinglovchisi).
 vi.stubGlobal('addEventListener', () => {});
 
+const { nativeBack } = await import('./telegram');
 const { profile } = await import('./state');
 const { cloudRestore, startTelegram } = await import('./telegram-app');
 
 afterEach(() => vi.useRealTimers());
 
 describe('Telegram bulutidagi profil', () => {
+  it("nativeBack sukut bo'yicha false (SDK yuklanmaguncha oddiy orqaga tugmasi qoladi)", () => {
+    expect(nativeBack.value).toBe(false);
+    expect(typeof document).toBe('undefined');
+  });
+
   it("bulut javob bermasa — holat noma'lum, yangi profil kodi bulutdagi eski kod ustidan yozilmaydi", async () => {
     vi.useFakeTimers();
     tg.cloud.set('profile', JSON.stringify({ code: 'ESKI-KOD' }));
