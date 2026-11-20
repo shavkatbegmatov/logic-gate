@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.1',
+    date: '2026-11-20',
+    uz: [
+      "3D rejimda barcha simlar, tumbler dastaklari va element korpuslari ikkinchi kadrda yo'qolib ketishi tuzatildi.",
+      "3D rejimda yoniq (1) va o'chiq (0) simlar, mikrosxema ustki yuzasi (0/1 nishoni), tumblerlar va svetodiodlar farqi keskin oshirildi.",
+    ],
+    ru: [
+      'В 3D-режиме исправлено исчезновение проводов, тумблеров и корпусов микросхем со второго кадра.',
+      'В 3D-режиме резко усилен контраст между активным (1) и неактивным (0) состоянием проводов, чипов (значок 0/1), тумблеров и светодиодов.',
+    ],
+  },
+  {
     version: '2.18.0',
     date: '2026-11-20',
     uz: [

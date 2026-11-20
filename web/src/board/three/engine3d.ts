@@ -352,6 +352,11 @@ export class Engine3D {
     gl.bindTexture(gl.TEXTURE_2D, this.shadowFbo ? this.shadowFbo.tex : this.boardTex);
     gl.uniform1i(gl.getUniformLocation(this.mainProg, 'uShadowMap'), 1);
 
+    // TEXTURE0 da oldingi kadrdagi sceneFbo.tex qolib FBO feedback-loop xatosini bermasligi uchun
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.boardTex);
+    gl.uniform1i(gl.getUniformLocation(this.mainProg, 'uTex'), 0);
+
     const drawBucket = (bk: GPUBucket, tex: WebGLTexture | null, discardAlpha: boolean) => {
       if (!bk.indexCount) return;
       gl.uniform1f(gl.getUniformLocation(this.mainProg, 'uUseTex'), tex ? 1 : 0);
@@ -418,6 +423,11 @@ export class Engine3D {
     gl.bindTexture(gl.TEXTURE_2D, this.bloomA!.tex);
     gl.uniform1i(gl.getUniformLocation(this.compProg, 'uBloom'), 1);
     this.drawQuad(this.compProg);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 
   dispose() {

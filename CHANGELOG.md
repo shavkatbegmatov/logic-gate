@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.1 — 2026-11-20
+
+- 3D rejimda barcha simlar, tumbler dastaklari va element korpuslari ikkinchi kadrda yo'qolib ketishi tuzatildi.
+- 3D rejimda yoniq (1) va o'chiq (0) simlar, mikrosxema ustki yuzasi (0/1 nishoni), tumblerlar va svetodiodlar farqi keskin oshirildi.
+
 ## 2.18.0 — 2026-11-20
 
 - Yangi AAA studiya ko'rinishi: o'yin sukut bo'yicha jonli «2D Real — Sanoat PCB» uslubida ochiladi, endi «3D Real» rejimi ham bor!

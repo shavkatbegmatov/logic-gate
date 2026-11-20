@@ -242,6 +242,8 @@ export class MeshBuilder {
     col: [number, number, number],
     rough: number,
     metal: number,
+    tipCol: [number, number, number] = col,
+    tipEmissive = 0,
   ) {
     // Tumbler X o'qi bo'ylab chap/o'ngga og'adi (0 → chap -X, 1 → o'ng +X).
     const dx = Math.sin(angleX);
@@ -257,9 +259,9 @@ export class MeshBuilder {
       col,
       rough,
       metal,
-      0,
+      tipEmissive * 0.45,
     );
-    this.addSphere(tip[0], tip[1], tip[2], r * 1.45, 8, 5, col, rough, metal, 0);
+    this.addSphere(tip[0], tip[1], tip[2], r * 1.6, 8, 5, tipCol, rough, tipEmissive > 0 ? 0.1 : metal, tipEmissive);
   }
 
   addSphere(
@@ -505,6 +507,11 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
   // 2. Simlar / mis yo'llar / ko'prik rezistorlar
   const driven = new Set(input.circuit.wires.map((w) => w.to));
   const usedSources = new Set(input.circuit.wires.map((w) => w.from));
+  const mixMuted = (a: [number, number, number], b: [number, number, number]): [number, number, number] => [
+    a[0] * 0.85 + b[0] * 0.15,
+    a[1] * 0.85 + b[1] * 0.15,
+    a[2] * 0.85 + b[2] * 0.15,
+  ];
 
   input.circuit.wires.forEach((w, i) => {
     const route = input.routed.routes[i];
@@ -521,12 +528,12 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       : on
         ? pal.traceOn
         : input.style === 'breadboard' || input.style === 'bench'
-          ? jumperColor(w.from)
+          ? mixMuted(pal.traceOff, jumperColor(w.from))
           : pal.traceOff;
-    const em = sel ? 1.15 : on ? (input.style === 'scifi' ? 1.45 : 1.05) : 0;
+    const em = sel ? 1.15 : on ? 1.08 : 0;
 
     if (input.style === 'pcb') {
-      solid.addFlatTrace(pts, 2.0, 1.15, baseCol, on ? 0.25 : 0.35, 0.78, em);
+      solid.addFlatTrace(pts, on || sel ? 2.8 : 1.75, on || sel ? 1.7 : 0.9, baseCol, on ? 0.22 : 0.42, 0.78, em);
       // Kesishish ustiga 3D SMD 000 rezistor ko'prik
       input.routed.hops[i].forEach((list, segIdx) => {
         if (!list.length || segIdx >= route.length - 1) return;
@@ -545,7 +552,7 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
         }
       });
     } else {
-      solid.addTube(pts, input.style === 'scifi' ? 1.85 : 1.95, 8, baseCol, on ? 0.28 : 0.42, input.style === 'scifi' ? 0.35 : 0.08, em);
+      solid.addTube(pts, on || sel ? 2.65 : 1.65, 8, baseCol, on ? 0.25 : 0.48, input.style === 'scifi' ? 0.35 : 0.08, em);
       solid.addCylinderY(pts[0][0], 0, 2.2, pts[0][2], 2.5, 2.0, 8, pal.metal, 0.2, 0.9, 0);
       const endP = pts[pts.length - 1];
       solid.addCylinderY(endP[0], 0, 2.2, endP[2], 2.5, 2.0, 8, pal.metal, 0.2, 0.9, 0);
@@ -610,15 +617,18 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const gx1 = g.x + 60;
     const gz0 = g.y + 4;
     const gz1 = g.y + GATE_H - 4;
-    const rimCol = err ? pal.bad : sel ? pal.sel : on ? pal.gateAccent : pal.gateBody;
-    const rimEm = err ? 1.15 : sel ? 0.9 : on ? 0.35 : 0;
 
     solid.addBox(gx0, 2 + lift, gz0, gx1, 11.4 + lift, gz1, pal.gateBody, 0.45, 0.14, 0);
-    // Ustki qirra / holat chizig'i
-    solid.addBox(gx0 + 1.2, 11.4 + lift, gz0 + 1.2, gx1 - 1.2, 12.2 + lift, gz1 - 1.2, rimCol, 0.35, 0.3, rimEm);
+    if (err || sel || on) {
+      const rimCol = err ? pal.bad : sel ? pal.sel : pal.traceOn;
+      const rimEm = err ? 1.15 : sel ? 0.95 : 1.0;
+      solid.addBox(gx0 - 1.4, 2.2 + lift, gz0 - 1.4, gx1 + 1.4, 12.25 + lift, gz1 + 1.4, rimCol, 0.3, 0.25, rimEm);
+    } else {
+      solid.addBox(gx0 + 1.2, 11.4 + lift, gz0 + 1.2, gx1 - 1.2, 12.2 + lift, gz1 - 1.2, pal.gateBody, 0.35, 0.3, 0);
+    }
 
-    // Ustki yuzaga atlasdan chip belgisi
-    const uv = gateAtlasUV(g.type);
+    // Ustki yuzaga atlasdan chip belgisi (0/1 ikki holatli)
+    const uv = gateAtlasUV(g.type, on);
     chipTops.quad(
       [gx0 + 2.2, 12.3 + lift, gz0 + 2.2],
       [gx1 - 2.2, 12.3 + lift, gz0 + 2.2],
@@ -628,12 +638,12 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       [1, 1, 1],
       0.42,
       0.08,
-      on && input.style === 'scifi' ? 0.4 : 0,
+      on ? 0.78 : 0,
       uv,
     );
 
     // Chiqish mikro-svetodiodi
-    solid.addSphere(gx1 - 6, 12.3 + lift, g.y + out, 2.6, 8, 4, on ? pal.lampOn : pal.lampOff, 0.18, 0.1, on ? 1.5 : 0, true);
+    solid.addSphere(gx1 - 6, 12.35 + lift, g.y + out, 3.6, 8, 4, on ? pal.lampOn : pal.lampOff, 0.18, 0.1, on ? 1.15 : 0, true);
     if (on && lights.length < 8) {
       lights.push({ pos: [g.x + 36, 20 + lift, g.y + 24], color: pal.lampOn, intensity: 0.55 });
     }
@@ -674,21 +684,28 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const z1 = p.y + 20;
 
     solid.addBox(x0, 0, z0, x1, 7.5, z1, pal.pinBox, 0.45, 0.18, 0);
-    solid.addBox(p.x - 14, 1.2, p.y - 2, p.x, 3.4, p.y + 2, pal.metal, 0.2, 0.9, 0);
+    if (on) {
+      solid.addBox(x0 + 1, 7.5, z0 + 1, x1 - 1, 8.2, z1 - 1, pal.traceOn, 0.3, 0.2, 0.95);
+    }
+    solid.addBox(p.x - 14, 1.2, p.y - 2, p.x, 3.4, p.y + 2, on ? pal.traceOn : pal.metal, 0.2, 0.9, on ? 0.8 : 0);
     // Tumbler gaykasi va animatsiyali dastagi
     const swX = p.x - 32;
-    solid.addCylinderY(swX, 7.5, 10.2, p.y, 6.2, 5.4, 8, pal.metal, 0.22, 0.9, 0);
+    solid.addCylinderY(swX, 8.2, 10.6, p.y, 6.2, 5.4, 8, pal.metal, 0.22, 0.9, 0);
     const angle = input.leverAngles.get(name) ?? (on ? 0.48 : -0.48);
-    solid.addTiltedLever(swX, 9.2, p.y, angle, 15, 2.3, pal.metal, 0.16, 0.94);
+    solid.addTiltedLever(swX, 9.6, p.y, angle, 15, 2.4, pal.metal, 0.16, 0.94, on ? pal.lampOn : pal.metal, on ? 1.0 : 0);
 
     // Holat LED
-    solid.addSphere(p.x - 66, 7.6, p.y - 12, 2.5, 8, 4, on ? pal.lampOn : pal.lampOff, 0.2, 0.1, on ? 1.4 : 0, true);
+    solid.addSphere(p.x - 66, 8.25, p.y - 11, 3.8, 8, 4, on ? pal.lampOn : pal.lampOff, 0.2, 0.1, on ? 1.15 : 0, true);
 
+    const labelInk: [number, number, number] = input.style === 'breadboard' ? [0.12, 0.15, 0.2] : [0.92, 0.96, 0.98];
+    const labelEm = input.style === 'scifi' ? 0.5 : 0.15;
     const uv = input.labelUVs.get(name);
     if (uv) {
-      const labelInk: [number, number, number] = input.style === 'breadboard' ? [0.12, 0.15, 0.2] : [0.92, 0.96, 0.98];
-      const labelEm = input.style === 'scifi' ? 0.5 : 0.15;
-      labels.quad([p.x - 72, 7.65, p.y - 8], [p.x - 42, 7.65, p.y - 8], [p.x - 42, 7.65, p.y + 10], [p.x - 72, 7.65, p.y + 10], [0, 1, 0], labelInk, 0.45, 0, labelEm, uv);
+      labels.quad([p.x - 58, 8.35, p.y - 17], [p.x - 41, 8.35, p.y - 17], [p.x - 41, 8.35, p.y - 1], [p.x - 58, 8.35, p.y - 1], [0, 1, 0], on ? pal.traceOn : labelInk, 0.45, 0, on ? 0.85 : labelEm, uv);
+    }
+    const bitUv = input.labelUVs.get(on ? '1' : '0');
+    if (bitUv) {
+      labels.quad([p.x - 71, 8.35, p.y + 1], [p.x - 47, 8.35, p.y + 1], [p.x - 47, 8.35, p.y + 17], [p.x - 71, 8.35, p.y + 17], [0, 1, 0], on ? pal.traceOn : labelInk, 0.45, 0, on ? 0.85 : labelEm, bitUv);
     }
     addPort(`in:${name}`, p.x, p.y, true, usedSources.has(`in:${name}`), on);
   });
@@ -709,7 +726,7 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const z0 = p.y - 20;
     const z1 = p.y + 20;
 
-    solid.addBox(p.x, 1.2, p.y - 2, x0, 3.4, p.y + 2, pal.metal, 0.2, 0.9, 0);
+    solid.addBox(p.x, 1.2, p.y - 2, x0, 3.4, p.y + 2, on ? pal.traceOn : pal.metal, 0.2, 0.9, on ? 0.8 : 0);
     solid.addBox(x0, 0, z0, x1, 6.5, z1, pal.pinBox, 0.45, 0.18, 0);
     if (err || bad || good) {
       const rim = err || bad ? pal.bad : pal.good;
@@ -718,17 +735,26 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
 
     // Metall gardish va 3D yarim sharsimon svetodiod
     const lx = p.x + 56;
+    if (on) {
+      solid.addCylinderY(lx, 6.5, 7.8, p.y, 12.2, 12.0, 14, pal.lampOn, 0.25, 0.2, 1.0);
+    }
     solid.addCylinderY(lx, 6.5, 9.5, p.y, 10.5, 9.5, 14, pal.brass, 0.22, 0.88, 0);
-    solid.addSphere(lx, 9.2, p.y, 8.2, 12, 6, on ? pal.lampOn : pal.lampOff, 0.14, 0.05, on ? 1.85 : 0, true);
+    solid.addSphere(lx, 9.2, p.y, 9.2, 12, 6, on ? pal.lampOn : pal.lampOff, 0.14, 0.05, on ? 1.15 : 0, true);
     if (on && lights.length < 8) {
       lights.push({ pos: [lx, 24, p.y], color: pal.lampOn, intensity: 1.15 });
     }
 
+    const labelInk: [number, number, number] = input.style === 'breadboard' ? [0.12, 0.15, 0.2] : [0.92, 0.96, 0.98];
+    const labelEm = input.style === 'scifi' ? 0.5 : 0.15;
     const uv = input.labelUVs.get(name);
     if (uv) {
-      const labelInk: [number, number, number] = input.style === 'breadboard' ? [0.12, 0.15, 0.2] : [0.92, 0.96, 0.98];
-      const labelEm = input.style === 'scifi' ? 0.5 : 0.15;
-      labels.quad([x0 + 2, 7.55, p.y - 10], [x0 + 30, 7.55, p.y - 10], [x0 + 30, 7.55, p.y + 10], [x0 + 2, 7.55, p.y + 10], [0, 1, 0], labelInk, 0.45, 0, labelEm, uv);
+      labels.quad([x0 + 2, 7.55, p.y - 16], [x0 + 30, 7.55, p.y - 16], [x0 + 30, 7.55, p.y - 1], [x0 + 2, 7.55, p.y - 1], [0, 1, 0], on ? pal.lampOn : labelInk, 0.45, 0, on ? 0.9 : labelEm, uv);
+    }
+    if (v !== null) {
+      const bitUv = input.labelUVs.get(on ? '1' : '0');
+      if (bitUv) {
+        labels.quad([x0 + 4, 7.55, p.y + 1], [x0 + 28, 7.55, p.y + 1], [x0 + 28, 7.55, p.y + 17], [x0 + 4, 7.55, p.y + 17], [0, 1, 0], on ? pal.lampOn : labelInk, 0.45, 0, on ? 0.9 : labelEm, bitUv);
+      }
     }
     if (exp !== undefined) {
       const euv = input.labelUVs.get(`exp:${exp}`);

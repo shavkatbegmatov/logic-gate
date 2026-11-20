@@ -16,7 +16,7 @@ import {
   type Vec3,
 } from './math3d';
 import { buildScene3D, VERTEX_FLOATS } from './meshes3d';
-import type { UVRect } from './textures3d';
+import { gateAtlasUV, type UVRect } from './textures3d';
 
 describe('3D matematika va orbita kamerasi', () => {
   it('matritsa ko\'paytirish va teskari matritsa birlik matritsani beradi', () => {
@@ -106,12 +106,69 @@ describe('3D sahna geometriyasi', () => {
   const routed = routeAll(circuit.wires, gmap, lay);
   const labelUVs = new Map<string, UVRect>([
     ['000', { u0: 0, v0: 0, u1: 0.2, v1: 0.1 }],
+    ['0', { u0: 0.1, v0: 0.1, u1: 0.2, v1: 0.2 }],
+    ['1', { u0: 0.2, v0: 0.1, u1: 0.3, v1: 0.2 }],
     ['A', { u0: 0.2, v0: 0, u1: 0.4, v1: 0.1 }],
     ['B', { u0: 0.4, v0: 0, u1: 0.6, v1: 0.1 }],
     ['Q', { u0: 0.6, v0: 0, u1: 0.8, v1: 0.1 }],
     ['q1', { u0: 0.8, v0: 0, u1: 1, v1: 0.1 }],
     ['exp:1', { u0: 0, v0: 0.1, u1: 0.2, v1: 0.2 }],
   ]);
+
+  it('gateAtlasUV 0 va 1 holatlari uchun alohida UV sohalarini qaytaradi', () => {
+    const off = gateAtlasUV('NOT', false);
+    const on = gateAtlasUV('NOT', true);
+    expect(on.u0).toBe(off.u0);
+    expect(on.v0).toBeGreaterThan(off.v1);
+  });
+
+  it('buildScene3D yoniq va o\'chiq holatda har xil geometriya va nur yaratadi', () => {
+    const base = {
+      style: 'breadboard' as const,
+      spec,
+      circuit,
+      layout: lay,
+      routed,
+      expected: [1],
+      drivers: new Map([['out:Q', 'g2']]),
+      reached: () => true,
+      selection: null,
+      activePort: null,
+      highlight: null,
+      draggingGateId: null,
+      ghost: null,
+      stateNames: new Map([['g2', 'q1']]),
+      labelUVs,
+    };
+    const offScene = buildScene3D({
+      ...base,
+      values: new Map(),
+      outputs: [0],
+      bits: [0, 0],
+      leverAngles: new Map([
+        ['A', -0.48],
+        ['B', -0.48],
+      ]),
+    });
+    const onScene = buildScene3D({
+      ...base,
+      values: new Map([
+        ['in:A', 1],
+        ['in:B', 1],
+        ['g1', 1],
+        ['g2', 1],
+      ]),
+      outputs: [1],
+      bits: [1, 1],
+      leverAngles: new Map([
+        ['A', 0.48],
+        ['B', 0.48],
+      ]),
+    });
+    expect(offScene.lights.length).toBe(0);
+    expect(onScene.lights.length).toBeGreaterThan(0);
+    expect(onScene.solid.vertCount).toBeGreaterThan(offScene.solid.vertCount);
+  });
 
   it.each(['pcb', 'bench', 'breadboard', 'scifi'] as const)('%s uslubida barcha mesh chelaklari yaroqli va NaN yo\'q', (style) => {
     const scene = buildScene3D({

@@ -165,8 +165,11 @@ void main() {
     pulseBoost = wave * 0.85;
   }
 
-  vec3 emCol = base * emissive + uPulseCol * pulseBoost;
-  vec3 col = ambient + direct + rimLight + pts + emCol;
+  vec3 lit = aces(ambient + direct + rimLight + pts);
+  vec3 col = mix(lit, base, clamp(emissive * 0.82, 0.0, 0.94));
+  if (pulseBoost > 0.001) {
+    col = mix(col, uPulseCol, clamp(pulseBoost * 0.85, 0.0, 0.9));
+  }
 
   // Uzoq masofa tumani (stol chetlari fon bilan yumshoq qo'shiladi)
   float camDist = length(uCamPos - vWorld);
@@ -174,12 +177,12 @@ void main() {
   col = mix(col, uClearCol, fog);
 
   if (uDirect > 0.5) {
-    gl_FragColor = vec4(aces(col), outAlpha);
+    gl_FragColor = vec4(clamp(col, 0.0, 1.0), outAlpha);
   } else if (uTexAlphaDiscard > 0.5) {
     gl_FragColor = vec4(clamp(col, 0.0, 1.0), outAlpha);
   } else {
     float specPeak = max(max(spec.r, spec.g), spec.b);
-    float bloom = clamp(emissive * 0.45 + pulseBoost * 0.65 + max(0.0, specPeak - 0.5) * 0.4, 0.0, 1.0);
+    float bloom = clamp(emissive * 0.35 + pulseBoost * 0.55 + max(0.0, specPeak - 0.6) * 0.3, 0.0, 1.0);
     gl_FragColor = vec4(clamp(col, 0.0, 1.0), bloom);
   }
 }
@@ -225,16 +228,12 @@ uniform sampler2D uScene;
 uniform sampler2D uBloom;
 varying vec2 vUV;
 
-vec3 aces(vec3 x) {
-  return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
-}
-
 void main() {
   vec3 scene = texture2D(uScene, vUV).rgb;
   vec3 bloom = texture2D(uBloom, vUV).rgb;
-  vec3 col = aces(scene + bloom * 0.95);
+  vec3 col = clamp(scene + bloom * 0.52, 0.0, 1.0);
   vec2 d = vUV - 0.5;
-  col *= 1.0 - dot(d, d) * 0.18;
+  col *= 1.0 - dot(d, d) * 0.12;
   gl_FragColor = vec4(col, 1.0);
 }
 `;
