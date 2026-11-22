@@ -103,3 +103,54 @@ describe('mavzular va ko\'rinish rejimlari', () => {
     expect(found.sort()).toEqual(['#fff', 'rgba(255, 255, 255, 0.25)']);
   });
 });
+
+/** WCAG 2.x: nisbiy yorqinlik va kontrast nisbati (#rgb / #rrggbb). */
+const luminance = (hex: string) => {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? [...h].map((c) => c + c).join('') : h.slice(0, 6);
+  const [r, g, b] = [0, 2, 4].map((k) => parseInt(full.slice(k, k + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a: string, b: string) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+describe("o'qilishi (kontrast)", () => {
+  it('nisbat hisobi WCAG namunalariga mos', () => {
+    expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 5);
+    expect(contrast('#777777', '#ffffff')).toBeCloseTo(4.48, 2);
+    expect(contrast('#fff', '#ffffff')).toBeCloseTo(1, 5);
+  });
+
+  // Matn kichik (13–15 px) — WCAG AA: 4,5:1. --dim — o'chirilgan tugma, placeholder, ikkinchi darajali izoh: 3:1.
+  // Mavzu ranglari o'zgartirilganda o'qib bo'lmaydigan matn shu yerda ushlanadi (2.18.0 da 4 ta yangi uslub).
+  const PAIRS: [fg: string, bg: string, min: number][] = [
+    ['--text', '--bg', 4.5],
+    ['--text', '--bg2', 4.5],
+    ['--text', '--panel', 4.5],
+    ['--text', '--raise', 4.5],
+    ['--muted', '--bg', 4.5],
+    ['--muted', '--bg2', 4.5],
+    ['--muted', '--panel', 4.5],
+    ['--dim', '--bg2', 3],
+    ['--dim', '--panel', 3],
+    ['--accent-ink', '--accent', 4.5],
+    ['--gold-ink', '--bg2', 4.5],
+    ['--bad', '--bg2', 4.5],
+    ['--good', '--bg2', 4.5],
+  ];
+
+  it.each(NAMES)('%s: matn va fon kontrasti yetarli', (name) => {
+    const own = vars(block(selectorOf(name)));
+    const low = PAIRS.flatMap(([fg, bg, min]) => {
+      const a = own.get(fg);
+      const b = own.get(bg);
+      expect(a, `${name} ${fg}`).toMatch(/^#[0-9a-f]{3,8}$/i);
+      expect(b, `${name} ${bg}`).toMatch(/^#[0-9a-f]{3,8}$/i);
+      const r = contrast(a!, b!);
+      return r >= min ? [] : [`${fg} (${a}) / ${bg} (${b}): ${r.toFixed(2)} < ${min}`];
+    });
+    expect(low).toEqual([]);
+  });
+});
