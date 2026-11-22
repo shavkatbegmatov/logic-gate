@@ -136,6 +136,17 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     }
   }, [camReset]);
 
+  // 3D'dagi aylantirish/surish faqat 3D kamerani suradi, lekin editor.viewTouched ni qo'yadi — 2D maydon
+  // (useBoard2D) buni «o'yinchi ko'rinishni o'zi joylagan» deb, fit() qilmasdi: ekran to'g'ridan-to'g'ri 3D'da
+  // ochilgan bo'lsa (3D moduli allaqachon yuklangan), 2D'da sxema 1:1 masshtabda chap yuqorida, kirishlar
+  // ekrandan tashqarida chiqardi. Faqat haqiqiy yopilishda (kontekst tiklanishida emas) tozalanadi.
+  useEffect(
+    () => () => {
+      editor.viewTouched = false;
+    },
+    [editor],
+  );
+
   // WebGL dvigateli, ResizeObserver, Editor 3D hooklari va 60 FPS kadr tsikli
   useEffect(() => {
     const wrap = wrapRef.current!;

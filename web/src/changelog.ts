@@ -18,6 +18,20 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.10',
+    date: '2026-11-23',
+    uz: [
+      "Tik telefonda «2D Real» platasidagi yozuvlar endi oynadagi aksdek teskari emas, to'g'ri o'qiladi.",
+      "3D'dan 2D'ga o'tganda sxema endi ekranga to'liq joylashadi — oldin ba'zan burchakka surilib, kirishlar ko'rinmay qolardi.",
+      "Uslub menyusini Esc bilan yopganda maydonda tanlangan element tanlovdan chiqib ketmaydi.",
+    ],
+    ru: [
+      'На телефоне в вертикальном положении надписи на плате «2D Real» больше не отображаются зеркально.',
+      'При переключении из 3D в 2D схема теперь целиком помещается на экране — раньше она иногда уезжала в угол, и входы не были видны.',
+      'Закрытие меню стилей клавишей Esc больше не снимает выделение с элемента на поле.',
+    ],
+  },
+  {
     version: '2.18.9',
     date: '2026-11-23',
     uz: ["Kichik va yotiq ekranlarda oyna ichida aylantirish kerak bo'lsa ham «Keyingi daraja», «Tushunarli» kabi tugmalar endi doim pastda ko'rinib turadi."],

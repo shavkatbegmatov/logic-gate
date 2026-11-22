@@ -123,6 +123,22 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
     <g transform={b.vertical ? `translate(${vx},${vy}) ${TRANSPOSE}` : `translate(${x},${y})`}>{children}</g>
   );
 
+  /**
+   * Plata yozuvi (ipak bosma). Tik ekranda butun sahna TRANSPOSE bilan akslanadi — oddiy <text> oynadagi aksdek
+   * teskari chiqardi. scale(1,-1) akslantirishni burilishga aylantiradi: yozuv chekka bo'ylab yuqoridan pastga
+   * o'qiladi. -6 — 8 px shriftning bosh harf balandligi: harflar avvalgidek chekka tomonda qoladi.
+   */
+  const silk = (x: number, y: number, text: string) =>
+    b.vertical ? (
+      <text class="real-silk" transform={`translate(${x},${y - 6}) scale(1,-1)`}>
+        {text}
+      </text>
+    ) : (
+      <text class="real-silk" x={x} y={y}>
+        {text}
+      </text>
+    );
+
   const label = (cls: string, x: number, y: number, text: ComponentChildren, vx = x, vy = y) =>
     b.vertical ? (
       <text class={cls} transform={`translate(${vx},${vy}) ${TRANSPOSE}`}>
@@ -187,7 +203,8 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
               <rect class="real-smd-pad" x={-9} y={-4} width={4} height={8} rx={0.8} />
               <rect class="real-smd-pad" x={5} y={-4} width={4} height={8} rx={0.8} />
               <rect class="real-smd-body" x={-5.5} y={-4.5} width={11} height={9} rx={1} />
-              <text class="real-smd-mark" x={0} y={0}>
+              {/* Tik ekranda sahna akslangan — markazlashgan belgi o'z joyida to'g'rilanadi (silk() ga qarang). */}
+              <text class="real-smd-mark" x={0} y={0} transform={b.vertical ? 'scale(1,-1)' : undefined}>
                 000
               </text>
             </g>,
@@ -272,12 +289,8 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 <line class="real-rail-pos" x1={sx + 16} y1={sy + 10} x2={sx + sw - 16} y2={sy + 10} />
                 <line class="real-rail-gnd" x1={sx + 16} y1={sy + sh - 10} x2={sx + sw - 16} y2={sy + sh - 10} />
                 <rect class="real-rail-groove" x={sx + 10} y={(sy + sy + sh) / 2 - 4} width={sw - 20} height={8} rx={3} />
-                <text class="real-silk" x={sx + 20} y={sy + 20}>
-                  +5V DC
-                </text>
-                <text class="real-silk" x={sx + 20} y={sy + sh - 16}>
-                  GND 0V
-                </text>
+                {silk(sx + 20, sy + 20, '+5V DC')}
+                {silk(sx + 20, sy + sh - 16, 'GND 0V')}
               </>
             ) : (
               <>
@@ -285,9 +298,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 <Screw x={sx + sw - 12} y={sy + 12} />
                 <Screw x={sx + 12} y={sy + sh - 12} />
                 <Screw x={sx + sw - 12} y={sy + sh - 12} />
-                <text class="real-silk" x={sx + 24} y={sy + 14}>
-                  {style === 'pcb' ? 'LOGIC-GATE // FR4 REV-3' : style === 'scifi' ? 'NEXUS-DECK // MK-IV' : 'BENCH // CH-01'}
-                </text>
+                {silk(sx + 24, sy + 14, style === 'pcb' ? 'LOGIC-GATE // FR4 REV-3' : style === 'scifi' ? 'NEXUS-DECK // MK-IV' : 'BENCH // CH-01')}
               </>
             )}
           </g>

@@ -5,6 +5,12 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.10 — 2026-11-23
+
+- Tik telefonda «2D Real» platasidagi yozuvlar endi oynadagi aksdek teskari emas, to'g'ri o'qiladi.
+- 3D'dan 2D'ga o'tganda sxema endi ekranga to'liq joylashadi — oldin ba'zan burchakka surilib, kirishlar ko'rinmay qolardi.
+- Uslub menyusini Esc bilan yopganda maydonda tanlangan element tanlovdan chiqib ketmaydi.
+
 ## 2.18.9 — 2026-11-23
 
 - Kichik va yotiq ekranlarda oyna ichida aylantirish kerak bo'lsa ham «Keyingi daraja», «Tushunarli» kabi tugmalar endi doim pastda ko'rinib turadi.

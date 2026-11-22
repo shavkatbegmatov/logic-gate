@@ -23,6 +23,7 @@ const MODE_LABEL: Record<BoardMode, () => string> = {
 export function ViewTools() {
   const open = useSignal(false);
   const popRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const mode = activeBoardMode.value;
   const theme = activeTheme.value;
   const selectedTheme = settings.value.theme ?? 'pcb';
@@ -33,16 +34,27 @@ export function ViewTools() {
     const onDown = (e: PointerEvent) => {
       if (popRef.current && !popRef.current.contains(e.target as Node)) open.value = false;
     };
+    // Ushlash bosqichida va to'xtatib: Esc faqat menyuni yopsin — maydondagi tanlov va ulanish kutayotgan
+    // nuqta (useEditorKeys, window'da) saqlansin.
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') open.value = false;
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      close();
     };
     addEventListener('pointerdown', onDown);
-    addEventListener('keydown', onKey);
+    addEventListener('keydown', onKey, true);
     return () => {
       removeEventListener('pointerdown', onDown);
-      removeEventListener('keydown', onKey);
+      removeEventListener('keydown', onKey, true);
     };
   }, [open.value]);
+
+  /** Menyu yopiladi; fokus uning ichida bo'lsa — ochgan tugmaga qaytadi (aks holda <body> ga tushardi). */
+  const close = () => {
+    const inside = !!popRef.current?.querySelector('[role="menu"]')?.contains(document.activeElement);
+    open.value = false;
+    if (inside) toggleRef.current?.focus();
+  };
 
   const setMode = (next: BoardMode) => {
     if (next === mode) return;
@@ -58,7 +70,7 @@ export function ViewTools() {
           ? 'real2d'
           : undefined;
     settings.value = nextMode ? { ...settings.value, theme: next, boardMode: nextMode } : { ...settings.value, theme: next };
-    open.value = false;
+    close();
     sfx.mode();
   };
 
@@ -84,6 +96,7 @@ export function ViewTools() {
       <div class="style-btn-wrap" ref={popRef}>
         <div class="view-seg">
           <button
+            ref={toggleRef}
             type="button"
             class={open.value ? 'on' : ''}
             aria-expanded={open.value}
