@@ -3220,6 +3220,23 @@ input[type='date']:focus {
   margin-top: 16px;
 }
 
+/* Oyna sig'masa (yotiq telefon, 320×640 — natija oynasi uzun), u ichida aylanadi: asosiy tugmalar qatori pastki
+   chetga yopishib turadi — «Keyingi daraja» doim ko'rinadi, autoFocus esa oynani pastga aylantirib, yulduzlarni
+   yashirmaydi. Sig'adigan oynada hech narsa o'zgarmaydi. */
+.modal > .modal-actions {
+  position: sticky;
+  bottom: -24px;
+  z-index: 1;
+  /* Ustidagi bo'shliq avvalgidek: 6 + 10 = 16 px (tasdiqlash oynasida — 20 px); pastda oyna chetigacha fon. */
+  margin: 6px 0 -24px;
+  padding: 10px 0 24px;
+  background: var(--bg2);
+}
+
+.modal > .confirm-actions {
+  margin-top: 10px;
+}
+
 /* Tasdiqlash oynasi (components/Dialogs.tsx): brauzerning confirm() oynasi o'rniga. */
 .modal.confirm {
   width: min(380px, 100%);

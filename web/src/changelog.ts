@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.9',
+    date: '2026-11-23',
+    uz: ["Kichik va yotiq ekranlarda oyna ichida aylantirish kerak bo'lsa ham «Keyingi daraja», «Tushunarli» kabi tugmalar endi doim pastda ko'rinib turadi."],
+    ru: ['На маленьких и горизонтальных экранах кнопки вроде «Следующий уровень» и «Понятно» теперь всегда видны внизу окна, даже если его нужно прокручивать.'],
+  },
+  {
     version: '2.18.8',
     date: '2026-11-23',
     uz: ["Telefonni yotqizib o'ynaganda maydon ancha kattaroq: sarlavha, elementlar paneli va tugmalar ixchamroq bo'lib, bitta qatorga joylashadi."],
