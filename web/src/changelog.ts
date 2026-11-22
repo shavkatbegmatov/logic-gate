@@ -16,7 +16,31 @@ export interface Release {
   ru: string[];
 }
 
+const parts = (v: string) => v.split('.').map(Number);
+/** a versiyasi b dan yangiroqmi (1.10.0 > 1.9.3). */
+const newer = (a: string, b: string) => {
+  const [x, y] = [parts(a), parts(b)];
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
+  return false;
+};
+
+/**
+ * Bosh sahifadagi xabar uchun eng muhim yangilik: o'yinchi ko'rmagan relizlar orasida yangi imkoniyatli
+ * (x.Y.0 yoki X.0.0) bo'lsa — eng yangisi shu, aks holda eng so'nggi reliz. Bir kunda bir nechta reliz
+ * chiqsa, kichik tuzatish (masalan, yangi yutuq) undan oldingi katta yangilikni (yangi bo'lim) yashirmasin.
+ */
+export function headline(seen: string | null, list: Release[] = CHANGELOG): Release {
+  const unseen = seen ? list.filter((r) => newer(r.version, seen)) : [];
+  return unseen.find((r) => parts(r.version)[2] === 0) ?? list[0];
+}
+
 export const CHANGELOG: Release[] = [
+  {
+    version: '2.19.2',
+    date: '2026-11-23',
+    uz: ["Bir necha yangilanishdan keyin qaytganingizda bosh sahifadagi xabar endi eng muhim yangilikni (masalan, yangi bo'limni) ko'rsatadi, faqat oxirgi kichik tuzatishni emas."],
+    ru: ['Если вы вернулись после нескольких обновлений, сообщение на главной теперь показывает самую важную новость (например, новую главу), а не только последнее мелкое исправление.'],
+  },
   {
     version: '2.19.1',
     date: '2026-11-23',

@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.19.2 — 2026-11-23
+
+- Bir necha yangilanishdan keyin qaytganingizda bosh sahifadagi xabar endi eng muhim yangilikni (masalan, yangi bo'limni) ko'rsatadi, faqat oxirgi kichik tuzatishni emas.
+
 ## 2.19.1 — 2026-11-23
 
 - Yangi yutuq «NOR ustasi»: «Faqat NOR» bo'limidagi barcha darajalarni 3 ★ bilan yeching.

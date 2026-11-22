@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import md from '../../CHANGELOG.md?raw';
 import pkg from '../package.json';
-import { CHANGELOG } from './changelog';
+import { CHANGELOG, headline, type Release } from './changelog';
 import { APP_VERSION, hasNews, markNewsSeen, newsFor, seenVersion } from './version';
 
 const semver = (v: string) => v.split('.').map(Number);
@@ -46,5 +46,28 @@ describe('versiya va yangiliklar', () => {
     expect(newsFor(true)).toBe(true);
     markNewsSeen();
     expect(newsFor(true)).toBe(false);
+  });
+});
+
+describe("bosh sahifadagi xabar: ko'rilmaganlar orasidagi eng muhim yangilik", () => {
+  const r = (version: string): Release => ({ version, date: '2026-11-23', uz: [version], ru: [version] });
+  const list = [r('2.19.1'), r('2.19.0'), r('2.18.13'), r('2.18.0'), r('2.17.5')];
+
+  it("kichik tuzatish undan oldingi yangi imkoniyatni yashirmaydi", () => {
+    expect(headline('2.18.13', list).version).toBe('2.19.0');
+    expect(headline('2.17.5', list).version).toBe('2.19.0'); // ikkita yangi imkoniyat — eng yangisi
+  });
+
+  it("ko'rilmaganlar faqat tuzatish bo'lsa — eng so'nggisi", () => {
+    expect(headline('2.19.0', list).version).toBe('2.19.1');
+  });
+
+  it("noma'lum yoki kelajakdagi versiya — eng so'nggisi", () => {
+    expect(headline(null, list).version).toBe('2.19.1');
+    expect(headline('9.9.9', list).version).toBe('2.19.1');
+  });
+
+  it("versiyalar son sifatida solishtiriladi (2.10.0 > 2.9.3)", () => {
+    expect(headline('2.9.3', [r('2.10.1'), r('2.10.0'), r('2.9.3')]).version).toBe('2.10.0');
   });
 });

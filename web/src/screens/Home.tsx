@@ -20,7 +20,7 @@ import { TG_APP_URL } from '../share';
 import { inTelegram } from '../telegram';
 import type { Release } from '../changelog';
 import { lang } from '../i18n';
-import { APP_VERSION, markNewsSeen, newsFor } from '../version';
+import { APP_VERSION, markNewsSeen, newsFor, seenVersion } from '../version';
 
 export function Home() {
   const started = solvedCount.value > 0;
@@ -179,7 +179,8 @@ function InstallBanner() {
 function NewsBanner() {
   const latest = useSignal<Release | null>(null);
   useEffect(() => {
-    import('../changelog').then((m) => (latest.value = m.CHANGELOG[0])).catch(() => {});
+    // Ko'rilmagan relizlar orasidagi eng muhimi (yangi bo'lim kabi) — faqat oxirgi tuzatish emas.
+    import('../changelog').then((m) => (latest.value = m.headline(seenVersion.peek()))).catch(() => {});
   }, []);
   const first = latest.value && (lang.value === 'ru' ? latest.value.ru : latest.value.uz)[0];
   return (
