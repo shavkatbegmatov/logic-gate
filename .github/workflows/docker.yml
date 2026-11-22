@@ -1,6 +1,11 @@
 # main ga push qilinganda: testlar → Docker image → ghcr.io → (ixtiyoriy) Coolify'da qayta joylash.
 # Pull request'da faqat testlar va build (image yig'ilmaydi, hech narsa joylanmaydi).
 #
+# Actions daqiqalari (yopiq repo — oylik limit): bitta push ~8 daqiqa edi, shundan tutun testi 4 daqiqa.
+# Shuning uchun: faqat hujjat yoki BotFather rasmi o'zgargan commit CI'ni ishga tushirmaydi; push'da tutun
+# testi 4 uslubda (har biri o'z tekshiruvi bilan), to'liq 8 uslub — haftada bir (dushanba) va qo'lda
+# (Actions → Docker image → Run workflow). Haftalik ishga tushirish deploy qilmaydi.
+#
 # Coolify avtomatik yangilanishi uchun repozitoriy Secrets'iga qo'shing:
 #   COOLIFY_WEBHOOK — Coolify ilovasi → Webhooks → Deploy Webhook URL
 #   COOLIFY_TOKEN   — Coolify → Keys & Tokens → API token (deploy huquqi bilan)
@@ -9,7 +14,11 @@ name: Docker image
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'deploy/telegram/**']
   pull_request:
+    paths-ignore: ['**.md', 'deploy/telegram/**']
+  schedule:
+    - cron: '0 2 * * 1' # dushanba 07:00 (Toshkent) — to'liq tutun testi
   workflow_dispatch:
 
 permissions:
@@ -38,10 +47,12 @@ jobs:
         working-directory: web
       - run: pnpm test && pnpm run build
         working-directory: web
-      # Tutun testi: shu build'ni runner'dagi Chrome'da ochib, har mavzuda asosiy ekranlarni ikkala tilda
-      # tekshiradi, AAA uslublarida 3D ekranni ham (web/scripts/ui-smoke.mjs; bog'liqliksiz, ~4 daqiqa). Ruscha matnlar uzunroq — tor ekranda
-      # sig'masligi ko'proq o'sha tilda chiqadi. Yiqilsa — skrinshotlar artefaktda.
-      - run: node scripts/ui-smoke.mjs --lang=uz,ru
+      # Tutun testi: shu build'ni runner'dagi Chrome'da ochib, asosiy ekranlarni ikkala tilda tekshiradi
+      # (web/scripts/ui-smoke.mjs; bog'liqliksiz). Ruscha matnlar uzunroq — tor ekranda sig'masligi ko'proq
+      # o'sha tilda chiqadi. Push'da 4 uslub (~2 daqiqa): Sanoat PCB — 2D/3D Real, tor va yotiq ekran;
+      # Daftar — yorug'; Haqiqiy plata — mikrosxema belgisi; Chizma — chiroqdagi xoch. Haftalik, qo'lda va
+      # PR'da — barcha 8 uslub (~4 daqiqa). Yiqilsa — skrinshotlar artefaktda.
+      - run: node scripts/ui-smoke.mjs --lang=uz,ru ${{ github.event_name == 'push' && '--theme=pcb,daftar,haqiqiy,chizma' || '' }}
         working-directory: web
         timeout-minutes: 10
       - uses: actions/upload-artifact@v7
@@ -54,7 +65,8 @@ jobs:
 
   image:
     needs: test
-    if: github.event_name != 'pull_request'
+    # Haftalik (schedule) — faqat tekshiruv: o'zgarish yo'q, qayta joylash shart emas.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
