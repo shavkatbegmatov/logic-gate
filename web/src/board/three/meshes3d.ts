@@ -35,6 +35,20 @@ export interface Scene3DData {
   lights: PointLight3D[];
   wireHits: WireHit3D[];
   bounds3D: { minX: number; minZ: number; maxX: number; maxZ: number };
+  /**
+   * Sahnada yoniq sim bor: animatsiya yoqilgan bo'lsa, signal to'lqini (shaders3d: emissive > 0.5 va
+   * pulseCoord > 0.01) vaqt bilan yuguradi — kadr har safar chizilishi kerak. Yo'q bo'lsa, sahna yoki
+   * kamera o'zgarmaguncha har kadr oldingisining aynan nusxasi.
+   */
+  pulsing: boolean;
+}
+
+/** Shaderdagi signal to'lqini shartiga mos uch bormi (emissive — 14, pulseCoord — 15-o'rin). */
+export function hasPulse(b: MeshBucket): boolean {
+  for (let o = 0; o < b.vertCount * VERTEX_FLOATS; o += VERTEX_FLOATS) {
+    if (b.verts[o + 14] > 0.5 && b.verts[o + 15] > 0.01) return true;
+  }
+  return false;
 }
 
 export interface SceneBuildInput {
@@ -805,13 +819,12 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     addPort(`out:${name}`, p.x, p.y, false, driven.has(`out:${name}`), on);
   });
 
+  const buckets = { solid: solid.finish(), boardTop: boardTop.finish(), chipTops: chipTops.finish(), labels: labels.finish() };
   return {
-    solid: solid.finish(),
-    boardTop: boardTop.finish(),
-    chipTops: chipTops.finish(),
-    labels: labels.finish(),
+    ...buckets,
     lights,
     wireHits,
     bounds3D: { minX: bx0, minZ: bz0, maxX: bx1, maxZ: bz1 },
+    pulsing: Object.values(buckets).some(hasPulse),
   };
 }

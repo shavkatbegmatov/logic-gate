@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.6 — 2026-11-22
+
+- 3D rejim telefonni kamroq qizdiradi va batareyani tejaydi: sxema o'zgarmay turganda maydon qayta-qayta chizilmaydi.
+
 ## 2.18.5 — 2026-11-22
 
 - 3D rejimda boshqa ilovaga o'tib qaytganingizda (ayniqsa telefonda va Telegram ichida) maydon bo'sh qolmaydi — sxema o'zi qayta chiziladi.

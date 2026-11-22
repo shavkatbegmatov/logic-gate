@@ -147,6 +147,8 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     // ishlaydi (glGen). data-gl — holat (tutun testi shuni kuzatadi).
     let lost = false;
     let raf = 0;
+    // Chizish faqat kerak bo'lganda (pastda, frame): o'lcham o'zgarsa kanvas tozalanadi — qayta chizish shart.
+    let redraw = true;
     const onLost = (e: Event) => {
       e.preventDefault();
       lost = true;
@@ -235,6 +237,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       const prevInset = editor.insetTop;
       editor.insetTop = width <= 820 ? topInset : 0;
       eng.resize(width, height);
+      redraw = true;
       if (!editor.viewTouched || big || prevInset !== editor.insetTop) fit3D(false);
     });
     ro.observe(wrap);
@@ -249,6 +252,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
 
     let lastT = performance.now();
     const startT = lastT;
+    /** Oxirgi chizilgan kadrdagi kamera matritsasi: sudrash, aylantirish, zoom — hammasi shu orqali seziladi. */
+    let lastVP: number[] | null = null;
+    const sameView = (vp: ArrayLike<number>) => !!lastVP && lastVP.every((x, i) => x === vp[i]);
 
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
@@ -275,7 +281,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       const motionSetting = settings.peek().motion ?? 'auto';
       const motionOn = motionSetting === 'on' || (motionSetting === 'auto' && !systemReducedMotion.peek() && !instantCheck());
 
+      let rebuilt = false;
       if (cur.dirty || leversMoving || !sceneRef.current) {
+        rebuilt = true;
         const labelStrings = [
           ...cur.spec.inputs,
           ...cur.spec.outputs,
@@ -309,6 +317,8 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
         cur.dirty = false;
       }
 
+      const { vp } = camera.matrices(sizeRef.current.w, sizeRef.current.h);
+
       // Tanlangan element/sim uchun suzuvchi o'chirish tugmasini 3D dan ekranga proyeksiya qilish
       const delBtn = delBtnRef.current;
       if (delBtn) {
@@ -324,7 +334,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
             wp = [m.x, 12, m.y];
           }
         }
-        const sp = wp ? projectPoint(wp, camera.matrices(sizeRef.current.w, sizeRef.current.h).vp, sizeRef.current.w, sizeRef.current.h) : null;
+        const sp = wp ? projectPoint(wp, vp, sizeRef.current.w, sizeRef.current.h) : null;
         if (sp && sp.z >= -1 && sp.z <= 1) {
           delBtn.style.display = 'grid';
           delBtn.style.left = `${sp.x}px`;
@@ -334,10 +344,15 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
         }
       }
 
-      if (sceneRef.current) {
-        eng.render(camera, sceneRef.current, cur.style, (now - startT) / 1000, motionOn);
+      // Har kadrda to'liq chizish (soya, sahna, bloom, DPR 2 gacha) telefonni bekorga qizdirib, batareyani
+      // yeydi: sahna va kamera o'zgarmasa, kadr oldingisining aynan nusxasi — ekranda o'sha qoladi. Vaqtga
+      // bog'liq yagona narsa — yoniq simdagi signal to'lqini (faqat animatsiya yoqilganda).
+      const scene = sceneRef.current;
+      if (scene && (redraw || rebuilt || camMoved || !sameView(vp) || (motionOn && scene.pulsing))) {
+        eng.render(camera, scene, cur.style, (now - startT) / 1000, motionOn);
+        lastVP = Array.from(vp);
+        redraw = false;
       }
-      void camMoved;
     };
     raf = requestAnimationFrame(frame);
 

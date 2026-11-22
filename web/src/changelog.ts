@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.6',
+    date: '2026-11-22',
+    uz: ["3D rejim telefonni kamroq qizdiradi va batareyani tejaydi: sxema o'zgarmay turganda maydon qayta-qayta chizilmaydi."],
+    ru: ['3D-режим меньше нагревает телефон и бережёт батарею: пока схема не меняется, поле не перерисовывается снова и снова.'],
+  },
+  {
     version: '2.18.5',
     date: '2026-11-22',
     uz: [
