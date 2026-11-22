@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.12',
+    date: '2026-11-23',
+    uz: ["Ekran o'quvchi dasturlar (ko'zi ojiz o'yinchilar uchun) tasdiqlash oynasida endi sarlavhadan tashqari savolning o'zini ham o'qiydi."],
+    ru: ['Программы экранного доступа (для незрячих игроков) в окне подтверждения теперь читают не только заголовок, но и сам вопрос.'],
+  },
+  {
     version: '2.18.11',
     date: '2026-11-23',
     uz: [

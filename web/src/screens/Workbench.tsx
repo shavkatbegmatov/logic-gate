@@ -292,7 +292,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof Element && e.target.closest('input, textarea, [role="dialog"]')) return;
+      if (e.target instanceof Element && e.target.closest('input, textarea, [role="dialog"], [role="alertdialog"]')) return;
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) runCheck();
       else if (run.current && (e.key === 'Escape' || e.key === ' ')) {
         e.preventDefault();

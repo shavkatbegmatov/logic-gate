@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.12 — 2026-11-23
+
+- Ekran o'quvchi dasturlar (ko'zi ojiz o'yinchilar uchun) tasdiqlash oynasida endi sarlavhadan tashqari savolning o'zini ham o'qiydi.
+
 ## 2.18.11 — 2026-11-23
 
 - Yangi versiya chiqqandan keyin eski ochiq sahifada 3D yuklanmasa, endi bu haqida xabar chiqadi va maydon 2D ko'rinishda qoladi (oldin «3D» tanlangan ko'rinar, maydon esa o'zgarmasdi).

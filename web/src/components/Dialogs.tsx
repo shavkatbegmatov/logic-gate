@@ -94,7 +94,9 @@ export function ConfirmHost() {
           <Icon name="copy" />
         </div>
         <h2 class="confirm-title">{t.share.copy}</h2>
-        <p class="confirm-text">{t.share.copyManual}</p>
+        <p class="confirm-text" data-modal-desc>
+          {t.share.copyManual}
+        </p>
         <CopyArea text={p.text} />
         <div class="modal-actions confirm-actions">
           <button class="btn" onClick={no}>
@@ -105,13 +107,16 @@ export function ConfirmHost() {
     );
   }
   return (
-    <Modal key={p.id} class="confirm" onClose={no}>
+    <Modal key={p.id} class="confirm" onClose={no} alert>
       <div class={`confirm-icon${p.danger ? ' danger' : ''}`} aria-hidden="true">
         <Icon name={p.icon ?? 'hint'} />
       </div>
       <h2 class="confirm-title">{p.title}</h2>
-      {p.text && <p class="confirm-text">{p.text}</p>}
-      {p.note && <p class="muted small">{p.note}</p>}
+      {/* Savol va izoh birga — ekran o'quvchi sarlavhadan keyin ikkalasini o'qiydi. */}
+      <div data-modal-desc>
+        {p.text && <p class="confirm-text">{p.text}</p>}
+        {p.note && <p class="muted small">{p.note}</p>}
+      </div>
       <div class="modal-actions confirm-actions">
         <button class="btn" onClick={no} autoFocus={p.danger}>
           {t.cancel}

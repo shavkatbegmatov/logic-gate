@@ -26,8 +26,20 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * aylanadi, yopilganda fokus oldingi joyiga qaytadi. Birinchi sarlavha — oynaning nomi (ekran o'quvchi).
  * Oyna ustida ikkinchisi ochilsa (natija oynasidan «nusxalab bo'lmadi» oynasi), klaviatura faqat
  * ustidagisida ishlaydi — aks holda Esc ikkalasini yopardi, Tab esa fokusni pastdagiga tortardi.
+ * [data-modal-desc] — oynaning mazmuni (aria-describedby): ekran o'quvchi sarlavhadan keyin uni ham o'qiydi.
+ * alert — javob kutadigan savol (tasdiqlash): role="alertdialog".
  */
-export function Modal({ children, onClose, class: cls }: { children: ComponentChildren; onClose?: () => void; class?: string }) {
+export function Modal({
+  children,
+  onClose,
+  class: cls,
+  alert = false,
+}: {
+  children: ComponentChildren;
+  onClose?: () => void;
+  class?: string;
+  alert?: boolean;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -40,6 +52,11 @@ export function Modal({ children, onClose, class: cls }: { children: ComponentCh
     if (title) {
       title.id ||= `modal-title-${id}`;
       el.setAttribute('aria-labelledby', title.id);
+    }
+    const desc = el.querySelector('[data-modal-desc]');
+    if (desc) {
+      desc.id ||= `modal-desc-${id}`;
+      el.setAttribute('aria-describedby', desc.id);
     }
     if (!el.contains(document.activeElement)) (el.querySelector<HTMLElement>('[autofocus]') ?? el).focus();
     const onKey = (e: KeyboardEvent) => {
@@ -79,7 +96,7 @@ export function Modal({ children, onClose, class: cls }: { children: ComponentCh
   }, []);
   return (
     <div class="modal-back" onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div class={cls ? `modal ${cls}` : 'modal'} role="dialog" aria-modal="true" tabIndex={-1} ref={ref}>
+      <div class={cls ? `modal ${cls}` : 'modal'} role={alert ? 'alertdialog' : 'dialog'} aria-modal="true" tabIndex={-1} ref={ref}>
         {children}
       </div>
     </div>

@@ -10,7 +10,7 @@ export function useEditorKeys(editor: Editor, opts: { clock?: boolean } = {}) {
   clock.current = !!opts.clock;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof Element && e.target.closest('input, textarea, [role="dialog"]')) return;
+      if (e.target instanceof Element && e.target.closest('input, textarea, [role="dialog"], [role="alertdialog"]')) return;
       if (editor.busy.value) return;
       const mod = e.ctrlKey || e.metaKey;
       if (e.key === 'Delete' || e.key === 'Backspace') {
