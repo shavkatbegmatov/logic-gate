@@ -87,18 +87,30 @@ export class Engine3D {
     this.labelTex = gl.createTexture()!;
 
     this.shadowFbo = this.createFBO(SHADOW_SIZE, SHADOW_SIZE, true, false);
-    this.usePost = this.shadowFbo !== null;
+    // Post-ishlov (bloom) sahna va bloom buferlarini talab qiladi — ular resize() da, o'lcham ma'lum
+    // bo'lgach yaratiladi. Oldin bu yerda soya buferiga qarab yoqilardi va ResizeObserver'dan oldingi
+    // birinchi kadr (maydon hali o'lchamsiz bo'lsa) bo'sh sceneFbo ga murojaat qilib TypeError berardi.
+    this.usePost = false;
   }
 
   static create(canvas: HTMLCanvasElement): Engine3D | null {
     const opts: WebGLContextAttributes = { antialias: true, alpha: false, powerPreference: 'high-performance' };
     const gl = (canvas.getContext('webgl2', opts) || canvas.getContext('webgl', opts)) as GL | null;
-    if (!gl) return null;
+    if (!gl || gl.isContextLost()) return null;
     try {
       return new Engine3D(gl);
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Kanvasdagi kontekst bor, lekin hozir yo'qolgan (GPU xotirasi bo'shatilgan) — brauzer uni qaytaradi,
+   * bu «WebGL yo'q» degani emas. Faqat create() null qaytargandan keyin chaqiriladi.
+   */
+  static isLost(canvas: HTMLCanvasElement): boolean {
+    const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as GL | null;
+    return !!gl && gl.isContextLost();
   }
 
   private shader(type: number, src: string): WebGLShader {
@@ -280,6 +292,8 @@ export class Engine3D {
 
   render(camera: OrbitCamera, scene: Scene3DData, style: RealStyle, timeSec: number, motionOn: boolean) {
     const gl = this.gl;
+    // loseContext() bilan 'webglcontextlost' hodisasi orasidagi kadr: chizish baribir hech narsa qilmaydi.
+    if (gl.isContextLost()) return;
     const pal = PALETTES_3D[style];
     const { eye, vp } = camera.matrices(this.width, this.height);
 

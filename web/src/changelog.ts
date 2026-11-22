@@ -18,6 +18,16 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.5',
+    date: '2026-11-22',
+    uz: [
+      "3D rejimda boshqa ilovaga o'tib qaytganingizda (ayniqsa telefonda va Telegram ichida) maydon bo'sh qolmaydi — sxema o'zi qayta chiziladi.",
+    ],
+    ru: [
+      'В 3D-режиме поле больше не остаётся пустым, когда вы переключаетесь в другое приложение и возвращаетесь (особенно на телефоне и в Telegram) — схема перерисовывается сама.',
+    ],
+  },
+  {
     version: '2.18.4',
     date: '2026-11-20',
     uz: [

@@ -1,5 +1,5 @@
 import { useSignal } from '@preact/signals';
-import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { sfx } from '../../audio';
 import { showToast } from '../../components/Toast';
 import { t } from '../../i18n';
@@ -52,6 +52,8 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   const sizeRef = useRef({ w: 800, h: 500 });
   const unsupportedRef = useRef(onUnsupported);
   unsupportedRef.current = onUnsupported;
+  // WebGL konteksti qaytgan sari oshadi: dvigatel (shaderlar, teksturalar, sahna) qaytadan quriladi.
+  const [glGen, setGlGen] = useState(0);
 
   const style = resolveRealStyle(activeTheme.value);
   const { gates, wires } = editor.circuit.value;
@@ -138,13 +140,43 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   useEffect(() => {
     const wrap = wrapRef.current!;
     const canvas = canvasRef.current!;
+
+    // Telefon GPU xotirasini bo'shatganda (boshqa ilovaga o'tilib qaytilganda, Telegram ichida ham) kontekst
+    // yo'qoladi: barcha bufer, tekstura va shaderlar bekor bo'ladi, chizish esa jim hech narsa qilmaydi —
+    // maydon bo'sh qolardi. preventDefault — brauzer kontekstni qaytarishi uchun; qaytganda effekt qaytadan
+    // ishlaydi (glGen). data-gl — holat (tutun testi shuni kuzatadi).
+    let lost = false;
+    let raf = 0;
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      lost = true;
+      cancelAnimationFrame(raf);
+      wrap.dataset.gl = 'lost';
+    };
+    const onRestored = () => setGlGen((n) => n + 1);
+    canvas.addEventListener('webglcontextlost', onLost);
+    canvas.addEventListener('webglcontextrestored', onRestored);
+    const unlisten = () => {
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
+    };
+
     const eng = Engine3D.create(canvas);
     if (!eng) {
+      // Kontekst hozir yo'qolgan (effekt shu paytda qayta ishladi) — qaytishini kutamiz; aks holda WebGL yo'q.
+      if (Engine3D.isLost(canvas)) {
+        wrap.dataset.gl = 'lost';
+        return unlisten;
+      }
+      unlisten();
       unsupportedRef.current?.();
       return;
     }
     engineRef.current = eng;
+    // Yangi dvigatelga sahna qaytadan yuklanadi (oldingisi yo'qolgan kontekstda edi).
+    sceneRef.current = null;
     editor.el = wrap;
+    wrap.dataset.gl = 'ready';
 
     const fit3D = (animate: boolean) => {
       const { w, h } = sizeRef.current;
@@ -215,7 +247,6 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       fit3D(false);
     }
 
-    let raf = 0;
     let lastT = performance.now();
     const startT = lastT;
 
@@ -313,14 +344,16 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      unlisten();
       if (editor.el === wrap) editor.el = null;
       editor.worldFromScreen = null;
       editor.fitOverride = null;
       editor.zoomOverride = null;
-      eng.dispose();
+      // Yo'qolgan kontekstdagi obyektlarni o'chirish faqat konsolga INVALID_OPERATION yozadi.
+      if (!lost) eng.dispose();
       engineRef.current = null;
     };
-  }, [editor, camera, topInset]);
+  }, [editor, camera, topInset, glGen]);
 
   const local = (e: PointerEvent | WheelEvent) => {
     const r = canvasRef.current!.getBoundingClientRect();

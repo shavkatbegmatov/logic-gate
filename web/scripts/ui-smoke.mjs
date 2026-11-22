@@ -40,6 +40,8 @@ const SCREENS = [
   { id: 'home', path: '', ready: '.screen.home .hero-svg' },
   { id: 'levels', path: 'levels', ready: '.screen.levels-screen .level-tile' },
   { id: 'level', path: 'level/b1', ready: '.screen.play .board svg', act: playLevel },
+  // 3D Real (WebGL): faqat AAA uslublarida; test brauzerida WebGL bo'lmasa — o'tkazib yuboriladi (ogohlantirish bilan).
+  { id: 'level3d', path: 'level/b1', ready: '.screen.play .board-3d-wrap', act: play3d, boardMode: 'real3d', themes: AAA_THEMES },
   { id: 'sandbox', path: 'sandbox', ready: '.screen.sandbox .board svg' },
   { id: 'settings', path: 'settings', ready: '.screen.settings .theme-tile' },
   { id: 'achievements', path: 'achievements', ready: '.achievements .achievement' },
@@ -47,7 +49,7 @@ const SCREENS = [
 
 const READY_MS = 10_000; // ekran chizilishi
 const CHECK_MS = 2_500; // tekshiruvlar shu vaqt ichida o'tishi kerak (animatsiya tugashi, shrift yuklanishi)
-const TOTAL_MS = 5 * 60_000; // butun test: osilib qolsa, CI soatlab kutmasin
+const TOTAL_MS = 8 * 60_000; // butun test: osilib qolsa, CI soatlab kutmasin (CI da ~4 daqiqa: 8 uslub, ikki til, 3D)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -179,6 +181,9 @@ async function launchBrowser(path, headed) {
     '--disable-sync',
     '--disable-features=Translate,MediaRouter',
     '--mute-audio',
+    // GPU yo'q joyda (CI runner) WebGL dasturiy SwiftShader orqali — 3D ekran tekshirilsin. Ochiladigan sahifa —
+    // o'zimizning build, shuning uchun «unsafe» bu yerda xavfsiz.
+    '--enable-unsafe-swiftshader',
     // Edge: o'zini qayta ochmasin — jarayon bitta bo'lsa, kutilmagan to'xtashda ham yopib bo'ladi (Chrome e'tibor bermaydi).
     '--edge-skip-compat-layer-relaunch',
   ];
@@ -452,6 +457,34 @@ async function playLevel(page) {
 }
 
 /**
+ * 3D Real: tanishtiruv oynasi chiqsa yopiladi (oldingi «level» ekranida ko'rilgan bo'lsa — chiqmaydi), WebGL
+ * dvigateli tayyor bo'ladi (data-gl="ready"), keyin kontekst sun'iy yo'qotiladi va qaytariladi — telefon GPU
+ * xotirasini bo'shatgandek (boshqa ilovaga o'tib qaytish). Dvigatel qayta qurilishi kerak; konsol xatolari
+ * (masalan, birinchi kadrdagi TypeError) checkScreen'da yig'iladi.
+ */
+async function play3d(page) {
+  const gotIt = '.modal-back .modal-actions .btn.primary';
+  if (await page.waitFor((sel) => !!document.querySelector(sel), [gotIt], 1500)) {
+    await page.tap(gotIt);
+    if (!(await page.waitFor(() => !document.querySelector('.modal-back'), [], 3000))) return ['tanishtiruv oynasi yopilmadi'];
+  }
+  const gl = (want) => page.waitFor((w) => document.querySelector('.board-3d-wrap')?.dataset.gl === w, [want], 8000);
+  if (!(await gl('ready'))) return ["3D maydon tayyor bo'lmadi (.board-3d-wrap data-gl=\"ready\" chiqmadi)"];
+  const lost = await page.evaluate(() => {
+    const c = document.querySelector('.board-3d-canvas');
+    const ext = (c?.getContext('webgl2') || c?.getContext('webgl'))?.getExtension('WEBGL_lose_context');
+    if (!ext) return false;
+    window.__lgLoseContext = ext;
+    ext.loseContext();
+    return true;
+  });
+  if (!lost) return ["WEBGL_lose_context kengaytmasi yo'q — kontekst yo'qolishini tekshirib bo'lmadi"];
+  if (!(await gl('lost'))) return ["WebGL konteksti yo'qolganda 3D maydon buni sezmadi (data-gl=\"lost\" chiqmadi)"];
+  await page.evaluate(() => window.__lgLoseContext.restoreContext());
+  return (await gl('ready')) ? [] : ["WebGL konteksti qaytgach 3D maydon qayta qurilmadi (data-gl=\"ready\" chiqmadi)"];
+}
+
+/**
  * Sahifada bajariladi: topilgan kamchiliklar ro'yxati (bo'sh — hammasi joyida).
  * Toshish ikki joyda: sahifaning o'zi va ichki aylantirish joylari (.scroll, .home-scroll, oyna) — body
  * `overflow: hidden`, ro'yxatlar ichki konteynerda aylanadi, shuning uchun keng element ko'pincha aynan
@@ -485,7 +518,7 @@ function inspect({ theme, lang, screen, ready }) {
   const want = theme === 'pcb' ? null : theme;
   const got = root.getAttribute('data-theme');
   if (got !== want) out.push(`<html data-theme>: ${got ?? "yo'q"}, kutilgan — ${want ?? "yo'q"}`);
-  const wantBoard = isAaa ? 'real2d' : 'schematic';
+  const wantBoard = screen === 'level3d' ? 'real3d' : isAaa ? 'real2d' : 'schematic';
   const gotBoard = root.getAttribute('data-board');
   if (gotBoard !== wantBoard) out.push(`<html data-board>: ${gotBoard ?? "yo'q"}, kutilgan — ${wantBoard}`);
   // Til: i18n.ts <html lang> ni qo'yadi — aks holda ruscha o'tish sezdirmay o'zbekcha matnni tekshirib qo'yardi.
@@ -634,6 +667,9 @@ function reportLines(server, known = []) {
   return lines;
 }
 
+/** Test brauzerida WebGL yo'q bo'lgan o'lchamlar: 3D ekran o'tkazib yuboriladi, oxirida bir marta aytiladi. */
+const noWebgl = new Set();
+
 /** Bitta til, mavzu va o'lcham: yangi «qurilma», til va mavzu localStorage orqali, keyin barcha ekranlar. */
 async function run(cdp, server, opt, lang, theme, size) {
   const failures = [];
@@ -656,19 +692,29 @@ async function run(cdp, server, opt, lang, theme, size) {
     await report('first-open', '#/', [...new Set(first)]);
     // Ilova umuman ochilmasa, qolgan ekranlar ham xuddi shunday yiqiladi — vaqt ketkazilmaydi.
     if (!booted) return { failures, bg: null, checked: 0 };
-    // Shakli — src/state.ts dagi cleanSettings qabul qiladigan.
-    await page.evaluate((s) => localStorage.setItem('lg.settings.v1', JSON.stringify(s)), {
-      theme,
-      lang,
-      boardMode: AAA_THEMES.includes(theme) ? 'real2d' : 'schematic',
-    });
+    // Shakli — src/state.ts dagi cleanSettings qabul qiladigan. Ekran o'z sxema ko'rinishini so'rashi mumkin (3D).
+    const defaultBoard = AAA_THEMES.includes(theme) ? 'real2d' : 'schematic';
+    const writeSettings = (boardMode) =>
+      page.evaluate((s) => localStorage.setItem('lg.settings.v1', JSON.stringify(s)), { theme, lang, boardMode });
+    await writeSettings(defaultBoard);
+    const webgl = await page.evaluate(() => !!document.createElement('canvas').getContext('webgl')).catch(() => false);
 
+    let checked = 0;
     for (const screen of opt.screens) {
+      if (screen.themes && !screen.themes.includes(theme)) continue;
+      if (screen.boardMode === 'real3d' && !webgl) {
+        noWebgl.add(`${size.label}`);
+        continue;
+      }
+      if (screen.boardMode) await writeSettings(screen.boardMode);
       await report(screen.id, `#/${screen.path}`, await checkScreen(page, server, lang, theme, screen));
+      if (screen.boardMode) await writeSettings(defaultBoard);
+      checked++;
     }
-    // Mavzu ranglari haqiqatan almashganini solishtirish uchun (pastda: to'rt mavzu — to'rt xil fon).
-    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor).catch(() => '');
-    return { failures, bg, checked: opt.screens.length };
+    // Mavzu ranglari haqiqatan almashganini solishtirish uchun (pastda: har mavzu — o'z foni). Bironta ekran
+    // ochilmagan bo'lsa (--screen=level3d da klassik mavzular), sahifada hali birinchi ochilishdagi mavzu turadi.
+    const bg = checked ? await page.evaluate(() => getComputedStyle(document.body).backgroundColor).catch(() => '') : null;
+    return { failures, bg, checked };
   } finally {
     await page.close();
   }
@@ -731,6 +777,7 @@ async function main() {
   }
 
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
+  if (noWebgl.size) console.warn(`  ! test brauzerida WebGL yo'q (${[...noWebgl].join(', ')}) — 3D ekran (level3d) tekshirilmadi`);
   if (!failures.length) {
     console.log(`\n${checks} ta ekran tekshirildi, hammasi joyida (${seconds} s).`);
     return;

@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.5 — 2026-11-22
+
+- 3D rejimda boshqa ilovaga o'tib qaytganingizda (ayniqsa telefonda va Telegram ichida) maydon bo'sh qolmaydi — sxema o'zi qayta chiziladi.
+
 ## 2.18.4 — 2026-11-20
 
 - Telegram Mini App va telefonda ko'rinish tugmalari (2D/3D/Sxema, uslub va 3D kamera) maydon o'rtasiga chiqib qolishi hamda palitra bilan to'qnashishi tuzatildi.
