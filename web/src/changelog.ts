@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.11',
+    date: '2026-11-23',
+    uz: [
+      "Yangi versiya chiqqandan keyin eski ochiq sahifada 3D yuklanmasa, endi bu haqida xabar chiqadi va maydon 2D ko'rinishda qoladi (oldin «3D» tanlangan ko'rinar, maydon esa o'zgarmasdi).",
+      "Elementni sudrab turganda ko'rinish almashsa, uning yangi joyi endi saqlanadi va «Bekor qilish» bilan qaytariladi.",
+    ],
+    ru: [
+      'Если после выхода новой версии в старой открытой вкладке не загрузился 3D, теперь появляется сообщение и поле остаётся в 2D (раньше кнопка «3D» была выбрана, а поле не менялось).',
+      'Если вид переключился, пока вы перетаскивали элемент, его новое место теперь сохраняется и отменяется кнопкой «Отменить».',
+    ],
+  },
+  {
     version: '2.18.10',
     date: '2026-11-23',
     uz: [

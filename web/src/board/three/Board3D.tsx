@@ -143,6 +143,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   useEffect(
     () => () => {
       editor.viewTouched = false;
+      // Sudrash paytida maydon almashsa — sudrash yakunlansin (useBoard2D dagi kabi).
+      if (drag.current?.kind === 'gate') editor.endDrag();
+      drag.current = null;
     },
     [editor],
   );

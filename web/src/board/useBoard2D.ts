@@ -59,6 +59,11 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
     return () => {
       ro.disconnect();
       if (editor.el === el) editor.el = null;
+      // Element sudralayotganda maydon almashsa (sekin yuklangan 2D Real sxema o'rniga chiqdi, chop etish,
+      // ikkinchi barmoq bilan 3D tugmasi): sudrash yakunlanadi — aks holda joy to'rga tushmay, tarixga
+      // yozilmay qolardi va keyingi sudrash uni ustidan yozib, «bekor qilish» qaytara olmasdi.
+      if (drag.current?.kind === 'gate') editor.endDrag();
+      drag.current = null;
     };
   }, [editor, topInset]);
 

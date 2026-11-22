@@ -26,6 +26,19 @@ type Board3DProps = BoardProps & { onUnsupported?: () => void };
 let LoadedReal2D: ComponentType<BoardProps> | null = null;
 let Loaded3D: ComponentType<Board3DProps> | null = null;
 
+/**
+ * Maydon bo'lagi yuklanmadi — ko'pincha yangi versiya joylangandan keyin ochiq qolgan eski sahifa o'chirilgan
+ * faylni so'raganda (yoki internet yo'q, service worker hali o'rnatilmagan). Avval jim edi: «3D» tugmasi yoniq,
+ * maydon esa 2D, kamera tugmalari ishlamaydi. Xabar har bo'lak uchun bir marta; brauzer muvaffaqiyatsiz
+ * import'ni sahifa yangilanguncha eslab qoladi.
+ */
+const warned = new Set<string>();
+const loadFailed = (which: string) => {
+  if (warned.has(which)) return;
+  warned.add(which);
+  showToast(t.loadFailed, 'error', 5000);
+};
+
 export function Board(props: BoardProps) {
   const mode = activeBoardMode.value;
   const [, bump] = useState(0);
@@ -38,14 +51,19 @@ export function Board(props: BoardProps) {
           LoadedReal2D = m.BoardReal2D;
           if (alive) bump((n) => n + 1);
         })
-        .catch(() => {});
+        // Sxema ko'rinishi o'rnida qoladi (u bosh bo'lakda).
+        .catch(() => loadFailed('real2d'));
     } else if (mode === 'real3d' && !Loaded3D) {
       import('./three/Board3D')
         .then((m) => {
           Loaded3D = m.Board3D;
           if (alive) bump((n) => n + 1);
         })
-        .catch(() => {});
+        .catch(() => {
+          loadFailed('real3d');
+          // Tugmalar holati ko'rinishga mos bo'lsin: 2D Real (yoki u ham yuklanmasa — sxema).
+          if (alive && settings.peek().boardMode === 'real3d') settings.value = { ...settings.peek(), boardMode: 'real2d' };
+        });
     }
     return () => {
       alive = false;

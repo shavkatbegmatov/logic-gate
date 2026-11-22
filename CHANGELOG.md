@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.11 — 2026-11-23
+
+- Yangi versiya chiqqandan keyin eski ochiq sahifada 3D yuklanmasa, endi bu haqida xabar chiqadi va maydon 2D ko'rinishda qoladi (oldin «3D» tanlangan ko'rinar, maydon esa o'zgarmasdi).
+- Elementni sudrab turganda ko'rinish almashsa, uning yangi joyi endi saqlanadi va «Bekor qilish» bilan qaytariladi.
+
 ## 2.18.10 — 2026-11-23
 
 - Tik telefonda «2D Real» platasidagi yozuvlar endi oynadagi aksdek teskari emas, to'g'ri o'qiladi.
