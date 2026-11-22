@@ -45,6 +45,17 @@ export function isAaaTheme(theme: ActiveTheme): boolean {
   return theme === 'pcb' || theme === 'bench' || theme === 'breadboard' || theme === 'scifi';
 }
 
+/**
+ * Mavzu tanlanganda sxema ko'rinishi ham almashadimi: klassik o'quv mavzusi (Plata, Daftar…) — klassik
+ * sxema; AAA uslubi klassik sxemadan tanlansa — 2D Real; qolgan hollarda (Avto ham) — o'zgarmaydi
+ * (undefined). Sozlamalar va maydondagi uslub menyusi (ViewTools) bir xil ishlashi uchun bitta joyda.
+ */
+export function boardModeForTheme(next: Theme, mode: BoardMode): BoardMode | undefined {
+  if (next === 'auto') return undefined;
+  if (!isAaaTheme(next)) return 'schematic';
+  return mode === 'schematic' ? 'real2d' : undefined;
+}
+
 const media = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: light)') : null;
 const systemLight = signal(media?.matches ?? false);
 media?.addEventListener?.('change', (e) => (systemLight.value = e.matches));

@@ -4,6 +4,7 @@ import css from './styles.css?raw';
 import {
   AAA_THEMES,
   BOARD_MODES,
+  boardModeForTheme,
   CLASSIC_THEMES,
   instantCheck,
   resolveBoardMode,
@@ -152,5 +153,25 @@ describe("o'qilishi (kontrast)", () => {
       return r >= min ? [] : [`${fg} (${a}) / ${bg} (${b}): ${r.toFixed(2)} < ${min}`];
     });
     expect(low).toEqual([]);
+  });
+});
+
+describe("mavzu tanlanganda sxema ko'rinishi (Sozlamalar va maydondagi uslub menyusi)", () => {
+  it("klassik o'quv mavzusi — klassik sxema, har qanday ko'rinishdan", () => {
+    for (const mode of BOARD_MODES) {
+      for (const theme of CLASSIC_THEMES.filter((x) => x !== 'auto')) expect(boardModeForTheme(theme, mode), `${theme} ${mode}`).toBe('schematic');
+    }
+  });
+
+  it("AAA uslubi klassik sxemadan — 2D Real; 2D/3D Real da tanlangan ko'rinish saqlanadi", () => {
+    for (const theme of AAA_THEMES) {
+      expect(boardModeForTheme(theme, 'schematic')).toBe('real2d');
+      expect(boardModeForTheme(theme, 'real2d')).toBeUndefined();
+      expect(boardModeForTheme(theme, 'real3d')).toBeUndefined();
+    }
+  });
+
+  it("Avto — ko'rinish o'zgarmaydi", () => {
+    for (const mode of BOARD_MODES) expect(boardModeForTheme('auto', mode)).toBeUndefined();
   });
 });

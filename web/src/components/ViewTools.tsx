@@ -4,7 +4,7 @@ import { sfx } from '../audio';
 import { cam3d } from '../board/cam3d';
 import { t } from '../i18n';
 import { settings } from '../state';
-import { AAA_THEMES, activeBoardMode, activeTheme, BOARD_MODES, CLASSIC_THEMES, isAaaTheme, type BoardMode, type Theme } from '../theme';
+import { AAA_THEMES, activeBoardMode, activeTheme, BOARD_MODES, boardModeForTheme, CLASSIC_THEMES, type BoardMode, type Theme } from '../theme';
 import { Icon, type IconName } from './ui';
 
 const MODE_ICON: Record<BoardMode, IconName> = {
@@ -63,12 +63,7 @@ export function ViewTools() {
   };
 
   const setTheme = (next: Theme) => {
-    const nextMode: BoardMode | undefined =
-      next !== 'auto' && !isAaaTheme(next)
-        ? 'schematic'
-        : next !== 'auto' && isAaaTheme(next) && mode === 'schematic'
-          ? 'real2d'
-          : undefined;
+    const nextMode = boardModeForTheme(next, mode);
     settings.value = nextMode ? { ...settings.value, theme: next, boardMode: nextMode } : { ...settings.value, theme: next };
     close();
     sfx.mode();

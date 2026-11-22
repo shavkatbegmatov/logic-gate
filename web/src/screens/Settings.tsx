@@ -16,7 +16,7 @@ import { go } from '../router';
 import { profile, settings } from '../state';
 import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
-import { AAA_THEMES, activeBoardMode, BOARD_MODES, CLASSIC_THEMES, isAaaTheme, MOTIONS, systemReducedMotion, type BoardMode, type Theme } from '../theme';
+import { AAA_THEMES, activeBoardMode, BOARD_MODES, boardModeForTheme, CLASSIC_THEMES, isAaaTheme, MOTIONS, systemReducedMotion, type BoardMode, type Theme } from '../theme';
 import { APP_VERSION } from '../version';
 import { clearPlayerData, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
 
@@ -261,12 +261,7 @@ function ThemeSwitch() {
   const current = settings.value.theme ?? 'pcb';
   const mode = activeBoardMode.value;
   const pickTheme = (next: Theme) => {
-    const nextMode: BoardMode | undefined =
-      next !== 'auto' && !isAaaTheme(next)
-        ? 'schematic'
-        : next !== 'auto' && isAaaTheme(next) && mode === 'schematic'
-          ? 'real2d'
-          : undefined;
+    const nextMode = boardModeForTheme(next, mode);
     settings.value = nextMode ? { ...settings.value, theme: next, boardMode: nextMode } : { ...settings.value, theme: next };
     sfx.mode();
   };
