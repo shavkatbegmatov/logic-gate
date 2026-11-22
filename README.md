@@ -4,7 +4,7 @@ Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqo
 
 - 48 ta daraja, 8 ta bo'lim: asoslardan 2 bitli ko'paytirgich, xotira (D-trigger), avtomatlar va «Faqat NOR» gacha.
 - Jonli simulyatsiya: simlar 1/0 holatiga qarab yonadi, haqiqat jadvali har bir o'zgarishda yangilanadi.
-- Bo'lim xulosalari (`#/lesson/<bo'lim>`, `web/src/lessons.ts`): bo'limning barcha darajalari yechilgach ochiladigan qisqa dars — formulalar, jadvallar va g'oyalar (De Morgan, NAND universalligi, summator, trigger, chekli avtomat), o'zbekcha va ruscha.
+- Bo'lim xulosalari (`#/lesson/<bo'lim>`, `web/src/lessons.ts`): bo'limning barcha darajalari yechilgach ochiladigan qisqa dars — formulalar, jadvallar va g'oyalar (De Morgan, NAND va NOR universalligi, summator, trigger, chekli avtomat), o'zbekcha va ruscha.
 - Sxema formulasi: yig'ilgan sxemaning Bul ifodasi (`Q = (A ∧ B) ∨ ¬C`) yon panelda jonli ko'rinadi (`web/src/sim/formula.ts`). Bir necha joyga ulangan element nom oladi (`t1`, chiqishga ulangan bo'lsa — chiqish nomi), D-trigger — `q1`, keyingi qiymati — `q1⁺`; maydonda trigger ostida ham `q1` yoziladi.
 - Element sonini tejagan o'yinchiga 3 ★. Keyingi bo'limlar yulduzlar bilan ochiladi.
 - Ro'yxatdan o'tmasdan o'ynash mumkin. Taxallus kiritilsa, natijalar reytingga qo'shiladi, progress esa tiklash kodi orqali boshqa qurilmaga o'tkaziladi.
@@ -148,7 +148,7 @@ node levels/build.mjs
 
 Ketma-ket (xotirali) darajada `fn` o'rniga `init` + `step(holat, ...kirishlar) → [keyingi holat, chiqishlar]` va vaqt diagrammasi namunasi (`example`) yoziladi; build ulardan eng kichik avtomatni quradi (`seq` maydoni). Maqsad haqiqatan minimum ekanini `node levels/seq-min.mjs` to'liq sanash bilan tekshiradi (taxminan bir daqiqa).
 
-Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. Bosqichli maslahat uchun yechimdan faqat elementlar tarkibi va kirishlarga ulangan birinchi element olinadi (`hints`); yechimning o'zi `levels.json` ga tushmaydi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
+Build skripti har bir yechimni tekshiradi va element soni `goal` ga teng ekanini nazorat qiladi. Maqsadning eng kam element soni ekani alohida isbotlanadi: kombinatsion darajalar — `node levels/comb-min.mjs` (ruxsat etilgan elementlar bilan barcha sxemalarni to'liq sanaydi, ~20 s; m5 dan tashqari hammasi `web/scripts/levels-min.test.mjs` da, har `pnpm test` da), ketma-ket darajalar — `node levels/seq-min.mjs`. Yangi daraja qo'shganda ikkalasini ham ishga tushiring. Bosqichli maslahat uchun yechimdan faqat elementlar tarkibi va kirishlarga ulangan birinchi element olinadi (`hints`); yechimning o'zi `levels.json` ga tushmaydi. `levels.json` Go binariga `go:embed` orqali joylanadi, shuning uchun o'zgarishdan keyin serverni qayta yig'ish kerak (`deploy.sh` buni o'zi qiladi).
 
 ## Coolify orqali joylash (Docker)
 
