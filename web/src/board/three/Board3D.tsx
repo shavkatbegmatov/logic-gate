@@ -54,6 +54,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   unsupportedRef.current = onUnsupported;
   // WebGL konteksti qaytgan sari oshadi: dvigatel (shaderlar, teksturalar, sahna) qaytadan quriladi.
   const [glGen, setGlGen] = useState(0);
+  /** Uxlab qolgan kadr tsiklini uyg'otadi (pastdagi effekt beradi). */
+  const wakeRef = useRef<(() => void) | null>(null);
+  const wake = () => wakeRef.current?.();
 
   const style = resolveRealStyle(activeTheme.value);
   const { gates, wires } = editor.circuit.value;
@@ -121,6 +124,12 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     stateNames: states,
     dirty: true,
   };
+  // Animatsiya sozlamasi kadr tsiklida peek() bilan o'qiladi — o'zgarsa komponent qayta chizilsin (va tsikl
+  // uyg'onsin): signal to'lqini yoqiladi yoki to'xtaydi.
+  void settings.value.motion;
+  void systemReducedMotion.value;
+  // Har chizishdan keyin (holat, tanlov, uslub, kamera buyrug'i o'zgardi) — tsikl uxlab qolgan bo'lsa, uyg'onadi.
+  useEffect(wake);
 
   // Kamera burchagi va tiklash buyruqlarini kuzatish
   const camAngle = cam3d.value.angle;
@@ -161,6 +170,12 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     // ishlaydi (glGen). data-gl — holat (tutun testi shuni kuzatadi).
     let lost = false;
     let raf = 0;
+    /**
+     * Kadr tsikli harakat yo'q paytda uxlaydi: sahna, kamera va animatsiya o'zgarmasa, requestAnimationFrame
+     * so'ralmaydi (avval soniyasiga 60 marta uyg'onib, hech narsa qilmasdi — telefonda protsessor bekor band).
+     * Uyg'otadi: har Preact chizishi, sichqoncha/sensor, o'lcham, kamera fit/zoom.
+     */
+    let sleeping = false;
     // Chizish faqat kerak bo'lganda (pastda, frame): o'lcham o'zgarsa kanvas tozalanadi — qayta chizish shart.
     let redraw = true;
     const onLost = (e: Event) => {
@@ -235,10 +250,14 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       const hit = rayPlaneY(unprojectRay(sx, sy, w, h, invVP), 0);
       return hit ? { x: hit.x, y: hit.z } : null;
     };
-    editor.fitOverride = () => fit3D(true);
+    editor.fitOverride = () => {
+      fit3D(true);
+      wakeLoop();
+    };
     editor.zoomOverride = (factor, sx, sy) => {
       const { w, h } = sizeRef.current;
       camera.zoomAtScreen(factor, sx ?? w / 2, sy ?? h / 2, w, h);
+      wakeLoop();
     };
 
     const ro = new ResizeObserver(([entry]) => {
@@ -253,6 +272,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       eng.resize(width, height);
       redraw = true;
       if (!editor.viewTouched || big || prevInset !== editor.insetTop) fit3D(false);
+      wakeLoop();
     });
     ro.observe(wrap);
     if (wrap.clientWidth > 10 && wrap.clientHeight > 10) {
@@ -270,8 +290,15 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     let lastVP: number[] | null = null;
     const sameView = (vp: ArrayLike<number>) => !!lastVP && lastVP.every((x, i) => x === vp[i]);
 
-    const frame = (now: number) => {
+    const wakeLoop = () => {
+      if (!sleeping || lost) return;
+      sleeping = false;
+      lastT = performance.now();
       raf = requestAnimationFrame(frame);
+    };
+    wakeRef.current = wakeLoop;
+
+    const frame = (now: number) => {
       const dt = Math.min(0.05, (now - lastT) / 1000);
       lastT = now;
 
@@ -362,16 +389,21 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       // yeydi: sahna va kamera o'zgarmasa, kadr oldingisining aynan nusxasi — ekranda o'sha qoladi. Vaqtga
       // bog'liq yagona narsa — yoniq simdagi signal to'lqini (faqat animatsiya yoqilganda).
       const scene = sceneRef.current;
-      if (scene && (redraw || rebuilt || camMoved || !sameView(vp) || (motionOn && scene.pulsing))) {
+      const pulsing = !!scene && motionOn && scene.pulsing;
+      if (scene && (redraw || rebuilt || camMoved || !sameView(vp) || pulsing)) {
         eng.render(camera, scene, cur.style, (now - startT) / 1000, motionOn);
         lastVP = Array.from(vp);
         redraw = false;
       }
+      // Keyingi kadr faqat harakat davom etsa: kamera animatsiyasi, tumbler dastagi, signal to'lqini.
+      if (camMoved || leversMoving || pulsing || !scene || cur.dirty) raf = requestAnimationFrame(frame);
+      else sleeping = true;
     };
     raf = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(raf);
+      if (wakeRef.current === wakeLoop) wakeRef.current = null;
       ro.disconnect();
       unlisten();
       if (editor.el === wrap) editor.el = null;
@@ -473,6 +505,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   };
 
   const onDown = (e: PointerEvent) => {
+    wake(); // kamera to'g'ridan-to'g'ri suriladi — uxlayotgan tsikl uyg'onsin
     if (editor.busy.value) return;
     capture(canvasRef.current!, e.pointerId);
     const p = local(e);
@@ -523,6 +556,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   };
 
   const onMove = (e: PointerEvent) => {
+    wake(); // kamera to'g'ridan-to'g'ri suriladi — uxlayotgan tsikl uyg'onsin
     if (!pointers.current.has(e.pointerId)) return;
     const p = local(e);
     pointers.current.set(e.pointerId, p);
@@ -569,6 +603,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   };
 
   const onUp = (e: PointerEvent) => {
+    wake(); // kamera to'g'ridan-to'g'ri suriladi — uxlayotgan tsikl uyg'onsin
     if (!pointers.current.delete(e.pointerId)) return;
     const d = drag.current;
     if (!d) return;
@@ -610,6 +645,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   };
 
   const onWheel = (e: WheelEvent) => {
+    wake(); // kamera to'g'ridan-to'g'ri suriladi — uxlayotgan tsikl uyg'onsin
     e.preventDefault();
     const p = local(e);
     const { w, h } = sizeRef.current;
@@ -618,6 +654,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   };
 
   const onDoubleClick = (e: MouseEvent) => {
+    wake(); // kamera to'g'ridan-to'g'ri suriladi — uxlayotgan tsikl uyg'onsin
     const r = canvasRef.current!.getBoundingClientRect();
     const hit = hitTest(e.clientX - r.left, e.clientY - r.top, false);
     if (hit.kind === 'empty') {

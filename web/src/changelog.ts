@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.13',
+    date: '2026-11-23',
+    uz: ["3D rejimda maydon tinch turganda telefon protsessori ham to'liq dam oladi — batareya yanada tejaladi."],
+    ru: ['В 3D-режиме, пока поле не меняется, процессор телефона полностью отдыхает — батарея расходуется ещё меньше.'],
+  },
+  {
     version: '2.18.12',
     date: '2026-11-23',
     uz: ["Ekran o'quvchi dasturlar (ko'zi ojiz o'yinchilar uchun) tasdiqlash oynasida endi sarlavhadan tashqari savolning o'zini ham o'qiydi."],
