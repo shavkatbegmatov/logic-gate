@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.18.8 — 2026-11-23
+
+- Telefonni yotqizib o'ynaganda maydon ancha kattaroq: sarlavha, elementlar paneli va tugmalar ixchamroq bo'lib, bitta qatorga joylashadi.
+
 ## 2.18.7 — 2026-11-22
 
 - Eng tor telefonlarda (320 px) rus tilida «Darajalar» ekranidagi uzun so'zlar endi karta va daraja plitkasidan chiqib ketmaydi: bo'lim yulduzlari sarlavha ostiga tushadi.

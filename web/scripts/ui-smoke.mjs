@@ -37,6 +37,8 @@ const SIZES = [
   // Eng tor telefon (eski kichik iPhone, arzon Android): uzun ruscha so'zlar faqat shu yerda chegaradan chiqardi
   // (2.18.7: «Darajalar» dagi bo'lim sarlavhasi va plitka). Ranglar yuqorida tekshiriladi — bitta uslub yetarli.
   { id: 'narrow', label: 'tor', width: 320, height: 640, mobile: true, themes: ['pcb'] },
+  // Yotiq telefon: balandlik kam — sarlavha, palitra va tugmalar maydonni siqib qo'ymasin (2.18.8).
+  { id: 'landscape', label: 'yotiq', width: 740, height: 360, mobile: true, themes: ['pcb'] },
 ];
 /** ready — ekran chizilganini bildiradigan element (alohida bo'lakda yuklanadigan ekranlar kechroq chiqadi). */
 const SCREENS = [
@@ -578,6 +580,13 @@ function inspect({ theme, lang, screen, ready }) {
       const buttons = shown('.modal.confirm .confirm-actions .btn');
       if (buttons !== 2) out.push(`tasdiqlash oynasida ${buttons} ta tugma ko'rinadi, kutilgan — 2`);
     }
+  }
+  // Maydon — o'yinning o'zi: atrofidagi panellar balandlikning ko'pi bilan 40% ini olsin (yotiq telefonda
+  // avval 49% maydonga qolardi; tik telefon va kompyuterda — 68–81%).
+  if (screen === 'level' || screen === 'level3d' || screen === 'sandbox') {
+    const st = document.querySelector('.stage');
+    const share = st ? st.getBoundingClientRect().height / innerHeight : 0;
+    if (st && share < 0.6) out.push(`maydon (.stage) balandlikning ${Math.round(share * 100)}% ini oladi — kamida 60% bo'lishi kerak`);
   }
   if (screen === 'level' || screen === 'sandbox') {
     const stage = document.querySelector('.stage');

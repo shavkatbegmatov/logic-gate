@@ -4781,6 +4781,63 @@ body:has(.stage.has-check) .toast {
 }
 
 /* ── Chop etish: faqat hisobot (o'qituvchi uchun), oq qog'oz ─ */
+/* Yotiq telefon (balandlik 480 px gacha): sarlavha, palitra va tugmalar avval balandlikning yarmini olardi
+   (740×360 da maydonga ~170 px qolardi). Ixchamroq: sarlavha past, palitrada chip kodi (74HC… — bezak) yo'q,
+   o'zbekcha nomlar qoladi; tor (≤ 820 px) joylashuvda palitra va tugmalar bitta qatorda. Kompyuter va tik
+   telefonga ta'sir qilmaydi. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .topbar {
+    padding-top: max(4px, var(--tg-safe-top, 0px), env(safe-area-inset-top));
+    padding-bottom: 4px;
+  }
+
+  .topbar .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .play-bottom {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 4px max(8px, env(safe-area-inset-right)) max(4px, var(--tg-safe-bottom, 0px), env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+
+  .palette {
+    flex-basis: auto;
+    gap: 6px;
+  }
+
+  .palette-item {
+    min-width: 56px;
+    padding: 3px 6px 2px;
+    line-height: 1.1;
+  }
+
+  .palette-item .gate-icon {
+    width: 32px;
+    height: 20px;
+  }
+
+  .palette-code {
+    display: none;
+  }
+
+  .actions {
+    flex: none;
+  }
+
+  .actions .btn {
+    flex: none;
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  .actions .check {
+    min-width: 104px;
+  }
+}
+
 @media print {
   body {
     overflow: visible;

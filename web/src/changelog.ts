@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.8',
+    date: '2026-11-23',
+    uz: ["Telefonni yotqizib o'ynaganda maydon ancha kattaroq: sarlavha, elementlar paneli va tugmalar ixchamroq bo'lib, bitta qatorga joylashadi."],
+    ru: ['Если играть, повернув телефон горизонтально, поле стало заметно больше: заголовок, панель элементов и кнопки компактнее и умещаются в одну строку.'],
+  },
+  {
     version: '2.18.7',
     date: '2026-11-22',
     uz: ["Eng tor telefonlarda (320 px) rus tilida «Darajalar» ekranidagi uzun so'zlar endi karta va daraja plitkasidan chiqib ketmaydi: bo'lim yulduzlari sarlavha ostiga tushadi."],
