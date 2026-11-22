@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.19.1 — 2026-11-23
+
+- Yangi yutuq «NOR ustasi»: «Faqat NOR» bo'limidagi barcha darajalarni 3 ★ bilan yeching.
+
 ## 2.19.0 — 2026-11-23
 
 - Yangi 8-bo'lim «Faqat NOR»: 6 ta daraja — faqat NOR elementlaridan NOT, OR, AND, XNOR, XOR va multipleksor yig'ing. Endi jami 48 daraja.

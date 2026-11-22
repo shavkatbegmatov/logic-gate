@@ -447,6 +447,7 @@ export const ru: Dict = {
     starsAll: (n: number) => ({ title: 'Безупречно', text: `Соберите все ${n} ★.` }),
     independent: (n: number) => ({ title: 'Самостоятельный', text: `Пройдите ${n} уровней на 3 ★ без подсказок.` }),
     nandMaster: { title: 'Мастер NAND', text: 'Пройдите все уровни раздела «Только NAND» на 3 ★.' },
+    norMaster: { title: 'Мастер NOR', text: 'Пройдите все уровни раздела «Только NOR» на 3 ★.' },
     dailyFirst: { title: 'Начало дня', text: 'Решите первую задачу дня.' },
     dailyPerfect: { title: 'Минимум найден', text: 'Решите задачу дня наименьшим числом элементов (3 ★).' },
     streak: (n: number) => ({

@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.19.1',
+    date: '2026-11-23',
+    uz: ["Yangi yutuq «NOR ustasi»: «Faqat NOR» bo'limidagi barcha darajalarni 3 ★ bilan yeching."],
+    ru: ['Новое достижение «Мастер NOR»: пройдите все уровни раздела «Только NOR» на 3 ★.'],
+  },
+  {
     version: '2.19.0',
     date: '2026-11-23',
     uz: [

@@ -164,6 +164,8 @@ const ICONS = {
   crown: 'M4 18h16M5 15 4 7l5 4 3-6 3 6 5-4-1 8Z',
   gem: 'M7 4h10l4 5-9 11L3 9ZM3 9h18M10 4 8 9l4 11 4-11-2-5',
   nand: 'M2 9h3M2 15h3M5 5h6a7 7 0 0 1 0 14H5ZM18 12a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0',
+  // NOR: OR korpusi (ichki egri chiziq kirish tomonda) va chiqishdagi doiracha — nand bilan bir o'lchamda.
+  nor: 'M2 9h3.6M2 15h3.6M4 5Q8 12 4 19Q12.5 19 16.5 12Q12.5 5 4 5ZM18 12a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0',
   target: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 8a4 4 0 1 0 0 8 4 4 0 1 0 0-8M12 12h.01',
   pencil: 'M4 20l1-4L16 5l3 3L8 19ZM14 7l3 3',
   formula: 'M13 4c-2.5 0-3.5 1.2-4 3.5L6.5 20M5 10h7M14 12l6 7M20 12l-6 7',

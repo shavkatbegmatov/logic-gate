@@ -30,7 +30,7 @@ describe('yutuqlar', () => {
   it('barcha darajalar 3 ★ bilan — kampaniya yutuqlarining hammasi', () => {
     const s = { ...empty, progress: solved(levels.map((l) => l.id)) };
     const got = doneIds(s);
-    for (const id of ['first', 'stars-half', 'stars-all', 'independent', 'nand-master']) expect(got).toContain(id);
+    for (const id of ['first', 'stars-half', 'stars-all', 'independent', 'nand-master', 'nor-master']) expect(got).toContain(id);
     expect(got.filter((id) => id.startsWith('chapter-'))).toHaveLength(chapters.length);
   });
 

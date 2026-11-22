@@ -180,6 +180,11 @@ DNS: domenlar eskiz.uz da (ns1/ns2.eskiz.uz), `logic.noesis.uz` — A yozuv `170
 
 Havola rasmi `web/public/og.png` (1200×630) va Telegram ilova rasmi `deploy/telegram/app-640x360.png` — `web/scripts/og.html` dan headless Chrome skrinshoti (buyruqlar faylning boshida). Ilova ikonkalari (`web/public/icons/`) — `web/scripts/icons.html` dan, belgi `web/public/favicon.svg` bilan bir xil. Telegram rasmni manzili bo'yicha keshlaydi, shuning uchun rasm o'zgarganda `web/index.html` va `web/scripts/pages.mjs` dagi `og.png?v=…` ni oshiring va havolani @WebpageBot'ga yuboring.
 
+Rasmlar o'zgargandan keyin (deploy tugagach) qo'lda qilinadigan ikki ish:
+
+1. **Telegram ilova rasmi (BotFather).** Telegram'da @BotFather → `/myapps` → `@LogicGateUzBot` → ilova (`play`) → **Edit Photo** → `deploy/telegram/app-640x360.png` ni rasm sifatida yuboring (640×360; siqilgan «photo» ham bo'ladi). Bu rasm `t.me/LogicGateUzBot/play` havolasi va ilova ochilish oynasida ko'rinadi.
+2. **Havola oldidagi rasm (@WebpageBot).** Telegram havolalar ko'rinishini (rasm, sarlavha, tavsif) o'z keshida saqlaydi. @WebpageBot ga `https://logic.noesis.uz` ni yuboring (qo'llanma sahifalari ham ulashilgan bo'lsa — ularning manzillarini ham, bittadan); bot «Link preview was updated» desa, yangi ko'rinish olindi. Eski xabarlardagi ko'rinish darhol o'zgarmasligi mumkin — yangi yuborilgan havolalarda yangisi chiqadi.
+
 ### Zaxira nusxa (Coolify)
 
 Server o'zi har kuni soat 03:00 da (Toshkent; `LG_BACKUP_HOUR=22` — UTC) bazaning gzip qilingan nusxasini `/data/backups/logicgate-YYYY-MM-DD.db.gz` ga yozadi (sana UTC bo'yicha), oxirgi 7 tasi saqlanadi (`LG_BACKUP_KEEP`). Ishga tushganda oxirgi 24 soatda nusxa bo'lmasa, bir daqiqadan keyin darhol oladi. Konteynerda shell yo'q, shuning uchun Coolify Scheduled Tasks emas, serverning ichki rejalashtiruvchisi ishlatiladi.

@@ -63,6 +63,15 @@ export const ACHIEVEMENTS: Achievement[] = [
       return [count(list, (l) => s.progress[l.id]?.stars === 3), list.length];
     },
   },
+  {
+    id: 'nor-master',
+    icon: 'nor',
+    title: () => a().norMaster.title, text: () => a().norMaster.text,
+    measure: (s) => {
+      const list = chapterLevels('nor');
+      return [count(list, (l) => s.progress[l.id]?.stars === 3), list.length];
+    },
+  },
   { id: 'daily-first', icon: 'calendar', title: () => a().dailyFirst.title, text: () => a().dailyFirst.text, measure: (s) => [Math.min(1, Object.keys(s.daily).length), 1] },
   {
     id: 'daily-perfect',
