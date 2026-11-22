@@ -34,6 +34,9 @@ const SIZES = [
   // Telefon: barmoq bilan bosiladi, aylantirish chizig'i joy olmaydi (mobile).
   { id: 'phone', label: 'telefon', width: 375, height: 812, mobile: true },
   { id: 'desktop', label: 'kompyuter', width: 1280, height: 800, mobile: false },
+  // Eng tor telefon (eski kichik iPhone, arzon Android): uzun ruscha so'zlar faqat shu yerda chegaradan chiqardi
+  // (2.18.7: «Darajalar» dagi bo'lim sarlavhasi va plitka). Ranglar yuqorida tekshiriladi — bitta uslub yetarli.
+  { id: 'narrow', label: 'tor', width: 320, height: 640, mobile: true, themes: ['pcb'] },
 ];
 /** ready — ekran chizilganini bildiradigan element (alohida bo'lakda yuklanadigan ekranlar kechroq chiqadi). */
 const SCREENS = [
@@ -746,6 +749,7 @@ async function main() {
         for (const size of opt.sizes) {
           const backgrounds = new Map();
           for (const theme of opt.themes) {
+            if (size.themes && !size.themes.includes(theme)) continue;
             const t0 = Date.now();
             const result = await run(cdp, server, opt, lang, theme, size);
             checks += result.checked;

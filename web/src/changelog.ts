@@ -18,6 +18,12 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.18.7',
+    date: '2026-11-22',
+    uz: ["Eng tor telefonlarda (320 px) rus tilida «Darajalar» ekranidagi uzun so'zlar endi karta va daraja plitkasidan chiqib ketmaydi: bo'lim yulduzlari sarlavha ostiga tushadi."],
+    ru: ['На самых узких телефонах (320 px) длинные слова на экране «Уровни» больше не вылезают за карточку и плитку уровня: звёзды главы переносятся под заголовок.'],
+  },
+  {
     version: '2.18.6',
     date: '2026-11-22',
     uz: ["3D rejim telefonni kamroq qizdiradi va batareyani tejaydi: sxema o'zgarmay turganda maydon qayta-qayta chizilmaydi."],

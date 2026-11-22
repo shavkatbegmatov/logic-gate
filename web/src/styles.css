@@ -1463,14 +1463,33 @@ input[type='date']:focus {
 
 .chapter header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 6px 12px;
 }
 
 .chapter header > div {
   display: flex;
   gap: 12px;
+  /* Uzun so'zli tavsif (ruschada «последовательный») yulduzlar hisobini karta chetidan chiqarib yuborardi.
+     Matnga kamida 200 px: 320 px telefonda yulduzlar sarlavha ostiga tushadi, kengroqda — o'ngda qoladi. */
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.chapter header > div > div {
+  min-width: 0;
+}
+
+/* Ruscha uzun so'z plitka va karta chegarasidan chiqmasin: bo'g'in ko'chiriladi (<html lang> — i18n.ts;
+   iOS/Telegram — -webkit-), lug'ati yo'q brauzerda — so'z sig'magan joyidan bo'linadi. */
+.chapter h2,
+.chapter p,
+.level-title {
+  overflow-wrap: anywhere;
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 
 .chapter h2 {

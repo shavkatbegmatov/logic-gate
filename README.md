@@ -113,7 +113,7 @@ cd web
 pnpm test
 ```
 
-Brauzerdagi tutun testi — har mavzuda (4 ta AAA uslubi + Plata, Haqiqiy plata, Daftar, Chizma), telefon (375×812) va kompyuter (1280×800) o'lchamida asosiy ekranlar buzilmay ochilishini tekshiradi:
+Brauzerdagi tutun testi — har mavzuda (4 ta AAA uslubi + Plata, Haqiqiy plata, Daftar, Chizma), telefon (375×812) va kompyuter (1280×800) o'lchamida, eng tor telefonda (320×640) esa bitta uslubda (Sanoat PCB) asosiy ekranlar buzilmay ochilishini tekshiradi:
 
 ```bash
 cd web
