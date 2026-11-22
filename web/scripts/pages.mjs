@@ -263,7 +263,7 @@ function shellHtml(g, lang, ctx, ld, body) {
 <meta property="og:title" content="${esc(page.h1)}">
 <meta property="og:description" content="${esc(page.description)}">
 <meta property="og:url" content="${esc(url)}">
-<meta property="og:image" content="${esc(ctx.site)}/og.png?v=4">
+<meta property="og:image" content="${esc(ctx.site)}/og.png?v=5">
 <meta property="og:locale" content="${c.locale}">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">${jsonLd(ld(page, url))}</script>
