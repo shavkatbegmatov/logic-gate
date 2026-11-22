@@ -84,6 +84,18 @@
           "description": "Схемы с памятью на практике: кнопка, турникет, счётчик и последовательный сумматор."
         }
       }
+    },
+    {
+      "id": "nor",
+      "title": "Faqat NOR",
+      "description": "NOR ham universal element: «Apollon» kemasining bort kompyuteri deyarli butunlay NOR elementlaridan yig'ilgan.",
+      "unlockStars": 76,
+      "i18n": {
+        "ru": {
+          "title": "Только NOR",
+          "description": "NOR тоже универсален: бортовой компьютер «Аполлона» собран почти целиком из элементов NOR."
+        }
+      }
     }
   ],
   "levels": [
@@ -2267,6 +2279,234 @@
           "title": "Последовательный сумматор",
           "task": "Два числа приходят побитно, начиная с младшего бита: на каждом такте A и B — очередные биты. S — соответствующий бит суммы, а перенос прибавляется к битам следующего такта. В начале перенос 0.",
           "hint": "Это полный сумматор и один D-триггер, хранящий его перенос: выход переноса — на триггер, а триггер — на третий вход сумматора."
+        }
+      }
+    },
+    {
+      "id": "r1",
+      "chapter": "nor",
+      "title": "NOR dan NOT",
+      "task": "Faqat NOR yordamida Q = NOT A ni hosil qiling.",
+      "hint": "NOR ning ikkala kirishiga bir xil signal bersangiz nima bo'ladi?",
+      "inputs": [
+        "A"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "NOR"
+      ],
+      "goal": 1,
+      "target": {
+        "Q": "10"
+      },
+      "hints": {
+        "gates": {
+          "NOR": 1
+        },
+        "first": [
+          "NOR",
+          "A",
+          "A"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "NOT из NOR",
+          "task": "Получите Q = NOT A, используя только NOR.",
+          "hint": "Что будет, если подать один и тот же сигнал на оба входа NOR?"
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "chapter": "nor",
+      "title": "NOR dan OR",
+      "task": "Faqat NOR yordamida Q = A OR B ni hosil qiling.",
+      "hint": "NOR — bu teskari OR. Uning chiqishini yana bitta NOR bilan teskarisiga aylantiring.",
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "NOR"
+      ],
+      "goal": 2,
+      "target": {
+        "Q": "0111"
+      },
+      "hints": {
+        "gates": {
+          "NOR": 2
+        },
+        "first": [
+          "NOR",
+          "A",
+          "B"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "OR из NOR",
+          "task": "Получите Q = A OR B, используя только NOR.",
+          "hint": "NOR — это OR с инверсией. Инвертируйте его выход ещё одним NOR."
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "chapter": "nor",
+      "title": "NOR dan AND",
+      "task": "Faqat NOR yordamida Q = A AND B ni hosil qiling.",
+      "hint": "De Morgan qonuni: A AND B = NOT(NOT A OR NOT B) — ya'ni NOR(NOT A, NOT B).",
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "NOR"
+      ],
+      "goal": 3,
+      "target": {
+        "Q": "0001"
+      },
+      "hints": {
+        "gates": {
+          "NOR": 3
+        },
+        "first": [
+          "NOR",
+          "A",
+          "A"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "AND из NOR",
+          "task": "Получите Q = A AND B, используя только NOR.",
+          "hint": "Закон де Моргана: A AND B = NOT(NOT A OR NOT B) — то есть NOR(NOT A, NOT B)."
+        }
+      }
+    },
+    {
+      "id": "r4",
+      "chapter": "nor",
+      "title": "NOR dan XNOR",
+      "task": "Faqat NOR yordamida Q = A XNOR B ni hosil qiling: A va B teng bo'lsa Q = 1.",
+      "hint": "NAND dan XOR qanday yig'ilgan bo'lsa, xuddi shunday: birinchi NOR(A, B) natijasini A va B bilan alohida-alohida NOR qiling, keyin ikkala natijani yana NOR qiling.",
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "NOR"
+      ],
+      "goal": 4,
+      "target": {
+        "Q": "1001"
+      },
+      "hints": {
+        "gates": {
+          "NOR": 4
+        },
+        "first": [
+          "NOR",
+          "A",
+          "B"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "XNOR из NOR",
+          "task": "Получите Q = A XNOR B, используя только NOR: Q = 1, когда A и B равны.",
+          "hint": "Так же, как XOR из NAND: результат первого NOR(A, B) соедините через NOR отдельно с A и с B, затем оба результата — ещё одним NOR."
+        }
+      }
+    },
+    {
+      "id": "r5",
+      "chapter": "nor",
+      "title": "NOR dan XOR",
+      "task": "Faqat NOR yordamida Q = A XOR B ni hosil qiling.",
+      "hint": "XNOR ni yig'ing va uni teskarisiga aylantiring. NOR bilan XOR ga kamroq element yetmaydi.",
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "NOR"
+      ],
+      "goal": 5,
+      "target": {
+        "Q": "0110"
+      },
+      "hints": {
+        "gates": {
+          "NOR": 5
+        },
+        "first": [
+          "NOR",
+          "A",
+          "B"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "XOR из NOR",
+          "task": "Получите Q = A XOR B, используя только NOR.",
+          "hint": "Соберите XNOR и инвертируйте его. Меньшим числом NOR XOR не собрать."
+        }
+      }
+    },
+    {
+      "id": "r6",
+      "chapter": "nor",
+      "title": "NOR dan multipleksor",
+      "task": "Faqat NOR yordamida: S = 0 bo'lsa Q = A, S = 1 bo'lsa Q = B.",
+      "hint": "Multipleksor = (A OR S) AND (B OR NOT S). Ketma-ket ikki qavat NOR aynan \"OR, keyin AND\" vazifasini bajaradi.",
+      "inputs": [
+        "A",
+        "B",
+        "S"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "gates": [
+        "NOR"
+      ],
+      "goal": 4,
+      "target": {
+        "Q": "00011011"
+      },
+      "hints": {
+        "gates": {
+          "NOR": 4
+        },
+        "first": [
+          "NOR",
+          "S",
+          "S"
+        ]
+      },
+      "i18n": {
+        "ru": {
+          "title": "Мультиплексор из NOR",
+          "task": "Используя только NOR: при S = 0 Q = A, при S = 1 Q = B.",
+          "hint": "Мультиплексор = (A OR S) AND (B OR NOT S). Два слоя NOR подряд работают как «сначала OR, потом AND»."
         }
       }
     }

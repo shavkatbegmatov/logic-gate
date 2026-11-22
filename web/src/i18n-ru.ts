@@ -190,7 +190,7 @@ export const ru: Dict = {
     copyManual: 'Не удалось скопировать автоматически. Текст выделен — скопируйте его вручную.',
     level: (num: number, title: string, stars: string, gates: number, goal: number) =>
       `Logic Gate · уровень ${num} «${title}»\n${stars} — ${gates} эл. (цель: ${goal})\nПопробуй и ты!`,
-    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 42 уровня, бесплатно!',
+    inviteText: 'Logic Gate — игра-головоломка: собирай схемы из логических элементов. 48 уровней, бесплатно!',
   },
 
   hints: {

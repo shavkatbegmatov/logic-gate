@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS, evaluate, type Snapshot } from './achievements';
-import { chapterLevels, levels } from './levels';
+import { chapterLevels, chapters, levels } from './levels';
 
 const empty: Snapshot = { progress: {}, daily: {}, streak: 0, hints: {}, custom: { solved: {}, created: 0 } };
 const solved = (ids: string[], stars = 3) =>
@@ -31,7 +31,7 @@ describe('yutuqlar', () => {
     const s = { ...empty, progress: solved(levels.map((l) => l.id)) };
     const got = doneIds(s);
     for (const id of ['first', 'stars-half', 'stars-all', 'independent', 'nand-master']) expect(got).toContain(id);
-    expect(got.filter((id) => id.startsWith('chapter-'))).toHaveLength(7);
+    expect(got.filter((id) => id.startsWith('chapter-'))).toHaveLength(chapters.length);
   });
 
   it('maslahat ishlatilgan darajalar «Mustaqil» ga hisoblanmaydi', () => {

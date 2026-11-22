@@ -18,6 +18,18 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.19.0',
+    date: '2026-11-23',
+    uz: [
+      "Yangi 8-bo'lim «Faqat NOR»: 6 ta daraja — faqat NOR elementlaridan NOT, OR, AND, XNOR, XOR va multipleksor yig'ing. Endi jami 48 daraja.",
+      "Bo'lim xulosasida — nega NOR ham universal va Oyga uchgan «Apollon» kemasining kompyuteri bunga qanday misol.",
+    ],
+    ru: [
+      'Новая 8-я глава «Только NOR»: 6 уровней — соберите NOT, OR, AND, XNOR, XOR и мультиплексор только из элементов NOR. Теперь всего 48 уровней.',
+      'В итогах главы — почему NOR тоже универсален и при чём тут компьютер «Аполлона», летавшего к Луне.',
+    ],
+  },
+  {
     version: '2.18.13',
     date: '2026-11-23',
     uz: ["3D rejimda maydon tinch turganda telefon protsessori ham to'liq dam oladi — batareya yanada tejaladi."],

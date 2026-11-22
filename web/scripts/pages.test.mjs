@@ -61,7 +61,17 @@ describe("qo'llanma sahifalari", () => {
       const ld = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/)[1]);
       expect(ld['@graph'][0].inLanguage).toBe(c.lang);
     }
-    expect(files['ru/logicheskie-elementy/index.html']).toContain(`${pack.chapters.length} глав, ${pack.levels.length} уровня:`);
+    // Ruscha sonlar bilan so'z shakli: 1 уровень, 2–4 уровня, 5–20 уровней (42 da «уровня», 48 da «уровней»).
+    const ru3 = (n, one, few, many) => {
+      const d = n % 10;
+      const h = n % 100;
+      return d === 1 && h !== 11 ? one : d >= 2 && d <= 4 && (h < 12 || h > 14) ? few : many;
+    };
+    const ch = pack.chapters.length;
+    const lv = pack.levels.length;
+    expect(files['ru/logicheskie-elementy/index.html']).toContain(
+      `${ch} ${ru3(ch, 'глава', 'главы', 'глав')}, ${lv} ${ru3(lv, 'уровень', 'уровня', 'уровней')}:`,
+    );
   });
 
   it("robots.txt, sitemap va o'yindagi havolalar", () => {

@@ -199,7 +199,7 @@ export const uz = {
       `Logic Gate · ${num}-daraja «${title}»
 ${stars} — ${gates} ta element (maqsad: ${goal})
 Sen ham yechib ko'r!`,
-    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 42 daraja, bepul!",
+    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 48 daraja, bepul!",
   },
 
   hints: {

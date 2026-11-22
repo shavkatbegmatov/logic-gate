@@ -206,6 +206,37 @@ const uz: Record<string, Lesson> = {
       },
     ],
   },
+  nor: {
+    title: 'NOR — ikkinchi universal element',
+    blocks: [
+      {
+        p: "NOR — teskari OR: kirishlardan hech biri 1 bo'lmagandagina 1 beradi. NAND kabi u ham universal: faqat NOR lardan istalgan sxemani yig'ish mumkin.",
+      },
+      { h: 'Asosiy amallar NOR orqali' },
+      { f: ['¬A    = NOR(A, A)', 'A ∨ B = ¬NOR(A, B)', 'A ∧ B = NOR(¬A, ¬B)'] },
+      {
+        p: "NAND bilan solishtiring: u yerda AND arzon (2 ta), OR qimmat (3 ta); NOR da aksincha — OR 2 ta, AND 3 ta. De Morgan qonuni ikkalasini bir-biriga ko'zgudek aks ettiradi.",
+      },
+      { h: 'Nechta NOR kerak' },
+      {
+        table: [
+          ['Amal', 'NOR'],
+          ['NOT', '1'],
+          ['OR', '2'],
+          ['AND', '3'],
+          ['XNOR', '4'],
+          ['XOR', '5'],
+          ['MUX', '4'],
+        ],
+      },
+      {
+        p: "NAND da XOR 4 ta bo'lgani kabi, NOR da 4 ta element XNOR beradi; XOR uchun uni yana bittasi bilan teskarisiga aylantirish kerak. Bu sonlar barcha sxemalarni birma-bir tekshirib isbotlangan — kamroq element bilan bo'lmaydi.",
+      },
+      {
+        tip: "1969-yilda Oyga uchgan «Apollon» kemasining bort kompyuteri deyarli butunlay bir xil mikrosxemalardan yig'ilgan — har birida ikkita 3 kirishli NOR. Bir xil katakchalardan qurish ishlab chiqarishni oson va ishonchli qiladi.",
+      },
+    ],
+  },
 };
 
 const ru: Record<string, Lesson> = {
@@ -399,6 +430,37 @@ const ru: Record<string, Lesson> = {
       },
       {
         tip: 'Кодируйте состояния с оглядкой на выход: если выход — это прямо значение триггера (Лампа с кнопкой: Q = q), для выхода не нужен отдельный элемент.',
+      },
+    ],
+  },
+  nor: {
+    title: 'NOR — второй универсальный элемент',
+    blocks: [
+      {
+        p: 'NOR — это OR с инверсией: даёт 1, только когда ни один вход не равен 1. Как и NAND, он универсален: из одних NOR можно собрать любую схему.',
+      },
+      { h: 'Основные операции через NOR' },
+      { f: ['¬A    = NOR(A, A)', 'A ∨ B = ¬NOR(A, B)', 'A ∧ B = NOR(¬A, ¬B)'] },
+      {
+        p: 'Сравните с NAND: там AND дешёвый (2), а OR дорогой (3); у NOR наоборот — OR за 2, AND за 3. Закон де Моргана отражает их друг в друге, как в зеркале.',
+      },
+      { h: 'Сколько нужно NOR' },
+      {
+        table: [
+          ['Операция', 'NOR'],
+          ['NOT', '1'],
+          ['OR', '2'],
+          ['AND', '3'],
+          ['XNOR', '4'],
+          ['XOR', '5'],
+          ['MUX', '4'],
+        ],
+      },
+      {
+        p: 'Как из NAND XOR собирается из 4 элементов, так из 4 NOR получается XNOR; для XOR его нужно инвертировать ещё одним. Эти числа доказаны полным перебором всех схем — меньшим числом элементов не обойтись.',
+      },
+      {
+        tip: 'Бортовой компьютер «Аполлона», летавшего к Луне в 1969 году, собран почти целиком из одинаковых микросхем — в каждой по два трёхвходовых NOR. Одинаковые ячейки делают производство проще и надёжнее.',
       },
     ],
   },

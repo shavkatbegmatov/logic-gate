@@ -23,8 +23,8 @@ const levels = (pack as unknown as LevelPack).levels;
 const sols = solutions as Record<string, Circuit>;
 
 describe('darajalar', () => {
-  it('42 ta daraja va har birida yechim bor', () => {
-    expect(levels).toHaveLength(42);
+  it('48 ta daraja va har birida yechim bor', () => {
+    expect(levels).toHaveLength(48);
     for (const l of levels) expect(sols[l.id], l.id).toBeDefined();
   });
 
