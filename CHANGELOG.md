@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.19.3 — 2026-11-23
+
+- Avval boshqa qurilmada yoki Telegram'da o'ynaganlar endi taxallus so'raladigan joyning o'zida (daraja yechilgach, reyting, bosh sahifa) «Avval o'ynaganmisiz? Tiklash kodini kiriting» orqali o'z profiliga qaytadi — reytingda bitta odamning ismi ko'payib ketmaydi.
+
 ## 2.19.2 — 2026-11-23
 
 - Bir necha yangilanishdan keyin qaytganingizda bosh sahifadagi xabar endi eng muhim yangilikni (masalan, yangi bo'limni) ko'rsatadi, faqat oxirgi kichik tuzatishni emas.

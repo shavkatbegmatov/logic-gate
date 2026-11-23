@@ -18,7 +18,7 @@ import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
 import { AAA_THEMES, activeBoardMode, BOARD_MODES, boardModeForTheme, CLASSIC_THEMES, isAaaTheme, MOTIONS, systemReducedMotion, type BoardMode, type Theme } from '../theme';
 import { APP_VERSION } from '../version';
-import { clearPlayerData, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
+import { clearPlayerData, codeComplete, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
 
 
 export function Settings() {
@@ -122,7 +122,8 @@ export function Settings() {
                 <p class="muted">{t.settings.codeText}</p>
               </>
             ) : (
-              <JoinForm compact />
+              // Kod bilan tiklash — pastdagi alohida kartada.
+              <JoinForm compact restore={false} />
             )}
           </section>
 
@@ -145,7 +146,7 @@ export function Settings() {
                 onInput={(e) => (code.value = (e.currentTarget as HTMLInputElement).value)}
                 aria-label={t.settings.code}
               />
-              <button class="btn" disabled={busy.value || code.value.replace(/[^0-9a-z]/gi, '').length !== 16}>
+              <button class="btn" disabled={busy.value || !codeComplete(code.value)}>
                 {t.settings.restoreButton}
               </button>
             </form>

@@ -936,6 +936,17 @@ input[type='date']:focus {
   margin-top: 4px;
 }
 
+/* «Menda tiklash kodi bor» / «Yangi profil ochish» — shakl ostida, ko'zga tashlanmaydigan havola. */
+.join .join-switch {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.join .code-input {
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+}
+
 .code-box {
   display: flex;
   align-items: center;

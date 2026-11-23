@@ -90,10 +90,7 @@ export function ClassScreen({ code: raw }: { code: string }) {
                   {t.classes.join}
                 </button>
               ) : (
-                <>
-                  <p>{t.classes.joinNeedsProfile}</p>
-                  <JoinForm compact onJoined={join} />
-                </>
+                <JoinForm compact hint={t.classes.joinNeedsProfile} onJoined={join} />
               )}
             </section>
           )}

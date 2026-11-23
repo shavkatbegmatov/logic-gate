@@ -39,6 +39,11 @@ export function formatCode(code: string): string {
   return (code.replace(/[^0-9a-z]/gi, '').toUpperCase().match(/.{1,4}/g) ?? []).join('-');
 }
 
+/** Kod to'liq kiritilganmi (16 belgi; bo'shliq va chiziqchalar hisobga olinmaydi) — «Tiklash» tugmasi uchun. */
+export function codeComplete(code: string): boolean {
+  return code.replace(/[^0-9a-z]/gi, '').length === 16;
+}
+
 /**
  * Qurilmadagi o'yinchi ma'lumotlari: natijalar, qoralamalar, kunlik masalalar, yutuqlar, vazifalar,
  * o'qilgan xulosalar va sertifikatdagi ism (keyingi o'quvchiga oldingisining haqiqiy ismi chiqmasin).

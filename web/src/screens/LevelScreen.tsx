@@ -171,10 +171,7 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
             </>
           )
         ) : (
-          <>
-            <p class="muted">{t.success.joinHint}</p>
-            <JoinForm compact onJoined={onJoined} />
-          </>
+          <JoinForm compact hint={t.success.joinHint} onJoined={onJoined} />
         )}
       </div>
 

@@ -73,8 +73,7 @@ export function Leaderboard({ tab }: { tab: Tab }) {
           )}
           {!profile.value && (
             <div class="card">
-              <p class="muted">{t.leaderboard.notJoined}</p>
-              <JoinForm compact />
+              <JoinForm compact hint={t.leaderboard.notJoined} />
             </div>
           )}
           {failed.value ? (

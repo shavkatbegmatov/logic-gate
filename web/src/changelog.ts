@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.19.3',
+    date: '2026-11-23',
+    uz: [
+      "Avval boshqa qurilmada yoki Telegram'da o'ynaganlar endi taxallus so'raladigan joyning o'zida (daraja yechilgach, reyting, bosh sahifa) «Avval o'ynaganmisiz? Tiklash kodini kiriting» orqali o'z profiliga qaytadi — reytingda bitta odamning ismi ko'payib ketmaydi.",
+    ],
+    ru: [
+      'Кто уже играл на другом устройстве или в Telegram, теперь может вернуться в свой профиль прямо там, где просят никнейм (после решения уровня, в рейтинге, на главной): «Уже играли? Введите код восстановления» — имя одного игрока больше не размножается в рейтинге.',
+    ],
+  },
+  {
     version: '2.19.2',
     date: '2026-11-23',
     uz: ["Bir necha yangilanishdan keyin qaytganingizda bosh sahifadagi xabar endi eng muhim yangilikni (masalan, yangi bo'limni) ko'rsatadi, faqat oxirgi kichik tuzatishni emas."],

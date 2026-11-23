@@ -37,7 +37,7 @@ vi.mock('./api', async (orig) => {
 vi.mock('./daily', async (orig) => ({ ...(await orig<typeof import('./daily')>()), syncDaily: async () => {} }));
 
 const { profile, progress } = await import('./state');
-const { formatCode, newProfileCode, restoreProfile, syncProgress } = await import('./sync');
+const { codeComplete, formatCode, newProfileCode, restoreProfile, syncProgress } = await import('./sync');
 
 const circuit = { gates: [], wires: [] };
 const result = (gates: number, synced: boolean) => ({ stars: 3, gates, circuit, at: 1, synced });
@@ -109,5 +109,12 @@ describe('tiklash kodi: umumiy kompyuter', () => {
   it('kod ko\'rinishi', () => {
     expect(formatCode(' abcd efgh-ijkl mnop ')).toBe('ABCD-EFGH-IJKL-MNOP');
     expect(formatCode('')).toBe('');
+  });
+
+  it("kod to'liqmi — bo'shliq va chiziqchalar hisobga olinmaydi", () => {
+    expect(codeComplete('abcd efgh-ijkl mnop')).toBe(true);
+    expect(codeComplete('ABCD-EFGH-IJKL-MNO')).toBe(false);
+    expect(codeComplete('ABCD-EFGH-IJKL-MNOPQ')).toBe(false);
+    expect(codeComplete('')).toBe(false);
   });
 });

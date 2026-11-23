@@ -208,10 +208,7 @@ function DailySuccess({ info, level, result, onAgain, onJoined }: {
             </>
           )
         ) : (
-          <>
-            <p class="muted">{t.daily.joinHint}</p>
-            <JoinForm compact onJoined={onJoined} />
-          </>
+          <JoinForm compact hint={t.daily.joinHint} onJoined={onJoined} />
         )}
       </div>
 
