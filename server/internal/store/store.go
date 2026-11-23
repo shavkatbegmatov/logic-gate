@@ -482,6 +482,34 @@ func (s *Store) RenamePlayer(ctx context.Context, id, nickname string) error {
 	return nil
 }
 
+// DeletePlayer o'yinchini butunlay o'chiradi (masalan, bir odamning ortiqcha profili): yechimlari, kunlik
+// natijalari va sinf a'zoligi ham o'chadi (ON DELETE CASCADE), Telegram chatidagi bog'lanish uziladi.
+// O'chirilgan o'yinchi qatori (taxallus, ★, daraja) qaytadi; topilmasa ErrNotFound.
+func (s *Store) DeletePlayer(ctx context.Context, id string) (PlayerRow, error) {
+	var r PlayerRow
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return r, err
+	}
+	defer tx.Rollback()
+	var created int64
+	err = tx.QueryRowContext(ctx,
+		`SELECT p.id, p.nickname, COALESCE(SUM(s.stars), 0), COUNT(s.level_id), p.created_at
+		 FROM players p LEFT JOIN solutions s ON s.player_id = p.id
+		 WHERE p.id = ? GROUP BY p.id`, id).Scan(&r.ID, &r.Nickname, &r.Stars, &r.Solved, &created)
+	if errors.Is(err, sql.ErrNoRows) {
+		return r, ErrNotFound
+	}
+	if err != nil {
+		return r, err
+	}
+	r.Created = time.Unix(created, 0)
+	if _, err := tx.ExecContext(ctx, `DELETE FROM players WHERE id = ?`, id); err != nil {
+		return r, err
+	}
+	return r, tx.Commit()
+}
+
 // pruneBatch — bitta DELETE da ko'pi bilan shuncha o'yinchi: yagona ulanish uzoq band bo'lmasin.
 const pruneBatch = 500
 

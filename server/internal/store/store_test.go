@@ -169,6 +169,56 @@ func TestLeaderboardAndRank(t *testing.T) {
 }
 
 // Tashlab ketilgan bo'sh profillar o'chadi; biror narsasi bor yoki yaqinda kirgan o'yinchiga tegilmaydi.
+func TestDeletePlayer(t *testing.T) {
+	st := testStore(t)
+	ctx := t.Context()
+	players(t, st, 2)
+	solve(t, st, "p1", "b1", 1, 3)
+	solve(t, st, "p1", "b2", 2, 2)
+	solve(t, st, "p2", "b1", 1, 3)
+	if _, _, err := st.SaveDaily(ctx, "p1", 20400, Solution{Gates: 3, Stars: 3, Circuit: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.CreateClass(ctx, "ABC123", "TEST sinf", []byte("TEST_KEY_HASH")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.JoinClass(ctx, "ABC123", "p1", 10); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.UpsertChat(ctx, 1, "uz"); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.LinkChat(ctx, 1, "p1"); err != nil {
+		t.Fatal(err)
+	}
+
+	r, err := st.DeletePlayer(ctx, "p1")
+	if err != nil || r.Nickname != "TEST_USER_1" || r.Stars != 5 || r.Solved != 2 {
+		t.Fatalf("o'chirish: %+v %v", r, err)
+	}
+	// Bog'langan hamma narsa ketdi, boshqa o'yinchiga tegilmadi.
+	for _, q := range []string{
+		`SELECT COUNT(*) FROM players WHERE id = 'p1'`,
+		`SELECT COUNT(*) FROM solutions WHERE player_id = 'p1'`,
+		`SELECT COUNT(*) FROM daily_solutions WHERE player_id = 'p1'`,
+		`SELECT COUNT(*) FROM class_members WHERE player_id = 'p1'`,
+	} {
+		var n int
+		if err := st.db.QueryRowContext(ctx, q).Scan(&n); err != nil || n != 0 {
+			t.Fatalf("%s: %d %v", q, n, err)
+		}
+	}
+	if c, err := st.Chat(ctx, 1); err != nil || c.PlayerID != "" {
+		t.Fatalf("chat: %+v %v", c, err)
+	}
+	if p, err := st.PlayerByToken(ctx, tokenHash(2)); err != nil || p.ID != "p2" {
+		t.Fatalf("p2: %+v %v", p, err)
+	}
+	if _, err := st.DeletePlayer(ctx, "p1"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("qayta o'chirish: %v", err)
+	}
+}
+
 func TestPruneEmptyPlayers(t *testing.T) {
 	st := testStore(t)
 	ctx := t.Context()

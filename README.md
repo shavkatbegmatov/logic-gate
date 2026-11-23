@@ -223,6 +223,13 @@ docker exec "$C" /app/logicgate players Ali        # taxallus bo'yicha qidirish
 docker exec "$C" /app/logicgate rename <id> "O'yinchi 17"
 ```
 
+Bir odamning ortiqcha profillari (yangi qurilmada kod o'rniga taxallus kiritib ochilgan) — avval zaxira nusxa, keyin `players` ro'yxatidagi id bo'yicha o'chiriladi. Yechimlari, kunlik natijalari va sinf a'zoligi ham o'chadi, qaytarib bo'lmaydi (faqat zaxira nusxadan). Taxallus bo'yicha o'chirilmaydi — bir xil ismli boshqa o'quvchi bo'lishi mumkin:
+
+```bash
+docker exec "$C" /app/logicgate backup
+docker exec "$C" /app/logicgate delete <id> [id...]
+```
+
 Reyting 15 soniya ichida yangilanadi.
 
 ## VPS'ga joylash (eskiz.uz)

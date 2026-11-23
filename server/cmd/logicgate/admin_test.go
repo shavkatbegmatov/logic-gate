@@ -45,4 +45,19 @@ func TestAdminCommands(t *testing.T) {
 	if !strings.Contains(out.String(), "Yangi Nom") {
 		t.Fatalf("nom o'zgarmadi:\n%s", out.String())
 	}
+
+	// delete: faqat id bo'yicha; topilmagan id xato beradi, lekin bori baribir o'chadi.
+	if err := cmdDelete(&out, db, nil); err == nil {
+		t.Fatal("id'siz delete qabul qilindi")
+	}
+	out.Reset()
+	err = cmdDelete(&out, db, []string{"aaa111", "yoq999"})
+	if err == nil || !strings.Contains(err.Error(), "yoq999") || !strings.Contains(out.String(), `o'chirildi: aaa111 "Yangi Nom"`) {
+		t.Fatalf("delete: %v\n%s", err, out.String())
+	}
+	out.Reset()
+	cmdPlayers(&out, db, nil)
+	if strings.Contains(out.String(), "aaa111") || !strings.Contains(out.String(), "jami: 1") {
+		t.Fatalf("o'chirilmadi:\n%s", out.String())
+	}
 }

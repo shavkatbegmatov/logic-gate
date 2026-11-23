@@ -80,10 +80,13 @@ func main() {
 			}
 			fmt.Println(path)
 			return
-		case "players", "rename":
+		case "players", "rename", "delete":
 			cmd := cmdPlayers
-			if os.Args[1] == "rename" {
+			switch os.Args[1] {
+			case "rename":
 				cmd = cmdRename
+			case "delete":
+				cmd = cmdDelete
 			}
 			if err := cmd(os.Stdout, dbPath, os.Args[2:]); err != nil {
 				fmt.Fprintln(os.Stderr, err)

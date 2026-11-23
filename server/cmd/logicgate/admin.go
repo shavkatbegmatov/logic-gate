@@ -4,6 +4,7 @@ package main
 //
 //	docker exec <konteyner> /app/logicgate players [qidiruv]
 //	docker exec <konteyner> /app/logicgate rename <id> <yangi taxallus>
+//	docker exec <konteyner> /app/logicgate delete <id> [id...]
 
 import (
 	"context"
@@ -64,5 +65,38 @@ func cmdRename(out io.Writer, dbPath string, args []string) error {
 		return err
 	}
 	fmt.Fprintf(out, "%s → %q (reyting 15 soniya ichida yangilanadi)\n", args[0], nick)
+	return nil
+}
+
+// cmdDelete o'yinchilarni id bo'yicha butunlay o'chiradi (bir odamning ortiqcha profillari). Faqat aniq id
+// qabul qilinadi — taxallus bo'yicha emas: bir xil ismli boshqa o'quvchi tasodifan o'chib ketmasin.
+// Topilmagan id xato beradi, lekin qolganlari baribir o'chiriladi.
+func cmdDelete(out io.Writer, dbPath string, args []string) error {
+	if len(args) == 0 {
+		return errors.New("foydalanish: logicgate delete <id> [id...] (id — `logicgate players` ro'yxatidan)")
+	}
+	st, err := store.Open(dbPath)
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	var missing []string
+	for _, id := range args {
+		r, err := st.DeletePlayer(ctx, id)
+		if errors.Is(err, store.ErrNotFound) {
+			missing = append(missing, id)
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "o'chirildi: %s %q (%d ★, %d daraja)\n", r.ID, r.Nickname, r.Stars, r.Solved)
+	}
+	fmt.Fprintln(out, "reyting 15 soniya ichida yangilanadi")
+	if len(missing) > 0 {
+		return fmt.Errorf("topilmadi: %s", strings.Join(missing, ", "))
+	}
 	return nil
 }
