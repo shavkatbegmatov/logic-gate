@@ -13,21 +13,29 @@ import { showToast } from './Toast';
  * har safar yangi profil ochardi — reytingda bir odamning ismi ko'payib ketardi.
  * hint — taxallus so'raladigan joydagi izoh (kod kiritilayotganda uning o'rniga kod haqidagi izoh chiqadi).
  * restore=false — kod bilan tiklash yonida alohida turibdi (Sozlamalar).
+ * startWithCode — avval kod maydoni (o'chirilgan profil o'rniga asosiysiga kirish); codeHint — kod maydoni
+ * izohi (standart — t.home.codeText); nickname — taxallus maydonidagi boshlang'ich ism.
  */
 export function JoinForm({
   compact = false,
   hint,
+  codeHint,
   restore = true,
+  startWithCode = false,
+  nickname = '',
   onJoined,
 }: {
   compact?: boolean;
   hint?: string;
+  codeHint?: string;
   restore?: boolean;
+  startWithCode?: boolean;
+  nickname?: string;
   onJoined?: () => void;
 }) {
-  const name = useSignal('');
+  const name = useSignal(nickname);
   const code = useSignal('');
-  const withCode = useSignal(false);
+  const withCode = useSignal(startWithCode);
   const busy = useSignal(false);
   const error = useSignal('');
   // Telegram bulutida profil bor-yo'qligi hali aniq emas yoki u tiklanmadi: yangi profil ochilsa,
@@ -106,7 +114,7 @@ export function JoinForm({
     <div class={`join${compact ? ' compact' : ''}`}>
       {!compact && <h2>{t.home.joinTitle}</h2>}
       {withCode.value ? (
-        <p class="muted">{t.home.codeText}</p>
+        <p class="muted">{codeHint ?? t.home.codeText}</p>
       ) : hint ? (
         <p class="muted">{hint}</p>
       ) : (

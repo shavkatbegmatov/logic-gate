@@ -3,7 +3,6 @@ import { signal } from '@preact/signals';
 import { resetAchievements } from './achievements';
 import { api, ApiError, type SolveResult } from './api';
 import { resetCustom } from './custom-store';
-import { showToast } from './components/Toast';
 import { resetDaily, syncDaily, unsyncRecentDaily } from './daily';
 import { t } from './i18n';
 import { resetLessons } from './lessons';
@@ -26,6 +25,9 @@ export function errorText(e: unknown): string {
 
 /** Yangi ochilgan profilning tiklash kodi — o'quvchi uni darhol ko'rib, yozib olsin (NewProfileCode). */
 export const newProfileCode = signal<string | null>(null);
+
+/** Server bilmaydigan (o'chirilgan) profilning taxallusi — o'quvchi kod bilan kirishi yoki yangisini ochishi kerak (LostProfile). */
+export const lostProfile = signal<string | null>(null);
 
 export async function createProfile(nickname: string) {
   const p = await api.createPlayer(nickname);
@@ -98,14 +100,15 @@ export function syncProgress(): Promise<void> {
   return syncing;
 }
 
-async function doSync(retried = false) {
+async function doSync() {
+  const asked = profile.value;
   let remote: Awaited<ReturnType<typeof api.progress>>['levels'];
   try {
     remote = (await api.progress()).levels;
   } catch (e) {
-    // Server profilni bilmaydi (zaxiradan tiklangan baza yoki uzoq vaqt bo'sh turgan profil o'chirilgan):
-    // shu taxallus bilan yangi profil ochiladi va natijalar unga qayta yuboriladi.
-    if (!retried && e instanceof ApiError && e.status === 401 && (await recreateProfile())) return doSync(true);
+    // Server profilni bilmaydi: dublikat sifatida o'chirilgan, uzoq vaqt bo'sh turib tozalangan yoki baza
+    // zaxiradan tiklangan. Kutish paytida boshqa profilga o'tilmagan bo'lsa — qurilma profilsiz qoladi.
+    if (e instanceof ApiError && e.status === 401 && asked && profile.value?.id === asked.id) return forgetLostProfile(asked.nickname);
     throw e;
   }
   const next = { ...progress.value };
@@ -144,25 +147,17 @@ async function doSync(retried = false) {
 }
 
 /**
- * Serverda yo'q profil o'rniga yangisi (shu taxallus bilan). Yangi tiklash kodi oynada ko'rsatiladi,
- * barcha natijalar va bugungi/kechagi kunlik masala qayta yuboriladi. Ochilmasa (taxallus endi qabul
- * qilinmaydi, aloqa yo'q) — false: qurilmadagi profil o'zgarmaydi.
+ * Serverda yo'q profil qurilmadan olib tashlanadi, natijalar esa joyida qoladi. Ilgari shu taxallus bilan
+ * yangisi jimgina ochilardi — o'chirilgan dublikat keyingi ochilishda reytingga qaytib kelardi. Endi
+ * o'quvchi o'zi tanlaydi (LostProfile oynasi): asosiy profilining kodi bilan kirsa — natijalar o'shanga
+ * qo'shiladi, yangisini ochsa — unga yuboriladi (server bilmaydigan «yuborilgan» natijalar doSync'da
+ * qayta yuboriladi, bugungi va kechagi kunlik masala — shu yerda belgilanadi).
  */
-async function recreateProfile(): Promise<boolean> {
-  const old = profile.value;
-  if (!old) return false;
-  try {
-    const p = await api.createPlayer(old.nickname);
-    if (profile.value?.id !== old.id) return false; // kutish paytida boshqa profilga o'tildi
-    profile.value = { id: p.id, nickname: p.nickname, code: p.code! };
-    newProfileCode.value = p.code!;
-    progress.value = Object.fromEntries(Object.entries(progress.value).map(([id, r]) => [id, { ...r, synced: false }]));
-    unsyncRecentDaily();
-    showToast(t.profileCode.recreated, 'error', 8000);
-    return true;
-  } catch {
-    return false;
-  }
+function forgetLostProfile(nickname: string) {
+  profile.value = null;
+  unsyncRecentDaily();
+  setMyTasks([]); // sinf a'zoligi profil bilan birga o'chgan
+  lostProfile.value = nickname;
 }
 
 /** Boshqa natijalarga ta'sir qilmaydigan xato: 4xx, lekin aloqa, kirish yoki cheklov emas. */

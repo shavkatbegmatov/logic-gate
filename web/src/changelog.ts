@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.20.1',
+    date: '2026-11-24',
+    uz: [
+      "Profilingiz serverda topilmasa (masalan, takroriy profil sifatida o'chirilgan bo'lsa), o'yin endi jimgina yangisini ochmaydi. «Profil topilmadi» oynasida asosiy profilingiz kodi bilan kirasiz — shu qurilmadagi natijalar unga qo'shiladi — yoki o'zingiz yangi profil ochasiz. Reytingda ismingiz qayta ko'payib ketmaydi.",
+    ],
+    ru: [
+      'Если вашего профиля нет на сервере (например, он удалён как дубликат), игра больше не создаёт новый молча. В окне «Профиль не найден» войдите по коду основного профиля — результаты с этого устройства добавятся к нему — или сами создайте новый. Имя в рейтинге больше не будет повторяться.',
+    ],
+  },
+  {
     version: '2.20.0',
     date: '2026-11-24',
     uz: [

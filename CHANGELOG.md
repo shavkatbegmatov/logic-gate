@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.20.1 — 2026-11-24
+
+- Profilingiz serverda topilmasa (masalan, takroriy profil sifatida o'chirilgan bo'lsa), o'yin endi jimgina yangisini ochmaydi. «Profil topilmadi» oynasida asosiy profilingiz kodi bilan kirasiz — shu qurilmadagi natijalar unga qo'shiladi — yoki o'zingiz yangi profil ochasiz. Reytingda ismingiz qayta ko'payib ketmaydi.
+
 ## 2.20.0 — 2026-11-24
 
 - Bosh sahifaning yuqorisida endi kim o'ynayotgani ko'rinadi: rangli avatar, taxallus, o'yinchi ID va reytingdagi o'rningiz. Bir xil ismli profillar ID va rangidan farqlanadi.

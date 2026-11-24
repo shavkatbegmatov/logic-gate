@@ -3276,8 +3276,13 @@ input[type='date']:focus {
   text-align: center;
 }
 
-.server-info .join .row {
+.server-info .join .row,
+.lost-profile .join .row {
   justify-content: center;
+}
+
+.lost-profile .join {
+  margin-top: 14px;
 }
 
 /* Yechimlar taqsimoti: element soni bo'yicha ustunlar, o'yinchining ustuni — asosiy rangda. */

@@ -197,7 +197,14 @@ export const uz = {
     text: "Bu — tiklash kodingiz. Uni daftaringizga yozib qo'ying: boshqa kompyuter yoki telefonda Sozlamalar → «Progressni tiklash» orqali shu kod bilan davom etasiz.",
     hint: "Kodni hech kimga bermang. U Sozlamalarda ham turadi.",
     ok: 'Yozib oldim',
-    recreated: "Eski profilingiz serverda topilmadi — shu taxallus bilan yangisi ochildi, natijalaringiz unga yuboriladi. Yangi kodni yozib oling.",
+  },
+
+  lostProfile: {
+    title: 'Profil topilmadi',
+    text: (name: string) => `«${name}» profili serverda yo'q — o'chirilgan bo'lishi mumkin. Natijalaringiz shu qurilmada saqlanib turibdi.`,
+    codeHint: "Asosiy profilingizning tiklash kodini kiriting — shu qurilmadagi natijalar unga qo'shiladi.",
+    newHint: "Kodingiz bo'lmasa — yangi profil oching, natijalar unga yuboriladi.",
+    later: 'Keyinroq',
   },
 
   crash: {

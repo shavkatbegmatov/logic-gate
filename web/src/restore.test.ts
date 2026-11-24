@@ -37,13 +37,17 @@ vi.mock('./api', async (orig) => {
 vi.mock('./daily', async (orig) => ({ ...(await orig<typeof import('./daily')>()), syncDaily: async () => {} }));
 
 const { profile, progress } = await import('./state');
-const { codeComplete, formatCode, newProfileCode, restoreProfile, syncProgress } = await import('./sync');
+const { codeComplete, createProfile, formatCode, lostProfile, newProfileCode, restoreProfile, syncInFlight, syncProgress } =
+  await import('./sync');
 
 const circuit = { gates: [], wires: [] };
 const result = (gates: number, synced: boolean) => ({ stars: 3, gates, circuit, at: 1, synced });
 
 beforeEach(() => {
   solved.length = 0;
+  delete players.CCCCCCCCCCCCCCCC;
+  lostProfile.value = null;
+  newProfileCode.value = null;
   players.AAAAAAAAAAAAAAAA = { id: 'ali', nickname: 'Ali', levels: [] };
   players.BBBBBBBBBBBBBBBB = {
     id: 'vali',
@@ -96,14 +100,51 @@ describe('tiklash kodi: umumiy kompyuter', () => {
     expect(solved).toEqual([{ by: 'ali', levelId: 'b1' }]);
   });
 
-  it('server profilni bilmasa — shu taxallus bilan yangisi ochiladi, kodi ko\'rsatiladi, natijalar unga ketadi', async () => {
+  describe("server profilni bilmasa (o'chirilgan dublikat)", () => {
     const built = { gates: [{ id: 'g1', type: 'NOT' as const, x: 0, y: 0 }], wires: [] };
-    profile.value = { id: 'yoq', nickname: 'Ali', code: 'ZZZZ-ZZZZ-ZZZZ-ZZZZ' };
-    progress.value = { b1: { ...result(1, true), circuit: built } };
-    await syncProgress();
-    expect(profile.value).toEqual({ id: 'yangi', nickname: 'Ali', code: 'CCCC-CCCC-CCCC-CCCC' });
-    expect(newProfileCode.value).toBe('CCCC-CCCC-CCCC-CCCC');
-    expect(solved).toEqual([{ by: 'yangi', levelId: 'b1' }]);
+    const lose = async () => {
+      profile.value = { id: 'yoq', nickname: 'Ali', code: 'ZZZZ-ZZZZ-ZZZZ-ZZZZ' };
+      progress.value = { b1: { ...result(1, true), circuit: built }, b2: { ...result(2, true), circuit: built } };
+      await syncProgress();
+    };
+
+    it("yangisi jimgina ochilmaydi: qurilma profilsiz qoladi, natijalar joyida, o'quvchidan so'raladi", async () => {
+      await lose();
+      expect(profile.value).toBeNull();
+      expect(lostProfile.value).toBe('Ali');
+      expect(Object.keys(progress.value).sort()).toEqual(['b1', 'b2']);
+      expect(players.CCCCCCCCCCCCCCCC).toBeUndefined();
+      expect(newProfileCode.value).toBeNull();
+      expect(solved).toEqual([]);
+    });
+
+    it("asosiy profil kodi bilan kirsa — server bilmagan natijalar unga qo'shiladi", async () => {
+      await lose();
+      expect(await restoreProfile('BBBB-BBBB-BBBB-BBBB', true)).toBe(true);
+      expect(profile.value?.id).toBe('vali');
+      // b1 ni Vali yaxshiroq (1 element) biladi — qayta yuborilmaydi; b2 ni bilmaydi — yuboriladi.
+      expect(solved).toEqual([{ by: 'vali', levelId: 'b2' }]);
+      expect(Object.keys(progress.value).sort()).toEqual(['b1', 'b2']);
+    });
+
+    it("yangi profil ochsa — natijalar unga yuboriladi, kodi ko'rsatiladi", async () => {
+      await lose();
+      await createProfile('Ali');
+      await syncInFlight();
+      expect(profile.value).toEqual({ id: 'yangi', nickname: 'Ali', code: 'CCCC-CCCC-CCCC-CCCC' });
+      expect(newProfileCode.value).toBe('CCCC-CCCC-CCCC-CCCC');
+      expect(solved.map((s) => s.levelId).sort()).toEqual(['b1', 'b2']);
+      expect(solved.every((s) => s.by === 'yangi')).toBe(true);
+    });
+
+    it("javob kutilayotganda boshqa profilga o'tilgan bo'lsa — unga tegilmaydi", async () => {
+      profile.value = { id: 'yoq', nickname: 'Ali', code: 'ZZZZ-ZZZZ-ZZZZ-ZZZZ' };
+      const pending = syncProgress();
+      profile.value = { id: 'ali', nickname: 'Ali', code: 'AAAA-AAAA-AAAA-AAAA' };
+      await expect(pending).rejects.toMatchObject({ status: 401 });
+      expect(profile.value?.id).toBe('ali');
+      expect(lostProfile.value).toBeNull();
+    });
   });
 
   it('kod ko\'rinishi', () => {

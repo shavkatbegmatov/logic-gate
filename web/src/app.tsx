@@ -1,6 +1,7 @@
 import { Fragment } from 'preact';
 import { useEffect, useErrorBoundary, useRef } from 'preact/hooks';
 import { cancelConfirm, ConfirmHost } from './components/Dialogs';
+import { LostProfile } from './components/LostProfile';
 import { NewProfileCode } from './components/NewProfileCode';
 import { showToast, Toast } from './components/Toast';
 import { reportCaught } from './errors';
@@ -52,6 +53,7 @@ export function App() {
   return (
     <Fragment key={lang.value}>
       <Guarded />
+      <LostProfile />
       <NewProfileCode />
       <ConfirmHost />
       <Toast />
