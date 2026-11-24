@@ -569,3 +569,7 @@ Cheklovlar (bitta maktab NAT manzili ortidagi 40 o'quvchili sinfga mo'ljallangan
 - Go server faqat `127.0.0.1` da tinglaydi va `X-Real-IP` ni faqat lokal manzildan kelgan so'rovda qabul qiladi.
 - systemd xizmati alohida foydalanuvchi nomidan, faqat o'qish uchun fayl tizimi va cheklangan huquqlar bilan ishlaydi.
 - Nginx CSP, `X-Frame-Options`, `nosniff` sarlavhalarini qo'shadi.
+
+## Litsenziya
+
+[MIT](LICENSE.md) — kodni istalgan maqsadda (tijoratda ham) ishlatish, o'zgartirish va tarqatish mumkin; faqat mualliflik va litsenziya matni nusxalarda saqlanishi kerak. Kod kafolatsiz beriladi.
