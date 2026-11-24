@@ -6,7 +6,13 @@ import { api } from './api';
 import { profile, totalStars } from './state';
 import { syncInFlight } from './sync';
 
-/** Avatar ranglari: oq harf bilan WCAG AA (≥ 4.5:1) kontrastli to'q ohanglar (player.test.ts tekshiradi). */
+/**
+ * Avatar harfi rangi. Avatar ranglari mavzuga bog'liq emas (profil hamma uslubda bir xil rangda), shuning
+ * uchun ular CSS mavzularida emas, shu yerda (CSS'da qattiq rang yo'q — theme.test.ts).
+ */
+export const AVATAR_INK = '#ffffff';
+
+/** Avatar ranglari: AVATAR_INK harfi bilan WCAG AA (≥ 4.5:1) kontrastli to'q ohanglar (player.test.ts tekshiradi). */
 export const AVATAR_COLORS = [
   '#2563eb',
   '#7c3aed',

@@ -1017,7 +1017,7 @@ input[type='date']:focus {
 }
 
 /* ── O'yinchi: avatar va sarlavhadagi belgi (components/PlayerChip.tsx) ───────── */
-/* Avatar — bosh harflar; rangi id'dan (player.ts: AVATAR_COLORS — oq harf bilan AA kontrast). */
+/* Avatar — bosh harflar; foni va harf rangi player.ts dan (AVATAR_COLORS, AVATAR_INK — mavzuga bog'liq emas). */
 .avatar {
   flex: none;
   width: 34px;
@@ -1026,7 +1026,7 @@ input[type='date']:focus {
   place-items: center;
   border-radius: 50%;
   background: var(--avatar-bg, var(--panel));
-  color: #fff;
+  color: var(--avatar-ink, var(--text));
   font: 700 13px/1 var(--sans);
   letter-spacing: 0.02em;
   user-select: none;

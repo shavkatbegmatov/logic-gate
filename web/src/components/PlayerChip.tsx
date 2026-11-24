@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { t } from '../i18n';
-import { avatarColor, currentRank, initials, refreshMyRank, shortId } from '../player';
+import { AVATAR_INK, avatarColor, currentRank, initials, refreshMyRank, shortId } from '../player';
 import { go } from '../router';
 import { profile, totalStars } from '../state';
 import { Icon } from './ui';
@@ -8,7 +8,11 @@ import { Icon } from './ui';
 /** O'yinchi avatari: taxallusning bosh harflari, rangi id'dan. id bo'lmasa — mehmon belgisi. */
 export function Avatar({ id, name, size = 'md' }: { id?: string; name?: string; size?: 'md' | 'lg' }) {
   return (
-    <span class={`avatar ${size}`} style={id ? { '--avatar-bg': avatarColor(id) } : undefined} aria-hidden="true">
+    <span
+      class={`avatar ${size}`}
+      style={id ? { '--avatar-bg': avatarColor(id), '--avatar-ink': AVATAR_INK } : undefined}
+      aria-hidden="true"
+    >
       {id && name ? initials(name) : <Icon name="user" />}
     </span>
   );

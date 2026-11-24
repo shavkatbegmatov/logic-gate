@@ -18,7 +18,7 @@ vi.mock('./api', async (orig) => {
 });
 
 const { profile, progress } = await import('./state');
-const { AVATAR_COLORS, RANK_TTL, avatarColor, currentRank, dateText, initials, myRank, refreshMyRank, setMyRank, shortId } =
+const { AVATAR_COLORS, AVATAR_INK, RANK_TTL, avatarColor, currentRank, dateText, initials, myRank, refreshMyRank, setMyRank, shortId } =
   await import('./player');
 
 const circuit = { gates: [], wires: [] };
@@ -50,12 +50,16 @@ describe("o'yinchi belgisi", () => {
     expect(used.size).toBe(AVATAR_COLORS.length);
   });
 
-  it('har bir avatar rangida oq harf WCAG AA (≥ 4.5:1) kontrastli', () => {
+  it('har bir avatar rangida harf (AVATAR_INK) WCAG AA (≥ 4.5:1) kontrastli', () => {
     const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-    for (const hex of AVATAR_COLORS) {
+    const lum = (hex: string) => {
       const [r, g, b] = [1, 3, 5].map((i) => lin(parseInt(hex.slice(i, i + 2), 16) / 255));
-      const l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      expect(1.05 / (l + 0.05), hex).toBeGreaterThanOrEqual(4.5);
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const ink = lum(AVATAR_INK);
+    for (const hex of AVATAR_COLORS) {
+      const [hi, lo] = [Math.max(ink, lum(hex)), Math.min(ink, lum(hex))];
+      expect((hi + 0.05) / (lo + 0.05), hex).toBeGreaterThanOrEqual(4.5);
     }
   });
 
