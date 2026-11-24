@@ -2,11 +2,11 @@ import { useSignal } from '@preact/signals';
 import { api, type ClassMember, type ClassReport, type ClassTask } from '../api';
 import { todaySig } from '../daily';
 import { t } from '../i18n';
-import { chapterLevels, chapters, levelNumber } from '../levels';
 import { errorText } from '../sync';
 import { dayToISO, isoToDay, MAX_TASK_LEVELS, MAX_TASKS, taskLevels } from '../tasks';
 import { DueLabel, TaskLevels, taskTitle } from './TaskView';
 import { askConfirm } from './Dialogs';
+import { LevelPicker } from './LevelPicker';
 import { Icon } from './ui';
 
 /** O'qituvchi hisobotidagi "Vazifalar": yangi vazifa berish va har biri bo'yicha kim bajargani. */
@@ -119,12 +119,6 @@ function TaskEditor({ code, teacherKey, onDone, onCancel }: {
   const error = useSignal('');
   const today = todaySig.value;
 
-  const toggle = (id: string) => {
-    const s = picked.value;
-    if (s.includes(id)) picked.value = s.filter((x) => x !== id);
-    else if (s.length < MAX_TASK_LEVELS) picked.value = [...s, id];
-  };
-
   const submit = async (e: Event) => {
     e.preventDefault();
     if (busy.value || !picked.value.length) return;
@@ -158,35 +152,7 @@ function TaskEditor({ code, teacherKey, onDone, onCancel }: {
         onInput={(e) => (title.value = (e.currentTarget as HTMLInputElement).value)}
       />
 
-      <p class="field-label">{t.tasks.levelsLabel(picked.value.length, MAX_TASK_LEVELS)}</p>
-      <div class="task-picker">
-        {chapters.map((ch, i) => (
-          <div key={ch.id} class="task-picker-row">
-            <span class="task-picker-ch">
-              {i + 1}. {ch.title}
-            </span>
-            <div class="task-picker-levels">
-              {chapterLevels(ch.id).map((l) => {
-                const on = picked.value.includes(l.id);
-                return (
-                  <button
-                    type="button"
-                    key={l.id}
-                    class={on ? 'on' : ''}
-                    aria-pressed={on}
-                    aria-label={`${levelNumber(l)}. ${l.title}`}
-                    title={l.title}
-                    disabled={!on && picked.value.length >= MAX_TASK_LEVELS}
-                    onClick={() => toggle(l.id)}
-                  >
-                    {levelNumber(l)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+      <LevelPicker picked={picked.value} max={MAX_TASK_LEVELS} onChange={(next) => (picked.value = next)} />
       {picked.value.length > 0 && <TaskLevels task={{ id: 0, title: '', levels: picked.value, createdAt: 0 }} links={false} />}
 
       <label class="field-label" for="task-due">

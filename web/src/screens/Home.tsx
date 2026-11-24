@@ -1,6 +1,11 @@
 import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { refreshMyTasks } from '../classes';
+import { ContestBanner } from '../components/ContestBanner';
+import { inClass } from '../contest';
+
+/** Sinf a'zosi bosh sahifada bo'lsa — musobaqa boshlanganini tekshirish oralig'i. */
+const CONTEST_POLL = 20_000;
 import { HeroGate } from '../components/HeroGate';
 import { JoinForm } from '../components/JoinForm';
 import { HomeTaskCard } from '../components/TaskView';
@@ -29,6 +34,12 @@ export function Home() {
     refreshMyTasks();
     refreshDailyStatus();
   }, [profile.value?.id]);
+  // Sinf a'zosi bo'lsa — o'qituvchi musobaqa boshlaganini tezroq ko'rsin (dars paytida bosh sahifa ochiq turadi).
+  useEffect(() => {
+    if (!inClass.value) return;
+    const id = setInterval(() => document.visibilityState === 'visible' && void refreshMyTasks(true), CONTEST_POLL);
+    return () => clearInterval(id);
+  }, [inClass.value]);
   return (
     <div class="screen home">
       <div class="home-scroll">
@@ -46,6 +57,7 @@ export function Home() {
             <HeroGate />
             {!profile.value && <p class="home-hello">{t.tagline}</p>}
             {onOldHost() && hasProgress() && <MoveBanner />}
+            <ContestBanner />
             <HomeTaskCard />
             <ContinueCard />
           </div>

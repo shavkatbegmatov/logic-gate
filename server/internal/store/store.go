@@ -107,6 +107,27 @@ var migrations = []string{
 		count INTEGER NOT NULL,
 		PRIMARY KEY (day, event, src)
 	) WITHOUT ROWID;`,
+	// Sinf musobaqasi: o'qituvchi darajalarni tanlab, vaqtli musobaqa boshlaydi; o'quvchilarning shu vaqtda
+	// (bo'sh maydondan) yuborgan yechimlari alohida — eng yaxshisi saqlanadi.
+	`CREATE TABLE class_contests (
+		id         INTEGER PRIMARY KEY,
+		class_id   TEXT NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
+		title      TEXT NOT NULL,
+		levels     TEXT NOT NULL,
+		starts_at  INTEGER NOT NULL,
+		ends_at    INTEGER NOT NULL
+	);
+	CREATE INDEX class_contests_class ON class_contests(class_id, id);
+	CREATE TABLE contest_solves (
+		contest_id INTEGER NOT NULL REFERENCES class_contests(id) ON DELETE CASCADE,
+		player_id  TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+		level_id   TEXT NOT NULL,
+		gates      INTEGER NOT NULL,
+		stars      INTEGER NOT NULL,
+		solved_at  INTEGER NOT NULL,
+		PRIMARY KEY (contest_id, player_id, level_id)
+	) WITHOUT ROWID;
+	CREATE INDEX contest_solves_player ON contest_solves(player_id);`,
 }
 
 type Store struct {

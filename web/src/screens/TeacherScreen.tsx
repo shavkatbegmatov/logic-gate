@@ -14,6 +14,7 @@ import {
 import { copyText } from '../clipboard';
 import { ShareButtons } from '../components/ShareButtons';
 import { taskTitle } from '../components/TaskView';
+import { TeacherContest } from '../components/TeacherContest';
 import { TeacherTasks } from '../components/TeacherTasks';
 import { askConfirm, showCopy } from '../components/Dialogs';
 import { showToast } from '../components/Toast';
@@ -315,6 +316,8 @@ export function TeacherReport({ code }: { code: string }) {
               </button>
             </div>
           </section>
+
+          <TeacherContest code={code} teacherKey={cls.key} />
 
           {r && <TeacherTasks code={code} teacherKey={cls.key} report={r} onChange={() => load()} />}
 

@@ -12,6 +12,7 @@ export type Route =
   | { name: 'lesson'; id: string }
   | { name: 'class'; code: string }
   | { name: 'teacher'; code?: string }
+  | { name: 'contest'; code: string; level?: string }
   | { name: 'news' }
   | { name: 'certificate' }
   | { name: 'achievements' }
@@ -28,8 +29,11 @@ function safeDecode(s: string): string {
 }
 
 function parse(hash: string): Route {
-  const [name, arg] = hash.replace(/^#\/?/, '').split('/');
+  const [name, arg, arg2] = hash.replace(/^#\/?/, '').split('/');
   switch (name) {
+    case 'contest':
+      // #/contest/<sinf kodi> — musobaqa (o'quvchi yoki o'qituvchi proyektori), …/<daraja> — yechish.
+      return arg ? { name, code: safeDecode(arg), level: arg2 ? safeDecode(arg2) : undefined } : { name: 'home' };
     case 'daily':
       return arg && /^\d+$/.test(arg) ? { name, day: Number(arg) } : { name };
     case 'sandbox':

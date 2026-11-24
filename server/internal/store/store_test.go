@@ -511,3 +511,64 @@ func TestFunnelCounts(t *testing.T) {
 		t.Fatalf("profillar oraliqdan tashqarida: %+v", f)
 	}
 }
+
+func TestContests(t *testing.T) {
+	st := testStore(t)
+	ctx := t.Context()
+	players(t, st, 3)
+	if err := st.CreateClass(ctx, "CLS001", "TEST sinf", tokenHash(90)); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{"p1", "p2", "p3"} {
+		st.JoinClass(ctx, "CLS001", p, 10)
+	}
+	start := time.Unix(1_800_000_000, 0)
+	c := &Contest{ClassID: "CLS001", Title: "TEST", Levels: []string{"b1", "b2"}, StartsAt: start, EndsAt: start.Add(10 * time.Minute)}
+	if err := st.CreateContest(ctx, c, 2); err != nil || c.ID == 0 {
+		t.Fatalf("yaratish: %v %+v", err, c)
+	}
+	if err := st.CreateContest(ctx, &Contest{ClassID: "CLS001", Levels: []string{"b1"}, StartsAt: start.Add(time.Minute), EndsAt: start.Add(time.Hour)}, 2); !errors.Is(err, ErrContestActive) {
+		t.Fatalf("davom etayotganida: %v", err)
+	}
+	// Eng yaxshi natija qoladi; teng yulduzda avvalroq erishgan yuqorida; hech narsa yechmagan — oxirida.
+	at := func(m int) time.Time { return start.Add(time.Duration(m) * time.Minute) }
+	st.SaveContestSolve(ctx, c.ID, "p1", "b1", 4, 2, at(1))
+	if ok, _ := st.SaveContestSolve(ctx, c.ID, "p1", "b1", 3, 3, at(3)); !ok {
+		t.Fatal("yaxshiroq yechim yozilmadi")
+	}
+	if ok, _ := st.SaveContestSolve(ctx, c.ID, "p1", "b1", 5, 1, at(4)); ok {
+		t.Fatal("yomonroq yechim yozildi")
+	}
+	st.SaveContestSolve(ctx, c.ID, "p2", "b1", 3, 3, at(2))
+	st.SaveContestSolve(ctx, c.ID, "p2", "x9", 3, 3, at(2)) // musobaqada yo'q daraja — hisobga kirmaydi
+	board, err := st.ContestBoard(ctx, c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(board) != 3 || board[0].PlayerID != "p2" || board[0].Stars != 3 || board[1].PlayerID != "p1" || board[1].Rank != 2 ||
+		board[2].PlayerID != "p3" || board[2].Solved != 0 || board[0].Levels["b1"] != 3 {
+		t.Fatalf("reyting: %+v", board)
+	}
+
+	// Tugatish, keyin yangisi; sinfda ko'pi bilan keep ta qoladi (eng eskisi natijalari bilan o'chadi).
+	if err := st.StopContest(ctx, "CLS001", c.ID, at(5)); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := st.LatestContest(ctx, "CLS001"); got.ID != c.ID || got.Active(at(6)) || !got.EndsAt.Equal(at(5)) {
+		t.Fatalf("tugatilgan: %+v", got)
+	}
+	for i := range 2 {
+		n := &Contest{ClassID: "CLS001", Levels: []string{"b1"}, StartsAt: at(10 + i*20), EndsAt: at(15 + i*20)}
+		if err := st.CreateContest(ctx, n, 2); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := st.ContestByID(ctx, "CLS001", c.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("eski musobaqa qoldi: %v", err)
+	}
+	var n int
+	st.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM contest_solves WHERE contest_id = ?`, c.ID).Scan(&n)
+	if n != 0 {
+		t.Fatalf("eski natijalar qoldi: %d", n)
+	}
+}

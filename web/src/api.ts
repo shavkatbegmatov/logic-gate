@@ -173,6 +173,46 @@ export interface ClassInfo {
   member?: boolean;
   key?: string;
   tasks?: ClassTask[];
+  /** Hozir davom etayotgan sinf musobaqasi (faqat a'zolarga). */
+  contest?: Contest;
+}
+
+/** Sinf musobaqasi. remaining — tugashiga qolgan soniyalar (0 — tugagan; server soati bo'yicha). */
+export interface Contest {
+  id: number;
+  title: string;
+  levels: string[];
+  startsAt: number;
+  endsAt: number;
+  remaining: number;
+}
+
+/** Musobaqa reytingi qatori: levels — daraja → yulduzlar (faqat musobaqa vaqtidagi yechimlar). */
+export interface ContestEntry {
+  rank: number;
+  nickname: string;
+  stars: number;
+  solved: number;
+  levels: Record<string, number>;
+  me?: boolean;
+}
+
+export interface ContestBoard {
+  code: string;
+  name: string;
+  contest: Contest;
+  board: ContestEntry[];
+}
+
+export interface ContestSolveResult {
+  gates: number;
+  stars: number;
+  improved: boolean;
+  rank?: number;
+  total?: number;
+  solved?: number;
+  /** shu darajadagi eng yaxshi natija (yulduz) */
+  best?: number;
 }
 
 /** O'qituvchi bergan vazifa. due — Toshkent kuni (yo'q — muddatsiz). */
@@ -260,6 +300,16 @@ export const api = {
     request<ClassTask>('POST', `${classPath(code)}/tasks`, body, undefined, teacher(key)),
   deleteTask: (code: string, key: string, id: number) =>
     request<{ ok: boolean }>('DELETE', `${classPath(code)}/tasks/${id}`, undefined, undefined, teacher(key)),
+  createContest: (code: string, key: string, body: { title: string; levels: string[]; minutes: number }) =>
+    request<Contest>('POST', `${classPath(code)}/contests`, body, undefined, teacher(key)),
+  stopContest: (code: string, key: string, id: number) =>
+    request<{ ok: boolean }>('POST', `${classPath(code)}/contests/${id}/stop`, undefined, undefined, teacher(key)),
+  /** Oxirgi musobaqa va reyting: o'qituvchi (kalit bilan, proyektor) yoki o'quvchi (a'zo). */
+  teacherContest: (code: string, key: string) =>
+    request<ContestBoard>('GET', `${classPath(code)}/contest/teacher`, undefined, undefined, teacher(key)),
+  studentContest: (code: string) => request<ContestBoard>('GET', `${classPath(code)}/contest`),
+  contestSolve: (code: string, id: number, level: string, circuit: Circuit) =>
+    request<ContestSolveResult>('POST', `${classPath(code)}/contests/${id}/solve`, { level, circuit }),
   dailyLeaderboard: (day: number | 'today') =>
     request<{ day: number; number: number; top: DailyEntry[]; me: DailyEntry | null }>('GET', `/daily/${day}/leaderboard`),
 };

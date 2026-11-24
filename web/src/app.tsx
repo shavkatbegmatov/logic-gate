@@ -33,6 +33,8 @@ const Achievements = lazy(() => import('./screens/Achievements').then((m) => m.A
 const CustomScreen = lazy(() => import('./screens/CustomScreen').then((m) => m.CustomScreen));
 // Sozlamalar (mavzu tanlagichi, sinflar, qo'llanmalar) — 2.17.0: ikki yangi mavzu bosh yuklamani chegaraga yetkazgach.
 const Settings = lazy(() => import('./screens/Settings').then((m) => m.Settings));
+// Sinf musobaqasi — faqat dars paytida.
+const ContestScreen = lazy(() => import('./screens/ContestScreen').then((m) => m.ContestScreen));
 
 export function App() {
   useEffect(() => {
@@ -114,6 +116,7 @@ function Routes() {
       {r.name === 'achievements' && <Achievements />}
       {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}
       {r.name === 'settings' && <Settings />}
+      {r.name === 'contest' && <ContestScreen key={`${r.code}/${r.level ?? ''}`} code={r.code} level={r.level} />}
     </Fragment>
   );
 }

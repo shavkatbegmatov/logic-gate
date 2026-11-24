@@ -1,0 +1,70 @@
+/* Sinf musobaqasi: o'quvchi ekrani va o'qituvchi proyektori. */
+
+.contest-head {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.contest-head p {
+  margin: 0;
+}
+
+.contest-clock {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.contest-over {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.contest-me {
+  font-weight: 600;
+}
+
+.contest-levels {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.contest-level:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.contest-board tr.idle td {
+  color: var(--muted);
+}
+
+/* Proyektor: sinfning orqa qatoridan ham o'qilsin. */
+.contest-projector .contest-head.projector {
+  margin: 8px 0 18px;
+}
+
+.contest-clock.big {
+  font-size: clamp(56px, 12vw, 140px);
+}
+
+.contest-over.big {
+  font-size: clamp(28px, 5vw, 56px);
+}
+
+.contest-projector .contest-board {
+  font-size: clamp(16px, 2.2vw, 28px);
+}
+
+.contest-projector .contest-board td,
+.contest-projector .contest-board th {
+  padding: 0.45em 0.6em;
+}
+
+.contest-board.wide .stars-cell {
+  color: var(--gold, var(--accent));
+  white-space: nowrap;
+}

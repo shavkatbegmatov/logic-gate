@@ -155,6 +155,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/classes/{code}/tasks", s.createTask)
 	mux.HandleFunc("DELETE /api/classes/{code}/tasks/{id}", s.deleteTask)
 	mux.HandleFunc("GET /api/me/classes", s.authed(s.myClasses))
+	mux.HandleFunc("POST /api/classes/{code}/contests", s.createContest)
+	mux.HandleFunc("POST /api/classes/{code}/contests/{id}/stop", s.stopContest)
+	mux.HandleFunc("POST /api/classes/{code}/contests/{id}/solve", s.authed(s.contestSolve))
+	mux.HandleFunc("GET /api/classes/{code}/contest", s.authed(s.studentContest))
+	mux.HandleFunc("GET /api/classes/{code}/contest/teacher", s.teacherContest)
 	mux.HandleFunc("POST /api/client-errors", s.clientError)
 	mux.HandleFunc("POST /api/events", s.funnelEvent)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
@@ -401,32 +406,8 @@ func (s *Server) solve(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &req) {
 		return
 	}
-	spec := sim.Spec{Inputs: level.Inputs, Outputs: level.Outputs, Gates: level.Gates}
-	var (
-		gates  int
-		simErr *sim.Error
-		wrong  map[string]any
-	)
-	if level.Seq != nil {
-		// Ketma-ket masala: sxema kerakli avtomat bilan har qanday kirishlar ketma-ketligida mos kelishi kerak.
-		var trace []int
-		gates, trace, simErr = sim.CheckSeq(spec, sim.Machine{Next: level.Seq.Next, Out: level.Seq.Out}, req.Circuit)
-		if trace != nil {
-			wrong = map[string]any{"error": "wrong_answer", "trace": trace}
-		}
-	} else {
-		var rows []int
-		gates, rows, simErr = sim.Check(spec, level.Target, req.Circuit)
-		if len(rows) > 0 {
-			wrong = map[string]any{"error": "wrong_answer", "wrongRows": rows}
-		}
-	}
-	if simErr != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, simErr)
-		return
-	}
-	if wrong != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, wrong)
+	gates, ok := checkCircuit(w, level, req.Circuit)
+	if !ok {
 		return
 	}
 	circuit, ok := storedCircuit(req.Circuit)
@@ -457,6 +438,39 @@ func (s *Server) solve(w http.ResponseWriter, r *http.Request) {
 		"best":     solutionJSON{LevelID: best.LevelID, Gates: best.Gates, Stars: best.Stars, SolvedAt: best.SolvedAt.Unix()},
 		"level":    statsJSON(st),
 	})
+}
+
+// checkCircuit sxema darajani yechishini tekshiradi va elementlar sonini qaytaradi. Yechmasa (yoki sxema
+// noto'g'ri tuzilgan bo'lsa) — 422 javobi yozilgan va ok=false.
+func checkCircuit(w http.ResponseWriter, level *levels.Level, c sim.Circuit) (gates int, ok bool) {
+	spec := sim.Spec{Inputs: level.Inputs, Outputs: level.Outputs, Gates: level.Gates}
+	var (
+		simErr *sim.Error
+		wrong  map[string]any
+	)
+	if level.Seq != nil {
+		// Ketma-ket masala: sxema kerakli avtomat bilan har qanday kirishlar ketma-ketligida mos kelishi kerak.
+		var trace []int
+		gates, trace, simErr = sim.CheckSeq(spec, sim.Machine{Next: level.Seq.Next, Out: level.Seq.Out}, c)
+		if trace != nil {
+			wrong = map[string]any{"error": "wrong_answer", "trace": trace}
+		}
+	} else {
+		var rows []int
+		gates, rows, simErr = sim.Check(spec, level.Target, c)
+		if len(rows) > 0 {
+			wrong = map[string]any{"error": "wrong_answer", "wrongRows": rows}
+		}
+	}
+	if simErr != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, simErr)
+		return 0, false
+	}
+	if wrong != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, wrong)
+		return 0, false
+	}
+	return gates, true
 }
 
 func statsJSON(st *store.LevelStats) map[string]any {

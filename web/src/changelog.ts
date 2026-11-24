@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.23.0',
+    date: '2026-11-25',
+    uz: [
+      "O'qituvchilar uchun sinf musobaqasi: darajalarni va vaqtni tanlang — o'quvchilar ularni bo'sh maydondan yechadi, reyting proyektorda katta taymer bilan jonli yangilanadi. Kim ko'p yulduz yig'sa — g'olib.",
+      "O'quvchilar musobaqa boshlanganini bosh sahifada ko'radi va bir bosishda qatnashadi.",
+    ],
+    ru: [
+      'Соревнование класса для учителей: выберите уровни и время — ученики решают их с пустого поля, рейтинг на проекторе обновляется вживую с большим таймером. Побеждает тот, у кого больше звёзд.',
+      'Ученики видят начало соревнования на главной и участвуют в одно касание.',
+    ],
+  },
+  {
     version: '2.22.0',
     date: '2026-11-24',
     uz: [

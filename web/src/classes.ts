@@ -3,6 +3,7 @@
 // ko'rsatiladi va boshqa qurilmaga ko'chirsa bo'ladi).
 import { signal } from '@preact/signals';
 import { api, type ClassMember } from './api';
+import { setClassesInfo } from './contest';
 import { dayOf } from './daily';
 import { chapterLevels, chapters, levels } from './levels';
 import { profile } from './state';
@@ -106,12 +107,16 @@ let lastTasksFetch = 0;
 export async function refreshMyTasks(force = false) {
   if (!profile.value) {
     if (myTasks.value.length) setMyTasks([]);
+    setClassesInfo([]);
     return;
   }
   if (!force && Date.now() - lastTasksFetch < 60_000) return;
   lastTasksFetch = Date.now();
   try {
-    setMyTasks(tasksFromClasses((await api.myClasses()).classes));
+    const { classes } = await api.myClasses();
+    setMyTasks(tasksFromClasses(classes));
+    // Musobaqa boshlangani ham shu ro'yxatda keladi.
+    setClassesInfo(classes);
   } catch {
     // oflayn — saqlangan ro'yxat qoladi
   }

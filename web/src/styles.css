@@ -2071,6 +2071,78 @@ p.join-or {
   background: var(--float);
 }
 
+/* Sinf musobaqasi: bosh sahifa va sinf sahifasidagi e'lon, taymer, musobaqa darajasidagi soat. */
+.contest-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 2px solid var(--accent);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.contest-banner-flag {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.contest-banner-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.contest-banner-text span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.countdown {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown.soon {
+  color: var(--bad);
+}
+
+.contest-banner-bar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--float);
+  box-shadow: 0 8px 24px var(--shadow);
+  font-size: 18px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.teacher-contest .contest-live {
+  display: grid;
+  gap: 10px;
+}
+
+.teacher-contest .contest-live p {
+  margin: 0;
+}
+
+.contest-minutes {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
 .tutorial {
   position: absolute;
   top: 12px;

@@ -98,6 +98,8 @@ type classJSON struct {
 	Member  bool       `json:"member,omitempty"`
 	Key     string     `json:"key,omitempty"`
 	Tasks   []taskJSON `json:"tasks,omitempty"`
+	// Contest — hozir davom etayotgan musobaqa (faqat a'zolarga: sinf sahifasi va /me/classes).
+	Contest *contestJSON `json:"contest,omitempty"`
 }
 
 type taskJSON struct {
@@ -210,6 +212,12 @@ func (s *Server) getClass(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		out.Member = member
+		if member {
+			if out.Contest, err = s.activeContest(r, c.ID); err != nil {
+				s.internal(w, r, err)
+				return
+			}
+		}
 	}
 	writeJSON(w, http.StatusOK, out)
 }
@@ -261,7 +269,12 @@ func (s *Server) myClasses(w http.ResponseWriter, r *http.Request) {
 			s.internal(w, r, err)
 			return
 		}
-		out = append(out, classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Member: true, Tasks: tasks})
+		contest, err := s.activeContest(r, c.ID)
+		if err != nil {
+			s.internal(w, r, err)
+			return
+		}
+		out = append(out, classJSON{Code: c.ID, Name: c.Name, Members: c.Members, Member: true, Tasks: tasks, Contest: contest})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"classes": out})
 }
@@ -387,21 +400,8 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	want := map[string]bool{}
-	for _, id := range req.Levels {
-		if _, ok := s.pack.Level(id); !ok {
-			writeErr(w, http.StatusBadRequest, errBadTask.Error())
-			return
-		}
-		want[id] = true
-	}
-	var ids []string
-	for _, l := range s.pack.Levels {
-		if want[l.ID] {
-			ids = append(ids, l.ID)
-		}
-	}
-	if len(ids) == 0 || len(ids) > maxTaskLevels {
+	ids, ok := s.levelList(req.Levels)
+	if !ok {
 		writeErr(w, http.StatusBadRequest, errBadTask.Error())
 		return
 	}

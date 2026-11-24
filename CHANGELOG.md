@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.23.0 — 2026-11-25
+
+- O'qituvchilar uchun sinf musobaqasi: darajalarni va vaqtni tanlang — o'quvchilar ularni bo'sh maydondan yechadi, reyting proyektorda katta taymer bilan jonli yangilanadi. Kim ko'p yulduz yig'sa — g'olib.
+- O'quvchilar musobaqa boshlanganini bosh sahifada ko'radi va bir bosishda qatnashadi.
+
 ## 2.22.0 — 2026-11-24
 
 - O'yinni yaxshilash uchun endi qaysi bosqichda qiyin bo'layotganini anonim tarzda hisoblaymiz: o'yin har qurilmadan faqat «ochildi», «1-daraja yechildi» kabi bosqich nomini bir marta yuboradi. Ism, ID, natijalar yoki boshqa ma'lumot yuborilmaydi.

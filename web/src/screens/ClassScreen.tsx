@@ -2,6 +2,8 @@ import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { api, type ClassEntry, type ClassInfo } from '../api';
 import { normalizeClassCode, refreshMyTasks } from '../classes';
+import { localEnd } from '../contest';
+import { Countdown } from '../components/Countdown';
 import { JoinForm } from '../components/JoinForm';
 import { TaskItem } from '../components/TaskView';
 import { askConfirm } from '../components/Dialogs';
@@ -18,6 +20,8 @@ export function ClassScreen({ code: raw }: { code: string }) {
   const board = useSignal<ClassEntry[] | null>(null);
   const error = useSignal('');
   const busy = useSignal(false);
+  // Davom etayotgan musobaqaning tugash vaqti (shu qurilma soati bo'yicha; javob kelganda bir marta hisoblanadi).
+  const contestEnd = useSignal(0);
 
   const load = async () => {
     error.value = '';
@@ -28,6 +32,7 @@ export function ClassScreen({ code: raw }: { code: string }) {
     try {
       const c = await api.classInfo(code);
       info.value = c;
+      contestEnd.value = c.contest ? localEnd(c.contest) : 0;
       board.value = c.member ? (await api.classBoard(code)).top : null;
       refreshMyTasks(true);
     } catch (e) {
@@ -97,6 +102,20 @@ export function ClassScreen({ code: raw }: { code: string }) {
           {c?.member && (
             <>
               <p class="good center">{t.classes.joined}</p>
+              {c.contest && contestEnd.value > Date.now() && (
+                <button class="contest-banner" onClick={() => go(`contest/${c.code}`)}>
+                  <span class="contest-banner-flag" aria-hidden="true">
+                    🏁
+                  </span>
+                  <span class="contest-banner-text">
+                    <b>{c.contest.title || t.contest.title}</b>
+                    <span>
+                      {t.contest.running} · <Countdown endsAt={contestEnd.value} />
+                    </span>
+                  </span>
+                  <span class="btn primary small">{t.contest.join}</span>
+                </button>
+              )}
               {(c.tasks?.length ?? 0) > 0 && (
                 <>
                   <h2 class="section-title">{t.tasks.title}</h2>
