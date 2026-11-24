@@ -12,6 +12,7 @@ export type Route =
   | { name: 'lesson'; id: string }
   | { name: 'class'; code: string }
   | { name: 'teacher'; code?: string }
+  | { name: 'handout'; code: string }
   | { name: 'contest'; code: string; level?: string }
   | { name: 'news' }
   | { name: 'certificate' }
@@ -54,6 +55,8 @@ function parse(hash: string): Route {
     case 'class':
       return arg ? { name: 'class', code: safeDecode(arg) } : { name: 'settings' };
     case 'teacher':
+      // #/teacher/<kod>/handout — sinf havolasining QR-kodli plakati va kartochkalari.
+      if (arg && arg2 === 'handout') return { name: 'handout', code: safeDecode(arg) };
       return arg ? { name: 'teacher', code: safeDecode(arg) } : { name: 'teacher' };
     case 'p':
       return arg ? { name: 'custom', code: arg } : { name: 'home' };

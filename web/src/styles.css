@@ -4186,6 +4186,12 @@ button.task-level:hover {
   color: var(--text);
 }
 
+/* Tarqatma (QR-kodli plakat va kartochkalar) — ulashish tugmalari ostida, markazda. */
+.handout-open {
+  display: flex;
+  margin: 10px auto 0;
+}
+
 .class-share input,
 .class-key code {
   flex: 1;

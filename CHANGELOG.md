@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.24.0 — 2026-11-25
+
+- O'qituvchilar uchun tarqatma: sinf havolasining QR-kodi bilan A4 plakat (devorga yoki proyektorga) va qirqib tarqatiladigan 8 ta kartochka. O'quvchi telefon kamerasini QR-kodga qaratadi — va sinfga qo'shiladi. Sinf sahifasida — «QR-kod va tarqatma».
+
 ## 2.23.0 — 2026-11-25
 
 - O'qituvchilar uchun sinf musobaqasi: darajalarni va vaqtni tanlang — o'quvchilar ularni bo'sh maydondan yechadi, reyting proyektorda katta taymer bilan jonli yangilanadi. Kim ko'p yulduz yig'sa — g'olib.

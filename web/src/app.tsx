@@ -35,6 +35,8 @@ const CustomScreen = lazy(() => import('./screens/CustomScreen').then((m) => m.C
 const Settings = lazy(() => import('./screens/Settings').then((m) => m.Settings));
 // Sinf musobaqasi — faqat dars paytida.
 const ContestScreen = lazy(() => import('./screens/ContestScreen').then((m) => m.ContestScreen));
+// O'qituvchi tarqatmasi (QR-kod) — kamdan-kam: chop etish oldidan.
+const HandoutScreen = lazy(() => import('./screens/HandoutScreen').then((m) => m.HandoutScreen));
 
 export function App() {
   useEffect(() => {
@@ -113,6 +115,7 @@ function Routes() {
       {r.name === 'news' && <NewsScreen />}
       {r.name === 'certificate' && <CertificateScreen />}
       {r.name === 'teacher' && (r.code ? <TeacherReport key={r.code} code={r.code} /> : <TeacherScreen />)}
+      {r.name === 'handout' && <HandoutScreen key={r.code} code={r.code} />}
       {r.name === 'achievements' && <Achievements />}
       {r.name === 'custom' && <CustomScreen key={r.code} code={r.code} />}
       {r.name === 'settings' && <Settings />}

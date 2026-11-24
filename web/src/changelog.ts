@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.24.0',
+    date: '2026-11-25',
+    uz: [
+      "O'qituvchilar uchun tarqatma: sinf havolasining QR-kodi bilan A4 plakat (devorga yoki proyektorga) va qirqib tarqatiladigan 8 ta kartochka. O'quvchi telefon kamerasini QR-kodga qaratadi — va sinfga qo'shiladi. Sinf sahifasida — «QR-kod va tarqatma».",
+    ],
+    ru: [
+      'Раздатка для учителей: плакат A4 с QR-кодом ссылки на класс (на стену или проектор) и 8 карточек, которые можно разрезать и раздать. Ученик наводит камеру телефона на QR-код — и он в классе. На странице класса — «QR-код и раздатка».',
+    ],
+  },
+  {
     version: '2.23.0',
     date: '2026-11-25',
     uz: [

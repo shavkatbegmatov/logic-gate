@@ -438,6 +438,28 @@ Sen ham yechib ko'r!`,
     } as Record<string, string>,
   },
 
+  handout: {
+    title: 'Tarqatma',
+    open: 'QR-kod va tarqatma',
+    intro:
+      "Plakatni sinf devoriga osing yoki proyektorda ko'rsating; kartochkalarni qirqib o'quvchilarga tarqating. O'qituvchi kaliti bu sahifada yo'q.",
+    poster: 'Plakat',
+    cards: 'Kartochkalar (8 ta)',
+    print: 'Chop etish',
+    telegramHint: 'Chop etish uchun shu sahifani kompyuterdagi brauzerda oching.',
+    heading: "Sinfga qo'shiling!",
+    game: "mantiqiy sxemalar o'yini",
+    code: 'Sinf kodi',
+    steps: [
+      'Telefon kamerasini QR-kodga qarating va havolani oching.',
+      "Taxallusingizni yozing — sinfga qo'shilasiz.",
+      "Darajalarni yeching — o'qituvchingiz natijalaringizni ko'radi.",
+    ],
+    noQr: (host: string) => `QR-kod ochilmasa: ${host} → Sozlamalar → «Sinf» → kodni yozing.`,
+    cardText: "QR-kodni skanerlang va taxallus bilan qo'shiling.",
+    qrLabel: (code: string) => `${code} sinfiga qo'shilish havolasi (QR-kod)`,
+  },
+
   contest: {
     title: 'Musobaqa',
     teacherTitle: 'Sinf musobaqasi',

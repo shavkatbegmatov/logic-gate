@@ -51,3 +51,17 @@ describe('Telegram SDK yuklanguncha hash', () => {
     expect(route.value).toEqual({ name: 'home' });
   });
 });
+
+describe('marshrutlar', () => {
+  it("o'qituvchi tarqatmasi — sinf hisobotidan alohida ekran", () => {
+    const { go, holdHash, releaseHash, route } = router;
+    holdHash();
+    go('teacher/C7FD68/handout');
+    expect(route.value).toEqual({ name: 'handout', code: 'C7FD68' });
+    go('teacher/C7FD68');
+    expect(route.value).toEqual({ name: 'teacher', code: 'C7FD68' });
+    go('teacher');
+    expect(route.value).toEqual({ name: 'teacher' });
+    releaseHash('');
+  });
+});

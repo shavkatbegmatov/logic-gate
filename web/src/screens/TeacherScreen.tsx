@@ -304,6 +304,9 @@ export function TeacherReport({ code }: { code: string }) {
               </button>
             </div>
             <ShareButtons text={t.classes.shareText(cls.name)} path={`#/class/${code}`} />
+            <button class="btn handout-open" onClick={() => go(`teacher/${code}/handout`)}>
+              <Icon name="qr" /> {t.handout.open}
+            </button>
           </section>
 
           <section class="card class-key">

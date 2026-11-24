@@ -1,0 +1,300 @@
+/*
+ * O'qituvchi tarqatmasi: A4 plakat va qirqiladigan kartochkalar. Varaq ichidagi o'lchamlar varaq eniga
+ * nisbatan (cqw): ekrandagi ko'rinish chop etilgani bilan bir xil. Fon bo'yoqlari chop etilmasligi mumkin
+ * (brauzerdagi «fon grafikasi» o'chiq) — shuning uchun ajratish faqat chiziq va matn rangi bilan.
+ */
+
+.handout {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.handout-intro {
+  margin: 0;
+}
+
+.handout-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.handout-tools p {
+  margin: 0;
+}
+
+.handout-sheet {
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px var(--shadow);
+}
+
+.qr {
+  display: block;
+}
+
+.qr path {
+  fill: currentColor;
+}
+
+/* --- Plakat --- */
+
+.poster {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 7cqw 9cqw 6cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.poster-top {
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+  font-size: 3cqw;
+  color: var(--muted);
+}
+
+.poster-brand,
+.slip-brand {
+  display: flex;
+  align-items: center;
+  gap: 1.4cqw;
+  color: var(--text);
+}
+
+.poster-brand img {
+  width: 6cqw;
+  height: 6cqw;
+}
+
+.poster-brand b {
+  font-size: 4cqw;
+}
+
+.poster-heading {
+  margin: 0;
+  font-size: 7.4cqw;
+  line-height: 1.1;
+}
+
+.poster-class {
+  max-width: 100%;
+  font-size: 5cqw;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.poster-qr {
+  width: 52cqw;
+  height: 52cqw;
+}
+
+.poster-code {
+  display: flex;
+  align-items: baseline;
+  gap: 2.6cqw;
+}
+
+.poster-code span {
+  font-size: 3.2cqw;
+  color: var(--muted);
+}
+
+.poster-code b {
+  font: 700 8cqw var(--mono);
+  letter-spacing: 0.12em;
+}
+
+.poster-url {
+  max-width: 100%;
+  font: 2.8cqw var(--mono);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.poster-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  gap: 1.8cqw;
+  text-align: left;
+  font-size: 3.3cqw;
+  line-height: 1.3;
+}
+
+.poster-steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 5.6cqw 1fr;
+  align-items: center;
+  gap: 2.4cqw;
+}
+
+.poster-steps li::before {
+  content: counter(step);
+  box-sizing: border-box;
+  width: 5.6cqw;
+  height: 5.6cqw;
+  display: grid;
+  place-items: center;
+  border: 0.5cqw solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 3cqw;
+}
+
+.poster-noqr {
+  margin: 0;
+  font-size: 2.5cqw;
+  color: var(--muted);
+}
+
+/* --- Kartochkalar: 2 × 4, qirqish chiziqlari punktir --- */
+
+.slips {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 3cqw;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.slip {
+  min-width: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 18cqw minmax(0, 1fr);
+  align-items: center;
+  gap: 2.6cqw;
+  padding: 2cqw 2.6cqw;
+  border: 0 dashed var(--edge-strong);
+  border-right-width: 0.25cqw;
+  border-bottom-width: 0.25cqw;
+}
+
+.slip:nth-child(odd) {
+  border-left-width: 0.25cqw;
+}
+
+.slip:nth-child(-n + 2) {
+  border-top-width: 0.25cqw;
+}
+
+.slip-side {
+  display: grid;
+  justify-items: center;
+  gap: 1cqw;
+}
+
+.slip-qr {
+  width: 18cqw;
+  height: 18cqw;
+}
+
+.slip-text {
+  min-width: 0;
+  display: grid;
+  gap: 1.1cqw;
+  font-size: 1.95cqw;
+  line-height: 1.25;
+}
+
+.slip-brand {
+  gap: 0.9cqw;
+}
+
+.slip-brand img {
+  width: 3cqw;
+  height: 3cqw;
+}
+
+.slip-brand b {
+  font-size: 2.2cqw;
+}
+
+/* Uzun sinf nomi — ko'pi bilan ikki qator. */
+.slip-class {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 2.5cqw;
+  font-weight: 600;
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+.slip-code span {
+  display: block;
+  font-size: 1.8cqw;
+  color: var(--muted);
+}
+
+.slip-code b {
+  font: 700 4.2cqw var(--mono);
+  letter-spacing: 0.08em;
+}
+
+.slip-text p {
+  margin: 0;
+}
+
+.slip-host {
+  font: 1.8cqw var(--mono);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* --- Chop etish: faqat varaq, chetlarsiz A4 (brauzerning sarlavha/sana qatorlari ham chiqmaydi) --- */
+
+@page handout {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  /* Nomli sahifa butun hujjatga: faqat varaqqa berilsa, undan keyingi bo'sh blok (xabarlar joyi)
+     «boshqa sahifa» bo'lib, oxirida bo'sh ikkinchi varaq chiqardi. */
+  body:has(.handout-sheet) {
+    page: handout;
+  }
+
+  .handout-intro,
+  .handout-tools {
+    display: none !important;
+  }
+
+  .handout {
+    display: block;
+    max-width: none;
+    padding: 0;
+  }
+
+  .handout-sheet {
+    width: 210mm;
+    height: 296mm;
+    aspect-ratio: auto;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
