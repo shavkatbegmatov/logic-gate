@@ -942,9 +942,109 @@ input[type='date']:focus {
   color: var(--muted);
 }
 
-.join .code-input {
+.join .code-input,
+.tg-login .code-input {
   font-family: var(--mono);
   letter-spacing: 0.04em;
+}
+
+/* «yoki» — ikki kirish usuli orasidagi ajratgich (p: .join p chekkalaridan ustun). */
+p.join-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 12px;
+  color: var(--muted);
+}
+
+.join-or::before,
+.join-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid color-mix(in srgb, var(--muted) 40%, transparent);
+}
+
+/* Telegram orqali kirish: tugma, kutish (raqam va botni ochish), Telegram bog'lanmagan holat. */
+.tg-login {
+  display: grid;
+  gap: 8px;
+  justify-items: stretch;
+}
+
+.tg-login .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tg-login p {
+  margin: 0;
+}
+
+.tg-login.waiting,
+.tg-login.new {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  text-align: center;
+}
+
+.tg-login.new {
+  text-align: left;
+}
+
+.tg-login-title {
+  font-weight: 700;
+}
+
+.tg-number {
+  justify-self: center;
+  min-width: 88px;
+  padding: 6px 18px;
+  border: 2px solid var(--accent);
+  border-radius: 14px;
+  font-family: var(--mono);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.tg-login .tg-wait {
+  animation: tg-wait 1.6s ease-in-out infinite;
+}
+
+@keyframes tg-wait {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.tg-login .link-btn {
+  justify-self: center;
+}
+
+/* Telegram bog'lanmagan holatdagi havolalar: kod bilan bog'lash va bekor qilish — tor ekranda ustma-ust. */
+.tg-login .tg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-top: 4px;
+}
+
+.tg-linked {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tg-linked svg {
+  flex: none;
+  margin-top: 0.2em;
 }
 
 .code-box {

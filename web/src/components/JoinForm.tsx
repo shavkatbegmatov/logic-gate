@@ -3,8 +3,9 @@ import { useEffect, useLayoutEffect, useRef } from 'preact/hooks';
 import { t } from '../i18n';
 import { profile } from '../state';
 import { codeComplete, createProfile, errorText, restoreProfile } from '../sync';
-import { sdk, suggestedNickname } from '../telegram';
+import { inTelegram, sdk, suggestedNickname } from '../telegram';
 import { cloudRestore, retryCloudRestore } from '../telegram-app';
+import { TelegramLogin } from './TelegramLogin';
 import { showToast } from './Toast';
 
 /**
@@ -36,6 +37,9 @@ export function JoinForm({
   const name = useSignal(nickname);
   const code = useSignal('');
   const withCode = useSignal(startWithCode);
+  // Telegram orqali kirish — sayt va brauzerda; Mini App ichida profil Telegram'dan o'zi tiklanadi.
+  const withTelegram = restore && !inTelegram;
+  const tgActive = useSignal(false);
   const busy = useSignal(false);
   const error = useSignal('');
   // Telegram bulutida profil bor-yo'qligi hali aniq emas yoki u tiklanmadi: yangi profil ochilsa,
@@ -110,60 +114,79 @@ export function JoinForm({
     );
   }
 
+  // Telegram orqali kirish ketayotganda (raqamni tasdiqlash, yangi profil) — o'z shakli o'rniga o'sha ko'rinadi.
+  const tg = withTelegram && (
+    <>
+      {!tgActive.value && (
+        <p class="join-or small" aria-hidden="true">
+          <span>{t.tgLogin.or}</span>
+        </p>
+      )}
+      <TelegramLogin onActive={(a) => (tgActive.value = a)} onDone={onJoined} />
+    </>
+  );
+
+  // Tuzilma o'zgarmaydi (o'z shakli — bitta o'rin, Telegram — keyingisi): aks holda Preact TelegramLogin'ni
+  // qayta yaratib, kutilayotgan so'rov holatini yo'qotardi.
   return (
     <div class={`join${compact ? ' compact' : ''}`}>
       {!compact && <h2>{t.home.joinTitle}</h2>}
-      {withCode.value ? (
-        <p class="muted">{codeHint ?? t.home.codeText}</p>
-      ) : hint ? (
-        <p class="muted">{hint}</p>
-      ) : (
-        !compact && <p class="muted">{t.home.joinText}</p>
+      {!tgActive.value && (
+        <>
+          {withCode.value ? (
+            <p class="muted">{codeHint ?? t.home.codeText}</p>
+          ) : hint ? (
+            <p class="muted">{hint}</p>
+          ) : (
+            !compact && <p class="muted">{t.home.joinText}</p>
+          )}
+          {/* key: ikki shakl alohida DOM — aks holda Preact bitta maydonni qayta ishlatib, taxallusdagi
+              maxLength olib tashlanganda u 0 ga aylanadi va kod maydoniga hech narsa yozilmaydi. */}
+          {withCode.value ? (
+            <form key="code" class="row" onSubmit={submitCode}>
+              <input
+                ref={codeRef}
+                type="text"
+                class="code-input"
+                maxLength={24}
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+                autoComplete="off"
+                spellcheck={false}
+                value={code.value}
+                onInput={(e) => (code.value = (e.currentTarget as HTMLInputElement).value)}
+                aria-label={t.settings.code}
+              />
+              <button class="btn" disabled={busy.value || !codeComplete(code.value)}>
+                {t.settings.restoreButton}
+              </button>
+            </form>
+          ) : (
+            <form key="nick" class="row" onSubmit={submit}>
+              <input
+                type="text"
+                maxLength={20}
+                autoComplete="nickname"
+                placeholder={t.home.nicknamePlaceholder}
+                value={name.value}
+                onInput={(e) => (name.value = (e.currentTarget as HTMLInputElement).value)}
+                aria-label={t.home.nicknamePlaceholder}
+              />
+              <button class="btn" disabled={busy.value || name.value.trim().length < 2}>
+                {t.home.join}
+              </button>
+            </form>
+          )}
+          {error.value && <p class="form-error">{error.value}</p>}
+          {restore && (
+            <p class="join-switch small">
+              <button type="button" class="link-btn" onClick={toggle}>
+                {withCode.value ? t.home.newInstead : t.home.haveCode}
+              </button>
+            </p>
+          )}
+        </>
       )}
-      {/* key: ikki shakl alohida DOM — aks holda Preact bitta maydonni qayta ishlatib, taxallusdagi
-          maxLength olib tashlanganda u 0 ga aylanadi va kod maydoniga hech narsa yozilmaydi. */}
-      {withCode.value ? (
-        <form key="code" class="row" onSubmit={submitCode}>
-          <input
-            ref={codeRef}
-            type="text"
-            class="code-input"
-            maxLength={24}
-            placeholder="XXXX-XXXX-XXXX-XXXX"
-            autoComplete="off"
-            spellcheck={false}
-            value={code.value}
-            onInput={(e) => (code.value = (e.currentTarget as HTMLInputElement).value)}
-            aria-label={t.settings.code}
-          />
-          <button class="btn" disabled={busy.value || !codeComplete(code.value)}>
-            {t.settings.restoreButton}
-          </button>
-        </form>
-      ) : (
-        <form key="nick" class="row" onSubmit={submit}>
-          <input
-            type="text"
-            maxLength={20}
-            autoComplete="nickname"
-            placeholder={t.home.nicknamePlaceholder}
-            value={name.value}
-            onInput={(e) => (name.value = (e.currentTarget as HTMLInputElement).value)}
-            aria-label={t.home.nicknamePlaceholder}
-          />
-          <button class="btn" disabled={busy.value || name.value.trim().length < 2}>
-            {t.home.join}
-          </button>
-        </form>
-      )}
-      {error.value && <p class="form-error">{error.value}</p>}
-      {restore && (
-        <p class="join-switch small">
-          <button type="button" class="link-btn" onClick={toggle}>
-            {withCode.value ? t.home.newInstead : t.home.haveCode}
-          </button>
-        </p>
-      )}
+      {tg}
     </div>
   );
 }

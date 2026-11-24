@@ -11,6 +11,9 @@ type Telegram interface {
 	VerifyInitData(initData string) (userID int64, lang string, err error)
 	// RemindChanged foydalanuvchiga holat haqida xabar yuboradi; blocked — bot unga yoza olmaydi.
 	RemindChanged(ctx context.Context, chatID int64, lang string, on bool) (blocked bool, err error)
+	// StartLink — botni shu /start parametri bilan ochadigan havola (t.me/<bot>?start=…); bot hali
+	// Telegram'ga ulanmagan bo'lsa — bo'sh.
+	StartLink(payload string) string
 }
 
 // telegramRemind — o'yin ichidan (Telegram Mini App) kunlik eslatmani ko'rish/yoqish/o'chirish.

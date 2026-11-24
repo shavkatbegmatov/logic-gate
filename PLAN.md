@@ -172,4 +172,4 @@ Kiruvchi ma'lumotlar hajmi va tuzilmasi tekshiriladi; IP bo'yicha rate limit (xo
 
 ### Keyingi g'oyalar (foydalanuvchi qarori yoki ma'lumoti kerak)
 
-- Telegram orqali kirish (initData imzosini serverda tekshirish) — bot tokeni serverda kerak bo'ladi; hozircha CloudStorage yetarli.
+- ~~Telegram orqali kirish~~ — bajarildi (2.21.0): saytda bot orqali tasdiqlab kirish, Mini App'da initData bilan (README → «Bot serverda»).

@@ -1,7 +1,7 @@
 // Telegram ichida ishga tushish: marshrut, oyna sozlamalari, profil kodi va o'qituvchi kalitlarini
 // Telegram bulutida saqlash. main.tsx ilova chizilgandan keyin chaqiradi (faqat Telegram ichida).
 import { effect, signal } from '@preact/signals';
-import { ApiError } from './api';
+import { api, ApiError } from './api';
 import { decodeTeacherClasses, encodeTeacherClasses, mergeTeacherClasses, teacherClasses } from './classes';
 import { showToast } from './components/Toast';
 import { t } from './i18n';
@@ -77,10 +77,12 @@ export async function startTelegram() {
   } catch {
     // Eski Telegram — sozlamalarsiz ham ishlaydi.
   }
-  if (app.isVersionAtLeast('6.9')) {
-    await syncCloudProfile(app);
-    await syncCloudTeacher(app);
-  }
+  const cloud = app.isVersionAtLeast('6.9');
+  // Bulut (CloudStorage) yo'q eski Telegram'da — faqat server orqali.
+  if (cloud) await syncCloudProfile(app);
+  else await serverRestore(app);
+  linkProfileToTelegram(app);
+  if (cloud) await syncCloudTeacher(app);
 }
 
 /** Ba'zi Telegram ilovalarida javob kelmay qolishi mumkin — o'yin kutib qolmasin. */
@@ -126,6 +128,42 @@ const cloudRemove = (app: TgWebApp, key: string) =>
   });
 
 /**
+ * Server orqali tiklash: Telegram imzolagan initData bilan shu foydalanuvchiga bog'langan profil (saytda
+ * «Telegram orqali kirish» bilan yoki boshqa qurilmadagi Mini App'da bog'langan). Bog'lanmagan yoki aloqa
+ * yo'q — false. Kutish paytida qurilmada profil paydo bo'lsa — unga tegilmaydi.
+ */
+async function serverRestore(app: TgWebApp): Promise<boolean> {
+  if (!app.initData || profile.peek()) return false;
+  try {
+    const r = await api.telegramAppLogin(app.initData);
+    if (!(await restoreProfile(r.player.code!, true))) return false;
+    const name = profile.peek()?.nickname;
+    if (name) showToast(t.telegram.restored(name), 'ok', 4000);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mini App'da ochiq profil shu Telegram foydalanuvchisiga bog'lanadi (har profil uchun bir marta): keyin
+ * saytda va boshqa qurilmalarda «Telegram orqali kirish» bilan, bulut bo'sh bo'lsa ham shu profilga kiriladi.
+ */
+function linkProfileToTelegram(app: TgWebApp) {
+  if (!app.initData) return;
+  let linkedFor: string | null = null;
+  effect(() => {
+    const id = profile.value?.id;
+    if (!id || id === linkedFor) return;
+    linkedFor = id;
+    api.telegramAppLink(app.initData).catch(() => {
+      // Aloqa yo'q — keyingi ochilishda bog'lanadi.
+      if (linkedFor === id) linkedFor = null;
+    });
+  });
+}
+
+/**
  * Telegram bulutida tiklash kodi: boshqa qurilmadagi Telegram'da o'yin ochilsa, profil va natijalar
  * o'zi tiklanadi. Qurilmada ham, bulutda ham boshqa-boshqa profil bo'lsa — hech biriga tegilmaydi.
  */
@@ -154,7 +192,12 @@ async function syncCloudProfile(app: TgWebApp) {
     cloudRestore.value = 'pending';
     try {
       if (cloudCode === undefined && !(await read())) {
-        // Bulut javob bermadi: profil bor-yo'qligi noma'lum. Bir marta o'zi qayta so'raydi.
+        // Bulut javob bermadi: server shu Telegram'ga bog'langan profilni bilsa — o'sha tiklanadi.
+        if (await serverRestore(app)) {
+          cloudRestore.value = 'idle';
+          return;
+        }
+        // Profil bor-yo'qligi noma'lum. Bir marta o'zi qayta so'raydi.
         cloudRestore.value = profile.peek() ? 'idle' : 'unknown';
         if (!retried) {
           retried = true;
@@ -164,16 +207,26 @@ async function syncCloudProfile(app: TgWebApp) {
       }
       const code = cloudCode;
       // Kutish paytida o'quvchi yangi profil ochgan bo'lsa — unga tegilmaydi.
-      if (code && (await restoreProfile(code, true))) {
-        const name = profile.peek()?.nickname;
-        if (name) showToast(t.telegram.restored(name), 'ok', 4000);
+      if (code) {
+        if (await restoreProfile(code, true)) {
+          const name = profile.peek()?.nickname;
+          if (name) showToast(t.telegram.restored(name), 'ok', 4000);
+        }
+      } else {
+        // Bulut bo'sh: profil saytda yoki boshqa qurilmada ochilib, Telegram'ga bog'langan bo'lishi mumkin.
+        await serverRestore(app);
       }
       cloudRestore.value = 'idle';
     } catch (e) {
-      // Kod endi yaroqsiz — bulutdan olib tashlanadi; aloqa yo'q bo'lsa, qayta urinsa bo'ladi.
+      // Kod endi yaroqsiz (profil o'chirilgan) — bulutdan olib tashlanadi; server shu Telegram'ga bog'langan
+      // boshqa profilni bilsa — o'sha tiklanadi. Aloqa yo'q bo'lsa, qayta urinsa bo'ladi.
       if (e instanceof ApiError && e.status === 401) {
         cloudCode = null;
         await cloudRemove(app, CLOUD_KEY);
+        if (await serverRestore(app)) {
+          cloudRestore.value = 'idle';
+          return;
+        }
       }
       cloudRestore.value = cloudCode && !profile.peek() ? 'failed' : 'idle';
     } finally {
@@ -185,6 +238,12 @@ async function syncCloudProfile(app: TgWebApp) {
     retry = () => void restore();
     addEventListener('online', retry);
     await restore();
+    // Server orqali tiklangan profil (bulut bo'sh edi yoki eskirgan kod olib tashlandi) — bulutga yoziladi.
+    const restored = profile.peek();
+    if (restored && cloudCode === null) {
+      cloudCode = restored.code;
+      await cloudSet(app, CLOUD_KEY, JSON.stringify({ code: cloudCode }));
+    }
   } else {
     cloudRestore.value = 'idle';
     if ((await read()) && cloudCode === null && profile.value) {

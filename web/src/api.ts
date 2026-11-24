@@ -42,7 +42,29 @@ export interface PlayerInfo {
   nickname: string;
   createdAt: number;
   code?: string;
+  /** Profil Telegram hisobiga bog'langanmi (faqat /me). */
+  telegram?: boolean;
 }
+
+/** Telegram orqali kirish so'rovi: botni ochadigan havola va saytda ko'rinadigan raqam. */
+export interface TgStart {
+  id: string;
+  url: string;
+  number: number;
+  /** Soniya. */
+  expiresIn: number;
+}
+
+/**
+ * So'rov holati: pending — tasdiq kutilmoqda, denied — rad etildi, linked — Telegram profilga bog'landi,
+ * new — Telegram hali profilga bog'lanmagan (name — Telegram'dagi ism), ok — profil va qurilma kaliti.
+ */
+export type TgStatus =
+  | { status: 'pending' }
+  | { status: 'denied' }
+  | { status: 'linked' }
+  | { status: 'new'; name: string }
+  | { status: 'ok'; player: PlayerInfo };
 
 export interface LevelStats {
   solvers: number;
@@ -206,6 +228,19 @@ export const api = {
   daily: () => request<DailyInfo>('GET', '/daily'),
   dailyDay: (day: number) => request<DailyInfo>('GET', `/daily/${day}`),
   dailyArchive: () => request<{ today: number; days: ArchiveDay[] }>('GET', '/daily/archive'),
+  /** Saytga Telegram orqali kirish so'rovi (link — ochiq profilni Telegram'ga bog'lash). */
+  telegramStart: (link = false) => request<TgStart>('POST', link ? '/me/telegram' : '/auth/telegram'),
+  telegramStatus: (id: string) => request<TgStatus>('GET', `/auth/telegram/${encodeURIComponent(id)}`),
+  /** Telegram bog'lanmagan: shu taxallus bilan yangi profil (javobda tiklash kodi). */
+  telegramNewPlayer: (id: string, nickname: string) =>
+    request<{ status: 'ok'; created?: boolean; player: PlayerInfo }>('POST', `/auth/telegram/${encodeURIComponent(id)}/player`, { nickname }),
+  /** Telegram bog'lanmagan: shu kodli profilga bog'lash. */
+  telegramAttach: (id: string, code: string) =>
+    request<{ status: 'linked' }>('POST', `/auth/telegram/${encodeURIComponent(id)}/attach`, undefined, code),
+  /** Mini App: Telegram imzolagan initData bilan bog'langan profilga kirish (404 not_linked — bog'lanmagan). */
+  telegramAppLogin: (initData: string) => request<{ player: PlayerInfo }>('POST', '/auth/telegram/app', { initData }),
+  /** Mini App: ochiq profilni shu Telegram foydalanuvchisiga bog'lash. */
+  telegramAppLink: (initData: string) => request<{ linked: boolean }>('POST', '/me/telegram/app', { initData }),
   /** Telegram ichida: kunlik eslatma holati (on yo'q) yoki uni o'zgartirish. Profil bo'lsa, chat unga bog'lanadi. */
   telegramRemind: (initData: string, on?: boolean, lang?: string) =>
     request<{ remind: boolean }>('POST', '/telegram/remind', on === undefined ? { initData } : { initData, on, lang }),

@@ -33,6 +33,7 @@ import (
 	"logicgate/server/internal/backup"
 	"logicgate/server/internal/bot"
 	"logicgate/server/internal/store"
+	"logicgate/server/internal/tglogin"
 	"logicgate/server/internal/web"
 )
 
@@ -207,6 +208,10 @@ func run(log *slog.Logger, addr, dbPath, staticDir string) error {
 		tgBot = bot.New(cfg, st, daily, log)
 		tgBot.SetAlerts(alerts)
 		opts.Telegram = tgBot
+		// Saytga Telegram orqali kirish: so'rovni API ochadi, bot tasdiqlaydi.
+		logins := tglogin.New(nil)
+		tgBot.SetLogins(logins)
+		opts.Logins = logins
 	}
 	var handler http.Handler = api.New(st, pack, daily, log, opts).Handler()
 	if staticDir != "" {

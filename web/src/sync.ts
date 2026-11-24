@@ -30,7 +30,14 @@ export const newProfileCode = signal<string | null>(null);
 export const lostProfile = signal<string | null>(null);
 
 export async function createProfile(nickname: string) {
-  const p = await api.createPlayer(nickname);
+  adoptNewProfile(await api.createPlayer(nickname));
+}
+
+/**
+ * Serverda hozirgina ochilgan profil (taxallus bilan yoki Telegram orqali): qurilmadagi natijalar unga
+ * yuboriladi, tiklash kodi esa darhol ko'rsatiladi.
+ */
+export function adoptNewProfile(p: { id: string; nickname: string; code?: string }) {
   profile.value = { id: p.id, nickname: p.nickname, code: p.code! };
   newProfileCode.value = p.code!;
   syncProgress().catch(() => {});

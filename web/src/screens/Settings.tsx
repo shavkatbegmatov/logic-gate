@@ -1,7 +1,7 @@
 import './Settings.css';
 import { useSignal } from '@preact/signals';
 import { useEffect, useRef } from 'preact/hooks';
-import { api } from '../api';
+import { api, type PlayerInfo } from '../api';
 import { sfx } from '../audio';
 import { copyText, selectContents } from '../clipboard';
 import { ClassesCard } from '../components/ClassesCard';
@@ -9,6 +9,7 @@ import { askConfirm } from '../components/Dialogs';
 import { JoinForm } from '../components/JoinForm';
 import { Avatar } from '../components/PlayerChip';
 import { RemindToggle } from '../components/RemindToggle';
+import { TelegramLogin } from '../components/TelegramLogin';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
 import { forgetAllTeacherClasses, teacherClasses } from '../classes';
@@ -29,16 +30,10 @@ import { clearPlayerData, codeComplete, errorText, formatCode, renameProfile, re
  * ID — ochiq raqam (o'qituvchi yoki administratorga aytish uchun), kirish uchun emas: buni yonida aytamiz,
  * aks holda tiklash kodi bilan adashtiriladi.
  */
-function ProfileHead({ id, nickname }: { id: string; nickname: string }) {
-  const created = useSignal<number | null>(null);
+function ProfileHead({ id, nickname, createdAt }: { id: string; nickname: string; createdAt: number | null }) {
   const idRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    created.value = null;
     void refreshMyRank();
-    api
-      .me()
-      .then((me) => me.id === id && (created.value = me.createdAt))
-      .catch(() => {});
   }, [id]);
   const rank = currentRank();
   const copyId = async () => {
@@ -49,7 +44,7 @@ function ProfileHead({ id, nickname }: { id: string; nickname: string }) {
     }
   };
   const meta = [
-    created.value ? t.player.since(dateText(created.value)) : null,
+    createdAt ? t.player.since(dateText(createdAt)) : null,
     rank === undefined ? null : rank === null ? t.player.unranked : t.player.rank(rank),
   ].filter(Boolean);
   return (
@@ -76,6 +71,17 @@ export function Settings() {
   const code = useSignal('');
   const busy = useSignal(false);
   const codeRef = useRef<HTMLElement>(null);
+  // Serverdagi profil ma'lumoti: ochilgan sana va Telegram'ga bog'langanmi.
+  const me = useSignal<PlayerInfo | null>(null);
+  const tgActive = useSignal(false);
+  useEffect(() => {
+    me.value = null;
+    if (!p) return;
+    api
+      .me()
+      .then((r) => r.id === profile.peek()?.id && (me.value = r))
+      .catch(() => {});
+  }, [p?.id]);
 
   const run = async (fn: () => Promise<void>, ok: string) => {
     busy.value = true;
@@ -143,7 +149,7 @@ export function Settings() {
             <h2>{t.settings.profile}</h2>
             {p ? (
               <>
-                <ProfileHead id={p.id} nickname={p.nickname} />
+                <ProfileHead id={p.id} nickname={p.nickname} createdAt={me.value?.createdAt ?? null} />
                 <form
                   class="row"
                   onSubmit={(e) => {
@@ -170,6 +176,23 @@ export function Settings() {
                   </button>
                 </div>
                 <p class="muted">{t.settings.codeText}</p>
+                {/* Mini App ichida profil Telegram'ga o'zi bog'lanadi. */}
+                {!inTelegram && me.value && (
+                  <>
+                    <h3>Telegram</h3>
+                    {me.value.telegram ? (
+                      <p class="muted tg-linked">
+                        <Icon name="telegram" />
+                        {t.tgLogin.linkedState}
+                      </p>
+                    ) : (
+                      <>
+                        <p class="muted">{t.tgLogin.linkHint}</p>
+                        <TelegramLogin mode="link" onDone={() => me.value && (me.value = { ...me.value, telegram: true })} />
+                      </>
+                    )}
+                  </>
+                )}
               </>
             ) : (
               // Kod bilan tiklash — pastdagi alohida kartada.
@@ -179,27 +202,44 @@ export function Settings() {
 
           <section class="card">
             <h2>{t.settings.restore}</h2>
-            <p class="muted">{t.settings.restoreText}</p>
-            <form
-              class="row code-row"
-              onSubmit={(e) => {
-                e.preventDefault();
-                restore();
-              }}
-            >
-              <input
-                type="text"
-                placeholder="XXXX-XXXX-XXXX-XXXX"
-                autoComplete="off"
-                spellcheck={false}
-                value={code.value}
-                onInput={(e) => (code.value = (e.currentTarget as HTMLInputElement).value)}
-                aria-label={t.settings.code}
+            {/* Telegram orqali kirish ketayotganda (tasdiq, yangi profil) — kod shakli yashiriladi; tuzilma
+                o'zgarmaydi, aks holda TelegramLogin qayta yaratilib, so'rov holati yo'qolardi. */}
+            {!tgActive.value && (
+              <>
+                <p class="muted">{t.settings.restoreText}</p>
+                <form
+                  class="row code-row"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    restore();
+                  }}
+                >
+                  <input
+                    type="text"
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                    autoComplete="off"
+                    spellcheck={false}
+                    value={code.value}
+                    onInput={(e) => (code.value = (e.currentTarget as HTMLInputElement).value)}
+                    aria-label={t.settings.code}
+                  />
+                  <button class="btn" disabled={busy.value || !codeComplete(code.value)}>
+                    {t.settings.restoreButton}
+                  </button>
+                </form>
+                {!inTelegram && (
+                  <p class="join-or small" aria-hidden="true">
+                    <span>{t.tgLogin.or}</span>
+                  </p>
+                )}
+              </>
+            )}
+            {!inTelegram && (
+              <TelegramLogin
+                onActive={(a) => (tgActive.value = a)}
+                onDone={() => profile.value && (nick.value = profile.value.nickname)}
               />
-              <button class="btn" disabled={busy.value || !codeComplete(code.value)}>
-                {t.settings.restoreButton}
-              </button>
-            </form>
+            )}
           </section>
 
           <ClassesCard />

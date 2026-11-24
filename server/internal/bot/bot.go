@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"logicgate/levels"
 	"logicgate/server/internal/store"
+	"logicgate/server/internal/tglogin"
 )
 
 type Config struct {
@@ -33,6 +35,10 @@ type Bot struct {
 	now   func() time.Time
 	// username — getMe dan; Mini App havolasi uchun (Run boshida, goroutine'lardan oldin yoziladi).
 	username string
+	// startName — o'sha nom, HTTP so'rovlari (StartLink) uchun: ular Run bilan parallel ishlaydi.
+	startName atomic.Value
+	// logins — saytga Telegram orqali kirish so'rovlari (SetLogins); nil — o'chirilgan.
+	logins *tglogin.Hub
 	// pause — xabarlar orasidagi tanaffus (Telegram cheklovi ~30 xabar/s); testlarda 0.
 	pause time.Duration
 
@@ -62,7 +68,7 @@ func (b *Bot) Run(ctx context.Context) {
 	for wait := 5 * time.Second; ; wait = min(wait*2, 5*time.Minute) {
 		me, err := b.tg.GetMe(ctx)
 		if err == nil {
-			b.username = me.Username
+			b.setUsername(me.Username)
 			break
 		}
 		b.log.Warn("telegram getMe", "err", err)
@@ -195,6 +201,11 @@ func (b *Bot) onMessage(ctx context.Context, m *Message) {
 	var err error
 	switch command(m.Text) {
 	case "/start":
+		// Saytdan kirish so'rovi: t.me/<bot>?start=auth_<id>.
+		if f := strings.Fields(m.Text); len(f) > 1 && strings.HasPrefix(f[1], authPrefix) {
+			err = b.onAuthStart(ctx, m, strings.TrimPrefix(f[1], authPrefix), lang)
+			break
+		}
 		_, err = b.tg.SendMessage(ctx, chat, tx.Welcome, b.mainKeyboard(lang, b.reminding(ctx, chat)))
 	case "/til", "/lang":
 		lang = otherLang(lang)
@@ -237,6 +248,10 @@ func (b *Bot) sendFailed(ctx context.Context, chat int64, err error) {
 
 func (b *Bot) onCallback(ctx context.Context, cb *CallbackQuery) {
 	chat := cb.From.ID
+	if data, ok := strings.CutPrefix(cb.Data, "auth:"); ok {
+		b.onAuthAnswer(ctx, cb, data)
+		return
+	}
 	if lang, ok := strings.CutPrefix(cb.Data, "lang:"); ok && (lang == "uz" || lang == "ru") {
 		// Til tugmasi: tanlangan tilda salomlashuv qayta yuboriladi.
 		b.st.UpsertChat(ctx, chat, lang)

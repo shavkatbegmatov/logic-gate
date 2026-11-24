@@ -20,6 +20,7 @@ import (
 	"logicgate/server/internal/nickname"
 	"logicgate/server/internal/sim"
 	"logicgate/server/internal/store"
+	"logicgate/server/internal/tglogin"
 )
 
 const (
@@ -49,6 +50,8 @@ type Server struct {
 	classes *limiter
 	// Brauzer xatolari haqida xabarlar va ularning takrorlari.
 	reports *limiter
+	// Telegram orqali kirish so'rovlari.
+	tglogin *limiter
 	cerr    clientErrors
 
 	// Umumiy reyting keshi (cachedLeaderboard): oxirgi holat, qayta hisoblash boshlangan payt va davom
@@ -78,6 +81,8 @@ type Options struct {
 	Now func() time.Time
 	// Telegram — bot o'rnatilgan bo'lsa (o'yin ichidan kunlik eslatma); nil — o'chirilgan.
 	Telegram Telegram
+	// Logins — saytga Telegram orqali kirish so'rovlari (bot ular bilan ishlaydi); nil — o'chirilgan.
+	Logins *tglogin.Hub
 }
 
 func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logger, opts Options) *Server {
@@ -104,6 +109,8 @@ func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logg
 		classes: newLimiter(1.0/120, 5),
 		// Bir IP dan: 5 tagacha birdaniga, keyin daqiqada bitta xato xabari.
 		reports: newLimiter(1.0/60, 5),
+		// Bir IP dan: butun sinf birdaniga, keyin 5 soniyada bitta so'rov (holatni so'rash — umumiy cheklov ostida).
+		tglogin: newLimiter(1.0/5, 45),
 	}
 }
 
@@ -126,6 +133,13 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/daily/{day}/solve", s.authed(s.solveDaily))
 	mux.HandleFunc("GET /api/daily/{day}/leaderboard", s.dailyLeaderboard)
 	mux.HandleFunc("POST /api/telegram/remind", s.telegramRemind)
+	mux.HandleFunc("POST /api/auth/telegram", s.telegramLogin)
+	mux.HandleFunc("POST /api/auth/telegram/app", s.telegramAppLogin)
+	mux.HandleFunc("GET /api/auth/telegram/{id}", s.telegramLoginStatus)
+	mux.HandleFunc("POST /api/auth/telegram/{id}/player", s.telegramLoginPlayer)
+	mux.HandleFunc("POST /api/auth/telegram/{id}/attach", s.authed(s.telegramLoginAttach))
+	mux.HandleFunc("POST /api/me/telegram", s.authed(s.telegramLink))
+	mux.HandleFunc("POST /api/me/telegram/app", s.authed(s.telegramAppLink))
 	mux.HandleFunc("POST /api/classes", s.createClass)
 	mux.HandleFunc("GET /api/classes/{code}", s.getClass)
 	mux.HandleFunc("DELETE /api/classes/{code}", s.deleteClass)
@@ -279,6 +293,8 @@ type playerJSON struct {
 	Nickname  string `json:"nickname"`
 	CreatedAt int64  `json:"createdAt"`
 	Code      string `json:"code,omitempty"`
+	// Telegram — profil Telegram hisobiga bog'langanmi (faqat /api/me).
+	Telegram *bool `json:"telegram,omitempty"`
 }
 
 func (s *Server) createPlayer(w http.ResponseWriter, r *http.Request) {
@@ -310,7 +326,12 @@ func (s *Server) createPlayer(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getMe(w http.ResponseWriter, r *http.Request) {
 	p := playerFrom(r)
-	writeJSON(w, http.StatusOK, playerJSON{ID: p.ID, Nickname: p.Nickname, CreatedAt: p.CreatedAt.Unix()})
+	linked, err := s.store.TelegramLinked(r.Context(), p.ID)
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, playerJSON{ID: p.ID, Nickname: p.Nickname, CreatedAt: p.CreatedAt.Unix(), Telegram: &linked})
 }
 
 func (s *Server) patchMe(w http.ResponseWriter, r *http.Request) {

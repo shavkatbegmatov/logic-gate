@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.21.0',
+    date: '2026-11-24',
+    uz: [
+      "Endi saytga Telegram orqali kirsa bo'ladi: «Telegram orqali kirish» ni bosing, botda saytdagi raqamni tanlang — tiklash kodini terish shart emas. Telefon, kompyuter, istalgan brauzerda.",
+      "Sozlamalarda — «Telegram'ni bog'lash»: profilingizni bir marta bog'lasangiz, keyin hamma qurilmada Telegram orqali kirasiz. Telegram ichida o'ynaganlarning profili o'zi bog'lanadi.",
+    ],
+    ru: [
+      'Теперь на сайт можно войти через Telegram: нажмите «Войти через Telegram» и выберите в боте число с сайта — код восстановления вводить не нужно. На телефоне, компьютере, в любом браузере.',
+      'В настройках — «Привязать Telegram»: привяжите профиль один раз, и дальше на всех устройствах входите через Telegram. У тех, кто играет внутри Telegram, профиль привязывается сам.',
+    ],
+  },
+  {
     version: '2.20.1',
     date: '2026-11-24',
     uz: [

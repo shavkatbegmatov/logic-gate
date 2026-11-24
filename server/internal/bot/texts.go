@@ -31,6 +31,19 @@ type texts struct {
 	ID               string // %d
 	Tiers            [6]string
 	Commands         []Command
+	// Saytga Telegram orqali kirish (auth.go).
+	AuthLogin    string // %s — bog'langan profil taxallusi
+	AuthLoginNew string
+	AuthLink     string // %s — bog'lanadigan profil
+	AuthReplace  string // %s — hozir bog'langan profil
+	AuthPick     string
+	AuthNotMe    string
+	AuthApproved string
+	AuthLinked   string // %s
+	AuthDenied   string
+	AuthWrong    string
+	AuthExpired  string
+	AuthTaken    string
 }
 
 var msgs = map[string]texts{
@@ -72,6 +85,19 @@ var msgs = map[string]texts{
 			{"id", "Telegram ID'ingiz"},
 			{"help", "Yordam"},
 		},
+		AuthLogin: "🔐 Brauzerda «%s» profiliga Telegram orqali kirish so'raldi.",
+		AuthLoginNew: "🔐 Brauzerda Telegram orqali kirish so'raldi. Bu Telegram hisobi hali hech bir profilga bog'lanmagan: " +
+			"tasdiqlasangiz, saytda yangi profil ochasiz yoki tiklash kodi bilan avvalgi profilingizni bog'laysiz.",
+		AuthLink:     "🔗 Brauzerdagi «%s» profilini shu Telegram hisobiga bog'lash so'raldi. Keyin istalgan qurilmada «Telegram orqali kirish» bilan shu profilga kirasiz.",
+		AuthReplace:  "Hozir bu Telegram «%s» profiliga bog'langan — tasdiqlasangiz, bog'lanish yangisiga o'tadi.",
+		AuthPick:     "Saytda ko'rinib turgan raqamni tanlang. So'rovni siz yubormagan bo'lsangiz — «Bu men emas» ni bosing.",
+		AuthNotMe:    "❌ Bu men emas",
+		AuthApproved: "✅ Tasdiqlandi. Brauzerga qayting — sahifa o'zi davom etadi.",
+		AuthLinked:   "✅ «%s» profili Telegram'ga bog'landi. Endi istalgan qurilmada «Telegram orqali kirish» bilan kirasiz.",
+		AuthDenied:   "❌ So'rov bekor qilindi.",
+		AuthWrong:    "❌ Raqam mos kelmadi — so'rov bekor qilindi. Saytda qaytadan urinib ko'ring.",
+		AuthExpired:  "Bu so'rov eskirgan yoki ishlatilgan. Saytda «Telegram orqali kirish» ni qayta bosing.",
+		AuthTaken:    "Bu so'rov boshqa Telegram hisobida ochilgan.",
 	},
 	"ru": {
 		Welcome: "Привет! Это Logic Gate — игра-головоломка: собирайте схемы из логических элементов.\n\n" +
@@ -111,6 +137,19 @@ var msgs = map[string]texts{
 			{"id", "Ваш Telegram ID"},
 			{"help", "Помощь"},
 		},
+		AuthLogin: "🔐 В браузере запрошен вход в профиль «%s» через Telegram.",
+		AuthLoginNew: "🔐 В браузере запрошен вход через Telegram. Этот аккаунт Telegram ещё не привязан к профилю: " +
+			"после подтверждения на сайте можно создать новый профиль или привязать прежний по коду восстановления.",
+		AuthLink:     "🔗 Запрошена привязка профиля «%s» к этому аккаунту Telegram. Потом на любом устройстве вы войдёте в него через «Войти через Telegram».",
+		AuthReplace:  "Сейчас этот Telegram привязан к профилю «%s» — после подтверждения привязка перейдёт на новый.",
+		AuthPick:     "Выберите число, которое показано на сайте. Если запрос отправляли не вы — нажмите «Это не я».",
+		AuthNotMe:    "❌ Это не я",
+		AuthApproved: "✅ Подтверждено. Вернитесь в браузер — страница продолжит сама.",
+		AuthLinked:   "✅ Профиль «%s» привязан к Telegram. Теперь на любом устройстве входите через «Войти через Telegram».",
+		AuthDenied:   "❌ Запрос отменён.",
+		AuthWrong:    "❌ Число не совпало — запрос отменён. Попробуйте ещё раз на сайте.",
+		AuthExpired:  "Этот запрос устарел или уже использован. Нажмите «Войти через Telegram» на сайте ещё раз.",
+		AuthTaken:    "Этот запрос открыт в другом аккаунте Telegram.",
 	},
 }
 

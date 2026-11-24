@@ -26,6 +26,7 @@ import (
 
 	"logicgate/levels"
 	"logicgate/server/internal/store"
+	"logicgate/server/internal/tglogin"
 )
 
 const testToken = "123456:TEST-token_abc"
@@ -119,7 +120,7 @@ func setup(t *testing.T) (*Bot, *fakeAPI, *store.Store) {
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	b := New(Config{Token: testToken, API: srv.URL, Admin: 99, Site: "https://logic.noesis.uz", RemindHour: 9}, st, daily, log)
 	b.pause = 0
-	b.username = "LogicGateUzBot"
+	b.setUsername("LogicGateUzBot")
 	// Kunlik masalalar ro'yxatining birinchi kuni (testlar sanaga bog'liq bo'lmasin).
 	start, err := time.ParseInLocation(time.DateOnly, daily.Start, levels.Tashkent)
 	if err != nil {
@@ -597,3 +598,121 @@ func TestWeeklyReportAndAlerts(t *testing.T) {
 		t.Fatalf("faqat brauzer: %q", text)
 	}
 }
+
+func TestAuthConfirm(t *testing.T) {
+	b, fake, st := setup(t)
+	ctx := context.Background()
+	hub := tglogin.New(nil)
+	b.SetLogins(hub)
+	if got := b.StartLink("auth_x"); got != "https://t.me/LogicGateUzBot?start=auth_x" {
+		t.Fatalf("havola: %s", got)
+	}
+	for i, nick := range []string{"TEST_USER", "TEST_USER_2"} {
+		h := sha256.Sum256([]byte(nick))
+		if err := st.CreatePlayer(ctx, "p"+strconv.Itoa(i+1), h[:], nick); err != nil {
+			t.Fatal(err)
+		}
+	}
+	open := func(chat int64, id string) call {
+		t.Helper()
+		b.Handle(ctx, Update{Message: &Message{
+			From: &User{ID: chat, FirstName: "Ali", LastName: "Valiyev"}, Chat: Chat{ID: chat, Type: "private"}, Text: "/start auth_" + id,
+		}})
+		m := fake.take("sendMessage")
+		return m[len(m)-1]
+	}
+	press := func(chat int64, id string, n int) string {
+		t.Helper()
+		b.Handle(ctx, Update{CallbackQuery: &CallbackQuery{
+			ID: "cb", From: User{ID: chat}, Data: "auth:" + id + ":" + strconv.Itoa(n), Message: &Message{MessageID: 7, Chat: Chat{ID: chat}},
+		}})
+		e := fake.take("editMessageText")
+		if len(e) == 0 || num(e[len(e)-1].Params["message_id"]) != 7 || e[len(e)-1].Params["reply_markup"] != nil {
+			t.Fatalf("xabar yangilanmadi: %+v", e)
+		}
+		return e[len(e)-1].Params["text"].(string)
+	}
+	tx := t2(t, "uz")
+
+	// 1. Kirish, Telegram bog'lanmagan: uchta raqam tugmasi (biri to'g'ri) va «Bu men emas».
+	r, _ := hub.Start(tglogin.Login, "", "")
+	m := open(42, r.ID)
+	if text := m.Params["text"].(string); !strings.Contains(text, tx.AuthLoginNew) || !strings.Contains(text, tx.AuthPick) {
+		t.Fatalf("matn: %s", text)
+	}
+	kb := keyboard(t, m)
+	if len(kb) != 2 || len(kb[0]) != 3 || kb[1][0]["callback_data"] != "auth:"+r.ID+":0" {
+		t.Fatalf("tugmalar: %v", kb)
+	}
+	for i, n := range r.Choices {
+		if kb[0][i]["text"] != strconv.Itoa(n) || kb[0][i]["callback_data"] != "auth:"+r.ID+":"+strconv.Itoa(n) {
+			t.Fatalf("raqam tugmasi %d: %v", i, kb[0][i])
+		}
+	}
+	if got, _ := hub.Get(r.ID); got.Chat != 42 || got.Name != "Ali Valiyev" {
+		t.Fatalf("so'rov biriktirilmadi: %+v", got)
+	}
+	// Havola boshqa hisobga o'tib qolsa — u so'rovni ololmaydi.
+	if text := open(43, r.ID).Params["text"]; text != tx.AuthTaken {
+		t.Fatalf("boshqa hisob: %v", text)
+	}
+	if text := press(42, r.ID, r.Number); text != tx.AuthApproved {
+		t.Fatalf("tasdiq: %s", text)
+	}
+	if got, _ := hub.Get(r.ID); got.State != tglogin.Approved {
+		t.Fatalf("holat: %+v", got)
+	}
+
+	// 2. Bog'lash: noto'g'ri raqam — rad, bog'lanmaydi; to'g'ri raqam — bot darhol bog'laydi.
+	r, _ = hub.Start(tglogin.Link, "p1", "TEST_USER")
+	if text := open(42, r.ID).Params["text"].(string); !strings.Contains(text, "«TEST_USER»") || strings.Contains(text, "Hozir bu Telegram") {
+		t.Fatalf("bog'lash matni: %s", text)
+	}
+	wrong := r.Choices[0]
+	if wrong == r.Number {
+		wrong = r.Choices[1]
+	}
+	if text := press(42, r.ID, wrong); text != tx.AuthWrong {
+		t.Fatalf("noto'g'ri raqam: %s", text)
+	}
+	if _, err := st.PlayerByChat(ctx, 42); err == nil {
+		t.Fatal("noto'g'ri raqam bilan bog'landi")
+	}
+	r, _ = hub.Start(tglogin.Link, "p1", "TEST_USER")
+	open(42, r.ID)
+	if text := press(42, r.ID, r.Number); !strings.Contains(text, "«TEST_USER»") || !strings.HasPrefix(text, "✅") {
+		t.Fatalf("bog'landi: %s", text)
+	}
+	if p, err := st.PlayerByChat(ctx, 42); err != nil || p.ID != "p1" {
+		t.Fatalf("bog'lanmadi: %+v %v", p, err)
+	}
+
+	// 3. Endi kirish so'rovida profil nomi ko'rinadi; boshqa profilga bog'lashda — almashishi aytiladi.
+	r, _ = hub.Start(tglogin.Login, "", "")
+	if text := open(42, r.ID).Params["text"].(string); !strings.Contains(text, "«TEST_USER» profiliga") {
+		t.Fatalf("kirish matni: %s", text)
+	}
+	if text := press(42, r.ID, 0); text != tx.AuthDenied {
+		t.Fatalf("«Bu men emas»: %s", text)
+	}
+	r, _ = hub.Start(tglogin.Link, "p2", "TEST_USER_2")
+	if text := open(42, r.ID).Params["text"].(string); !strings.Contains(text, "«TEST_USER_2»") || !strings.Contains(text, "Hozir bu Telegram «TEST_USER» profiliga") {
+		t.Fatalf("almashtirish matni: %s", text)
+	}
+
+	// 4. Eskirgan yoki noma'lum so'rov.
+	if text := open(42, "yoq").Params["text"]; text != tx.AuthExpired {
+		t.Fatalf("noma'lum: %v", text)
+	}
+	if text := press(42, "yoq", 12); text != tx.AuthExpired {
+		t.Fatalf("noma'lum tugma: %s", text)
+	}
+	// Oddiy /start — salomlashuv (so'rov emas).
+	b.Handle(ctx, Update{Message: &Message{From: &User{ID: 42}, Chat: Chat{ID: 42, Type: "private"}, Text: "/start c_ABCDEF"}})
+	if m := fake.take("sendMessage"); !strings.Contains(m[len(m)-1].Params["text"].(string), "Logic Gate") {
+		t.Fatalf("oddiy /start: %v", m[len(m)-1].Params["text"])
+	}
+}
+
+// t2 — bot matnlari (testdagi t bilan to'qnashmasin).
+func t2(_ *testing.T, lang string) texts { return t(lang) }

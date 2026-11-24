@@ -89,6 +89,16 @@ var migrations = []string{
 		created_at INTEGER NOT NULL
 	);
 	CREATE INDEX class_tasks_class ON class_tasks(class_id);`,
+	// Qurilma kalitlari: Telegram orqali kirgan qurilma o'z kalitini oladi (tiklash kodi kabi ishlaydi).
+	// Asosiy kod faqat xesh ko'rinishida saqlanadi — uni qaytarib berib bo'lmaydi, almashtirish esa
+	// boshqa qurilmalarni profildan chiqarib yuborardi.
+	`CREATE TABLE player_tokens (
+		token_hash BLOB PRIMARY KEY,
+		player_id  TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+		created_at INTEGER NOT NULL
+	) WITHOUT ROWID;
+	CREATE INDEX player_tokens_player ON player_tokens(player_id, created_at);
+	CREATE INDEX tg_chats_player ON tg_chats(player_id);`,
 }
 
 type Store struct {
@@ -196,11 +206,16 @@ func (s *Store) CreatePlayer(ctx context.Context, id string, tokenHash []byte, n
 	return err
 }
 
+// PlayerByToken — tiklash kodi yoki qurilma kaliti (AddToken) xeshi bo'yicha o'yinchi.
 func (s *Store) PlayerByToken(ctx context.Context, tokenHash []byte) (*Player, error) {
 	var p Player
 	var created, seen int64
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, nickname, created_at, last_seen_at FROM players WHERE token_hash = ?`, tokenHash).
+		`SELECT id, nickname, created_at, last_seen_at FROM players WHERE token_hash = ?
+		 UNION ALL
+		 SELECT p.id, p.nickname, p.created_at, p.last_seen_at FROM player_tokens t JOIN players p ON p.id = t.player_id
+		 WHERE t.token_hash = ?
+		 LIMIT 1`, tokenHash, tokenHash).
 		Scan(&p.ID, &p.Nickname, &created, &seen)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
@@ -210,6 +225,29 @@ func (s *Store) PlayerByToken(ctx context.Context, tokenHash []byte) (*Player, e
 	}
 	p.CreatedAt, p.LastSeen = time.Unix(created, 0), time.Unix(seen, 0)
 	return &p, nil
+}
+
+// maxTokens — bir o'yinchining qurilma kalitlari chegarasi: undan oshsa, eng eskisi o'chadi.
+const maxTokens = 20
+
+// AddToken o'yinchiga yangi qurilma kalitini qo'shadi (Telegram orqali kirish). Kalit tiklash kodi
+// kabi ishlaydi; eng eski kalitlar maxTokens dan ortig'i o'chiriladi.
+func (s *Store) AddToken(ctx context.Context, playerID string, tokenHash []byte) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, `INSERT INTO player_tokens (token_hash, player_id, created_at) VALUES (?, ?, ?)`,
+		tokenHash, playerID, time.Now().Unix()); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM player_tokens WHERE player_id = ? AND token_hash NOT IN (
+		SELECT token_hash FROM player_tokens WHERE player_id = ? ORDER BY created_at DESC, token_hash LIMIT ?)`,
+		playerID, playerID, maxTokens); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 // Touch last_seen_at ni yangilaydi, lekin soatiga ko'pi bilan bir marta (diskka kam yozish uchun).

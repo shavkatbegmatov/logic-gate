@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.21.0 — 2026-11-24
+
+- Endi saytga Telegram orqali kirsa bo'ladi: «Telegram orqali kirish» ni bosing, botda saytdagi raqamni tanlang — tiklash kodini terish shart emas. Telefon, kompyuter, istalgan brauzerda.
+- Sozlamalarda — «Telegram'ni bog'lash»: profilingizni bir marta bog'lasangiz, keyin hamma qurilmada Telegram orqali kirasiz. Telegram ichida o'ynaganlarning profili o'zi bog'lanadi.
+
 ## 2.20.1 — 2026-11-24
 
 - Profilingiz serverda topilmasa (masalan, takroriy profil sifatida o'chirilgan bo'lsa), o'yin endi jimgina yangisini ochmaydi. «Profil topilmadi» oynasida asosiy profilingiz kodi bilan kirasiz — shu qurilmadagi natijalar unga qo'shiladi — yoki o'zingiz yangi profil ochasiz. Reytingda ismingiz qayta ko'payib ketmaydi.

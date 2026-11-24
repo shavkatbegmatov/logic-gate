@@ -44,11 +44,40 @@ func (s *Store) SetRemind(ctx context.Context, chatID int64, lang string, on boo
 	return err
 }
 
-// LinkChat chatni o'yinchiga bog'laydi: eslatma bugungi masalani yechganlarga yuborilmaydi, seriya ko'rsatiladi.
+// LinkChat Telegram foydalanuvchisini o'yinchiga bog'laydi (chat yozuvi bo'lmasa — yaratiladi: Mini App'ni
+// botga yozmasdan ochganlar). Bog'langan profilga Telegram orqali kiriladi; eslatma bugungi masalani
+// yechganlarga yuborilmaydi, seriya ko'rsatiladi. Bitta Telegram — bitta profil (yangi bog'lanish eskisini almashtiradi).
 func (s *Store) LinkChat(ctx context.Context, chatID int64, playerID string) error {
-	_, err := s.db.ExecContext(ctx, `UPDATE tg_chats SET player_id = ?, updated_at = ? WHERE chat_id = ?`,
-		playerID, time.Now().Unix(), chatID)
+	now := time.Now().Unix()
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO tg_chats (chat_id, player_id, created_at, updated_at) VALUES (?, ?, ?, ?)
+		ON CONFLICT (chat_id) DO UPDATE SET player_id = excluded.player_id, updated_at = excluded.updated_at`,
+		chatID, playerID, now, now)
 	return err
+}
+
+// PlayerByChat — Telegram foydalanuvchisiga bog'langan o'yinchi; bog'lanmagan bo'lsa ErrNotFound.
+func (s *Store) PlayerByChat(ctx context.Context, chatID int64) (*Player, error) {
+	var p Player
+	var created, seen int64
+	err := s.db.QueryRowContext(ctx, `
+		SELECT p.id, p.nickname, p.created_at, p.last_seen_at FROM tg_chats c JOIN players p ON p.id = c.player_id
+		WHERE c.chat_id = ?`, chatID).Scan(&p.ID, &p.Nickname, &created, &seen)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	p.CreatedAt, p.LastSeen = time.Unix(created, 0), time.Unix(seen, 0)
+	return &p, nil
+}
+
+// TelegramLinked — o'yinchi biror Telegram hisobiga bog'langanmi (Sozlamalarda ko'rsatiladi).
+func (s *Store) TelegramLinked(ctx context.Context, playerID string) (bool, error) {
+	var ok bool
+	err := s.db.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM tg_chats WHERE player_id = ?)`, playerID).Scan(&ok)
+	return ok, err
 }
 
 // SetBlocked — foydalanuvchi botni bloklagan (yoki o'chirgan): unga boshqa xabar yuborilmaydi.

@@ -108,6 +108,7 @@ type User struct {
 	ID           int64  `json:"id"`
 	IsBot        bool   `json:"is_bot"`
 	FirstName    string `json:"first_name"`
+	LastName     string `json:"last_name"`
 	Username     string `json:"username"`
 	LanguageCode string `json:"language_code"`
 }
@@ -222,6 +223,17 @@ func (c *Client) EditReplyMarkup(ctx context.Context, chatID int64, messageID in
 	return c.call(ctx, "editMessageReplyMarkup", map[string]any{
 		"chat_id": chatID, "message_id": messageID, "reply_markup": kb,
 	}, nil)
+}
+
+// EditText xabar matnini almashtiradi; kb nil bo'lsa, tugmalar olib tashlanadi.
+func (c *Client) EditText(ctx context.Context, chatID int64, messageID int, text string, kb *Keyboard) error {
+	params := map[string]any{
+		"chat_id": chatID, "message_id": messageID, "text": text, "link_preview_options": map[string]bool{"is_disabled": true},
+	}
+	if kb != nil {
+		params["reply_markup"] = kb
+	}
+	return c.call(ctx, "editMessageText", params, nil)
 }
 
 func (c *Client) AnswerCallback(ctx context.Context, id, text string) error {

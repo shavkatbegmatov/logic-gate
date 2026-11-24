@@ -76,6 +76,75 @@ func TestPlayerByToken(t *testing.T) {
 	}
 }
 
+func TestDeviceTokensAndTelegramLink(t *testing.T) {
+	st := testStore(t)
+	ctx := t.Context()
+	players(t, st, 2)
+
+	// Qurilma kaliti tiklash kodi kabi ishlaydi; asosiy kod ham ishlashda davom etadi.
+	if err := st.AddToken(ctx, "p1", tokenHash(101)); err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range []int{1, 101} {
+		if p, err := st.PlayerByToken(ctx, tokenHash(n)); err != nil || p.ID != "p1" {
+			t.Fatalf("kalit %d: %+v %v", n, p, err)
+		}
+	}
+	// Bir o'yinchida ko'pi bilan maxTokens ta kalit: eskilari o'chadi, oxirgisi qoladi.
+	for i := range maxTokens + 5 {
+		if err := st.AddToken(ctx, "p2", tokenHash(200+i)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var n int
+	st.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM player_tokens WHERE player_id = 'p2'`).Scan(&n)
+	if n != maxTokens {
+		t.Fatalf("kalitlar soni: %d", n)
+	}
+	if p, err := st.PlayerByToken(ctx, tokenHash(200+maxTokens+4)); err != nil || p.ID != "p2" {
+		t.Fatalf("oxirgi kalit: %+v %v", p, err)
+	}
+
+	// Telegram bog'lanishi: chat yozuvi bo'lmasa ham yaratiladi; yangi bog'lanish eskisini almashtiradi.
+	if _, err := st.PlayerByChat(ctx, 42); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("bog'lanmagan: %v", err)
+	}
+	if ok, _ := st.TelegramLinked(ctx, "p1"); ok {
+		t.Fatal("p1 bog'lanmagan edi")
+	}
+	if err := st.LinkChat(ctx, 42, "p1"); err != nil {
+		t.Fatal(err)
+	}
+	if p, err := st.PlayerByChat(ctx, 42); err != nil || p.ID != "p1" || p.Nickname != "TEST_USER_1" {
+		t.Fatalf("bog'langan: %+v %v", p, err)
+	}
+	if ok, _ := st.TelegramLinked(ctx, "p1"); !ok {
+		t.Fatal("p1 bog'langan bo'lishi kerak")
+	}
+	if c, err := st.Chat(ctx, 42); err != nil || c.Lang != "uz" || c.Remind {
+		t.Fatalf("yangi chat: %+v %v", c, err)
+	}
+	st.LinkChat(ctx, 42, "p2")
+	if p, _ := st.PlayerByChat(ctx, 42); p.ID != "p2" {
+		t.Fatalf("qayta bog'lash: %+v", p)
+	}
+
+	// Profil o'chirilsa — kalitlari ham, bog'lanish ham yo'qoladi.
+	if _, err := st.DeletePlayer(ctx, "p2"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.PlayerByToken(ctx, tokenHash(200+maxTokens+4)); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("o'chirilgan profil kaliti: %v", err)
+	}
+	st.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM player_tokens WHERE player_id = 'p2'`).Scan(&n)
+	if n != 0 {
+		t.Fatalf("kalitlar qoldi: %d", n)
+	}
+	if _, err := st.PlayerByChat(ctx, 42); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("o'chirilgan profilga bog'lanish: %v", err)
+	}
+}
+
 func TestSaveSolutionKeepsBest(t *testing.T) {
 	st := testStore(t)
 	players(t, st, 1)
