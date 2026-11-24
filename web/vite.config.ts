@@ -52,5 +52,9 @@ export default defineConfig({
     setupFiles: ['src/test-setup.ts'],
     // theme.test.ts barcha uslub fayllarini ?raw bilan o'qiydi — CSS o'chirilgan bo'lsa, matn bo'sh keladi.
     css: { include: [/styles\.css/, /screens[\\/][^\\/]+\.css/] },
+    // Har test fayli alohida jarayonda emas (standart «forks»), bitta jarayon ichidagi oqimda ishlaydi.
+    // Antivirus har yangi jarayonni tekshiradigan kompyuterda (ishga tushish ~5 s) forks bilan to'plam
+    // ~220 s davom etib, testlar 5 s cheklovdan o'tib yiqilardi; threads bilan — ~5 s.
+    pool: 'threads',
   },
 });
