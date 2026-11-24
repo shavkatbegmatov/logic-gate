@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"logicgate/levels"
+	"logicgate/server/internal/store"
 )
 
 // ── Haftalik hisobot ────────────────────────────────────────
@@ -74,6 +75,11 @@ func (b *Bot) SendWeeklyReport(ctx context.Context) error {
 	fmt.Fprintf(&sb, "Kunlik masala: %d ta yechim, %d kishi\n", w.DailySolves, w.DailySolvers)
 	fmt.Fprintf(&sb, "Darajalar yechildi: %d\n", w.LevelSolves)
 	fmt.Fprintf(&sb, "Bot: %d obunachi, %d eslatma", w.Chats, w.Subscribers)
+	f, err := b.st.Funnel(ctx, today-7, today, now.Add(-7*24*time.Hour))
+	if err != nil {
+		return err
+	}
+	sb.WriteString("\n\n🔻 Voronka (7 kun):\n" + funnelText(f))
 	if len(top) > 0 {
 		sb.WriteString("\n\n🏆 Reyting:")
 		for _, e := range top {
@@ -84,6 +90,30 @@ func (b *Bot) SendWeeklyReport(ctx context.Context) error {
 		return err
 	}
 	return b.st.SetMeta(ctx, metaReportDay, strconv.Itoa(today))
+}
+
+// funnelText — voronka bosqichlari: soni va o'yinni birinchi marta ochgan qurilmalarga nisbatan ulushi.
+// Bosqichlarni qurilma o'zi bir marta yuboradi; «Profil ochdi» — serverdagi yangi profillar (eski
+// qurilmalardan ochilganlari ham), shuning uchun u 100% dan oshishi mumkin.
+func funnelText(f store.Funnel) string {
+	visits := f.Events[store.EvVisit]
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "Birinchi marta ochdi: %d", visits)
+	if tg := f.TG[store.EvVisit]; tg > 0 {
+		fmt.Fprintf(&sb, " (Telegram'da: %d)", tg)
+	}
+	line := func(name string, n int) {
+		fmt.Fprintf(&sb, "\n%s: %d", name, n)
+		if visits > 0 {
+			fmt.Fprintf(&sb, " (%d%%)", n*100/visits)
+		}
+	}
+	line("1-darajani yechdi", f.Events[store.EvLevel1])
+	line("3 ta daraja yechdi", f.Events[store.EvLevel3])
+	line("Profil ochdi", f.Profiles)
+	line("Kunlik masala yechdi", f.Events[store.EvDaily1])
+	line("Boshqa kuni qaytdi", f.Events[store.EvReturn])
+	return sb.String()
 }
 
 // ── Xatolar haqida ogohlantirish ─────────────────────────────

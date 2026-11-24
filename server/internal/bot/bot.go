@@ -492,12 +492,18 @@ func (b *Bot) SendReminders(ctx context.Context) error {
 // ── Admin ───────────────────────────────────────────────────
 
 func (b *Bot) statsText(ctx context.Context) string {
-	s, err := b.st.Stats(ctx, levels.DayOf(b.now()), b.now())
+	now := b.now()
+	today := levels.DayOf(now)
+	s, err := b.st.Stats(ctx, today, now)
 	if err != nil {
 		return "Statistika olinmadi: " + err.Error()
 	}
-	return fmt.Sprintf("📊 Logic Gate\nO'yinchilar: %d (7 kunda faol: %d)\nBugungi masalani yechgan: %d\nBot obunachilari: %d, eslatma: %d",
+	text := fmt.Sprintf("📊 Logic Gate\nO'yinchilar: %d (7 kunda faol: %d)\nBugungi masalani yechgan: %d\nBot obunachilari: %d, eslatma: %d",
 		s.Players, s.ActiveWeek, s.DailyToday, s.Chats, s.Subscribers)
+	if f, err := b.st.Funnel(ctx, today-7, today, now.Add(-7*24*time.Hour)); err == nil {
+		text += "\n\n🔻 Voronka (7 kun):\n" + funnelText(f)
+	}
+	return text
 }
 
 // SendBackup — kunlik zaxira nusxani admin'ga fayl qilib yuboradi (backup.Config.Notify).

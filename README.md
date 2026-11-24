@@ -418,6 +418,10 @@ Coolify: ilova → **Environment Variables** → `LG_TELEGRAM_TOKEN` (va `LG_TEL
 
 Rasm `deploy/telegram/app-640x360.png` va `web/public/og.png` — `web/scripts/og.html` dan.
 
+### O'yinchilar voronkasi
+
+O'yinchilar qaysi bosqichda to'xtab qolayotganini ko'rish uchun (2.22.0): qurilma har bosqichni serverga **bir marta** xabar qiladi (`web/src/funnel.ts` → `POST /api/events {event, src}`) — o'yin shu qurilmada birinchi ochildi (`visit`), 1-daraja (`level1`), 3 ta daraja (`level3`), birinchi kunlik masala (`daily1`), boshqa kuni qaytib ochildi (`return`); `src` — `web` yoki `tg`. Server kun bo'yicha faqat sonini oshiradi (`stats_daily`): qurilma, o'yinchi, IP va boshqa ma'lumot saqlanmaydi. Qaysi bosqich yuborilgani faqat qurilmaning o'zida (`lg.funnel.v1`); 2.22.0 dan oldin o'ynagan qurilmalar hisoblanmaydi. Bot admin'ga haftalik hisobotda va `/stats` da 7 kunlik voronkani ko'rsatadi — har bosqich soni va birinchi ochganlarga nisbatan ulushi («Profil ochdi» — serverdagi yangi profillar). Bir IP dan: 80 tagacha birdaniga, keyin 2 soniyada bitta.
+
 ### Brauzer xatolari
 
 O'yin (faqat build'da) kutilmagan xatolarni — `error` va `unhandledrejection` — `POST /api/client-errors` ga yuboradi (`web/src/errors.ts`). Faqat o'yinning o'z kodidagi (stekda `<sayt>/assets/…`) xatolar: brauzer kengaytmalari, Telegram skripti, tarmoq uzilishlari va ma'lum shovqinlar (`ResizeObserver loop`, `Script error.`) yuborilmaydi; bir sahifada ko'pi bilan 5 ta, har biri bir marta. Yuboriladi: xabar, stek, ekran nomi (marshrutning birinchi qismi — sinf yoki masala kodisiz), versiya, brauzer (User-Agent), Telegram ichidami. O'yinchi, IP, natijalar yuborilmaydi.

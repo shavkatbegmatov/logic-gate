@@ -483,3 +483,31 @@ func TestClassMembership(t *testing.T) {
 		t.Fatalf("natija yo'qoldi: %+v", sols)
 	}
 }
+
+func TestFunnelCounts(t *testing.T) {
+	st := testStore(t)
+	ctx := t.Context()
+	for _, e := range []struct {
+		day     int
+		ev, src string
+	}{
+		{100, EvVisit, "web"}, {100, EvVisit, "web"}, {100, EvVisit, "tg"}, {100, EvLevel1, "web"},
+		{103, EvVisit, "web"}, {103, EvReturn, "tg"},
+		{93, EvVisit, "web"}, // oraliqdan tashqarida
+	} {
+		if err := st.CountEvent(ctx, e.day, e.ev, e.src); err != nil {
+			t.Fatal(err)
+		}
+	}
+	players(t, st, 2)
+	f, err := st.Funnel(ctx, 96, 103, time.Now().Add(-time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Events[EvVisit] != 4 || f.TG[EvVisit] != 1 || f.Events[EvLevel1] != 1 || f.Events[EvReturn] != 1 || f.TG[EvReturn] != 1 || f.Profiles != 2 {
+		t.Fatalf("voronka: %+v", f)
+	}
+	if f, _ := st.Funnel(ctx, 96, 103, time.Now().Add(time.Hour)); f.Profiles != 0 {
+		t.Fatalf("profillar oraliqdan tashqarida: %+v", f)
+	}
+}

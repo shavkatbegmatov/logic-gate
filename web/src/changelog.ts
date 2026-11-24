@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.22.0',
+    date: '2026-11-24',
+    uz: [
+      "O'yinni yaxshilash uchun endi qaysi bosqichda qiyin bo'layotganini anonim tarzda hisoblaymiz: o'yin har qurilmadan faqat «ochildi», «1-daraja yechildi» kabi bosqich nomini bir marta yuboradi. Ism, ID, natijalar yoki boshqa ma'lumot yuborilmaydi.",
+    ],
+    ru: [
+      'Чтобы улучшать игру, теперь анонимно считаем, на каком этапе становится трудно: с каждого устройства игра один раз отправляет только название этапа — «открыта», «пройден 1-й уровень» и т. п. Имя, ID, результаты и другие данные не отправляются.',
+    ],
+  },
+  {
     version: '2.21.0',
     date: '2026-11-24',
     uz: [

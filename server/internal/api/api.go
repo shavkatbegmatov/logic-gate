@@ -52,7 +52,9 @@ type Server struct {
 	reports *limiter
 	// Telegram orqali kirish so'rovlari.
 	tglogin *limiter
-	cerr    clientErrors
+	// Voronka bosqichlari (qurilma har birini bir marta yuboradi).
+	events *limiter
+	cerr   clientErrors
 
 	// Umumiy reyting keshi (cachedLeaderboard): oxirgi holat, qayta hisoblash boshlangan payt va davom
 	// etayotgan hisoblash (nil — yo'q; tugaganda yopiladi).
@@ -111,6 +113,8 @@ func New(st *store.Store, pack *levels.Pack, daily *levels.Daily, log *slog.Logg
 		reports: newLimiter(1.0/60, 5),
 		// Bir IP dan: butun sinf birdaniga, keyin 5 soniyada bitta so'rov (holatni so'rash — umumiy cheklov ostida).
 		tglogin: newLimiter(1.0/5, 45),
+		// Bir IP dan: butun sinf birinchi ochilishda (40 qurilma × 1–2 bosqich), keyin 2 soniyada bitta.
+		events: newLimiter(0.5, 80),
 	}
 }
 
@@ -152,6 +156,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/classes/{code}/tasks/{id}", s.deleteTask)
 	mux.HandleFunc("GET /api/me/classes", s.authed(s.myClasses))
 	mux.HandleFunc("POST /api/client-errors", s.clientError)
+	mux.HandleFunc("POST /api/events", s.funnelEvent)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, "not_found")
 	})

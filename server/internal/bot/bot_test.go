@@ -540,12 +540,29 @@ func TestWeeklyReportAndAlerts(t *testing.T) {
 	b, fake, st := setup(t)
 	ctx := context.Background()
 	st.CreatePlayer(ctx, "p1", []byte("p1"), "Ali")
+	// Voronka: 4 ta yangi qurilma (1 tasi Telegram'da), 2 tasi 1-darajani yechgan, 1 tasi qaytgan.
+	day := levels.DayOf(b.now())
+	for _, e := range [][2]string{{"visit", "web"}, {"visit", "web"}, {"visit", "web"}, {"visit", "tg"}, {"level1", "web"}, {"level1", "tg"}, {"return", "web"}} {
+		st.CountEvent(ctx, day, e[0], e[1])
+	}
 	if err := b.SendWeeklyReport(ctx); err != nil {
 		t.Fatal(err)
 	}
 	msgs := fake.take("sendMessage")
 	if len(msgs) != 1 || num(msgs[0].Params["chat_id"]) != 99 || !strings.Contains(msgs[0].Params["text"].(string), "O'yinchilar: 1 (yangi: 1)") {
 		t.Fatalf("hisobot: %+v", msgs)
+	}
+	for _, want := range []string{
+		"🔻 Voronka (7 kun):", "Birinchi marta ochdi: 4 (Telegram'da: 1)", "1-darajani yechdi: 2 (50%)",
+		"3 ta daraja yechdi: 0 (0%)", "Profil ochdi: 1 (25%)", "Boshqa kuni qaytdi: 1 (25%)",
+	} {
+		if !strings.Contains(msgs[0].Params["text"].(string), want) {
+			t.Fatalf("hisobotda %q yo'q:\n%s", want, msgs[0].Params["text"])
+		}
+	}
+	// /stats ham voronkani ko'rsatadi.
+	if text := b.statsText(ctx); !strings.Contains(text, "Birinchi marta ochdi: 4") {
+		t.Fatalf("/stats: %s", text)
 	}
 
 	// Dushanba 10:00 dan keyin — hozir; yuborilgan bo'lsa — keyingi dushanba; yakshanba — ertaga.

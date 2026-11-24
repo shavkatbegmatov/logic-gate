@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.22.0 — 2026-11-24
+
+- O'yinni yaxshilash uchun endi qaysi bosqichda qiyin bo'layotganini anonim tarzda hisoblaymiz: o'yin har qurilmadan faqat «ochildi», «1-daraja yechildi» kabi bosqich nomini bir marta yuboradi. Ism, ID, natijalar yoki boshqa ma'lumot yuborilmaydi.
+
 ## 2.21.0 — 2026-11-24
 
 - Endi saytga Telegram orqali kirsa bo'ladi: «Telegram orqali kirish» ni bosing, botda saytdagi raqamni tanlang — tiklash kodini terish shart emas. Telefon, kompyuter, istalgan brauzerda.

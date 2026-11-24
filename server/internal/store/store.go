@@ -99,6 +99,14 @@ var migrations = []string{
 	) WITHOUT ROWID;
 	CREATE INDEX player_tokens_player ON player_tokens(player_id, created_at);
 	CREATE INDEX tg_chats_player ON tg_chats(player_id);`,
+	// O'yinchilar voronkasi: kun, bosqich va manba (web/tg) bo'yicha faqat sonlar — hech qanday id yo'q.
+	`CREATE TABLE stats_daily (
+		day   INTEGER NOT NULL,
+		event TEXT NOT NULL,
+		src   TEXT NOT NULL,
+		count INTEGER NOT NULL,
+		PRIMARY KEY (day, event, src)
+	) WITHOUT ROWID;`,
 }
 
 type Store struct {

@@ -3,6 +3,7 @@ import { onOldHost } from './migrate';
 import { render } from 'preact';
 import { App } from './app';
 import { installErrorReporting } from './errors';
+import { startFunnel } from './funnel';
 import './install';
 import './theme';
 import { freshDevice, langReady } from './state';
@@ -39,6 +40,8 @@ void langReady.then((ok) => {
 
   // Telegram Mini App sifatida ochilgan bo'lsa: Telegram oynasi, marshrut, bulutdagi profil.
   if (inTelegram) void startTelegram();
+  // O'yinchilar voronkasi (faqat bosqich nomlari, har biri qurilmadan bir marta).
+  startFunnel();
 });
 
 // Oflayn rejim (scripts/sw.template.js). Faqat build'da va HTTPS/localhost'da: eski manzil

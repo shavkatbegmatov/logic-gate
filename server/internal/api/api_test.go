@@ -662,3 +662,29 @@ func TestVersion(t *testing.T) {
 		t.Fatalf("version: %d %v", status, out)
 	}
 }
+
+func TestFunnelEvent(t *testing.T) {
+	e := newEnv(t)
+	ctx := context.Background()
+	for _, body := range []map[string]string{
+		{"event": "visit", "src": "web"},
+		{"event": "visit", "src": "tg"},
+		{"event": "level1"},                        // manba yo'q — sayt
+		{"event": "return", "src": "boshqa narsa"}, // noma'lum manba — sayt
+	} {
+		if st, out := e.do("POST", "/api/events", "", body); st != http.StatusNoContent {
+			t.Fatalf("%v: %d %v", body, st, out)
+		}
+	}
+	if st, out := e.do("POST", "/api/events", "", map[string]string{"event": "hack"}); st != http.StatusBadRequest || out["error"] != "bad_event" {
+		t.Fatalf("noma'lum bosqich: %d %v", st, out)
+	}
+	day := levels.DayOf(time.Now())
+	f, err := e.api.store.Funnel(ctx, day-1, day, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Events["visit"] != 2 || f.TG["visit"] != 1 || f.Events["level1"] != 1 || f.Events["return"] != 1 || f.TG["return"] != 0 || f.Events["hack"] != 0 {
+		t.Fatalf("hisoblagichlar: %+v", f)
+	}
+}
