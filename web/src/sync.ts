@@ -86,6 +86,9 @@ export async function renameProfile(nickname: string) {
 
 let syncing: Promise<void> | null = null;
 
+/** Hozir ketayotgan sinxronlash (yo'q bo'lsa — null): natijalar yuborilgach so'raladigan narsalar kutadi. */
+export const syncInFlight = (): Promise<void> | null => syncing;
+
 /** Serverdagi yaxshiroq natijalarni oladi va yuborilmagan lokal natijalarni jo'natadi. */
 export function syncProgress(): Promise<void> {
   if (!profile.value) return Promise.resolve();

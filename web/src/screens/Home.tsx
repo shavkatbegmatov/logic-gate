@@ -6,6 +6,7 @@ import { JoinForm } from '../components/JoinForm';
 import { HomeTaskCard } from '../components/TaskView';
 import { canOfferInstall, dismissInstall, promptInstall } from '../install';
 import { MiniBoard } from '../components/MiniBoard';
+import { PlayerChip } from '../components/PlayerChip';
 import { ShareButtons } from '../components/ShareButtons';
 import { Icon, type IconName } from '../components/ui';
 import { states } from '../achievements';
@@ -34,12 +35,16 @@ export function Home() {
         <div class="home-inner">
           <header class="home-top">
             <h1 class="brand">{t.appName}</h1>
-            <LangToggle />
+            {/* Kim o'ynayapti — doim ko'rinib turadi (bir xil ismli profillar ID bilan farqlanadi). */}
+            <div class="home-top-end">
+              <PlayerChip />
+              <LangToggle />
+            </div>
           </header>
           {/* O'yin: sxema, navbatdagi daraja va bitta asosiy tugma. */}
           <div class="home-lead">
             <HeroGate />
-            <p class="home-hello">{profile.value ? t.home.hello(profile.value.nickname) : t.tagline}</p>
+            {!profile.value && <p class="home-hello">{t.tagline}</p>}
             {onOldHost() && hasProgress() && <MoveBanner />}
             <HomeTaskCard />
             <ContinueCard />

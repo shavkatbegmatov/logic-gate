@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.20.0 — 2026-11-24
+
+- Bosh sahifaning yuqorisida endi kim o'ynayotgani ko'rinadi: rangli avatar, taxallus, o'yinchi ID va reytingdagi o'rningiz. Bir xil ismli profillar ID va rangidan farqlanadi.
+- Sozlamalarda — to'liq o'yinchi ID (nusxalash tugmasi bilan), profil ochilgan sana va reytingdagi o'rin. ID ochiq raqam: uni o'qituvchiga aytsa bo'ladi, kirish uchun esa tiklash kodi kerak.
+
 ## 2.19.3 — 2026-11-23
 
 - Avval boshqa qurilmada yoki Telegram'da o'ynaganlar endi taxallus so'raladigan joyning o'zida (daraja yechilgach, reyting, bosh sahifa) «Avval o'ynaganmisiz? Tiklash kodini kiriting» orqali o'z profiliga qaytadi — reytingda bitta odamning ismi ko'payib ketmaydi.

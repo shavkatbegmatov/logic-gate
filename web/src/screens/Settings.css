@@ -157,3 +157,52 @@
 .code-row input {
   flex: 1 1 200px;
 }
+
+/* ── Profil boshi: avatar, taxallus, to'liq ID (nusxalash), ochilgan sana va o'rin ── */
+.profile-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  margin-bottom: 14px;
+}
+
+.profile-head-text {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.profile-head-text strong {
+  font-size: 17px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.profile-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 16 belgili ID tor telefonda ham bir qatorda; bosilsa — butunlay belgilanadi. */
+.profile-id code {
+  color: var(--text);
+  font: 600 13px var(--mono);
+  letter-spacing: 0.02em;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.profile-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.card .profile-id-hint {
+  grid-column: 1 / -1;
+  margin: 10px 0 0;
+}

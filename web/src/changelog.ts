@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.20.0',
+    date: '2026-11-24',
+    uz: [
+      "Bosh sahifaning yuqorisida endi kim o'ynayotgani ko'rinadi: rangli avatar, taxallus, o'yinchi ID va reytingdagi o'rningiz. Bir xil ismli profillar ID va rangidan farqlanadi.",
+      "Sozlamalarda — to'liq o'yinchi ID (nusxalash tugmasi bilan), profil ochilgan sana va reytingdagi o'rin. ID ochiq raqam: uni o'qituvchiga aytsa bo'ladi, kirish uchun esa tiklash kodi kerak.",
+    ],
+    ru: [
+      'Вверху главной теперь видно, кто играет: цветной аватар, никнейм, ID игрока и ваше место в рейтинге. Профили с одинаковыми именами различаются по ID и цвету.',
+      'В настройках — полный ID игрока (с кнопкой копирования), дата создания профиля и место в рейтинге. ID — открытый номер, его можно назвать учителю, а для входа нужен код восстановления.',
+    ],
+  },
+  {
     version: '2.19.3',
     date: '2026-11-23',
     uz: [

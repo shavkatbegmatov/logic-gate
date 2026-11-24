@@ -15,6 +15,21 @@ export const ru: Dict = {
   loadFailed: 'Страница не загрузилась. Проверьте интернет и попробуйте снова.',
   langFailed: 'Язык не загрузился. Проверьте интернет и попробуйте снова.',
 
+  player: {
+    guest: 'Гость',
+    signIn: 'Войти в профиль',
+    guestLabel: 'Гость: результаты сохраняются только на этом устройстве. Создать профиль или войти по коду',
+    label: (name: string, id: string, rank: number | null) =>
+      `Профиль: ${name}, ID ${id}${rank ? `, ${rank}-е место в рейтинге` : ''}. Открыть настройки`,
+    id: 'ID игрока',
+    idHint:
+      'ID — открытый номер вашего профиля: его можно назвать учителю или администратору. Войти по ID нельзя — для этого нужен код восстановления.',
+    since: (date: string) => `Создан: ${date}`,
+    rank: (n: number) => `${n}-е место в рейтинге`,
+    unranked: 'Пока нет в рейтинге',
+    copied: 'ID скопирован',
+  },
+
   home: {
     play: 'Играть',
     continue: 'Продолжить',
@@ -32,7 +47,6 @@ export const ru: Dict = {
     newInstead: 'Создать новый профиль',
     codeText: 'Введите код восстановления, выданный при создании профиля, — результаты вернутся на это устройство.',
     restoredAs: (name: string) => `Профиль восстановлен: ${name}`,
-    hello: (name: string) => `Привет, ${name}!`,
     chapter: (n: number, title: string) => `Глава ${n} · ${title}`,
     chapterProgress: (solved: number, total: number, stars: number, max: number) => `${solved}/${total} ур. · ${stars}/${max} ★`,
     allDone: 'Все уровни пройдены!',

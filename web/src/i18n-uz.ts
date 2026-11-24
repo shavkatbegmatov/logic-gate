@@ -17,6 +17,22 @@ export const uz = {
   // Til almashtirilganda yangi til lug'ati yuklanmadi (i18n.ts) — xabar eski tilda chiqadi.
   langFailed: "Til yuklanmadi. Internetni tekshirib, qayta urinib ko'ring.",
 
+  // Kim o'ynayapti: bosh sahifa sarlavhasidagi belgi (components/PlayerChip.tsx) va Sozlamalardagi profil boshi.
+  player: {
+    guest: 'Mehmon',
+    signIn: 'Profilga kirish',
+    guestLabel: "Mehmon: natijalar faqat shu qurilmada saqlanadi. Profil ochish yoki kod bilan kirish",
+    label: (name: string, id: string, rank: number | null) =>
+      `Profil: ${name}, ID ${id}${rank ? `, reytingda ${rank}-o'rin` : ''}. Sozlamalarni ochish`,
+    id: "O'yinchi ID",
+    idHint:
+      "ID — profilingizning ochiq raqami: uni o'qituvchi yoki administratorga aytsangiz bo'ladi. ID bilan profilga kirib bo'lmaydi — buning uchun tiklash kodi kerak.",
+    since: (date: string) => `Ochilgan: ${date}`,
+    rank: (n: number) => `Reytingda ${n}-o'rin`,
+    unranked: "Reytingda hali yo'q",
+    copied: 'ID nusxalandi',
+  },
+
   home: {
     play: "O'ynash",
     continue: 'Davom etish',
@@ -34,7 +50,6 @@ export const uz = {
     newInstead: 'Yangi profil ochish',
     codeText: "Profil ochilganda berilgan tiklash kodini kiriting — natijalaringiz shu qurilmaga qaytadi.",
     restoredAs: (name: string) => `Profil tiklandi: ${name}`,
-    hello: (name: string) => `Salom, ${name}!`,
     chapter: (n: number, title: string) => `${n}-bo'lim · ${title}`,
     chapterProgress: (solved: number, total: number, stars: number, max: number) => `${solved}/${total} daraja · ${stars}/${max} ★`,
     allDone: 'Hamma darajalar yechildi!',

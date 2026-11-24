@@ -1,11 +1,13 @@
 import './Settings.css';
 import { useSignal } from '@preact/signals';
-import { useRef } from 'preact/hooks';
+import { useEffect, useRef } from 'preact/hooks';
+import { api } from '../api';
 import { sfx } from '../audio';
 import { copyText, selectContents } from '../clipboard';
 import { ClassesCard } from '../components/ClassesCard';
 import { askConfirm } from '../components/Dialogs';
 import { JoinForm } from '../components/JoinForm';
+import { Avatar } from '../components/PlayerChip';
 import { RemindToggle } from '../components/RemindToggle';
 import { showToast } from '../components/Toast';
 import { Icon, TopBar } from '../components/ui';
@@ -13,6 +15,7 @@ import { forgetAllTeacherClasses, teacherClasses } from '../classes';
 import { LANGS, t } from '../i18n';
 import { switchLang } from '../lang-switch';
 import { go } from '../router';
+import { currentRank, dateText, refreshMyRank } from '../player';
 import { profile, settings } from '../state';
 import { installed, installPrompt, isIOS, promptInstall } from '../install';
 import { inTelegram, openExternal } from '../telegram';
@@ -20,6 +23,52 @@ import { AAA_THEMES, activeBoardMode, BOARD_MODES, boardModeForTheme, CLASSIC_TH
 import { APP_VERSION } from '../version';
 import { clearPlayerData, codeComplete, errorText, formatCode, renameProfile, restoreProfile } from '../sync';
 
+
+/**
+ * Profilning boshi: avatar, taxallus, to'liq o'yinchi ID (nusxalash bilan), ochilgan sana va reytingdagi o'rin.
+ * ID — ochiq raqam (o'qituvchi yoki administratorga aytish uchun), kirish uchun emas: buni yonida aytamiz,
+ * aks holda tiklash kodi bilan adashtiriladi.
+ */
+function ProfileHead({ id, nickname }: { id: string; nickname: string }) {
+  const created = useSignal<number | null>(null);
+  const idRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    created.value = null;
+    void refreshMyRank();
+    api
+      .me()
+      .then((me) => me.id === id && (created.value = me.createdAt))
+      .catch(() => {});
+  }, [id]);
+  const rank = currentRank();
+  const copyId = async () => {
+    if (await copyText(id)) showToast(t.player.copied, 'ok');
+    else if (idRef.current) {
+      selectContents(idRef.current);
+      showToast(t.settings.copyManual, 'info');
+    }
+  };
+  const meta = [
+    created.value ? t.player.since(dateText(created.value)) : null,
+    rank === undefined ? null : rank === null ? t.player.unranked : t.player.rank(rank),
+  ].filter(Boolean);
+  return (
+    <div class="profile-head">
+      <Avatar id={id} name={nickname} size="lg" />
+      <div class="profile-head-text">
+        <strong>{nickname}</strong>
+        <span class="profile-id">
+          {t.player.id}: <code ref={idRef}>{id}</code>
+          <button class="icon-btn small" onClick={copyId} title={t.settings.copy} aria-label={`${t.settings.copy}: ${t.player.id}`}>
+            <Icon name="copy" />
+          </button>
+        </span>
+        {meta.length > 0 && <span class="profile-meta">{meta.join(' · ')}</span>}
+      </div>
+      <p class="muted small profile-id-hint">{t.player.idHint}</p>
+    </div>
+  );
+}
 
 export function Settings() {
   const p = profile.value;
@@ -94,6 +143,7 @@ export function Settings() {
             <h2>{t.settings.profile}</h2>
             {p ? (
               <>
+                <ProfileHead id={p.id} nickname={p.nickname} />
                 <form
                   class="row"
                   onSubmit={(e) => {

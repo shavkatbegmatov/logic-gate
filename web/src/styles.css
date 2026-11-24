@@ -999,9 +999,129 @@ input[type='date']:focus {
 }
 
 .brand {
+  flex: none;
   margin: 0;
   font-size: 17px;
   font-weight: 700;
+}
+
+.home-top {
+  gap: 12px;
+}
+
+.home-top-end {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── O'yinchi: avatar va sarlavhadagi belgi (components/PlayerChip.tsx) ───────── */
+/* Avatar — bosh harflar; rangi id'dan (player.ts: AVATAR_COLORS — oq harf bilan AA kontrast). */
+.avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--avatar-bg, var(--panel));
+  color: #fff;
+  font: 700 13px/1 var(--sans);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.avatar.lg {
+  width: 52px;
+  height: 52px;
+  font-size: 19px;
+}
+
+/* Mehmon: rangsiz, odam belgisi. */
+.avatar .icon {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.avatar.lg .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.player-chip {
+  min-width: 0;
+  max-width: 250px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 3px 12px 3px 3px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: var(--bg2);
+  box-shadow: inset 0 1px 0 var(--bevel-top);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.player-chip:hover {
+  background: var(--hover);
+}
+
+.player-chip-text {
+  min-width: 0;
+  display: grid;
+  line-height: 1.25;
+  overflow: hidden;
+}
+
+.player-chip-text strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-chip-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.player-chip-sub.accent {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.player-id {
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+
+.player-rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.player-rank .icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* Eng tor telefonlarda (320 px) o'rin sig'maydi — u Sozlamalarda va reytingda bor. */
+@media (max-width: 359px) {
+  .player-rank {
+    display: none;
+  }
 }
 
 /* Til: burchakdagi kichik tugma (to'liq tanlov — sozlamalarda). */

@@ -7,6 +7,7 @@ import { TopBar } from '../components/ui';
 import { syncDaily } from '../daily';
 import { t } from '../i18n';
 import { go } from '../router';
+import { setMyRank } from '../player';
 import { profile } from '../state';
 import { syncProgress } from '../sync';
 
@@ -34,7 +35,11 @@ export function Leaderboard({ tab }: { tab: Tab }) {
       // Avval yuborilmagan natijalar jo'natiladi, keyin reyting olinadi.
       if (tab === 'overall') {
         await syncProgress().catch(() => {});
-        overall.value = await api.leaderboard();
+        const res = await api.leaderboard();
+        overall.value = res;
+        // Bosh sahifadagi belgi uchun o'rin ham yangilanadi (qaytganda qayta so'ralmaydi).
+        const me = profile.peek();
+        if (me) setMyRank(me.id, res.me?.rank ?? null);
       } else {
         await syncDaily().catch(() => {});
         daily.value = await api.dailyLeaderboard('today');

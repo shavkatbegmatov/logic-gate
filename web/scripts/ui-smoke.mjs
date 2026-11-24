@@ -554,6 +554,13 @@ function inspect({ theme, lang, screen, ready }) {
     if (theme === 'chizma' ? !crosses : crosses) out.push(`${where} .lamp-x: ${crosses} ta ko'rinadi (faqat «chizma» da bo'lishi kerak)`);
   };
   if (screen === 'home') {
+    // Kim o'ynayapti — sarlavhadagi belgi (profilsiz — «Mehmon») ko'rinib, ekran chetidan chiqmasin.
+    const chip = document.querySelector('.home-top .player-chip');
+    if (!chip || !visible(chip)) out.push("bosh sahifada o'yinchi belgisi (.player-chip) ko'rinmaydi");
+    else {
+      const r = chip.getBoundingClientRect();
+      if (r.left < 0 || r.right > innerWidth + 1) out.push(`o'yinchi belgisi ekrandan chiqdi: ${Math.round(r.left)}–${Math.round(r.right)} (ekran ${innerWidth})`);
+    }
     marks('.hero');
     const slab = shown('.hero .real-slab');
     if (isAaa ? !slab : slab) out.push(`.hero .real-slab: ${slab} ta ko'rinadi (faqat AAA uslublarida bo'lishi kerak)`);
