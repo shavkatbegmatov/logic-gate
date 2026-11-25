@@ -1,7 +1,7 @@
 // Element belgilari (ANSI ko'rinishi), 72×48 maydonda: kirish uchlari x=0 da, chiqish x=72 da.
 // Faqat ma'lumot, importlarsiz: build vaqtidagi qo'llanma sahifalari (scripts/pages.mjs) ham
 // shu fayldan foydalanadi — Node uni to'g'ridan-to'g'ri o'qiydi.
-import type { GateType } from '../sim/types';
+import type { BlockType, GateType } from '../sim/types';
 
 export const SHAPE_W = 72;
 export const SHAPE_H = 48;
@@ -20,7 +20,7 @@ export interface ShapeInfo {
   back?: string;
 }
 
-export const SHAPES: Record<Exclude<GateType, 'DFF'>, ShapeInfo> = {
+export const SHAPES: Record<Exclude<GateType, 'DFF' | BlockType>, ShapeInfo> = {
   NOT: { body: NOT_BODY, tip: 50, bubble: true },
   AND: { body: AND_BODY, tip: 54, bubble: false },
   NAND: { body: AND_BODY, tip: 54, bubble: true },
@@ -34,14 +34,38 @@ export const SHAPES: Record<Exclude<GateType, 'DFF'>, ShapeInfo> = {
 // shuning uchun uchlar ham, daraja pinlari ham bir to'rda turadi va sim to'g'ri chiziq bo'la oladi.
 // Karrali bo'lmasa, ro'parama-ro'para qo'yilgan elementlar orasida ham sim o'rtasida mayda pog'ona qoladi.
 
-/** Kirish uchlari (y koordinatalari): NOT — o'rtada, D-trigger — yuqorida (D), qolganlari — ikkita. */
-export const inputLeads = (type: GateType): number[] => (type === 'NOT' ? [24] : type === 'DFF' ? [12] : [12, 36]);
+/**
+ * Blok (mikrosxema) korpusi: balandligi va oyoqlari (y). Kenglik oddiy element bilan bir xil (72), shuning
+ * uchun simlar va to'r o'zgarmaydi; ko'p oyoqli blok pastga cho'ziladi. Oyoqlar to'rda (12 ga karrali).
+ */
+export const BLOCK_SHAPE: Record<BlockType, { h: number; ins: number[]; outs: number[] }> = {
+  HA: { h: 48, ins: [12, 36], outs: [12, 36] },
+  FA: { h: 72, ins: [12, 36, 60], outs: [24, 48] },
+  MUX: { h: 72, ins: [12, 36, 60], outs: [36] },
+  DEC: { h: 96, ins: [36, 60], outs: [12, 36, 60, 84] },
+};
 
-/** Chiqish uchi (y): D-trigger'da Q yuqorida, D bilan bir chiziqda (standart belgi); qolganlarida o'rtada. */
-export const outputY = (type: GateType): number => (type === 'DFF' ? 12 : 24);
+/** Blok korpusi x bo'yicha: oyoqlar uchun ikki chetda joy qoladi. */
+export const BLOCK_BODY = { x: 12, w: 48, rx: 4 };
+
+const blockShape = (type: GateType) => (type in BLOCK_SHAPE ? BLOCK_SHAPE[type as BlockType] : null);
+
+/** Element balandligi: oddiy elementlar 48, bloklar oyoqlariga qarab. */
+export const gateHeight = (type: GateType): number => blockShape(type)?.h ?? SHAPE_H;
+
+/** Kirish uchlari (y koordinatalari): NOT — o'rtada, D-trigger — yuqorida (D), qolganlari — ikkita. */
+export const inputLeads = (type: GateType): number[] =>
+  blockShape(type)?.ins ?? (type === 'NOT' ? [24] : type === 'DFF' ? [12] : [12, 36]);
+
+/** Chiqish uchlari (y): blokda bir nechta, qolganlarida bitta (outputY). */
+export const outputLeads = (type: GateType): number[] => blockShape(type)?.outs ?? [type === 'DFF' ? 12 : 24];
+
+/** 0-chiqish uchi (y): D-trigger'da Q yuqorida, D bilan bir chiziqda (standart belgi); qolganlarida o'rtada. */
+export const outputY = (type: GateType): number => outputLeads(type)[0];
 
 /** Kirish uchining tana bilan uchrashadigan x nuqtasi. */
-export const leadEnd = (type: GateType): number => (type === 'NOT' ? 18 : type === 'DFF' ? 14 : 20);
+export const leadEnd = (type: GateType): number =>
+  blockShape(type) ? BLOCK_BODY.x : type === 'NOT' ? 18 : type === 'DFF' ? 14 : 20;
 
 /**
  * D-trigger: to'rtburchak; D kirishi va Q chiqishi yuqorida, takt belgisi (uchburchak) chap qirraning

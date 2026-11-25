@@ -19,8 +19,8 @@ import { ViewTools } from '../components/ViewTools';
 import { Icon, Modal, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { go, replaceRoute } from '../router';
-import { ALL_GATE_TYPES, type Circuit, type Spec } from '../sim/types';
-import { KEYS, profile } from '../state';
+import { ALL_GATE_TYPES, BLOCK_TYPES, BLOCKS, type Circuit, type GateType, type Spec } from '../sim/types';
+import { KEYS, profile, progress } from '../state';
 import { load, saveLater } from '../storage';
 import { ClockTools, ZoomTools } from './Workbench';
 import { useEditorKeys } from './useEditorKeys';
@@ -34,10 +34,13 @@ interface Saved {
   circuit: Circuit;
 }
 
+/** Qum qutidagi elementlar: oddiylari va ochilgan bloklar (blok manbasi bo'lgan daraja yechilgan bo'lsa). */
+const sandboxGates = (): GateType[] => [...ALL_GATE_TYPES, ...BLOCK_TYPES.filter((b) => progress.peek()[BLOCKS[b].from])];
+
 const specFor = (inputs: number, outputs: number): Spec => ({
   inputs: INPUT_NAMES.slice(0, inputs),
   outputs: OUTPUT_NAMES.slice(0, outputs),
-  gates: ALL_GATE_TYPES,
+  gates: sandboxGates(),
 });
 
 export function Sandbox({ formula }: { formula?: string }) {
@@ -132,14 +135,14 @@ export function Sandbox({ formula }: { formula?: string }) {
             />
           )}
           <Formula editor={editor} outputs={spec.outputs} />
-          <GateList gates={ALL_GATE_TYPES} />
+          <GateList gates={spec.gates} />
           <button class="btn ghost small side-close" onClick={() => (showSide.value = false)}>
             {t.close}
           </button>
         </aside>
       </div>
       <div class="play-bottom">
-        <Palette editor={editor} gates={ALL_GATE_TYPES} />
+        <Palette editor={editor} gates={spec.gates} />
         <div class="actions">
           <button class="btn table-toggle" onClick={() => (showSide.value = !showSide.value)}>
             <Icon name="table" /> {t.play.table}
@@ -273,6 +276,7 @@ function FormulaModal({ editor, initial, onClose }: { editor: Editor; initial: s
 function createError(err: CreateError): string {
   if (err.code === 'empty') return t.custom.empty;
   if (err.code === 'too_complex') return t.custom.tooComplex;
+  if (err.code === 'blocks') return t.custom.noBlocks;
   if (err.code === 'unconnected_output' && err.ref) return t.unconnectedOutput(err.ref);
   return t.errors[err.code];
 }

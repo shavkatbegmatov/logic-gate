@@ -8,8 +8,8 @@
 // tanlanadigani — vertikal qism ("yo'lak") joyi. Ro'para portlar orasida — to'g'ri chiziq, orqaga
 // qaytuvchi sim — aylanib (geometry.wireRoute). Ochko'z usul: simlar navbat bilan, har biri avval
 // joylashganlarga nisbatan eng "arzon" joyni oladi. Natija deterministik (bir xil sxema — bir xil chizma).
-import type { Gate, Wire } from '../sim/types';
-import { GATE_H, GATE_W, GRID, portPoint, wireRoute, type Layout, type Point } from './geometry';
+import { parseSource, type Gate, type Wire } from '../sim/types';
+import { gateH, GATE_W, GRID, portPoint, wireRoute, type Layout, type Point } from './geometry';
 
 /** Portdan chiqqan to'g'ri qism (geometry.ts dagi STUB bilan bir xil). */
 const STUB = 12;
@@ -180,7 +180,7 @@ function hitsBox(s: Seg, b: Box): boolean {
 const gateOf = (port: string) => {
   if (port.startsWith('in:') || port.startsWith('out:')) return null;
   const i = port.lastIndexOf(':');
-  return i < 0 ? port : port.slice(0, i);
+  return i < 0 ? parseSource(port).id : port.slice(0, i);
 };
 
 interface Candidate {
@@ -223,7 +223,7 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
     const b = portPoint(w.to, gates, lay);
     return a && b ? { a, b } : null;
   });
-  const boxes: Box[] = [...gates.values()].map((g) => ({ x0: g.x - 2, y0: g.y - 2, x1: g.x + GATE_W + 2, y1: g.y + GATE_H + 2, id: g.id }));
+  const boxes: Box[] = [...gates.values()].map((g) => ({ x0: g.x - 2, y0: g.y - 2, x1: g.x + GATE_W + 2, y1: g.y + gateH(g) + 2, id: g.id }));
 
   // Avval tanlovi kam (tor joydagi) simlar; teng bo'lsa — chapdan o'ngga, yuqoridan pastga.
   const order = wires

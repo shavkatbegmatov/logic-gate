@@ -1,13 +1,13 @@
-import type { ComponentChildren, ComponentType } from 'preact';
+import { Fragment, type ComponentChildren, type ComponentType } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { showToast } from '../components/Toast';
 import { t } from '../i18n';
-import { GATE_ARITY } from '../sim/types';
+import { BLOCKS, GATE_ARITY, gateOutputs, isBlock, sourcePort } from '../sim/types';
 import { settings } from '../state';
 import { activeBoardMode, activeTheme } from '../theme';
 import type { Editor } from './editor';
 import { CHIP_CODE, GateShape } from './GateShape';
-import { GATE_H, GATE_W, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
+import { GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { routeD } from './routing';
 import { capture, TRANSPOSE, useBoard2D } from './useBoard2D';
 
@@ -209,9 +209,19 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
                   aria-label={a11y.gate(b.gateName.get(g.id)!)}
                   onKeyDown={(e) => b.onGateKey(e, g)}
                 >
-                  <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
+                  <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={gateH(g) + 4} rx={8} />
                   <GateShape type={g.type} chip={chip} />
-                  {g.type === 'DFF' ? (
+                  {isBlock(g.type) ? (
+                    <>
+                      {label('gate-label block-label', 36, gateH(g) / 2, g.type)}
+                      {BLOCKS[g.type].inputs.map((n, i) => (
+                        <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>
+                      ))}
+                      {BLOCKS[g.type].outputs.map((n, k) => (
+                        <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>
+                      ))}
+                    </>
+                  ) : g.type === 'DFF' ? (
                     <>
                       {label('gate-label', 36, GATE_H / 2 - 6, g.type, 29, GATE_H / 2)}
                       {label('gate-sub', 36, GATE_H / 2 + 9, b.states.get(g.id), 45, GATE_H / 2)}
@@ -228,7 +238,12 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
                   port(`${g.id}:${i}`, 0, inputPortY(g, i), false, b.driven.has(`${g.id}:${i}`), false, a11y.gateIn(b.gateName.get(g.id)!, i)),
                 )}
-                {port(g.id, GATE_W, outputPortY(g), true, b.usedSources.has(g.id), on, a11y.gateOut(b.gateName.get(g.id)!))}
+                {Array.from({ length: gateOutputs(g.type) }, (_, k) => {
+                  const id = sourcePort(g.id, k);
+                  const outOn = b.reached(id, 0) && b.values.get(id) === 1;
+                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${BLOCKS[g.type].outputs[k]}` : b.gateName.get(g.id)!;
+                  return port(id, GATE_W, outputPortY(g, k), true, b.usedSources.has(id), outOn, a11y.gateOut(name));
+                })}
               </g>
             );
           })}

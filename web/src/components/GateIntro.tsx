@@ -1,7 +1,7 @@
 import { GateIcon } from '../board/GateShape';
 import { t } from '../i18n';
-import { applyGate, rowBits } from '../sim/sim';
-import { GATE_ARITY, type GateType } from '../sim/types';
+import { gateOutputValues, rowBits } from '../sim/sim';
+import { BLOCKS, GATE_ARITY, isBlock, type GateType } from '../sim/types';
 import { Modal } from './ui';
 
 /** Daraja yangi element bilan tanishtirganda bir marta chiqadigan karta: belgi, izoh, to'liq jadval. */
@@ -12,7 +12,8 @@ export function GateIntro({ gates, onClose }: { gates: GateType[]; onClose: () =
       {gates.map((type) => {
         if (type === 'DFF') return <FlipFlopIntro key={type} />;
         const n = GATE_ARITY[type];
-        const names = n === 1 ? ['A'] : ['A', 'B'];
+        const names = isBlock(type) ? BLOCKS[type].inputs : n === 1 ? ['A'] : ['A', 'B'];
+        const outs = isBlock(type) ? BLOCKS[type].outputs : ['Q'];
         return (
           <div key={type} class="intro-gate">
             <GateIcon type={type} size={110} />
@@ -26,13 +27,17 @@ export function GateIntro({ gates, onClose }: { gates: GateType[]; onClose: () =
                   {names.map((x) => (
                     <th key={x}>{x}</th>
                   ))}
-                  <th class="sep">Q</th>
+                  {outs.map((x, i) => (
+                    <th key={`o${x}`} class={i === 0 ? 'sep' : ''}>
+                      {x}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 1 << n }, (_, r) => {
                   const bits = rowBits(n, r);
-                  const q = applyGate(type, bits[0], bits[1] ?? 0);
+                  const qs = gateOutputValues(type, bits);
                   return (
                     <tr key={r}>
                       {bits.map((b, k) => (
@@ -40,7 +45,11 @@ export function GateIntro({ gates, onClose }: { gates: GateType[]; onClose: () =
                           {b}
                         </td>
                       ))}
-                      <td class={`sep${q ? ' one match' : ''}`}>{q}</td>
+                      {qs.map((q, i) => (
+                        <td key={`o${i}`} class={`${i === 0 ? 'sep' : ''}${q ? ' one match' : ''}`}>
+                          {q}
+                        </td>
+                      ))}
                     </tr>
                   );
                 })}

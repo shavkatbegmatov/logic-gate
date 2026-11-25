@@ -1,10 +1,10 @@
-import type { ComponentChildren } from 'preact';
+import { Fragment, type ComponentChildren } from 'preact';
 import { t } from '../i18n';
-import { GATE_ARITY, type GateType } from '../sim/types';
+import { BLOCKS, GATE_ARITY, gateOutputs, isBlock, sourcePort, type GateType } from '../sim/types';
 import { activeTheme, resolveRealStyle, type RealStyle } from '../theme';
 import type { Editor } from './editor';
-import { CHIP_CODE } from './GateShape';
-import { bounds, GATE_H, GATE_W, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
+import { CHIP_CODE, GateShape } from './GateShape';
+import { bounds, GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { routeD } from './routing';
 import { DFF_BODY, inputLeads, outputY, SHAPES } from './shapes';
 import { TRANSPOSE, useBoard2D } from './useBoard2D';
@@ -34,6 +34,7 @@ function MiniSymbol({ type }: { type: GateType }) {
       </g>
     );
   }
+  if (isBlock(type)) return null;
   const s = SHAPES[type];
   return (
     <g class="real-ic-sym" transform="translate(23,5) scale(0.36)">
@@ -336,9 +337,19 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   aria-label={a11y.gate(b.gateName.get(g.id)!)}
                   onKeyDown={(e) => b.onGateKey(e, g)}
                 >
-                  <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={GATE_H + 4} rx={8} />
-                  <RealGateBody type={g.type} style={style} />
-                  {g.type === 'DFF' ? (
+                  <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={gateH(g) + 4} rx={8} />
+                  {isBlock(g.type) ? <GateShape type={g.type} /> : <RealGateBody type={g.type} style={style} />}
+                  {isBlock(g.type) ? (
+                    <>
+                      {label('gate-label block-label', 36, gateH(g) / 2, g.type)}
+                      {BLOCKS[g.type].inputs.map((n, i) => (
+                        <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>
+                      ))}
+                      {BLOCKS[g.type].outputs.map((n, k) => (
+                        <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>
+                      ))}
+                    </>
+                  ) : g.type === 'DFF' ? (
                     <>
                       {label('gate-label', 35, 32, 'DFF', 28, GATE_H / 2)}
                       {label('gate-sub', 35, 40, b.states.get(g.id), 44, GATE_H / 2)}
@@ -353,7 +364,12 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
                   port(`${g.id}:${i}`, 0, inputPortY(g, i), false, b.driven.has(`${g.id}:${i}`), false, a11y.gateIn(b.gateName.get(g.id)!, i)),
                 )}
-                {port(g.id, GATE_W, outputPortY(g), true, b.usedSources.has(g.id), on, a11y.gateOut(b.gateName.get(g.id)!))}
+                {Array.from({ length: gateOutputs(g.type) }, (_, k) => {
+                  const id = sourcePort(g.id, k);
+                  const outOn = b.reached(id, 0) && b.values.get(id) === 1;
+                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${BLOCKS[g.type].outputs[k]}` : b.gateName.get(g.id)!;
+                  return port(id, GATE_W, outputPortY(g, k), true, b.usedSources.has(id), outOn, a11y.gateOut(name));
+                })}
               </g>
             );
           })}

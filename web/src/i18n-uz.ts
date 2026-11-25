@@ -565,6 +565,7 @@ Sen ham yechib ko'r!`,
     try: "O'zim sinab ko'raman",
     empty: "Avval maydonga element qo'yib, barcha chiqishlarni ulang.",
     tooComplex: "Sxemaning xatti-harakati havolaga sig'maydi (holatlar juda ko'p). Kamroq trigger yoki kirish ishlating.",
+    noBlocks: "Bloklar (HA, FA, MUX, DEC) bilan masalani hali ulashib bo'lmaydi. Ularni oddiy elementlar bilan almashtiring.",
     createTextSeq:
       "Sxemangizning vaqt bo'yicha xatti-harakati masala bo'ladi. Do'stingiz uni sizdan kamroq element bilan yig'a oladimi?",
     shareText: (title: string, goal: number) =>
@@ -843,6 +844,10 @@ Sen ham urinib ko'r!`,
     NOR: { name: 'YOKI-EMAS', text: 'OR ning teskarisi.' },
     XNOR: { name: 'Tenglik', text: 'Kirishlar bir xil bo\'lsa, 1.' },
     DFF: { name: 'Xotira', text: "D-trigger: D kirishidagi qiymatni eslab qoladi va keyingi taktda Q da chiqaradi. Boshida 0." },
+    HA: { name: 'Yarim summator', text: "Blok: ikki bitni qo'shadi. S — yig'indi, C — ko'chirish. «Yarim summator» darajasidan." },
+    FA: { name: "To'liq summator", text: "Blok: uchta bitni qo'shadi. S — yig'indi, Co — ko'chirish. «To'liq summator» darajasidan." },
+    MUX: { name: 'Multipleksor', text: "Blok: S = 0 bo'lsa Q = A, S = 1 bo'lsa Q = B. «Multipleksor» darajasidan." },
+    DEC: { name: 'Dekoder', text: "Blok: AB ikkilik soniga mos Y chiqishi 1, qolganlari 0. «Dekoder» darajasidan." },
   } satisfies Record<GateType, { name: string; text: string }>,
 };
 

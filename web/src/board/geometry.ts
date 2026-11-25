@@ -1,5 +1,5 @@
-import type { Circuit, Gate, Spec } from '../sim/types';
-import { inputLeads, outputY } from './shapes';
+import { parseSource, type Circuit, type Gate, type Spec } from '../sim/types';
+import { gateHeight, inputLeads, outputLeads } from './shapes';
 
 // Hamma o'lchamlar "dunyo" birliklarida; ekranga View orqali o'tkaziladi.
 export const GATE_W = 72;
@@ -56,9 +56,14 @@ export function inputPortY(gate: Gate, idx: number): number {
   return inputLeads(gate.type)[idx];
 }
 
-/** Chiqish porti (y, element ichida): D-trigger'da yuqorida, qolganlarida o'rtada. */
-export function outputPortY(gate: Gate): number {
-  return outputY(gate.type);
+/** k-chiqish porti (y, element ichida): D-trigger'da yuqorida, qolganlarida o'rtada, blokda — oyoqlari. */
+export function outputPortY(gate: Gate, k = 0): number {
+  return outputLeads(gate.type)[k] ?? outputLeads(gate.type)[0];
+}
+
+/** Element balandligi (dunyo birliklarida): bloklar oddiy elementdan baland bo'lishi mumkin. */
+export function gateH(gate: Gate): number {
+  return gateHeight(gate.type);
 }
 
 /** Port koordinatasi: manba (`in:A`, gid) yoki qabul qiluvchi (`out:Q`, `gid:0`). */
@@ -67,8 +72,9 @@ export function portPoint(port: string, gates: Map<string, Gate>, lay: Layout): 
   if (port.startsWith('out:')) return lay.outputs.get(port.slice(4)) ?? null;
   const i = port.lastIndexOf(':');
   if (i < 0) {
-    const g = gates.get(port);
-    return g ? { x: g.x + GATE_W, y: g.y + outputPortY(g) } : null;
+    const { id, k } = parseSource(port);
+    const g = gates.get(id);
+    return g ? { x: g.x + GATE_W, y: g.y + outputPortY(g, k) } : null;
   }
   const g = gates.get(port.slice(0, i));
   return g ? { x: g.x, y: g.y + inputPortY(g, Number(port.slice(i + 1))) } : null;
@@ -175,7 +181,7 @@ export function bounds(circuit: Circuit, lay: Layout, vertical = false) {
     minX = Math.min(minX, g.x - 16);
     maxX = Math.max(maxX, g.x + GATE_W + 16);
     minY = Math.min(minY, g.y - 16);
-    maxY = Math.max(maxY, g.y + GATE_H + 16);
+    maxY = Math.max(maxY, g.y + gateH(g) + 16);
   }
   return { minX, minY, maxX, maxY };
 }

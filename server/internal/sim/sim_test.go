@@ -30,8 +30,8 @@ func TestReferenceSolutions(t *testing.T) {
 	if err := json.Unmarshal(raw, &sols); err != nil {
 		t.Fatal(err)
 	}
-	if len(pack.Levels) != 48 {
-		t.Fatalf("48 ta daraja kutilgan, %d bor", len(pack.Levels))
+	if len(pack.Levels) != 54 {
+		t.Fatalf("54 ta daraja kutilgan, %d bor", len(pack.Levels))
 	}
 	for _, l := range pack.Levels {
 		var (
@@ -47,6 +47,66 @@ func TestReferenceSolutions(t *testing.T) {
 		if cerr != nil || len(wrong) > 0 || gates != l.Goal {
 			t.Errorf("%s: err=%v wrong=%v gates=%d goal=%d", l.ID, cerr, wrong, gates, l.Goal)
 		}
+	}
+}
+
+// Bloklar jadvali levels.json dagi (levels/blocks.mjs dan yaratilgan) bilan bir xil bo'lishi kerak.
+func TestBlocksMatchLevels(t *testing.T) {
+	pack, err := levels.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pack.Blocks) != len(Blocks) {
+		t.Fatalf("bloklar soni: levels.json %d, sim %d", len(pack.Blocks), len(Blocks))
+	}
+	for name, want := range pack.Blocks {
+		got, ok := Blocks[name]
+		if !ok || !slices.Equal(got.Inputs, want.Inputs) || !slices.Equal(got.Outputs, want.Outputs) || len(got.Luts) != len(want.Luts) {
+			t.Fatalf("%s: sim %+v, levels.json %+v", name, got, want)
+		}
+		for i, l := range want.Luts {
+			if int(got.Luts[i]) != l {
+				t.Errorf("%s: %d-chiqish jadvali %#x, kutilgan %#x", name, i, got.Luts[i], l)
+			}
+		}
+		if arity[name] != len(want.Inputs) {
+			t.Errorf("%s: arity %d", name, arity[name])
+		}
+	}
+}
+
+// Blok chiqishlari: `g.1` manba, noto'g'ri chiqish raqami va oddiy elementda `.1` rad etiladi.
+func TestBlockPorts(t *testing.T) {
+	spec := Spec{Inputs: []string{"A", "B", "C"}, Outputs: []string{"S", "Co"}, Gates: []string{"FA", "AND"}}
+	target := map[string]string{"S": "01101001", "Co": "00010111"}
+	ok := Circuit{
+		Gates: []Gate{{ID: "f", Type: "FA"}},
+		Wires: []Wire{{From: "in:A", To: "f:0"}, {From: "in:B", To: "f:1"}, {From: "in:C", To: "f:2"}, {From: "f", To: "out:S"}, {From: "f.1", To: "out:Co"}},
+	}
+	if gates, wrong, err := Check(spec, target, ok); err != nil || len(wrong) > 0 || gates != 1 {
+		t.Fatalf("FA: err=%v wrong=%v gates=%d", err, wrong, gates)
+	}
+	bad := func(from, to string) Circuit {
+		c := Circuit{Gates: append([]Gate{{ID: "a", Type: "AND"}}, ok.Gates...), Wires: slices.Clone(ok.Wires)}
+		c.Wires = append(c.Wires, Wire{From: "in:A", To: "a:0"}, Wire{From: "in:B", To: "a:1"})
+		c.Wires[3] = Wire{From: from, To: to}
+		return c
+	}
+	for _, w := range [][2]string{{"f.2", "out:S"}, {"f.0", "out:S"}, {"a.1", "out:S"}, {"f.01", "out:S"}, {"in:A", "f:3"}} {
+		if _, _, err := Check(spec, target, bad(w[0], w[1])); err == nil || err.Code != "bad_wire" {
+			t.Errorf("%v: bad_wire kutilgan, %v", w, err)
+		}
+	}
+	// Blok chiqishidan o'ziga qaytgan sim — sikl.
+	cyc := Circuit{Gates: ok.Gates, Wires: slices.Clone(ok.Wires)}
+	cyc.Wires[2] = Wire{From: "f.1", To: "f:2"}
+	if _, _, err := Check(spec, target, cyc); err == nil || err.Code != "cycle" {
+		t.Errorf("sikl kutilgan, %v", err)
+	}
+	// Canonical blok chiqishini ham qayta nomlaydi.
+	can := Canonical(ok)
+	if can.Wires[4].From != "g1.1" {
+		t.Errorf("Canonical: %v", can.Wires[4])
 	}
 }
 
@@ -200,6 +260,17 @@ func (c *compiled) oldStep(r int, state uint64) ([]uint8, uint64) {
 		if g.Type == "DFF" {
 			continue
 		}
+		if b, ok := Blocks[g.Type]; ok {
+			// Blok: jadval qatori — kirishlar bitlari, birinchisi eng katta.
+			r := 0
+			for i := range b.Inputs {
+				r = r<<1 | int(values[c.drivers[fmt.Sprintf("%s:%d", g.ID, i)]])
+			}
+			for k, l := range b.Luts {
+				values[sourcePort(g.ID, k)] = l >> r & 1
+			}
+			continue
+		}
 		a := values[c.drivers[g.ID+":0"]]
 		b := values[c.drivers[g.ID+":1"]]
 		values[g.ID] = oldApply(g.Type, a, b)
@@ -277,7 +348,7 @@ func oldCheckSeq(spec Spec, m Machine, c Circuit) (gates int, trace []int, err *
 // randomCircuit — tasodifiy spec va sxema: ko'pincha to'g'ri (kombinatsion manba — oldingi element yoki
 // istalgan trigger), ba'zan sikl, ulanmagan kirish yoki ko'p trigger bilan.
 func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
-	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF"}}
+	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC"}}
 	for i := range 1 + rng.IntN(4) {
 		spec.Inputs = append(spec.Inputs, string(rune('A'+i)))
 	}
@@ -303,7 +374,7 @@ func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
 			}
 			g := c.Gates[k-len(spec.Inputs)]
 			if k-len(spec.Inputs) < i || g.Type == "DFF" || rng.IntN(25) == 0 {
-				return g.ID
+				return sourcePort(g.ID, rng.IntN(outputs(g.Type)))
 			}
 		}
 	}

@@ -1,5 +1,23 @@
-import type { GateType } from '../sim/types';
-import { DFF_BODY, inputLeads, leadEnd, outputY, SHAPE_H, SHAPE_W, SHAPES } from './shapes';
+import { isBlock, type BlockType, type GateType } from '../sim/types';
+import { BLOCK_BODY, BLOCK_SHAPE, DFF_BODY, gateHeight, inputLeads, leadEnd, outputLeads, outputY, SHAPE_H, SHAPE_W, SHAPES } from './shapes';
+
+/** Blok (mikrosxema): to'rtburchak korpus, chap tomonda kirish, o'ngda chiqish oyoqlari, burchakda kesik. */
+function BlockBody({ type }: { type: BlockType }) {
+  const b = BLOCK_BODY;
+  const h = BLOCK_SHAPE[type].h;
+  return (
+    <g class="gate-shape block-shape">
+      {inputLeads(type).map((y) => (
+        <line key={`i${y}`} class="lead" x1={0} y1={y} x2={b.x} y2={y} />
+      ))}
+      {outputLeads(type).map((y) => (
+        <line key={`o${y}`} class="lead" x1={b.x + b.w} y1={y} x2={SHAPE_W} y2={y} />
+      ))}
+      <rect class="gate-body" x={b.x} y={2} width={b.w} height={h - 4} rx={b.rx} />
+      <path class="gate-back" d={`M${b.x + 18},2 A6,6 0 0 0 ${b.x + 30},2`} />
+    </g>
+  );
+}
 
 /** D-trigger: to'rtburchak, takt belgisi (uchburchak) chap qirraning pastida. Takt hamma triggerlar uchun umumiy. */
 function FlipFlop() {
@@ -17,6 +35,10 @@ function FlipFlop() {
 /** «Haqiqiy plata» mavzusidagi korpus (72×48 maydonda) va mikrosxema markasi — shu elementli haqiqiy 74HC seriyasi. */
 const CHIP = { x: 14, y: 3, w: 44, h: 42 };
 export const CHIP_CODE: Record<GateType, string> = {
+  HA: '74HC183',
+  FA: '74HC183',
+  MUX: '74HC157',
+  DEC: '74HC139',
   NOT: '74HC04',
   AND: '74HC08',
   OR: '74HC32',
@@ -43,6 +65,7 @@ function Chip({ type }: { type: GateType }) {
 
 /** chip — «Haqiqiy plata» mavzusida maydondagi element (palitra va yordam oynalarida har doim belgi). */
 export function GateShape({ type, chip }: { type: GateType; chip?: boolean }) {
+  if (isBlock(type)) return <BlockBody type={type} />;
   if (chip) return <Chip type={type} />;
   if (type === 'DFF') return <FlipFlop />;
   const s = SHAPES[type];
@@ -62,9 +85,23 @@ export function GateShape({ type, chip }: { type: GateType; chip?: boolean }) {
 
 /** Palitra va yordam oynalari uchun kichik belgi. */
 export function GateIcon({ type, size = 40 }: { type: GateType; size?: number }) {
+  // Baland blok kichik belgida ham bir xil balandlikda: ko'rinish maydoni kengayadi, nomi o'rtada.
+  const h = Math.max(SHAPE_H, gateHeight(type));
+  const w = (SHAPE_W * h) / SHAPE_H;
   return (
-    <svg class="gate-icon" width={size} height={(size * SHAPE_H) / SHAPE_W} viewBox={`0 0 ${SHAPE_W} ${SHAPE_H}`} aria-hidden="true">
+    <svg
+      class="gate-icon"
+      width={size}
+      height={(size * SHAPE_H) / SHAPE_W}
+      viewBox={`${(SHAPE_W - w) / 2} 0 ${w} ${h}`}
+      aria-hidden="true"
+    >
       <GateShape type={type} />
+      {isBlock(type) && (
+        <text class="block-icon-label" x={SHAPE_W / 2} y={h / 2 + 7}>
+          {type}
+        </text>
+      )}
     </svg>
   );
 }
