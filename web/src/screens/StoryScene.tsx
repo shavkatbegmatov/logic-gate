@@ -1,0 +1,277 @@
+// Kampaniya sahnasi: bo'lim oldidan (intro) va oxirida (outro) 4–5 kadrlik kartochkalar.
+// Rasmlar — shu yerdagi SVG (fayl yo'q), ranglar — «Mis va lojuvard» (styles.css: [data-theme='minor']):
+// sahna o'yinchi qaysi mavzuni tanlaganidan qat'i nazar shu palitrada chiziladi.
+// Klaviatura: → / Enter / Probel — keyingi, ← — oldingi, Esc — o'tkazib yuborish.
+import './StoryScene.css';
+import { useSignal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
+import { Modal } from '../components/ui';
+import { t } from '../i18n';
+import type { SceneRef } from '../story';
+import { storyFor, type Art, type Frame } from '../story-texts';
+
+export function StoryScene({ scene, onDone }: { scene: SceneRef; onDone: () => void }) {
+  const story = storyFor(scene.chapter);
+  const data = story?.[scene.kind];
+  const i = useSignal(0);
+
+  useEffect(() => {
+    if (!data) onDone();
+  }, [data]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLButtonElement && (e.key === 'Enter' || e.key === ' ')) return; // Tugmaning o'zi bosiladi.
+      if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (i.value > 0) i.value--;
+      }
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+  }, [data]);
+
+  if (!data) return null;
+  const last = i.value === data.frames.length - 1;
+  const frame = data.frames[i.value];
+  function next() {
+    if (!data) return;
+    if (i.value < data.frames.length - 1) i.value++;
+    else onDone();
+  }
+
+  return (
+    <Modal onClose={onDone} class="story-modal">
+      <div class="story" data-theme="minor">
+        <header class="story-head">
+          <span class="story-place">{story!.place}</span>
+          <h2 class="story-title">{data.title}</h2>
+          <button class="btn small ghost story-skip" onClick={onDone}>
+            {t.story.skip}
+          </button>
+        </header>
+        <div class="story-art" key={`art-${i.value}`}>
+          <Picture art={frame.art} />
+        </div>
+        <FrameText frame={frame} key={`text-${i.value}`} />
+        <footer class="story-foot">
+          <div class="story-dots" aria-label={t.story.progress(i.value + 1, data.frames.length)}>
+            {data.frames.map((_, k) => (
+              <span key={k} class={k === i.value ? 'on' : k < i.value ? 'past' : ''} />
+            ))}
+          </div>
+          <div class="story-nav">
+            {i.value > 0 && (
+              <button class="btn small" onClick={() => i.value--}>
+                {t.story.back}
+              </button>
+            )}
+            <button class="btn primary" onClick={next} autoFocus>
+              {last ? t.story.done[scene.kind] : t.story.next}
+            </button>
+          </div>
+        </footer>
+      </div>
+    </Modal>
+  );
+}
+
+function FrameText({ frame }: { frame: Frame }) {
+  const cls = `story-text${frame.note ? ' note' : ''}${frame.who === 'chiroq' ? ' machine' : ''}`;
+  return (
+    <div class="story-line" aria-live="polite">
+      {frame.who && <span class={`story-who ${frame.who}`}>{t.story.who[frame.who]}</span>}
+      <p class={cls}>{frame.text}</p>
+    </div>
+  );
+}
+
+// ── Rasmlar ─────────────────────────────────────────────────
+// viewBox 320×180. Hammasi CSS o'zgaruvchilari bilan (mavzu ranglari), qattiq yozilgan rang yo'q.
+
+function Picture({ art }: { art: Art }) {
+  return (
+    <svg viewBox="0 0 320 180" role="img" aria-hidden="true" class={`story-svg art-${art}`}>
+      <defs>
+        {/* Girih: 8 burchakli yulduz (ikki kvadrat) — devor va ramka naqshi, plata yo'llari kabi. */}
+        <pattern id="girih" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M10 10h20v20H10zM20 5.9 34.1 20 20 34.1 5.9 20zM0 20h5.9M34.1 20H40M20 0v5.9M20 34.1V40" class="girih-line" />
+        </pattern>
+        <radialGradient id="glow">
+          <stop offset="0" class="glow-in" />
+          <stop offset="1" class="glow-out" />
+        </radialGradient>
+      </defs>
+      {art === 'city' && <City />}
+      {art === 'workshop' && <Workshop />}
+      {art === 'note' && <Note />}
+      {art === 'orb' && <Orb />}
+      {art === 'wake' && <Wake />}
+      {(art === 'talk' || art === 'laugh') && <Talk laugh={art === 'laugh'} />}
+      {art === 'window' && <Window />}
+    </svg>
+  );
+}
+
+function Stars() {
+  return (
+    <g class="stars">
+      {[[22, 18], [64, 34], [98, 12], [140, 28], [186, 16], [222, 38], [262, 14], [300, 30], [44, 52], [244, 58]].map(([x, y], k) => (
+        <circle key={k} cx={x} cy={y} r={k % 3 ? 0.9 : 1.4} />
+      ))}
+    </g>
+  );
+}
+
+/** Ko'hna Minor silueti: gumbazlar, minora, rasadxona; derazalar o'chiq (Sukunat). */
+function Skyline({ lit = false }: { lit?: boolean }) {
+  return (
+    <g class="skyline">
+      <path d="M0 180V132h26v-14q14-22 28 0v14h20V98h8V84h4v14h8v34h18v-10q24-40 48 0v10h16v-22q16-26 32 0v22h22V92q14-18 28 0v40h20v-12q14-20 28 0v60z" />
+      <g class={`windows${lit ? ' lit' : ''}`}>
+        <rect x="36" y="140" width="6" height="9" rx="3" />
+        <rect x="82" y="108" width="4" height="8" rx="2" />
+        <rect x="148" y="138" width="8" height="12" rx="4" />
+        <rect x="204" y="126" width="6" height="10" rx="3" />
+        <rect x="243" y="108" width="6" height="12" rx="3" />
+        <rect x="292" y="142" width="6" height="9" rx="3" />
+      </g>
+    </g>
+  );
+}
+
+/** Chiroq: mis shar, bitta ko'z, ikki antenna-sim. awake — ko'z oltin (Q = 1). */
+function Chiroq({ x, y, s = 1, awake = false, reach = false }: { x: number; y: number; s?: number; awake?: boolean; reach?: boolean }) {
+  return (
+    <g class={`chiroq${awake ? ' awake' : ''}`} transform={`translate(${x} ${y}) scale(${s})`}>
+      {awake && <circle r="34" fill="url(#glow)" class="chiroq-glow" />}
+      <path class="chiroq-wire" d={reach ? 'M-6 -16Q-14 -40 -30 -52' : 'M-6 -16Q-10 -28 -18 -32'} />
+      <path class="chiroq-wire" d="M6 -16Q10 -28 18 -32" />
+      <circle class="chiroq-tip" cx={reach ? -30 : -18} cy={reach ? -52 : -32} r="2.4" />
+      <circle class="chiroq-tip" cx="18" cy="-32" r="2.4" />
+      <circle class="chiroq-body" r="18" />
+      <path class="chiroq-seam" d="M-18 2h36" />
+      <circle class="chiroq-eye" cy="-4" r="6.5" />
+    </g>
+  );
+}
+
+/** Lola: soddalashtirilgan siluet — ro'mol, yelka, qo'lida kavsharlagich. */
+function Lola({ x, y, tilt = 0 }: { x: number; y: number; tilt?: number }) {
+  return (
+    <g class="lola" transform={`translate(${x} ${y}) rotate(${tilt})`}>
+      <path class="lola-body" d="M-26 60q2-34 26-38q24 4 26 38z" />
+      <circle class="lola-face" cy="0" r="14" />
+      <path class="lola-scarf" d="M-16 2q-2-22 16-22q18 0 16 22q-4-12-16-12t-16 12zM12 6q10 8 6 24l-6-4z" />
+      <path class="lola-tool" d="M22 44l16-20" />
+    </g>
+  );
+}
+
+function City() {
+  return (
+    <>
+      <rect width="320" height="180" class="sky" />
+      <Stars />
+      <circle cx="262" cy="40" r="11" class="moon" />
+      <Skyline />
+    </>
+  );
+}
+
+function Workshop() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="118" fill="url(#girih)" class="girih" />
+      <path class="arch" d="M228 118V54q0-30 30-30t30 30v64z" />
+      <path class="lamp-cord" d="M90 0v34" />
+      <path class="lamp-shade" d="M76 46l14-12 14 12z" />
+      <rect y="118" width="320" height="8" class="table-top" />
+      <rect y="126" width="320" height="54" class="table" />
+      <Chiroq x={120} y={100} s={0.8} />
+      <path class="paper" d="M170 112l42-6 4 10-42 6z" />
+    </>
+  );
+}
+
+function Note() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih" />
+      <g transform="rotate(-3 160 90)">
+        <rect x="70" y="22" width="180" height="136" rx="4" class="paper" />
+        {[44, 62, 80, 98, 116].map((y, k) => (
+          <path key={y} class="ink" d={`M88 ${y}h${k === 4 ? 70 : 144}`} />
+        ))}
+        <path class="ink sign" d="M196 136q6-14 10 0q4-14 10 0" />
+      </g>
+    </>
+  );
+}
+
+function Orb() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih" />
+      <circle cx="160" cy="92" r="64" class="orb-shell" />
+      <circle cx="160" cy="92" r="54" class="orb-inside" />
+      {/* Uzilgan simlar va kalitlar — 1-bo'limda o'yinchi ularni ulaydi. */}
+      <path class="trace" d="M120 70h22M178 70h22M120 112h14M150 112h50M160 50v14M160 120v14" />
+      <rect x="138" y="64" width="12" height="12" rx="2" class="switch" />
+      <rect x="170" y="64" width="12" height="12" rx="2" class="switch" />
+      <rect x="148" y="104" width="24" height="16" rx="3" class="chip" />
+      <circle cx="134" cy="112" r="2.6" class="spark" />
+    </>
+  );
+}
+
+function Wake() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih lit" />
+      <rect y="132" width="320" height="48" class="table" />
+      <Chiroq x={160} y={100} s={1.6} awake />
+    </>
+  );
+}
+
+function Talk({ laugh }: { laugh: boolean }) {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih lit" />
+      <rect y="140" width="320" height="40" class="table" />
+      <Lola x={96} y={86} tilt={laugh ? -6 : 0} />
+      <Chiroq x={220} y={110} s={1.1} awake />
+    </>
+  );
+}
+
+function Window() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih lit" />
+      <clipPath id="win">
+        <path d="M80 150V70q0-50 80-50t80 50v80z" />
+      </clipPath>
+      <g clip-path="url(#win)">
+        <rect width="320" height="180" class="sky" />
+        <Stars />
+        {/* Bozor darvozalari — keyingi bo'lim. */}
+        <path class="skyline" d="M80 150v-40h20v-14q14-24 28 0v14h12v-24q20-30 40 0v24h12v-14q14-24 28 0v14h20v40z" />
+        <path class="gate-door" d="M110 150v-26q8-12 16 0v26zM152 150v-32q8-14 16 0v32zM194 150v-26q8-12 16 0v26z" />
+      </g>
+      <path class="arch-frame" d="M80 150V70q0-50 80-50t80 50v80z" />
+      <rect x="64" y="150" width="192" height="10" class="table-top" />
+      <Chiroq x={226} y={132} s={0.7} awake reach />
+    </>
+  );
+}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { lazy } from '../components/lazy';
 import { Icon, Stars, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { chapterDone, lessonsRead } from '../lessons';
@@ -6,7 +7,10 @@ import { mapCell, mapColumns, mapSeen, markMapSeen, TILE_GAP } from '../levelmap
 import { chapterLevels, chapters, levelNumber, levels } from '../levels';
 import { go } from '../router';
 import { chapterStars, chapterUnlocked, continueLevel, levelUnlocked, progress, totalStars } from '../state';
+import { markSceneSeen, preloadStory, sceneSeen, STORY_CHAPTERS, storyOn, storyPlace, type SceneRef } from '../story';
 import { assignedLevels } from '../tasks';
+
+const StoryScene = lazy(() => import('./StoryScene').then((m) => m.StoryScene));
 
 /** Bo'lim kartochkasi va uning ichki chegaralari (styles.css: .chapters, .chapter). */
 const MAP_INSET = 2 * 16 + 2 * 16 + 2;
@@ -19,8 +23,18 @@ export function LevelsScreen() {
     const seen = new Set(mapSeen.value);
     return levels.filter((l) => progress.value[l.id] && !seen.has(l.id)).map((l) => l.id);
   });
+  // Bo'lim kartasidagi «Hikoya» — sahnani qayta ko'rish (kirish, bo'lim tugagan bo'lsa — keyin chiqish ham).
+  const [scene, setScene] = useState<SceneRef | null>(null);
+  const closeScene = () => {
+    if (!scene) return;
+    markSceneSeen(scene);
+    const outro: SceneRef = { chapter: scene.chapter, kind: 'outro' };
+    setScene(scene.kind === 'intro' && chapterDone(scene.chapter) ? outro : null);
+  };
 
   useEffect(() => {
+    // Hikoya qatorlari darajada darhol chiqishi uchun matnlar shu yerda oldindan yuklanadi.
+    if (storyOn()) void preloadStory();
     markMapSeen(levels.filter((l) => progress.value[l.id]).map((l) => l.id));
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
@@ -50,6 +64,7 @@ export function LevelsScreen() {
                   <div>
                     <div class="chapter-num">{ci + 1}</div>
                     <div>
+                      {storyPlace(ch.id) && <span class="chapter-place">{storyPlace(ch.id)}</span>}
                       <h2>{ch.title}</h2>
                       <p class="muted">{ch.description}</p>
                     </div>
@@ -92,6 +107,11 @@ export function LevelsScreen() {
                     );
                   })}
                 </div>
+                {open && storyOn() && STORY_CHAPTERS.includes(ch.id) && sceneSeen({ chapter: ch.id, kind: 'intro' }) && (
+                  <button class="btn small ghost story-btn" onClick={() => setScene({ chapter: ch.id, kind: 'intro' })}>
+                    <Icon name="book" /> {t.story.replay}
+                  </button>
+                )}
                 {open &&
                   (chapterDone(ch.id) ? (
                     <button
@@ -110,6 +130,7 @@ export function LevelsScreen() {
           })}
         </div>
       </div>
+      {scene && <StoryScene key={`${scene.chapter}:${scene.kind}`} scene={scene} onDone={closeScene} />}
     </div>
   );
 }

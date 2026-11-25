@@ -37,6 +37,8 @@ export const SCENES: Record<string, Scene> = {
   memory: { root: 55, mode: MIXO, bpm: 92, prog: [0, 6, 3, 0], density: 0.45, bright: 1100, clock: true },
   automata: { root: 59, mode: MINOR, bpm: 104, prog: [0, 5, 3, 4], density: 0.55, bright: 1400, hat: true, clock: true },
   nor: { root: 61, mode: MINOR, bpm: 88, prog: [0, 3, 5, 4], density: 0.4, bright: 1000 },
+  // Bloklar: mikrosxemalar ustaxonasi — mexanik, aniq ritm (hi-hat va takt), yorqinroq.
+  chips: { root: 57, mode: MIXO, bpm: 98, prog: [0, 4, 6, 3], density: 0.5, bright: 1500, hat: true, clock: true },
   daily: { root: 64, mode: MAJOR, bpm: 96, prog: [0, 5, 3, 4], density: 0.5, bright: 1700, hat: true },
   sandbox: { root: 60, mode: LYDIAN, bpm: 66, prog: [0, 4], density: 0.2, bright: 700 },
 };

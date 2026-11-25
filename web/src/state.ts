@@ -48,6 +48,8 @@ export interface Settings {
   boardMode?: BoardMode;
   /** Animatsiya (theme.ts); yo'q bo'lsa — Avto. */
   motion?: Motion;
+  /** Kampaniya hikoyasi (story.ts): sahnalar va hikoya qatorlari; yo'q bo'lsa — yoqilgan. */
+  story?: boolean;
 }
 
 /**
@@ -74,6 +76,7 @@ const cleanSettings = (v: unknown): Partial<Settings> | null => {
     v.theme === 'bench' ||
     v.theme === 'breadboard' ||
     v.theme === 'scifi' ||
+    v.theme === 'minor' ||
     v.theme === 'plata' ||
     v.theme === 'haqiqiy' ||
     v.theme === 'daftar' ||
@@ -84,6 +87,7 @@ const cleanSettings = (v: unknown): Partial<Settings> | null => {
   }
   if (v.boardMode === 'real2d' || v.boardMode === 'real3d' || v.boardMode === 'schematic') out.boardMode = v.boardMode;
   if (v.motion === 'on' || v.motion === 'off' || v.motion === 'auto') out.motion = v.motion;
+  if (typeof v.story === 'boolean') out.story = v.story;
   return out;
 };
 const loadSettings = (): Settings => ({ sound: true, ...load(KEYS.settings, {}, cleanSettings) });

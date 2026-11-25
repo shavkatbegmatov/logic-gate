@@ -61,6 +61,12 @@ export const chapters = [
     description: "NOR ham universal element: «Apollon» kemasining bort kompyuteri deyarli butunlay NOR elementlaridan yig'ilgan.",
     unlockStars: 76,
   },
+  {
+    id: 'chips',
+    title: 'Bloklar',
+    description: "Chiroq buvining sandig'idan eski mikrosxemalarni topdi: summator, multipleksor, dekoder. Yechilgan qurilma endi bitta blok — kattaroq mashinaning g'ishti.",
+    unlockStars: 88,
+  },
 ];
 
 const not = (a) => a ^ 1;
@@ -916,6 +922,126 @@ export const levels = [
         q: ['NOR', 't1', 't2'],
       },
       out: { Q: 'q' },
+    },
+  },
+
+  // ── 9. Bloklar ─────────────────────────────────────────────
+  // Blok (mikrosxema) — yechilgan darajadan olingan tayyor qurilma; bitta element deb hisoblanadi.
+  // Yechimda blok chiqishi: "f" — 0-chiqish, "f.1" — 1-chiqish va hokazo.
+  {
+    id: 'k1',
+    chapter: 'chips',
+    title: "Birlar sanog'i",
+    task: "A, B va C dan nechtasi 1 ekanini ikki bitli son Q1 Q0 bilan chiqaring: 0, 1, 2 yoki 3.",
+    hint: "To'liq summator aynan shuni qiladi: uchta bitni qo'shadi. S — kichik bit, Co — katta bit.",
+    inputs: ['A', 'B', 'C'],
+    outputs: ['Q1', 'Q0'],
+    gates: ['FA', 'AND', 'OR', 'XOR'],
+    goal: 1,
+    fn: (A, B, C) => [(A + B + C) >> 1, (A + B + C) & 1],
+    sol: { g: { f: ['FA', 'A', 'B', 'C'] }, out: { Q1: 'f.1', Q0: 'f' } },
+  },
+  {
+    id: 'k2',
+    chapter: 'chips',
+    title: 'Ikki bitli summator',
+    task: "Ikki bitli A1 A0 va B1 B0 sonlarini qo'shing: natija — uch bitli C S1 S0.",
+    hint: "Kichik xona uchun yarim summator yetadi. Uning ko'chirish biti katta xonadagi to'liq summatorning Ci kirishiga boradi.",
+    inputs: ['A1', 'A0', 'B1', 'B0'],
+    outputs: ['C', 'S1', 'S0'],
+    gates: ['HA', 'FA', 'AND', 'OR', 'XOR'],
+    goal: 2,
+    fn: (A1, A0, B1, B0) => {
+      const s = A1 * 2 + A0 + B1 * 2 + B0;
+      return [(s >> 2) & 1, (s >> 1) & 1, s & 1];
+    },
+    sol: {
+      g: { h: ['HA', 'A0', 'B0'], f: ['FA', 'A1', 'B1', 'h.1'] },
+      out: { C: 'f.1', S1: 'f', S0: 'h' },
+    },
+  },
+  {
+    id: 'k3',
+    chapter: 'chips',
+    title: "To'rtdan biri",
+    task: "S1 S0 ikkilik son (S1 — katta bit) to'rtta kirishdan birini tanlaydi: Q = D0, D1, D2 yoki D3.",
+    hint: "Avval S0 bilan juftlar ichidan tanlang (D0/D1 va D2/D3), keyin S1 bilan ikki natijadan birini.",
+    inputs: ['D0', 'D1', 'D2', 'D3', 'S1', 'S0'],
+    outputs: ['Q'],
+    gates: ['MUX', 'AND', 'OR', 'NOT'],
+    goal: 3,
+    fn: (D0, D1, D2, D3, S1, S0) => [[D0, D1, D2, D3][S1 * 2 + S0]],
+    sol: {
+      g: { m0: ['MUX', 'D0', 'D1', 'S0'], m1: ['MUX', 'D2', 'D3', 'S0'], q: ['MUX', 'm0', 'm1', 'S1'] },
+      out: { Q: 'q' },
+    },
+  },
+  {
+    id: 'k4',
+    chapter: 'chips',
+    title: 'Uch bitli summator',
+    task: "Uch bitli A2 A1 A0 va B2 B1 B0 sonlarini qo'shing: natija — to'rt bitli C S2 S1 S0.",
+    hint: "Ko'chirish zanjiri: har xonaning ko'chirish biti keyingi xonaning Ci kirishiga boradi.",
+    inputs: ['A2', 'A1', 'A0', 'B2', 'B1', 'B0'],
+    outputs: ['C', 'S2', 'S1', 'S0'],
+    gates: ['HA', 'FA', 'AND', 'OR', 'XOR'],
+    goal: 3,
+    fn: (A2, A1, A0, B2, B1, B0) => {
+      const s = A2 * 4 + A1 * 2 + A0 + B2 * 4 + B1 * 2 + B0;
+      return [(s >> 3) & 1, (s >> 2) & 1, (s >> 1) & 1, s & 1];
+    },
+    sol: {
+      g: { h: ['HA', 'A0', 'B0'], f1: ['FA', 'A1', 'B1', 'h.1'], f2: ['FA', 'A2', 'B2', 'f1.1'] },
+      out: { C: 'f2.1', S2: 'f2', S1: 'f1', S0: 'h' },
+    },
+  },
+  {
+    id: 'k5',
+    chapter: 'chips',
+    title: 'Sakkiz eshik',
+    task: "A B C — uch bitli son (A — katta bit). Shu songa mos chiqish 1, qolganlari 0 bo'lsin: 000 → Y0, …, 111 → Y7.",
+    hint: "Dekoder B va C dan to'rtta chiziq beradi. Har chiziqni bir marta NOT A bilan (Y0–Y3), bir marta A bilan (Y4–Y7) AND qiling.",
+    inputs: ['A', 'B', 'C'],
+    outputs: ['Y0', 'Y1', 'Y2', 'Y3', 'Y4', 'Y5', 'Y6', 'Y7'],
+    gates: ['DEC', 'AND', 'NOT'],
+    goal: 10,
+    fn: (A, B, C) => {
+      const n = A * 4 + B * 2 + C;
+      return [0, 1, 2, 3, 4, 5, 6, 7].map((i) => (i === n ? 1 : 0));
+    },
+    sol: {
+      g: {
+        d: ['DEC', 'B', 'C'],
+        na: ['NOT', 'A'],
+        y0: ['AND', 'na', 'd'],
+        y1: ['AND', 'na', 'd.1'],
+        y2: ['AND', 'na', 'd.2'],
+        y3: ['AND', 'na', 'd.3'],
+        y4: ['AND', 'A', 'd'],
+        y5: ['AND', 'A', 'd.1'],
+        y6: ['AND', 'A', 'd.2'],
+        y7: ['AND', 'A', 'd.3'],
+      },
+      out: { Y0: 'y0', Y1: 'y1', Y2: 'y2', Y3: 'y3', Y4: 'y4', Y5: 'y5', Y6: 'y6', Y7: 'y7' },
+    },
+  },
+  {
+    id: 'k6',
+    chapter: 'chips',
+    title: "To'rt ovoz",
+    task: "To'rtta ovozdan (A, B, C, D) nechtasi 1 ekanini uch bitli son Q2 Q1 Q0 bilan chiqaring: 0 dan 4 gacha.",
+    hint: "To'liq summator uchta ovozni sanaydi. To'rtinchisini kichik bitga yarim summator bilan qo'shing, ikkala ko'chirishni esa yana bir yarim summator bilan.",
+    inputs: ['A', 'B', 'C', 'D'],
+    outputs: ['Q2', 'Q1', 'Q0'],
+    gates: ['HA', 'FA', 'AND', 'OR', 'XOR'],
+    goal: 3,
+    fn: (A, B, C, D) => {
+      const s = A + B + C + D;
+      return [(s >> 2) & 1, (s >> 1) & 1, s & 1];
+    },
+    sol: {
+      g: { f: ['FA', 'A', 'B', 'C'], h1: ['HA', 'f', 'D'], h2: ['HA', 'f.1', 'h1.1'] },
+      out: { Q2: 'h2.1', Q1: 'h2', Q0: 'h1' },
     },
   },
 ];

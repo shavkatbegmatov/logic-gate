@@ -290,6 +290,16 @@ export function Settings() {
                 <Icon name={settings.value.sound ? 'sound' : 'mute'} /> {settings.value.sound ? t.settings.on : t.settings.off}
               </button>
             </div>
+            <div class="row between">
+              <span>{t.story.setting}</span>
+              <button
+                class={`btn toggle${settings.value.story !== false ? ' on' : ''}`}
+                onClick={() => (settings.value = { ...settings.value, story: settings.value.story === false })}
+                aria-pressed={settings.value.story !== false}
+              >
+                <Icon name="book" /> {settings.value.story !== false ? t.settings.on : t.settings.off}
+              </button>
+            </div>
           </section>
 
           <section class="card">

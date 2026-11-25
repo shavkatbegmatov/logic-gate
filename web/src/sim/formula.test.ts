@@ -69,3 +69,32 @@ describe('formula', () => {
     }
   });
 });
+
+describe('formula: bloklar', () => {
+  it("blok chiqishi oddiy amallarda, kirishlari nom bilan (ifoda ikki baravar o'smasin)", () => {
+    const c: Circuit = {
+      gates: [
+        { id: 'h', type: 'HA', x: 0, y: 0 },
+        { id: 'x', type: 'AND', x: 0, y: 0 },
+        { id: 'f', type: 'FA', x: 0, y: 0 },
+      ],
+      wires: [
+        { from: 'in:A', to: 'h:0' },
+        { from: 'in:B', to: 'h:1' },
+        { from: 'in:A', to: 'x:0' },
+        { from: 'in:C', to: 'x:1' },
+        { from: 'x', to: 'f:0' },
+        { from: 'in:B', to: 'f:1' },
+        { from: 'h.1', to: 'f:2' },
+        { from: 'h', to: 'out:S' },
+        { from: 'f.1', to: 'out:Co' },
+      ],
+    };
+    expect(formulaLines(c, ['S', 'Co'])).toEqual([
+      { name: 'S', expr: 'A ⊕ B', kind: 'out' },
+      { name: 't1', expr: 'A ∧ C', kind: 'tmp' },
+      { name: 't2', expr: 'A ∧ B', kind: 'tmp' },
+      { name: 'Co', expr: '(t1 ∧ B) ∨ (t2 ∧ (t1 ⊕ B))', kind: 'out' },
+    ]);
+  });
+});

@@ -77,8 +77,8 @@ describe('mavzular va ko\'rinish rejimlari', () => {
     expect(resolveRealStyle('chizma')).toBe('bench');
   });
 
-  it("Sozlamalardagi ro'yxat: 4 ta AAA + klassik mavzular va Avto", () => {
-    expect(AAA_THEMES).toEqual(['pcb', 'bench', 'breadboard', 'scifi']);
+  it("Sozlamalardagi ro'yxat: 5 ta AAA + klassik mavzular va Avto", () => {
+    expect(AAA_THEMES).toEqual(['pcb', 'bench', 'breadboard', 'scifi', 'minor']);
     expect(CLASSIC_THEMES).toEqual(['plata', 'haqiqiy', 'daftar', 'chizma', 'auto']);
     expect([...THEMES].sort()).toEqual([...NAMES, 'auto'].sort());
   });
@@ -86,7 +86,7 @@ describe('mavzular va ko\'rinish rejimlari', () => {
   it("har bir mavzu PCB'dagi har bir rangni qayta belgilaydi (ortiqchasi ham yo'q), fon THEME_BG bilan bir xil", () => {
     const base = vars(block(selectorOf('pcb')));
     const colors = [...base.keys()].filter((k) => k !== '--mono' && k !== '--sans').sort();
-    expect(NAMES).toEqual(['pcb', 'bench', 'breadboard', 'scifi', 'plata', 'haqiqiy', 'daftar', 'chizma']);
+    expect(NAMES).toEqual(['pcb', 'bench', 'breadboard', 'scifi', 'minor', 'plata', 'haqiqiy', 'daftar', 'chizma']);
     for (const name of NAMES) {
       const own = vars(block(selectorOf(name)));
       if (name !== 'pcb') expect([...own.keys()].sort(), name).toEqual(colors);

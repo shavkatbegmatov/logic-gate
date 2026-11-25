@@ -36,6 +36,34 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.28.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 9-bo'lim — «Bloklar» (88 ★ dan ochiladi): Chiroq buvining sandig'idan topilgan tayyor mikrosxemalar — yarim summator, to'liq summator, multipleksor va dekoder. Har biri ichidagi sxemani qayta yig'masdan bitta element sifatida qo'yiladi.",
+      "6 ta yangi daraja: birlar sanog'i, ikki va uch bitli summator, «to'rtdan biri» tanlagich, sakkiz eshikli dekoder va to'rt ovozli hisoblagich. Blok bir nechta chiqishli — har oyog'i alohida ulanadi. Bu — protsessor yig'ish sari birinchi qadam.",
+      "Qum qutida: blok uni o'rgatgan daraja yechilgach palitrada paydo bo'ladi (masalan, to'liq summator — «To'liq summator» darajasidan keyin).",
+    ],
+    ru: [
+      "Новый, 9-й раздел — «Блоки» (открывается с 88 ★): готовые микросхемы из сундука бабушки Чирок — полусумматор, полный сумматор, мультиплексор и дешифратор. Каждая ставится одним элементом, без сборки схемы внутри.",
+      "6 новых уровней: подсчёт единиц, двух- и трёхбитный сумматор, селектор «один из четырёх», дешифратор на восемь дверей и счётчик четырёх голосов. У блока несколько выходов — каждая ножка подключается отдельно. Это первый шаг к сборке процессора.",
+      "В Песочнице: блок появляется в палитре, когда решён уровень, где он изучался (например, полный сумматор — после уровня «Полный сумматор»).",
+    ],
+  },
+  {
+    version: '2.27.0',
+    date: '2026-11-25',
+    uz: [
+      "Hikoya: endi o'yin Ko'hna Minor shahrida o'tadi — shahar mashinasi Ustoz jim bo'lib qolgan, shogird qiz Lola va mis chiroq-robot Chiroq uni sxemalarni tushunib qayta yoqadi. Birinchi bo'lim «Buvining ustaxonasi»: kirish va yakuniy sahnalar, har darajada qisqa hikoya qatori. Qolgan bo'limlar keyingi versiyalarda.",
+      "Yangi uslub «Mis va lojuvard»: Samarqand koshinlari ranglari va girih naqshlari, signal — mis-oltin. Sozlamalar → «Mavzu va uslub».",
+      "Hikoyani Sozlamalarda o'chirib qo'yish mumkin; bo'lim kartasidagi «Hikoya» sahnani qayta ko'rsatadi.",
+    ],
+    ru: [
+      "История: теперь игра происходит в городе Кохна-Минор — городская машина Устоз замолчала, ученица Лола и медный робот-фонарик Огонёк запускают её снова, разбираясь в схемах. Первая глава «Мастерская бабушки»: вступительная и финальная сцены, короткая строка сюжета на каждом уровне. Остальные главы — в следующих версиях.",
+      "Новый стиль «Медь и лазурит»: цвета самаркандских изразцов и узоры гирих, сигнал — медно-золотой. Настройки → «Тема и стиль».",
+      "Историю можно выключить в Настройках; кнопка «История» на карточке главы показывает сцену заново.",
+    ],
+  },
+  {
     version: '2.26.0',
     date: '2026-11-25',
     uz: [

@@ -3,6 +3,7 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { blockOutputs, blocks, lutsOf } from './blocks.mjs';
 import * as ru from './i18n.ru.mjs';
 import { machineOf as buildMachine, rowsOf } from './machine.mjs';
 import { chapters, levels } from './source.mjs';
@@ -10,6 +11,28 @@ import { chapters, levels } from './source.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const ONE_INPUT = new Set(['NOT', 'DFF']);
 const errors = [];
+
+const OPS = {
+  NOT: (a) => a ^ 1,
+  AND: (a, b) => a & b,
+  OR: (a, b) => a | b,
+  XOR: (a, b) => a ^ b,
+  NAND: (a, b) => (a & b) ^ 1,
+  NOR: (a, b) => (a | b) ^ 1,
+  XNOR: (a, b) => (a ^ b) ^ 1,
+};
+
+/** Element kirishlari soni: blokda — oyoqlari soni. */
+const arityOf = (type) => (blocks[type] ? blocks[type].inputs.length : ONE_INPUT.has(type) ? 1 : 2);
+
+/** Element chiqishlari (massiv): blokda bir nechta. */
+const gateOuts = (type, ins) => (blocks[type] ? blockOutputs(type, ins) : [OPS[type](...ins)]);
+
+/** Yechimdagi manba: "f" — f ning 0-chiqishi, "f.1" — 1-chiqishi (blokda). */
+function splitSrc(s) {
+  const i = s.lastIndexOf('.');
+  return i < 0 ? [s, 0] : [s.slice(0, i), Number(s.slice(i + 1))];
+}
 
 function fail(id, msg) {
   errors.push(`${id}: ${msg}`);
@@ -33,8 +56,9 @@ function toCircuit(level) {
   const { g, out } = level.sol;
   const isInput = (s) => level.inputs.includes(s);
   const depth = {};
-  const depthOf = (name, seen = new Set()) => {
-    if (isInput(name)) return 0;
+  const depthOf = (src, seen = new Set()) => {
+    if (isInput(src)) return 0;
+    const [name] = splitSrc(src);
     if (g[name]?.[0] === 'DFF') return 1;
     if (!(name in g)) {
       fail(level.id, `noma'lum manba "${name}"`);
@@ -47,7 +71,7 @@ function toCircuit(level) {
     if (depth[name] === undefined) {
       seen.add(name);
       const [, ...srcs] = g[name];
-      depth[name] = 1 + Math.max(...srcs.map((s) => (g[s]?.[0] === 'DFF' ? 1 : depthOf(s, seen))));
+      depth[name] = 1 + Math.max(...srcs.map((s) => (g[splitSrc(s)[0]]?.[0] === 'DFF' ? 1 : depthOf(s, seen))));
       seen.delete(name);
     }
     return depth[name];
@@ -59,16 +83,25 @@ function toCircuit(level) {
     } else depthOf(name);
   });
 
-  const rowAt = {};
+  // Ustundagi navbatdagi bo'sh y: blok oddiy elementdan baland (oyoqlari soniga qarab) — ustma-ust tushmasin.
+  const nextY = {};
   const gates = Object.entries(g).map(([id, [type, ...srcs]]) => {
     const d = depth[id];
-    rowAt[d] = (rowAt[d] ?? 0) + 1;
-    const want = ONE_INPUT.has(type) ? 1 : 2;
+    const y = nextY[d] ?? 40;
+    const h = blocks[type] ? Math.max(blocks[type].inputs.length, blocks[type].outputs.length) * 24 : 48;
+    nextY[d] = y + Math.max(90, h + 42);
+    const want = arityOf(type);
     if (srcs.length !== want) fail(level.id, `${id}: ${type} uchun ${want} ta kirish kerak`);
     if (!level.gates.includes(type)) fail(level.id, `${id}: ${type} bu darajada ruxsat etilmagan`);
-    return { id, type, x: 120 + (d - 1) * 140, y: 40 + (rowAt[d] - 1) * 90 };
+    return { id, type, x: 120 + (d - 1) * 140, y };
   });
-  const src = (s) => (isInput(s) ? `in:${s}` : s);
+  const src = (s) => {
+    if (isInput(s)) return `in:${s}`;
+    const [name, k] = splitSrc(s);
+    const type = g[name]?.[0];
+    if (k < 0 || k >= (blocks[type]?.outputs.length ?? 1) || !Number.isInteger(k)) fail(level.id, `noto'g'ri chiqish "${s}"`);
+    return s;
+  };
   const wires = [];
   for (const [id, [, ...srcs]] of Object.entries(g)) {
     srcs.forEach((s, i) => wires.push({ from: src(s), to: `${id}:${i}` }));
@@ -85,22 +118,18 @@ function evalSolution(level) {
   const { g, out } = level.sol;
   const n = level.inputs.length;
   const cols = level.outputs.map(() => []);
-  const ops = {
-    NOT: (a) => a ^ 1,
-    AND: (a, b) => a & b,
-    OR: (a, b) => a | b,
-    XOR: (a, b) => a ^ b,
-    NAND: (a, b) => (a & b) ^ 1,
-    NOR: (a, b) => (a | b) ^ 1,
-    XNOR: (a, b) => (a ^ b) ^ 1,
-  };
   for (let r = 0; r < 1 << n; r++) {
     const env = {};
     level.inputs.forEach((name, k) => (env[name] = (r >> (n - 1 - k)) & 1));
+    const outs = {};
     const val = (s) => {
       if (s in env) return env[s];
-      const [type, ...srcs] = g[s];
-      return (env[s] = ops[type](...srcs.map(val)));
+      const [name, k] = splitSrc(s);
+      if (!outs[name]) {
+        const [type, ...srcs] = g[name];
+        outs[name] = gateOuts(type, srcs.map(val));
+      }
+      return outs[name][k];
     };
     level.outputs.forEach((name, i) => cols[i].push(String(val(out[name]))));
   }
@@ -125,27 +154,23 @@ function hintsFor(level) {
 function checkSeqSolution(level, m) {
   const { g, out } = level.sol;
   const dffs = Object.keys(g).filter((name) => g[name][0] === 'DFF');
-  const ops = {
-    NOT: (a) => a ^ 1,
-    AND: (a, b) => a & b,
-    OR: (a, b) => a | b,
-    XOR: (a, b) => a ^ b,
-    NAND: (a, b) => (a & b) ^ 1,
-    NOR: (a, b) => (a | b) ^ 1,
-    XNOR: (a, b) => (a ^ b) ^ 1,
-  };
   const run = (state, bits) => {
     const env = {};
     level.inputs.forEach((name, k) => (env[name] = bits[k]));
     dffs.forEach((name, i) => (env[name] = (state >> i) & 1));
+    const cache = {};
     const val = (s, depth = 0) => {
       if (s in env) return env[s];
-      if (!g[s] || depth > 64) {
+      const [name, k] = splitSrc(s);
+      if (!g[name] || depth > 64) {
         fail(level.id, `noma'lum manba yoki sikl: ${s}`);
         return 0;
       }
-      const [type, ...srcs] = g[s];
-      return (env[s] = ops[type](...srcs.map((x) => val(x, depth + 1))));
+      if (!cache[name]) {
+        const [type, ...srcs] = g[name];
+        cache[name] = gateOuts(type, srcs.map((x) => val(x, depth + 1)));
+      }
+      return cache[name][k];
     };
     const outs = level.outputs.map((name) => String(val(out[name])));
     const nextState = dffs.reduce((acc, name, i) => acc | (val(g[name][1]) << i), 0);
@@ -183,6 +208,23 @@ function exampleRows(level) {
     if (typeof bits !== 'string' || bits.length !== n || /[^01]/.test(bits)) fail(level.id, `noto'g'ri namuna qadami "${bits}"`);
     return parseInt(bits, 2);
   });
+}
+
+// Bloklar: jadval va blok ochiladigan daraja bir xil ishlashi kerak.
+const outBlocks = {};
+for (const [type, b] of Object.entries(blocks)) {
+  const src = levels.find((l) => l.id === b.from);
+  if (!src || src.step) fail(type, `blok manbasi ${b.from} kombinatsion daraja emas`);
+  else if (JSON.stringify(src.inputs) !== JSON.stringify(b.inputs) || JSON.stringify(src.outputs) !== JSON.stringify(b.outputs)) {
+    fail(type, `oyoqlar ${b.from} darajasidagi kirish/chiqishlardan farq qiladi`);
+  } else {
+    const n = b.inputs.length;
+    for (let r = 0; r < 1 << n; r++) {
+      const bits = b.inputs.map((_, k) => (r >> (n - 1 - k)) & 1);
+      if (src.fn(...bits).join() !== b.fn(...bits).join()) fail(type, `${b.from} bilan ${r}-qatorda farq`);
+    }
+  }
+  outBlocks[type] = { inputs: b.inputs, outputs: b.outputs, luts: lutsOf(b), from: b.from };
 }
 
 const ids = new Set();
@@ -235,7 +277,7 @@ if (errors.length) {
   process.exit(1);
 }
 
-const data = { version: 1, chapters: outChapters, levels: outLevels };
+const data = { version: 1, blocks: outBlocks, chapters: outChapters, levels: outLevels };
 writeFileSync(join(here, 'levels.json'), JSON.stringify(data, null, 2) + '\n');
 writeFileSync(join(here, 'solutions.json'), JSON.stringify(solutions, null, 2) + '\n');
 console.log(`${outLevels.length} ta daraja, ${chapters.length} ta bo'lim yozildi.`);

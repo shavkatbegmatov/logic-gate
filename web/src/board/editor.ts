@@ -2,7 +2,7 @@
 import { computed, signal } from '@preact/signals';
 import { sfx } from '../audio';
 import { compile, evaluate, replay, rowBits, truthTable, wouldCycle } from '../sim/sim';
-import { GATE_ARITY, type Circuit, type GateType, type Spec } from '../sim/types';
+import { GATE_ARITY, gateOutputs, parseSource, type Circuit, type GateType, type Spec } from '../sim/types';
 import {
   bounds,
   GATE_H,
@@ -14,7 +14,7 @@ import {
   snap,
   type Layout,
 } from './geometry';
-import { outputY } from './shapes';
+import { gateHeight, outputY } from './shapes';
 import { cleanCircuit } from '../validate';
 
 export type Selection = { kind: 'gate'; id: string } | { kind: 'wire'; index: number } | null;
@@ -182,10 +182,11 @@ export class Editor {
     if (p.startsWith('in:')) return spec.inputs.includes(p.slice(3));
     if (p.startsWith('out:')) return spec.outputs.includes(p.slice(4));
     const i = p.lastIndexOf(':');
-    const id = i < 0 ? p : p.slice(0, i);
+    const src = parseSource(p);
+    const id = i < 0 ? src.id : p.slice(0, i);
     const g = this.circuit.value.gates.find((g) => g.id === id);
     if (!g) return false;
-    if (i < 0) return true;
+    if (i < 0) return src.k >= 0 && src.k < gateOutputs(g.type);
     const k = Number(p.slice(i + 1));
     return Number.isInteger(k) && k >= 0 && k < GATE_ARITY[g.type];
   }
@@ -257,16 +258,18 @@ export class Editor {
   }
 
   /** Markazi (cx, cy) bo'lgan bo'sh joy; band bo'lsa pastroqqa, keyin o'ngga suriladi. */
-  private freeSpot(cx: number, cy: number) {
+  private freeSpot(cx: number, cy: number, type?: GateType) {
+    const h = type ? gateHeight(type) : GATE_H;
     let x = snap(cx - GATE_W / 2);
-    let y = snap(cy - GATE_H / 2);
+    let y = snap(cy - h / 2);
+    // Ikki element y bo'yicha ustma-ust tushadimi (balandliklari har xil bo'lishi mumkin).
     const busy = (x: number, y: number) =>
-      this.circuit.value.gates.some((g) => Math.abs(g.x - x) < GATE_W && Math.abs(g.y - y) < GATE_H);
+      this.circuit.value.gates.some((g) => Math.abs(g.x - x) < GATE_W && y < g.y + gateHeight(g.type) && g.y < y + h);
     for (let i = 0; i < 12 && busy(x, y); i++) {
       y += GATE_H + 12;
       if (i === 5) {
         x += GATE_W + 24;
-        y = snap(cy - GATE_H / 2);
+        y = snap(cy - h / 2);
       }
     }
     return { x, y };
@@ -275,7 +278,7 @@ export class Editor {
   /** Elementni markazi (x, y) nuqtada bo'ladigan qilib qo'shadi; joy band bo'lsa pastroqqa suradi. */
   addGate(type: GateType, cx: number, cy: number) {
     if (this.locked) return;
-    const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy) };
+    const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy, type) };
     this.commit({ ...this.circuit.value, gates: [...this.circuit.value.gates, gate] });
     this.selection.value = { kind: 'gate', id: gate.id };
     sfx.place();
@@ -291,7 +294,7 @@ export class Editor {
     const pts = sources.map((s) => lay.inputs.get(s)).filter((p) => p !== undefined);
     const cx = (pts.length ? Math.max(...pts.map((p) => p.x)) : 0) + 150;
     const cy = pts.length ? pts.reduce((sum, p) => sum + p.y, 0) / pts.length : 0;
-    const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy) };
+    const gate = { id: this.nextId(), type, ...this.freeSpot(cx, cy, type) };
     const c = this.circuit.value;
     const wires = sources.slice(0, GATE_ARITY[type]).map((s, i) => ({ from: `in:${s}`, to: `${gate.id}:${i}` }));
     this.commit({ gates: [...c.gates, gate], wires: [...c.wires, ...wires] });
@@ -313,7 +316,7 @@ export class Editor {
       if (d < GATE_H && (near === null || d < Math.abs(near - c.y))) near = p.y;
     }
     // Element markazi (cy) dan freeSpot y = snap(cy - GATE_H/2) ni oladi; chiqish shundan outputY pastda.
-    const cy = near === null ? c.y : near - outputY(type) + GATE_H / 2;
+    const cy = near === null ? c.y : near - outputY(type) + gateHeight(type) / 2;
     this.addGate(type, c.x, cy);
   }
 
@@ -381,7 +384,7 @@ export class Editor {
       const prefix = `${sel.id}:`;
       this.commit({
         gates: c.gates.filter((g) => g.id !== sel.id),
-        wires: c.wires.filter((w) => w.from !== sel.id && !w.to.startsWith(prefix)),
+        wires: c.wires.filter((w) => parseSource(w.from).id !== sel.id && !w.to.startsWith(prefix)),
       });
     } else {
       this.commit({ ...c, wires: c.wires.filter((_, i) => i !== sel.index) });
@@ -469,7 +472,7 @@ function sanitize(spec: Spec, raw: Circuit): Circuit {
     if (p.startsWith('in:')) return spec.inputs.includes(p.slice(3));
     if (p.startsWith('out:')) return spec.outputs.includes(p.slice(4));
     const i = p.lastIndexOf(':');
-    return ids.has(i < 0 ? p : p.slice(0, i));
+    return ids.has(i < 0 ? parseSource(p).id : p.slice(0, i));
   };
   const seen = new Set<string>();
   const wires = c.wires.filter((w) => {

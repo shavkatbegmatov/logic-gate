@@ -1,6 +1,19 @@
 // Mantiqiy sxema simulyatori. Xuddi shu qoidalar server/internal/sim da Go'da takrorlangan —
 // o'zgartirsangiz, ikkalasini ham yangilang (umumiy testlar levels/solutions.json orqali).
-import { GATE_ARITY, type Circuit, type Gate, type GateType, type Level, type Machine, type Spec } from './types';
+import {
+  BLOCKS,
+  GATE_ARITY,
+  gateOutputs,
+  isBlock,
+  parseSource,
+  sourcePort,
+  type Circuit,
+  type Gate,
+  type GateType,
+  type Level,
+  type Machine,
+  type Spec,
+} from './types';
 
 /** flipflops — D-triggerlar: tekshiruvda holatlar soni 2^n gacha o'sadi. */
 export const LIMITS = { gates: 64, wires: 256, flipflops: 8, coord: 100000 };
@@ -25,7 +38,7 @@ export interface SimError {
   ref?: string;
 }
 
-const OPS: Record<GateType, (a: number, b: number) => number> = {
+const OPS: Record<Exclude<GateType, keyof typeof BLOCKS>, (a: number, b: number) => number> = {
   NOT: (a) => a ^ 1,
   AND: (a, b) => a & b,
   OR: (a, b) => a | b,
@@ -37,13 +50,31 @@ const OPS: Record<GateType, (a: number, b: number) => number> = {
   DFF: (a) => a,
 };
 
+/** Oddiy element: kirishlar a, b (bir kirishlida b e'tiborsiz). Blok uchun — 0-chiqish. */
 export function applyGate(type: GateType, a: number, b: number): number {
-  return OPS[type](a, b);
+  return isBlock(type) ? gateOutputValues(type, [a, b])[0] : OPS[type](a, b);
 }
 
-export function isSource(spec: Spec, gateIds: Set<string>, s: string): boolean {
+/** Element chiqishlari: blokda jadvaldan (birinchi kirish — qatorning eng katta biti). */
+export function gateOutputValues(type: GateType, ins: number[]): number[] {
+  if (!isBlock(type)) return [OPS[type](ins[0] ?? 0, ins[1] ?? 0)];
+  const b = BLOCKS[type];
+  const r = b.inputs.reduce((acc, _, i) => (acc << 1) | (ins[i] ? 1 : 0), 0);
+  return b.luts.map((lut) => (lut >> r) & 1);
+}
+
+/** Element manbasi (`gid` yoki `gid.k`) bo'lsa — element id si, aks holda null. */
+function sourceGate(gates: { has(id: string): boolean }, s: string): string | null {
+  if (s.startsWith('in:')) return null;
+  const { id } = parseSource(s);
+  return gates.has(id) ? id : null;
+}
+
+export function isSource(spec: Spec, gates: Map<string, Gate>, s: string): boolean {
   if (s.startsWith('in:')) return spec.inputs.includes(s.slice(3));
-  return gateIds.has(s);
+  const { id, k } = parseSource(s);
+  const g = gates.get(id);
+  return !!g && k >= 0 && k < gateOutputs(g.type) && sourcePort(id, k) === s;
 }
 
 export function isSink(spec: Spec, gates: Map<string, Gate>, s: string): boolean {
@@ -52,7 +83,8 @@ export function isSink(spec: Spec, gates: Map<string, Gate>, s: string): boolean
   if (i < 0) return false;
   const g = gates.get(s.slice(0, i));
   const idx = s.slice(i + 1);
-  return !!g && (idx === '0' || (idx === '1' && GATE_ARITY[g.type] === 2));
+  const k = Number(idx);
+  return !!g && /^\d$/.test(idx) && k < GATE_ARITY[g.type];
 }
 
 /** Sink → manba. */
@@ -75,10 +107,9 @@ export interface Compiled {
 export function compile(spec: Spec, circuit: Circuit): Compiled {
   const gates = new Map<string, Gate>();
   for (const g of circuit.gates) if (!gates.has(g.id)) gates.set(g.id, g);
-  const ids = new Set(gates.keys());
   const drivers: Drivers = new Map();
   for (const w of circuit.wires) {
-    if (!isSource(spec, ids, w.from) || !isSink(spec, gates, w.to) || drivers.has(w.to)) continue;
+    if (!isSource(spec, gates, w.from) || !isSink(spec, gates, w.to) || drivers.has(w.to)) continue;
     drivers.set(w.to, w.from);
   }
   const { order, cyclic } = topoSort(gates, drivers);
@@ -97,9 +128,10 @@ function topoSort(gates: Map<string, Gate>, drivers: Drivers) {
     if (g.type === 'DFF') continue;
     for (let i = 0; i < GATE_ARITY[g.type]; i++) {
       const src = drivers.get(`${g.id}:${i}`);
-      if (src && gates.has(src)) {
+      const from = src === undefined ? null : sourceGate(gates, src);
+      if (from) {
         indeg.set(g.id, indeg.get(g.id)! + 1);
-        users.get(src)!.push(g.id);
+        users.get(from)!.push(g.id);
       }
     }
   }
@@ -129,10 +161,9 @@ export function validate(spec: Spec, circuit: Circuit): SimError | null {
     if (!spec.gates.includes(g.type)) return { code: 'gate_not_allowed', ref: g.id };
     gates.set(g.id, g);
   }
-  const ids = new Set(gates.keys());
   const drivers: Drivers = new Map();
   for (const w of circuit.wires) {
-    if (!isSource(spec, ids, w.from) || !isSink(spec, gates, w.to)) return { code: 'bad_wire' };
+    if (!isSource(spec, gates, w.from) || !isSink(spec, gates, w.to)) return { code: 'bad_wire' };
     if (drivers.has(w.to)) return { code: 'sink_taken', ref: w.to };
     drivers.set(w.to, w.from);
   }
@@ -156,7 +187,7 @@ export function rowBits(n: number, r: number): number[] {
 }
 
 export interface Evaluation {
-  /** Manba qiymatlari: `in:A`, element id si. Ulanmagan kirishli element ham 0/1 qiymat oladi. */
+  /** Manba qiymatlari: `in:A`, element id si (blokda `gid.k` ham). Ulanmagan kirishli element ham 0/1 qiymat oladi. */
   values: Map<string, number>;
   /** Chiqishlar: ulanmagan bo'lsa null. */
   outputs: (number | null)[];
@@ -173,7 +204,11 @@ export function evaluate(c: Compiled, bits: number[], state?: State): Evaluation
     return src === undefined ? 0 : (values.get(src) ?? 0);
   };
   for (const g of c.order) {
-    values.set(g.id, g.type === 'DFF' ? (state?.get(g.id) ?? 0) : applyGate(g.type, read(`${g.id}:0`), read(`${g.id}:1`)));
+    if (g.type === 'DFF') values.set(g.id, state?.get(g.id) ?? 0);
+    else if (isBlock(g.type)) {
+      const ins = Array.from({ length: GATE_ARITY[g.type] }, (_, i) => read(`${g.id}:${i}`));
+      gateOutputValues(g.type, ins).forEach((v, k) => values.set(sourcePort(g.id, k), v));
+    } else values.set(g.id, applyGate(g.type, read(`${g.id}:0`), read(`${g.id}:1`)));
   }
   const outputs = c.spec.outputs.map((o) => {
     const src = c.drivers.get(`out:${o}`);
@@ -219,7 +254,7 @@ export function depths(c: Compiled): Map<string, number> {
       const src = c.drivers.get(`${g.id}:${i}`);
       if (src !== undefined) m = Math.max(m, d.get(src) ?? 0);
     }
-    d.set(g.id, m + 1);
+    for (let k = 0; k < gateOutputs(g.type); k++) d.set(sourcePort(g.id, k), m + 1);
   }
   return d;
 }
@@ -408,6 +443,7 @@ export function check(level: Level, circuit: Circuit): CheckResult {
  */
 export function wouldCycle(circuit: Circuit, from: string, to: string): boolean {
   if (from.startsWith('in:') || to.startsWith('out:')) return false;
+  from = parseSource(from).id;
   const types = new Map(circuit.gates.map((g) => [g.id, g.type]));
   const target = to.slice(0, to.lastIndexOf(':'));
   if (types.get(target) === 'DFF') return false;
@@ -418,8 +454,9 @@ export function wouldCycle(circuit: Circuit, from: string, to: string): boolean 
     if (w.to.startsWith('out:')) continue;
     const g = w.to.slice(0, w.to.lastIndexOf(':'));
     if (types.get(g) === 'DFF') continue;
-    if (!next.has(w.from)) next.set(w.from, []);
-    next.get(w.from)!.push(g);
+    const src = parseSource(w.from).id;
+    if (!next.has(src)) next.set(src, []);
+    next.get(src)!.push(g);
   }
   const seen = new Set<string>();
   const stack = [target];
