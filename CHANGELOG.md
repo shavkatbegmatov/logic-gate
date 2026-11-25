@@ -5,6 +5,12 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.27.0 — 2026-11-25
+
+- Hikoya: endi o'yin Ko'hna Minor shahrida o'tadi — shahar mashinasi Ustoz jim bo'lib qolgan, shogird qiz Lola va mis chiroq-robot Chiroq uni sxemalarni tushunib qayta yoqadi. Birinchi bo'lim «Buvining ustaxonasi»: kirish va yakuniy sahnalar, har darajada qisqa hikoya qatori. Qolgan bo'limlar keyingi versiyalarda.
+- Yangi uslub «Mis va lojuvard»: Samarqand koshinlari ranglari va girih naqshlari, signal — mis-oltin. Sozlamalar → «Mavzu va uslub».
+- Hikoyani Sozlamalarda o'chirib qo'yish mumkin; bo'lim kartasidagi «Hikoya» sahnani qayta ko'rsatadi.
+
 ## 2.26.0 — 2026-11-25
 
 - Musiqa: har bo'limning o'z fon kuyi bor — «Asoslar» yorqin va xotirjam, «Faqat NAND» qorong'iroq, «Xotira» va «Avtomatlar»da takt soati chiqillaydi. Menyu, kunlik masala va qum qutining ham o'z musiqasi bor.

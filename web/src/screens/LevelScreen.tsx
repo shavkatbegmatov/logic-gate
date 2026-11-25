@@ -5,6 +5,7 @@ import { sfx } from '../audio';
 import { Editor } from '../board/editor';
 import { outputColumn } from '../board/geometry';
 import { GateIntro } from '../components/GateIntro';
+import { lazy } from '../components/lazy';
 import { SpreadChart } from '../components/SpreadChart';
 import { JoinForm } from '../components/JoinForm';
 import { ShareButtons } from '../components/ShareButtons';
@@ -29,8 +30,11 @@ import {
   totalStars,
   unseenGates,
 } from '../state';
+import { introFor, markSceneSeen, outroFor, preloadStory, storyLine, type SceneRef } from '../story';
 import { submitSolve } from '../sync';
 import { Workbench, type Solved } from './Workbench';
+
+const StoryScene = lazy(() => import('./StoryScene').then((m) => m.StoryScene));
 
 interface Result {
   stars: number;
@@ -57,6 +61,14 @@ function Play({ level }: { level: Level }) {
   const result = useSignal<Result | null>(null);
   // Daraja yangi element bilan tanishtirsa — bir martalik karta (vazifa orqali o'tkazib yuborilganlari ham).
   const intro = useSignal(unseenGates(level));
+  // Kampaniya sahnasi: bo'lim boshida (kirish) — element kartasidan oldin; bo'lim tugaganda (chiqish).
+  const scene = useSignal<SceneRef | null>(introFor(level.id));
+  /** Yechimdan keyin ko'rsatiladigan chiqish sahnasi (natija oynasidagi «Hikoya davomi» tugmasi). */
+  const outro = useSignal<SceneRef | null>(null);
+
+  useEffect(() => {
+    void preloadStory();
+  }, []);
 
   useMemo(() => {
     editor.load(level, getDraft(level.id) ?? progress.value[level.id]?.circuit ?? emptyCircuit(), outputColumn(level.goal));
@@ -65,6 +77,7 @@ function Play({ level }: { level: Level }) {
 
   const onSolved = async ({ circuit, gates, stars }: Solved) => {
     const { improved, prev } = recordSolve(level.id, circuit, gates, stars);
+    outro.value = outroFor(level.id);
     const base: Result = { stars, gates, improved, prevGates: prev?.gates };
     result.value = base;
     const server = await submitSolve(level.id, circuit);
@@ -85,8 +98,25 @@ function Play({ level }: { level: Level }) {
       onSolved={onSolved}
       topInset={tutorialStep >= 0 ? 150 : 64}
       banner={tutorialStep >= 0 && <div class="tutorial">{tutorialText[tutorialStep]}</div>}
+      story={storyLine(level.chapter, level.id)}
     >
-      {intro.value.length > 0 && (
+      {scene.value && (
+        <StoryScene
+          key={`${scene.value.chapter}:${scene.value.kind}`}
+          scene={scene.value}
+          onDone={() => {
+            const done = scene.value!;
+            markSceneSeen(done);
+            scene.value = null;
+            if (done.kind === 'outro') {
+              const next = nextLevel(level);
+              go(next && levelUnlocked(next) ? `level/${next.id}` : 'levels');
+            }
+          }}
+        />
+      )}
+
+      {!scene.value && intro.value.length > 0 && (
         <GateIntro
           gates={intro.value}
           onClose={() => {
@@ -96,10 +126,19 @@ function Play({ level }: { level: Level }) {
         />
       )}
 
-      {result.value && (
+      {result.value && !scene.value && (
         <SuccessModal
           level={level}
           result={result.value}
+          onStory={
+            outro.value
+              ? () => {
+                  scene.value = outro.value;
+                  outro.value = null;
+                  result.value = null;
+                }
+              : undefined
+          }
           onAgain={() => (result.value = null)}
           onJoined={async () => {
             const server = await submitSolve(level.id, editor.circuit.value);
@@ -130,9 +169,11 @@ function tutorialSeq(editor: Editor): number {
   return 3;
 }
 
-function SuccessModal({ level, result, onAgain, onJoined }: {
+function SuccessModal({ level, result, onAgain, onJoined, onStory }: {
   level: Level;
   result: Result;
+  /** Bo'lim shu yechim bilan tugadi va hikoyaning chiqish sahnasi bor — asosiy tugma uni ochadi. */
+  onStory?: () => void;
   onAgain: () => void;
   onJoined: () => void;
 }) {
@@ -206,7 +247,11 @@ function SuccessModal({ level, result, onAgain, onJoined }: {
         <button class="btn" onClick={onAgain}>
           {t.success.again}
         </button>
-        {nextOpen ? (
+        {onStory ? (
+          <button class="btn primary" onClick={onStory} autoFocus>
+            {t.story.continue}
+          </button>
+        ) : nextOpen ? (
           <button class="btn primary" onClick={() => go(`level/${next!.id}`)} autoFocus>
             {t.success.next}
           </button>

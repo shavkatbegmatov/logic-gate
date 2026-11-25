@@ -24,6 +24,7 @@
       theme === 'bench' ||
       theme === 'breadboard' ||
       theme === 'scifi' ||
+      theme === 'minor' ||
       theme === 'plata' ||
       theme === 'haqiqiy' ||
       theme === 'daftar' ||

@@ -1,5 +1,5 @@
 // Rang mavzusi va sxema ko'rinishi:
-// 4 ta AAA studiya uslubi (Sanoat PCB, Laboratoriya stoli, Maket platasi, Kiber Sci-Fi) hamda
+// 5 ta AAA studiya uslubi (Sanoat PCB, Laboratoriya stoli, Maket platasi, Kiber Sci-Fi, Mis va lojuvard) hamda
 // 4 ta klassik o'quv mavzusi (Plata, Haqiqiy plata, Daftar, Chizma) + Avto.
 // Sxema ko'rinishi (boardMode): 2D Real (sukut bo'yicha), 3D Real (WebGL) va Klassik sxema.
 // Ranglar styles.css da; bu yerda <html data-theme> va <html data-board> qo'yiladi.
@@ -7,10 +7,10 @@
 import { computed, effect, signal } from '@preact/signals';
 import { settings } from './state';
 
-export type ActiveTheme = 'pcb' | 'bench' | 'breadboard' | 'scifi' | 'plata' | 'haqiqiy' | 'daftar' | 'chizma';
+export type ActiveTheme = 'pcb' | 'bench' | 'breadboard' | 'scifi' | 'minor' | 'plata' | 'haqiqiy' | 'daftar' | 'chizma';
 export type Theme = ActiveTheme | 'auto';
 
-export const AAA_THEMES: ActiveTheme[] = ['pcb', 'bench', 'breadboard', 'scifi'];
+export const AAA_THEMES: ActiveTheme[] = ['pcb', 'bench', 'breadboard', 'scifi', 'minor'];
 export const CLASSIC_THEMES: Theme[] = ['plata', 'haqiqiy', 'daftar', 'chizma', 'auto'];
 export const THEMES: Theme[] = [...AAA_THEMES, ...CLASSIC_THEMES];
 
@@ -20,6 +20,7 @@ export const THEME_BG: Record<ActiveTheme, string> = {
   bench: '#101418',
   breadboard: '#ebe6da',
   scifi: '#060b16',
+  minor: '#0b1630',
   plata: '#0b1712',
   haqiqiy: '#062a1c',
   daftar: '#efe9dc',
@@ -38,11 +39,11 @@ export function resolveRealStyle(theme: ActiveTheme): RealStyle {
   if (theme === 'bench' || theme === 'chizma') return 'bench';
   if (theme === 'breadboard' || theme === 'daftar') return 'breadboard';
   if (theme === 'scifi') return 'scifi';
-  return 'pcb';
+  return 'pcb'; // minor (Mis va lojuvard) — PCB plata, ranglari mavzudan.
 }
 
 export function isAaaTheme(theme: ActiveTheme): boolean {
-  return theme === 'pcb' || theme === 'bench' || theme === 'breadboard' || theme === 'scifi';
+  return theme === 'pcb' || theme === 'bench' || theme === 'breadboard' || theme === 'scifi' || theme === 'minor';
 }
 
 /**

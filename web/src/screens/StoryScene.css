@@ -1,0 +1,339 @@
+/* Kampaniya sahnasi (StoryScene.tsx). Ranglar — faqat mavzu o'zgaruvchilari: .story o'zi
+   data-theme="minor" bo'lgani uchun «Mis va lojuvard» palitrasi har doim shu yerda ishlaydi. */
+
+.modal.story-modal {
+  width: min(560px, 100%);
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+}
+
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  color: var(--text);
+  background: var(--bg2);
+  border: 1px solid var(--edge-strong);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px var(--shadow);
+}
+
+.story-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 12px;
+}
+
+.story-place {
+  grid-column: 1;
+  font: 600 11px/1.3 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sel);
+}
+
+.story-title {
+  grid-column: 1;
+  margin: 2px 0 0;
+  font-size: 20px;
+}
+
+.story-skip {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.story-art {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--edge);
+  animation: story-in 0.5s ease both;
+}
+
+.story-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.story-line {
+  min-height: 84px;
+  animation: story-in 0.45s ease 0.1s both;
+}
+
+.story-who {
+  display: inline-block;
+  margin-bottom: 4px;
+  font: 600 12px/1.2 var(--sans);
+  color: var(--sel);
+}
+
+.story-who.chiroq {
+  color: var(--accent);
+  font-family: var(--mono);
+}
+
+.story-text {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.story-text.machine {
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+.story-text.note {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.story-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.story-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.story-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.story-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--off);
+}
+
+.story-dots span.past {
+  background: var(--muted);
+}
+
+.story-dots span.on {
+  background: var(--accent);
+}
+
+@keyframes story-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── SVG sahnalar ───────────────────────────────────────── */
+
+.story-svg .sky {
+  fill: var(--board);
+}
+
+.story-svg .stars circle {
+  fill: var(--muted);
+}
+
+.story-svg .moon {
+  fill: var(--silver);
+  opacity: 0.85;
+}
+
+.story-svg .skyline {
+  fill: var(--panel);
+}
+
+.story-svg .windows rect {
+  fill: var(--off);
+}
+
+.story-svg .windows.lit rect {
+  fill: var(--on);
+}
+
+.story-svg .wall {
+  fill: var(--bg2);
+}
+
+.story-svg .girih {
+  opacity: 0.5;
+}
+
+.story-svg .girih-line {
+  fill: none;
+  stroke: var(--trace);
+  stroke-width: 0.8;
+}
+
+.story-svg .girih.lit .girih-line {
+  stroke: var(--trace-on);
+  opacity: 0.35;
+}
+
+.story-svg .arch,
+.story-svg .arch-frame {
+  fill: none;
+  stroke: var(--copper);
+  stroke-width: 3;
+}
+
+.story-svg .arch {
+  fill: var(--board);
+}
+
+.story-svg .lamp-cord,
+.story-svg .trace,
+.story-svg .chiroq-wire,
+.story-svg .lola-tool {
+  fill: none;
+  stroke: var(--lead);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.story-svg .trace {
+  stroke: var(--trace);
+  stroke-width: 3;
+}
+
+.story-svg .lamp-shade {
+  fill: var(--bezel);
+  stroke: var(--copper);
+}
+
+.story-svg .table-top {
+  fill: var(--copper);
+  opacity: 0.6;
+}
+
+.story-svg .table {
+  fill: var(--raise);
+}
+
+.story-svg .paper {
+  fill: var(--text);
+}
+
+.story-svg .ink {
+  fill: none;
+  stroke: var(--bg2);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.story-svg .ink.sign {
+  stroke-width: 2.4;
+  opacity: 0.8;
+}
+
+.story-svg .orb-shell {
+  fill: var(--copper);
+}
+
+.story-svg .orb-inside {
+  fill: var(--board);
+}
+
+.story-svg .switch {
+  fill: var(--knob);
+}
+
+.story-svg .chip {
+  fill: var(--gate-fill);
+  stroke: var(--gate-stroke);
+}
+
+.story-svg .spark {
+  fill: var(--accent);
+  animation: story-blink 1.4s ease-in-out infinite;
+}
+
+.story-svg .chiroq-body {
+  fill: var(--copper);
+  stroke: var(--bronze);
+  stroke-width: 1.5;
+}
+
+.story-svg .chiroq-seam {
+  stroke: var(--bronze);
+  stroke-width: 1.2;
+}
+
+.story-svg .chiroq-eye {
+  fill: var(--off);
+  stroke: var(--bezel);
+  stroke-width: 1.5;
+}
+
+.story-svg .chiroq-tip {
+  fill: var(--lead);
+}
+
+.story-svg .chiroq.awake .chiroq-eye,
+.story-svg .chiroq.awake .chiroq-tip {
+  fill: var(--lamp-on);
+}
+
+.story-svg .glow-in {
+  stop-color: var(--lamp-on);
+  stop-opacity: 0.55;
+}
+
+.story-svg .glow-out {
+  stop-color: var(--lamp-on);
+  stop-opacity: 0;
+}
+
+.story-svg .chiroq-glow {
+  animation: story-pulse 2.4s ease-in-out infinite;
+}
+
+.story-svg .lola-body {
+  fill: var(--sel);
+  opacity: 0.85;
+}
+
+.story-svg .lola-face {
+  fill: var(--silver);
+}
+
+.story-svg .lola-scarf {
+  fill: var(--bad);
+}
+
+.story-svg .gate-door {
+  fill: var(--board);
+  stroke: var(--copper);
+  stroke-width: 1.2;
+}
+
+@keyframes story-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes story-pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 480px) {
+  .story-text {
+    font-size: 16px;
+  }
+}

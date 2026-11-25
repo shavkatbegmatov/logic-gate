@@ -6,6 +6,7 @@ import { resetCustom } from './custom-store';
 import { resetDaily, syncDaily, unsyncRecentDaily } from './daily';
 import { t } from './i18n';
 import { resetLessons } from './lessons';
+import { resetStory } from './story';
 import { levelById } from './levels';
 import { resetMapSeen } from './levelmap';
 import { KEYS, markSynced, profile, progress, resetLocalProgress } from './state';
@@ -109,6 +110,7 @@ export function clearPlayerData() {
   resetCustom();
   resetAchievements();
   resetLessons();
+  resetStory();
   resetMapSeen();
   save(KEYS.certName, null);
   setMyTasks([]);

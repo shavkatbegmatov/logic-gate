@@ -26,7 +26,7 @@ const DIST = join(WEB, 'dist');
 const SHOTS = join(WEB, 'test-results', 'ui');
 
 /** src/theme.ts dagi ActiveTheme. «Avto» alohida mavzu emas — qurilmaga qarab Daftar yoki Sanoat PCB. */
-const AAA_THEMES = ['pcb', 'bench', 'breadboard', 'scifi'];
+const AAA_THEMES = ['pcb', 'bench', 'breadboard', 'scifi', 'minor'];
 const THEMES = [...AAA_THEMES, 'plata', 'haqiqiy', 'daftar', 'chizma'];
 /** Odatda faqat birinchisi; ruscha matnlar uzunroq — tor ekranda sig'masligi ko'proq shu tilda chiqadi. */
 const LANGS = ['uz', 'ru'];
@@ -434,11 +434,19 @@ async function openPage(cdp, size, apiOrigin) {
 // ── Ekrandagi amallar va tekshiruvlar ────────────────────────────────────────────────────────────────
 
 /**
- * Birinchi daraja: tanishtiruv oynasi yopiladi, palitradan bitta element qo'shiladi, keyin «Tozalash» —
+ * Birinchi daraja: avval kampaniyaning kirish sahnasi (screens/StoryScene.tsx) kadrma-kadr «Keyingi» bilan
+ * o'tiladi, keyin tanishtiruv oynasi yopiladi, palitradan bitta element qo'shiladi, keyin «Tozalash» —
  * brauzerniki emas, o'yinning tasdiqlash oynasi (components/Dialogs.tsx). «Bekor qilish» elementni saqlaydi;
  * qayta ochilgan oyna tekshiruvga ochiq qoladi (inspect): u ham har mavzu, til va o'lchamda ekranga sig'sin.
  */
 async function playLevel(page) {
+  const story = '.story .story-nav .btn.primary';
+  if (!(await page.waitFor((sel) => !!document.querySelector(sel), [story], 5000))) return ['kirish sahnasi chiqmadi'];
+  for (let i = 0; i < 8 && (await page.evaluate((sel) => !!document.querySelector(sel), story)); i++) {
+    await page.tap(story);
+    await sleep(120);
+  }
+  if (!(await page.waitFor(() => !document.querySelector('.story'), [], 3000))) return ['kirish sahnasi yopilmadi'];
   const gotIt = '.modal-back .modal-actions .btn.primary';
   if (!(await page.waitFor((sel) => !!document.querySelector(sel), [gotIt], 5000))) return ['tanishtiruv oynasi chiqmadi'];
   await page.tap(gotIt);
@@ -517,7 +525,7 @@ function inspect({ theme, lang, screen, ready }) {
   // Ekran chizilmagan: qolgan tekshiruvlar ma'nosiz (sababi yuqorida yoki chaqiruvchida).
   if (!ready) return out;
 
-  const isAaa = ['pcb', 'bench', 'breadboard', 'scifi'].includes(theme);
+  const isAaa = ['pcb', 'bench', 'breadboard', 'scifi', 'minor'].includes(theme);
 
   // Mavzu: Sanoat PCB (pcb) — atributsiz; boardMode — AAA da real2d, klassikda schematic.
   const want = theme === 'pcb' ? null : theme;
@@ -619,7 +627,7 @@ function inspect({ theme, lang, screen, ready }) {
     const modes = document.querySelectorAll('.mode-tile').length;
     if (modes !== 3) out.push(`.mode-tile: ${modes} ta, kutilgan — 3`);
     const tiles = document.querySelectorAll('.theme-tile').length;
-    if (tiles !== 9) out.push(`.theme-tile: ${tiles} ta, kutilgan — 9`);
+    if (tiles !== 10) out.push(`.theme-tile: ${tiles} ta, kutilgan — 10`);
     const on = [...document.querySelectorAll('.theme-tile.on [data-theme]')].map((el) => el.getAttribute('data-theme'));
     if (on.join() !== theme) out.push(`tanlangan mavzu kartasi: ${on.join('+') || "yo'q"}, kutilgan — ${theme}`);
   }
