@@ -28,6 +28,11 @@ const arityOf = (type) => (blocks[type] ? blocks[type].inputs.length : ONE_INPUT
 /** Element chiqishlari (massiv): blokda bir nechta. */
 const gateOuts = (type, ins) => (blocks[type] ? blockOutputs(type, ins) : [OPS[type](...ins)]);
 
+/** Xotirali element: D-trigger yoki registr bloki — chiqishi saqlangan qiymat, shu taktda kirishiga bog'liq emas. */
+const isStateful = (type) => type === 'DFF' || !!blocks[type]?.state;
+/** Element saqlaydigan bitlar soni (holat bitmaskasida). */
+const stateBits = (type) => (type === 'DFF' ? 1 : blocks[type]?.state ? blocks[type].outputs.length : 0);
+
 /** Yechimdagi manba: "f" — f ning 0-chiqishi, "f.1" — 1-chiqishi (blokda). */
 function splitSrc(s) {
   const i = s.lastIndexOf('.');
@@ -59,7 +64,7 @@ function toCircuit(level) {
   const depthOf = (src, seen = new Set()) => {
     if (isInput(src)) return 0;
     const [name] = splitSrc(src);
-    if (g[name]?.[0] === 'DFF') return 1;
+    if (isStateful(g[name]?.[0])) return 1;
     if (!(name in g)) {
       fail(level.id, `noma'lum manba "${name}"`);
       return 0;
@@ -71,13 +76,13 @@ function toCircuit(level) {
     if (depth[name] === undefined) {
       seen.add(name);
       const [, ...srcs] = g[name];
-      depth[name] = 1 + Math.max(0, ...srcs.map((s) => (g[splitSrc(s)[0]]?.[0] === 'DFF' ? 1 : depthOf(s, seen))));
+      depth[name] = 1 + Math.max(0, ...srcs.map((s) => (isStateful(g[splitSrc(s)[0]]?.[0]) ? 1 : depthOf(s, seen))));
       seen.delete(name);
     }
     return depth[name];
   };
   Object.keys(g).forEach((name) => {
-    if (g[name][0] === 'DFF') {
+    if (isStateful(g[name][0])) {
       depth[name] = 1;
       g[name].slice(1).forEach((s) => depthOf(s));
     } else depthOf(name);
@@ -143,7 +148,7 @@ function hintsFor(level) {
   const gates = {};
   for (const [type] of Object.values(level.sol.g)) gates[type] = (gates[type] ?? 0) + 1;
   let first = Object.values(level.sol.g).find(([, ...srcs]) => srcs.length && srcs.every((s) => level.inputs.includes(s)));
-  if (!first && level.step) first = ['DFF'];
+  if (!first && level.step) first = [level.gates.find(isStateful)];
   if (!first) fail(level.id, "kirishlarga ulangan element yo'q");
   return { gates, first };
 }
@@ -153,12 +158,22 @@ function hintsFor(level) {
 /** Mos yozuvdagi yechim (D-triggerlar bilan) avtomat bilan bir xil ishlaydimi — mustaqil tekshiruv. */
 function checkSeqSolution(level, m) {
   const { g, out } = level.sol;
-  const dffs = Object.keys(g).filter((name) => g[name][0] === 'DFF');
+  // Xotirali elementlar: har biri holat bitmaskasida o'z joyida (D-trigger — 1 bit, registr — chiqishlari soni).
+  const cells = [];
+  let width = 0;
+  for (const name of Object.keys(g).filter((n) => isStateful(g[n][0]))) {
+    cells.push({ name, off: width, bits: stateBits(g[name][0]) });
+    width += cells.at(-1).bits;
+  }
   const run = (state, bits) => {
     const env = {};
-    level.inputs.forEach((name, k) => (env[name] = bits[k]));
-    dffs.forEach((name, i) => (env[name] = (state >> i) & 1));
     const cache = {};
+    level.inputs.forEach((name, k) => (env[name] = bits[k]));
+    for (const c of cells) {
+      const q = Array.from({ length: c.bits }, (_, k) => (state >> (c.off + k)) & 1);
+      if (g[c.name][0] === 'DFF') env[c.name] = q[0];
+      else cache[c.name] = q;
+    }
     const val = (s, depth = 0) => {
       if (s in env) return env[s];
       const [name, k] = splitSrc(s);
@@ -173,7 +188,12 @@ function checkSeqSolution(level, m) {
       return cache[name][k];
     };
     const outs = level.outputs.map((name) => String(val(out[name])));
-    const nextState = dffs.reduce((acc, name, i) => acc | (val(g[name][1]) << i), 0);
+    let nextState = 0;
+    for (const c of cells) {
+      const [type, ...srcs] = g[c.name];
+      const next = type === 'DFF' ? [val(srcs[0])] : blockOutputs(type, [...srcs.map((x) => val(x)), ...cache[c.name]]);
+      next.forEach((v, k) => (nextState |= v << (c.off + k)));
+    }
     return [outs.join(''), nextState];
   };
   const rows = rowsOf(level.inputs.length);
@@ -216,6 +236,17 @@ for (const [type, b] of Object.entries(blocks)) {
   const src = levels.find((l) => l.id === b.from);
   if (b.free) {
     if (!src) fail(type, `blok manbasi ${b.from} yo'q`);
+  } else if (b.state) {
+    // Xotirali blok: blok (holat — chiqishlar) va ketma-ket daraja avtomatlari bir xil bo'lishi kerak.
+    if (!src?.step) fail(type, `blok manbasi ${b.from} ketma-ket daraja emas`);
+    else if (JSON.stringify(src.inputs) !== JSON.stringify(b.inputs) || JSON.stringify(src.outputs) !== JSON.stringify(b.outputs)) {
+      fail(type, `oyoqlar ${b.from} darajasidagi kirish/chiqishlardan farq qiladi`);
+    } else {
+      const own = { inputs: b.inputs, outputs: b.outputs, init: b.outputs.map(() => 0), step: (q, ...ins) => [b.fn(...ins, ...q), q] };
+      const want = buildMachine(src, (msg) => fail(type, msg));
+      const got = buildMachine(own, (msg) => fail(type, msg));
+      if (JSON.stringify(want) !== JSON.stringify(got)) fail(type, `${b.from} darajasi avtomatidan farq qiladi`);
+    }
   } else if (!src || src.step) fail(type, `blok manbasi ${b.from} kombinatsion daraja emas`);
   else if (JSON.stringify(src.inputs) !== JSON.stringify(b.inputs) || JSON.stringify(src.outputs) !== JSON.stringify(b.outputs)) {
     fail(type, `oyoqlar ${b.from} darajasidagi kirish/chiqishlardan farq qiladi`);
@@ -226,7 +257,7 @@ for (const [type, b] of Object.entries(blocks)) {
       if (src.fn(...bits).join() !== b.fn(...bits).join()) fail(type, `${b.from} bilan ${r}-qatorda farq`);
     }
   }
-  outBlocks[type] = { inputs: b.inputs, outputs: b.outputs, luts: lutsOf(b), from: b.from, ...(b.bus && { bus: b.bus }) };
+  outBlocks[type] = { inputs: b.inputs, outputs: b.outputs, luts: lutsOf(b), from: b.from, ...(b.bus && { bus: b.bus }), ...(b.state && { state: true }) };
 }
 
 const ids = new Set();
@@ -253,7 +284,7 @@ for (const level of levels) {
   if (!tr?.title || !tr.task || !tr.hint) fail(level.id, "ruscha tarjima yo'q");
   if (step) {
     // Ketma-ket masala: jadval o'rniga kerakli avtomat va vaqt diagrammasi namunasi.
-    if (!level.gates.includes('DFF')) fail(level.id, 'ketma-ket masalada DFF ruxsat etilishi kerak');
+    if (!level.gates.some(isStateful)) fail(level.id, 'ketma-ket masalada xotirali element (DFF yoki registr) ruxsat etilishi kerak');
     const m = buildMachine(level, (msg) => fail(level.id, msg));
     if (m) {
       checkSeqSolution(level, m);

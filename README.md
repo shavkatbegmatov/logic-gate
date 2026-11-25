@@ -2,7 +2,7 @@
 
 Mantiqiy elementlardan (NOT, AND, OR, XOR, NAND, NOR, XNOR) sxema yig'ib, boshqotirmalarni yechadigan brauzer o'yini.
 
-- 66 ta daraja, 11 ta bo'lim: asoslardan 2 bitli ko'paytirgich, xotira (D-trigger), avtomatlar, «Faqat NOR», bloklar (yarim/to'liq summator, multipleksor, dekoder — bitta element sifatida) va shinalar (4 bitli shina: bitta qalin sim, ustida son; 4 bitli summator, shina tanlovchi, bittaga oshiruvchi) va ALU (manfiy son, ayirgich, taqqoslagich, amal kodi bilan to'rt amal) gacha.
+- 72 ta daraja, 12 ta bo'lim: asoslardan 2 bitli ko'paytirgich, xotira (D-trigger), avtomatlar, «Faqat NOR», bloklar (yarim/to'liq summator, multipleksor, dekoder — bitta element sifatida) va shinalar (4 bitli shina: bitta qalin sim, ustida son; 4 bitli summator, shina tanlovchi, bittaga oshiruvchi) va ALU (manfiy son, ayirgich, taqqoslagich, amal kodi bilan to'rt amal) va registrlar (yuklanuvchi bit, siljitish registri, dastur hisoblagichi, manzilli xotira, akkumulyator) gacha.
 - Jonli simulyatsiya: simlar 1/0 holatiga qarab yonadi, haqiqat jadvali har bir o'zgarishda yangilanadi.
 - Bo'lim xulosalari (`#/lesson/<bo'lim>`, `web/src/lessons.ts`): bo'limning barcha darajalari yechilgach ochiladigan qisqa dars — formulalar, jadvallar va g'oyalar (De Morgan, NAND va NOR universalligi, summator, trigger, chekli avtomat), o'zbekcha va ruscha.
 - Sxema formulasi: yig'ilgan sxemaning Bul ifodasi (`Q = (A ∧ B) ∨ ¬C`) yon panelda jonli ko'rinadi (`web/src/sim/formula.ts`). Bir necha joyga ulangan element nom oladi (`t1`, chiqishga ulangan bo'lsa — chiqish nomi), D-trigger — `q1`, keyingi qiymati — `q1⁺`; maydonda trigger ostida ham `q1` yoziladi.

@@ -3,7 +3,7 @@ import { computed, signal } from '@preact/signals';
 import { sfx } from '../audio';
 import { bundles, portGroup } from './bus';
 import { compile, evaluate, replay, rowBits, truthTable, wouldCycle } from '../sim/sim';
-import { GATE_ARITY, gateOutputs, parseSource, type Circuit, type GateType, type Spec } from '../sim/types';
+import { GATE_ARITY, gateOutputs, hasMemory, isStateful, parseSource, type Circuit, type GateType, type Spec } from '../sim/types';
 import {
   bounds,
   GATE_H,
@@ -86,13 +86,13 @@ export class Editor {
     return JSON.stringify([c.gates.map((g) => [g.id, g.type]), c.wires]);
   });
   /**
-   * Elementlar va simlar soni, D-trigger bormi. Ekranlar sxemaning o'zi (circuit) o'rniga shuni o'qiydi:
+   * Elementlar va simlar soni, xotirali element (D-trigger, registr) bormi. Ekranlar sxemaning o'zi (circuit) o'rniga shuni o'qiydi:
    * element sudralganda butun ekran (jadval, formula, vaqt diagrammasi) har kadrda qayta chizilmasin.
    */
   readonly shape = computed(() => {
     void this.topology.value;
     const c = this.circuit.peek();
-    return { gates: c.gates.length, wires: c.wires.length, dff: c.gates.some((g) => g.type === 'DFF') };
+    return { gates: c.gates.length, wires: c.wires.length, dff: c.gates.some((g) => isStateful(g.type)) };
   });
   readonly compiled = computed(() => {
     void this.topology.value;
@@ -443,7 +443,7 @@ export class Editor {
     // Gorizontal rejimda chiqishlar o'ngda — zoom tugmalari ularni yopmasin.
     const availW = this.size.w - (vertical ? 0 : ZOOM_TOOLS_W);
     // Xotirali sxemada chap pastda takt tugmalari — pastki pinlarni yopmasin.
-    const availH = this.size.h - top - (this.spec.value.gates.includes('DFF') ? CLOCK_TOOLS_H : 0);
+    const availH = this.size.h - top - (hasMemory(this.spec.value.gates) ? CLOCK_TOOLS_H : 0);
     const s = Math.max(
       MIN_ZOOM,
       Math.min(1.35, (availW - pad * 2) / (maxA - minA), (availH - pad * 2) / (maxB - minB)),

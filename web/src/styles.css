@@ -5178,6 +5178,12 @@ body:has(.stage.has-check) .toast {
   box-shadow: inset 0 3px 0 rgba(var(--on-rgb), 0.6);
 }
 
+/* Shina qatori — son: "yuqori signal" chizig'i yo'q (0 dan boshqa son ham "yoniq" emas). */
+.wave td.num {
+  color: var(--text);
+  box-shadow: none;
+}
+
 .wave tr.sep > * {
   border-top: 1px solid var(--gate-stroke);
 }

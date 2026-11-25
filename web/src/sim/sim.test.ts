@@ -23,8 +23,8 @@ const levels = (pack as unknown as LevelPack).levels;
 const sols = solutions as Record<string, Circuit>;
 
 describe('darajalar', () => {
-  it('66 ta daraja va har birida yechim bor', () => {
-    expect(levels).toHaveLength(66);
+  it('72 ta daraja va har birida yechim bor', () => {
+    expect(levels).toHaveLength(72);
     for (const l of levels) expect(sols[l.id], l.id).toBeDefined();
   });
 
@@ -288,7 +288,12 @@ describe('sxemadan avtomat', () => {
 describe('bloklar', () => {
   it("jadvallar levels.json dagi (levels/blocks.mjs dan) bilan bir xil", () => {
     const fromJson = (pack as unknown as { blocks: Record<string, unknown> }).blocks;
-    const mine = Object.fromEntries(Object.entries(BLOCKS).map(([k, b]) => [k, { inputs: b.inputs, outputs: b.outputs, luts: blockLuts(k as BlockType), from: b.from, ...(b.bus && { bus: b.bus }) }]));
+    const mine = Object.fromEntries(
+      Object.entries(BLOCKS).map(([k, b]) => [
+        k,
+        { inputs: b.inputs, outputs: b.outputs, luts: blockLuts(k as BlockType), from: b.from, ...(b.bus && { bus: b.bus }), ...(b.state && { state: true }) },
+      ]),
+    );
     expect(mine).toEqual(fromJson);
   });
 

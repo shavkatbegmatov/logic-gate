@@ -31,8 +31,8 @@ func TestReferenceSolutions(t *testing.T) {
 	if err := json.Unmarshal(raw, &sols); err != nil {
 		t.Fatal(err)
 	}
-	if len(pack.Levels) != 66 {
-		t.Fatalf("66 ta daraja kutilgan, %d bor", len(pack.Levels))
+	if len(pack.Levels) != 72 {
+		t.Fatalf("72 ta daraja kutilgan, %d bor", len(pack.Levels))
 	}
 	for _, l := range pack.Levels {
 		var (
@@ -229,6 +229,50 @@ func TestSequential(t *testing.T) {
 	}
 }
 
+// Holatli bloklar: registr chiqishi o'z kirishiga qaytishi sikl emas, xotira chegarasi esa bitlarda.
+func TestRegisters(t *testing.T) {
+	pack, err := levels.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	g3, _ := pack.Level("g3")
+	spec := specOf(g3)
+	m := Machine{Next: g3.Seq.Next, Out: g3.Seq.Out}
+
+	// Siljitish: D3..D0 = Q2 Q1 Q0 S, LD = E (shina server uchun oddiy simlar).
+	shift := func(ld string) Circuit {
+		return Circuit{
+			Gates: []Gate{{ID: "r", Type: "REG4"}},
+			Wires: []Wire{{"r.1", "r:0"}, {"r.2", "r:1"}, {"r.3", "r:2"}, {"in:S", "r:3"}, {ld, "r:4"},
+				{"r", "out:Q3"}, {"r.1", "out:Q2"}, {"r.2", "out:Q1"}, {"r.3", "out:Q0"}},
+		}
+	}
+	if gates, trace, err := CheckSeq(spec, m, shift("in:E")); err != nil || trace != nil || gates != 1 {
+		t.Fatalf("siljitish registri: gates=%d trace=%v err=%v", gates, trace, err)
+	}
+	// LD = S: E = 0 da ham yozadi — farq topiladi.
+	if _, trace, err := CheckSeq(spec, m, shift("in:S")); err != nil || len(trace) == 0 {
+		t.Fatalf("LD = S: trace=%v err=%v", trace, err)
+	}
+
+	// 2 × REG4 = 8 bit — chegarada; yana bitta REG1 — 9 bit.
+	full := Circuit{Wires: []Wire{{"in:S", "out:Q3"}, {"in:S", "out:Q2"}, {"in:S", "out:Q1"}, {"in:S", "out:Q0"}}}
+	for _, id := range []string{"a", "b"} {
+		full.Gates = append(full.Gates, Gate{ID: id, Type: "REG4"})
+		for i := range 5 {
+			full.Wires = append(full.Wires, Wire{"in:S", fmt.Sprintf("%s:%d", id, i)})
+		}
+	}
+	if err := Validate(spec, full); err != nil {
+		t.Fatalf("8 bit: %v", err)
+	}
+	full.Gates = append(full.Gates, Gate{ID: "c", Type: "REG1"})
+	full.Wires = append(full.Wires, Wire{"in:S", "c:0"}, Wire{"in:E", "c:1"})
+	if err := Validate(spec, full); err == nil || err.Code != "too_many_flipflops" {
+		t.Fatalf("9 bit: %v", err)
+	}
+}
+
 // ── Eski (har taktda xarita yaratadigan) hisoblash: faqat yangisi bilan solishtirish uchun ──
 
 func oldApply(t string, a, b uint8) uint8 {
@@ -257,13 +301,13 @@ func (c *compiled) oldStep(r int, state uint64) ([]uint8, uint64) {
 	for k, name := range c.spec.Inputs {
 		values["in:"+name] = uint8(r>>(n-1-k)) & 1
 	}
-	bit := make(map[string]int, len(c.dffs))
-	for i, id := range c.dffs {
-		bit[id] = i
-		values[id] = uint8(state>>i) & 1
+	for _, x := range c.cells {
+		for k := range x.bits {
+			values[sourcePort(x.id, k)] = uint8(state>>(x.off+k)) & 1
+		}
 	}
 	for _, g := range c.order {
-		if g.Type == "DFF" {
+		if stateBits(g.Type) > 0 {
 			continue
 		}
 		if b, ok := Blocks[g.Type]; ok {
@@ -286,8 +330,23 @@ func (c *compiled) oldStep(r int, state uint64) ([]uint8, uint64) {
 		out[i] = values[c.drivers["out:"+o]]
 	}
 	var next uint64
-	for id, i := range bit {
-		next |= uint64(values[c.drivers[id+":0"]]) << i
+	for _, x := range c.cells {
+		if x.typ == "DFF" {
+			next |= uint64(values[c.drivers[x.id+":0"]]) << x.off
+			continue
+		}
+		// Registr: Fn (kirishlar, joriy chiqishlar) → keyingi chiqishlar.
+		b := Blocks[x.typ]
+		ins := make([]uint8, 0, len(b.Inputs)+x.bits)
+		for i := range b.Inputs {
+			ins = append(ins, values[c.drivers[fmt.Sprintf("%s:%d", x.id, i)]])
+		}
+		for k := range x.bits {
+			ins = append(ins, values[sourcePort(x.id, k)])
+		}
+		for k, v := range b.Fn(ins) {
+			next |= uint64(v) << (x.off + k)
+		}
 	}
 	return out, next
 }
@@ -354,7 +413,7 @@ func oldCheckSeq(spec Spec, m Machine, c Circuit) (gates int, trace []int, err *
 // randomCircuit — tasodifiy spec va sxema: ko'pincha to'g'ri (kombinatsion manba — oldingi element yoki
 // istalgan trigger), ba'zan sikl, ulanmagan kirish yoki ko'p trigger bilan.
 func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
-	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC", "SPLIT", "JOIN", "NOT4", "ADD4", "MUX4", "INC4", "NOR4", "ONE", "ZERO", "SUB4", "AND4", "OR4", "XOR4", "ALU4"}}
+	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC", "SPLIT", "JOIN", "NOT4", "ADD4", "MUX4", "INC4", "NOR4", "ONE", "ZERO", "SUB4", "AND4", "OR4", "XOR4", "ALU4", "REG1", "REG4", "PC4"}}
 	for i := range 1 + rng.IntN(4) {
 		spec.Inputs = append(spec.Inputs, string(rune('A'+i)))
 	}
@@ -362,11 +421,12 @@ func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
 		spec.Outputs = append(spec.Outputs, fmt.Sprintf("Q%d", i))
 	}
 	var c Circuit
-	dffs := 0
+	bits := 0
 	for i := range rng.IntN(16) {
 		t := spec.Gates[rng.IntN(len(spec.Gates))]
-		if t == "DFF" {
-			if dffs++; dffs > MaxFlipflops && rng.IntN(4) > 0 {
+		if n := stateBits(t); n > 0 {
+			if bits += n; bits > MaxFlipflops && rng.IntN(4) > 0 {
+				bits -= n
 				t = "NOT"
 			}
 		}
@@ -379,7 +439,7 @@ func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
 				return "in:" + spec.Inputs[k]
 			}
 			g := c.Gates[k-len(spec.Inputs)]
-			if k-len(spec.Inputs) < i || g.Type == "DFF" || rng.IntN(25) == 0 {
+			if k-len(spec.Inputs) < i || stateBits(g.Type) > 0 || rng.IntN(25) == 0 {
 				return sourcePort(g.ID, rng.IntN(outputs(g.Type)))
 			}
 		}
@@ -406,7 +466,7 @@ func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
 // joylarda chiqish teskarisiga almashtiriladi.
 func machineOf(rng *rand.Rand, spec Spec, c Circuit, flip int) Machine {
 	cc, _ := compile(spec, c)
-	states, rows := 1<<len(cc.dffs), 1<<len(spec.Inputs)
+	states, rows := 1<<cc.stateBits, 1<<len(spec.Inputs)
 	m := Machine{Next: make([][]int, states), Out: make([][]string, states)}
 	for s := range states {
 		m.Next[s], m.Out[s] = make([]int, rows), make([]string, rows)

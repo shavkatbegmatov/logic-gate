@@ -14,9 +14,11 @@ export function GateIntro({ gates, onClose }: { gates: GateType[]; onClose: () =
         if (type === 'DFF') return <FlipFlopIntro key={type} />;
         const ex = busExamples(type);
         if (ex) return <BusBlockIntro key={type} type={type} ex={ex} />;
-        const n = GATE_ARITY[type];
-        const names = isBlock(type) ? BLOCKS[type].inputs : n === 1 ? ['A'] : ['A', 'B'];
-        const outs = isBlock(type) ? BLOCKS[type].outputs : ['Q'];
+        const b = isBlock(type) ? BLOCKS[type] : null;
+        // Xotirali blok: joriy Q ham ustun, natija — keyingi taktdagi Q⁺.
+        const names = b ? (b.state ? [...b.inputs, ...b.outputs] : b.inputs) : GATE_ARITY[type] === 1 ? ['A'] : ['A', 'B'];
+        const outs = b ? b.outputs.map((o) => (b.state ? `${o}⁺` : o)) : ['Q'];
+        const n = names.length;
         return (
           <div key={type} class="intro-gate">
             <GateIcon type={type} size={110} />
@@ -24,6 +26,7 @@ export function GateIntro({ gates, onClose }: { gates: GateType[]; onClose: () =
               <b>{type}</b> — {t.gates[type].name}
             </div>
             <p>{t.gates[type].text}</p>
+            {b?.state && <p class="muted">{t.play.stateNote}</p>}
             <table class="truth intro-truth">
               <thead>
                 <tr>
@@ -80,6 +83,7 @@ function BusBlockIntro({ type, ex }: { type: GateType; ex: NonNullable<ReturnTyp
       </div>
       <p>{t.gates[type].text}</p>
       <p class="muted">{t.play.busExamples}</p>
+      {isBlock(type) && BLOCKS[type].state && <p class="muted">{t.play.stateNote}</p>}
       <table class="truth intro-truth">
         <thead>
           <tr>

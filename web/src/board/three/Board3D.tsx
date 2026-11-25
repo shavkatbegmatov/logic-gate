@@ -5,7 +5,7 @@ import { showToast } from '../../components/Toast';
 import { t } from '../../i18n';
 import { stateNames } from '../../sim/formula';
 import { depths } from '../../sim/sim';
-import { GATE_ARITY, gateOutputs, sourcePort, type Gate } from '../../sim/types';
+import { GATE_ARITY, gateOutputs, hasMemory, sourcePort, type Gate } from '../../sim/types';
 import { activeTheme, instantCheck, resolveRealStyle, systemReducedMotion } from '../../theme';
 import { bundles, groupValue, isHiddenBit, pinGroups } from '../bus';
 import { settings } from '../../state';
@@ -223,7 +223,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       const bz0 = b.minY - 26;
       const bx1 = b.maxX + 24;
       const bz1 = b.maxY + 26;
-      const hasClock = editor.spec.peek().gates.includes('DFF');
+      const hasClock = hasMemory(editor.spec.peek().gates);
       const bottomInset = w <= 820 ? (hasClock ? 96 : 46) : (hasClock ? 64 : 50);
 
       let rightInset = w > 820 ? 52 : 0;

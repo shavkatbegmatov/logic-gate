@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { groupValue, pinGroups } from '../board/bus';
 import { t } from '../i18n';
 import { evaluate, machineOut, nextState, rowBits, type Compiled, type State } from '../sim/sim';
-import type { Machine } from '../sim/types';
+import type { Machine, Spec } from '../sim/types';
 
 /** Vaqt diagrammasidagi bitta takt: kirishlar qatori, sxema chiqishlari va kutilgan chiqishlar. */
 export interface Step {
@@ -38,12 +39,13 @@ const SHOWN = 12;
 
 /**
  * Vaqt diagrammasi: ustunlar — taktlar, qatorlar — kirishlar va chiqishlar. Kutilgan va sxemadagi
- * qiymatlar bo'lsa, ikkalasi ham ko'rsatiladi, farq qizil.
+ * qiymatlar bo'lsa, ikkalasi ham ko'rsatiladi, farq qizil. Shina — bitta qator, qiymati son.
  */
-export function Timeline({ title, inputs, outputs, steps, now, note }: {
+export function Timeline({ title, inputs, outputs, buses, steps, now, note }: {
   title: string;
   inputs: string[];
   outputs: string[];
+  buses?: Spec['buses'];
   steps: Step[];
   /** Oxirgi ustun — joriy (takt hali bosilmagan) holat. */
   now?: boolean;
@@ -62,8 +64,10 @@ export function Timeline({ title, inputs, outputs, steps, now, note }: {
     if (el) el.scrollLeft = el.scrollWidth;
   }, [steps.length]);
 
-  const cell = (v: number | null | undefined, cls = '') => (
-    <td class={`${cls}${v ? ' one' : ''}`}>{v === null || v === undefined ? '?' : v}</td>
+  const ins = pinGroups(inputs, buses);
+  const outs = pinGroups(outputs, buses);
+  const cell = (v: number | null | undefined, cls = '', bus = false) => (
+    <td class={`${cls}${v ? ' one' : ''}${bus ? ' num' : ''}`}>{v === null || v === undefined ? '?' : v}</td>
   );
 
   return (
@@ -85,33 +89,33 @@ export function Timeline({ title, inputs, outputs, steps, now, note }: {
             </tr>
           </thead>
           <tbody>
-            {inputs.map((name, k) => (
-              <tr key={name} class="wave-in">
-                <th>{name}</th>
-                {shown.map((s, i) => cell(rowBits(n, s.row)[k], now && i === shown.length - 1 ? 'now' : ''))}
+            {ins.map((g) => (
+              <tr key={g.name} class="wave-in">
+                <th>{g.name}</th>
+                {shown.map((s, i) => cell(groupValue(rowBits(n, s.row), g.idx), now && i === shown.length - 1 ? 'now' : '', g.bus))}
               </tr>
             ))}
-            {outputs.map((name, j) => [
+            {outs.map((g) => [
               hasExp && (
-                <tr key={`${name}e`} class="wave-exp sep">
+                <tr key={`${g.name}e`} class="wave-exp sep">
                   <th>
-                    {name}
+                    {g.name}
                     {hasGot && <small> {t.play.expected.toLowerCase()}</small>}
                   </th>
-                  {shown.map((s, i) => cell(s.exp?.[j], now && i === shown.length - 1 ? 'now' : ''))}
+                  {shown.map((s, i) => cell(s.exp && groupValue(s.exp, g.idx), now && i === shown.length - 1 ? 'now' : '', g.bus))}
                 </tr>
               ),
               hasGot && (
-                <tr key={`${name}g`} class={`wave-got${hasExp ? '' : ' sep'}`}>
+                <tr key={`${g.name}g`} class={`wave-got${hasExp ? '' : ' sep'}`}>
                   <th>
-                    {name}
+                    {g.name}
                     {hasExp && <small> {t.play.got.toLowerCase()}</small>}
                   </th>
                   {shown.map((s, i) => {
-                    const v = s.got?.[j];
-                    const e = s.exp?.[j];
-                    const state = e === undefined || v === null || v === undefined ? '' : v === e ? 'match' : 'miss';
-                    return cell(v, `${state}${now && i === shown.length - 1 ? ' now' : ''}`);
+                    const v = s.got && groupValue(s.got, g.idx);
+                    const e = s.exp && groupValue(s.exp, g.idx);
+                    const state = e === undefined || e === null || v === null || v === undefined ? '' : v === e ? 'match' : 'miss';
+                    return cell(v, `${state}${now && i === shown.length - 1 ? ' now' : ''}`, g.bus);
                   })}
                 </tr>
               ),

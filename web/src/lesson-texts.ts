@@ -323,6 +323,35 @@ const uz: Record<string, Lesson> = {
       },
     ],
   },
+  registers: {
+    title: 'Registrlar — protsessor qayerda eslaydi',
+    blocks: [
+      {
+        p: "ALU hisoblaydi, lekin hech narsani eslab qolmaydi: kirishlar o'zgarsa, natija ham o'zgaradi. Sonni saqlash uchun xotirali element kerak — u faqat takt bosilganda yangilanadi. Bu bo'limdagi bloklar (REG1, REG4, PC4) shunday: ularning chiqishi — saqlangan qiymat.",
+      },
+      { h: 'Yuklanuvchi bit va registr' },
+      { f: ['LD = 1  →  Q⁺ = D', 'LD = 0  →  Q⁺ = Q'] },
+      {
+        p: "Q⁺ — keyingi taktdagi qiymat. Yuklanuvchi bit — D-trigger va multipleksor: LD = 0 bo'lsa, trigger o'z qiymatini qayta yozadi. To'rtta shunday bit umumiy LD bilan — to'rt bitli registr (REG4).",
+      },
+      { h: 'Registr orqali halqa' },
+      {
+        table: [
+          ['Qurilma', 'Keyingi taktda'],
+          ['REG4', 'LD = 1 → D;  LD = 0 → Q'],
+          ['PC4', 'J = 1 → D;  J = 0 → Q + 1'],
+          ['ACC', 'E = 1 → Q op X;  E = 0 → Q'],
+          ['RAM', 'W = 1 → M[A] = D'],
+        ],
+      },
+      {
+        p: "Registr chiqishi shu taktdagi kirishiga bog'liq emas, shuning uchun chiqishdan hisoblangan qiymatni yana uning o'ziga berish mumkin — bu sikl emas. Siljitish registri, dastur hisoblagichi va akkumulyator aynan shunday halqalar. Xotira esa — ko'p katak va manzil: dekoder yozishni bitta katakka yo'naltiradi, multipleksorlar daraxti o'qishda bitta katakni tanlaydi.",
+      },
+      {
+        tip: "Birinchi mikroprotsessor Intel 4004 da 16 ta to'rt bitli registr, akkumulyator va 12 bitli dastur hisoblagichi bo'lgan. Keyingi bo'limda shu bloklardan protsessorning boshqaruv qismi yig'iladi.",
+      },
+    ],
+  },
 };
 
 const ru: Record<string, Lesson> = {
@@ -633,6 +662,35 @@ const ru: Record<string, Lesson> = {
       },
       {
         tip: 'Знаменитая микросхема 74181 (1970) — четырёхбитное АЛУ: 32 операции в одном корпусе. Ставя несколько таких рядом, собирали многие компьютеры той эпохи.',
+      },
+    ],
+  },
+  registers: {
+    title: 'Регистры — где процессор помнит',
+    blocks: [
+      {
+        p: 'АЛУ вычисляет, но ничего не запоминает: меняются входы — меняется и результат. Чтобы хранить число, нужен элемент с памятью — он обновляется только по нажатию «Такт». Блоки этого раздела (REG1, REG4, PC4) такие: их выход — хранимое значение.',
+      },
+      { h: 'Загружаемый бит и регистр' },
+      { f: ['LD = 1  →  Q⁺ = D', 'LD = 0  →  Q⁺ = Q'] },
+      {
+        p: 'Q⁺ — значение на следующем такте. Загружаемый бит — это D-триггер и мультиплексор: при LD = 0 триггер переписывает своё же значение. Четыре таких бита с общим LD — четырёхбитный регистр (REG4).',
+      },
+      { h: 'Кольцо через регистр' },
+      {
+        table: [
+          ['Устройство', 'На следующем такте'],
+          ['REG4', 'LD = 1 → D;  LD = 0 → Q'],
+          ['PC4', 'J = 1 → D;  J = 0 → Q + 1'],
+          ['ACC', 'E = 1 → Q op X;  E = 0 → Q'],
+          ['RAM', 'W = 1 → M[A] = D'],
+        ],
+      },
+      {
+        p: 'Выход регистра не зависит от его входа в том же такте, поэтому значение, вычисленное из выхода, можно снова подать на него же — это не цикл. Сдвиговый регистр, счётчик команд и аккумулятор — именно такие кольца. А память — это много ячеек и адрес: дешифратор направляет запись в одну ячейку, дерево мультиплексоров выбирает одну ячейку при чтении.',
+      },
+      {
+        tip: 'В первом микропроцессоре Intel 4004 было 16 четырёхбитных регистров, аккумулятор и 12-битный счётчик команд. В следующем разделе из этих блоков соберётся управляющая часть процессора.',
       },
     ],
   },

@@ -108,9 +108,10 @@ describe('formula: har bir blok ifodasi jadvaliga mos', () => {
     ) => number;
 
   it.each(BLOCK_TYPES)('%s', (type) => {
+    const b = BLOCKS[type];
     const n = GATE_ARITY[type];
     const names = Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i));
-    const outs = BLOCKS[type].outputs.map((_, k) => `O${k}`);
+    const outs = b.outputs.map((_, k) => `O${k}`);
     const c: Circuit = {
       gates: [{ id: 'b', type, x: 0, y: 0 }],
       wires: [
@@ -119,10 +120,18 @@ describe('formula: har bir blok ifodasi jadvaliga mos', () => {
       ],
     };
     const lines = formulaLines(c, outs);
-    expect(lines.map((l) => l.name)).toEqual(outs);
-    const fns = lines.map((l) => compileExpr(l.expr, names));
-    for (let r = 0; r < 1 << n; r++) {
-      const bits = rowBits(n, r);
+    expect(lines.filter((l) => l.kind !== 'next').map((l) => l.name)).toEqual(outs);
+    // Xotirali blok: chiqishlar — holat (q1, q2, …), jadvalga keyingi qiymatlar (q⁺) mos kelishi kerak.
+    const states = b.state ? b.outputs.map((_, k) => `q${k + 1}`) : [];
+    const checked = b.state ? lines.filter((l) => l.kind === 'next') : lines;
+    if (b.state) {
+      expect(lines.filter((l) => l.kind === 'out').map((l) => l.expr)).toEqual(states);
+      expect(checked.map((l) => l.name)).toEqual(states.map((q) => `${q}⁺`));
+    }
+    const vars = [...names, ...states];
+    const fns = checked.map((l) => compileExpr(l.expr, vars));
+    for (let r = 0; r < 1 << vars.length; r++) {
+      const bits = rowBits(vars.length, r);
       expect(fns.map((f) => f(...bits)), `${type} ${bits.join('')}`).toEqual(gateOutputValues(type, bits));
     }
   });

@@ -36,6 +36,20 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.34.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 12-bo'lim — «Registrlar va xotira» (124 ★ dan ochiladi): protsessor sonlarni qayerda saqlashini yig'asiz. 6 ta daraja: yuklanuvchi bit, registr, siljitish registri, dastur hisoblagichi, manzilli xotira va akkumulyator — ALU bilan registrning birinchi halqasi.",
+      "Yangi bloklar: yuklanuvchi bit (REG1) va to'rt bitli registr (REG4) — chiqishi saqlangan qiymat, u faqat takt bosilganda yangilanadi. Shuning uchun registr chiqishini uning o'z kirishiga qaytarish mumkin: bu sikl emas. «Dastur hisoblagichi» darajasidan keyin Qum qutida tayyor PC4 bloki ochiladi.",
+      "Vaqt diagrammasida shinalar endi bitta qatorda son bilan ko'rinadi. Sxemadagi xotira chegarasi — 8 bit (D-trigger — 1 bit, REG4 — 4 bit).",
+    ],
+    ru: [
+      "Новая, 12-я глава — «Регистры и память» (открывается с 124 ★): собираете, где процессор хранит числа. 6 уровней: загружаемый бит, регистр, сдвиговый регистр, счётчик команд, адресная память и аккумулятор — первая петля АЛУ и регистра.",
+      "Новые блоки: загружаемый бит (REG1) и четырёхбитный регистр (REG4) — их выход это хранимое значение, оно меняется только по такту. Поэтому выход регистра можно вернуть на его же вход: это не цикл. После уровня «Счётчик команд» в Песочнице открывается готовый блок PC4.",
+      "На временной диаграмме шины теперь видны одной строкой с числом. Предел памяти в схеме — 8 бит (D-триггер — 1 бит, REG4 — 4 бита).",
+    ],
+  },
+  {
     version: '2.33.1',
     date: '2026-11-25',
     uz: [

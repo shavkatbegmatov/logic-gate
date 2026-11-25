@@ -17,7 +17,7 @@ import { ViewTools } from '../components/ViewTools';
 import { Icon, TopBar } from '../components/ui';
 import { t } from '../i18n';
 import { check, depths, expected, machineOut, machineReplay, type SimError } from '../sim/sim';
-import type { Circuit, Level } from '../sim/types';
+import { hasMemory, type Circuit, type Level } from '../sim/types';
 import { instantCheck } from '../theme';
 import { useEditorKeys } from './useEditorKeys';
 
@@ -113,7 +113,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
     }
   };
 
-  useEditorKeys(editor, { clock: level.gates.includes('DFF') });
+  useEditorKeys(editor, { clock: hasMemory(level.gates) });
 
   useEffect(
     () => () => {
@@ -371,7 +371,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
             />
           )}
           <ZoomTools editor={editor} />
-          {level.gates.includes('DFF') && <ClockTools editor={editor} />}
+          {hasMemory(level.gates) && <ClockTools editor={editor} />}
         </div>
 
         <aside class={`side${showSide.value ? ' open' : ''}`}>
@@ -391,12 +391,14 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
                 title={t.play.example}
                 inputs={level.inputs}
                 outputs={level.outputs}
+                buses={level.buses}
                 steps={traceSteps(null, seq.example, seq)}
               />
               <Timeline
                 title={t.play.yourRun}
                 inputs={level.inputs}
                 outputs={level.outputs}
+                buses={level.buses}
                 steps={live}
                 now
                 note={history.length ? undefined : t.play.liveHint}

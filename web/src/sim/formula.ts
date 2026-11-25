@@ -2,8 +2,20 @@
 // Bitta joyga ulangan element ifodaga to'g'ridan-to'g'ri qo'yiladi; bir nechta joyda ishlatilgani
 // alohida nom oladi (chiqishga ham ulangan bo'lsa — o'sha chiqish nomi, aks holda t1, t2, …) — xuddi
 // sxemadagidek, umumiy qism bir marta hisoblanadi. D-trigger chiqishi — holat q1, q2, … (sxemadagi
-// D-triggerlar tartibida), keyingi takt qiymati — q1⁺.
-import { BLOCKS, GATE_ARITY, isBlock, parseSource, type BlockType, type Circuit, type GateType } from './types';
+// D-triggerlar tartibida), keyingi takt qiymati — q1⁺. Registr bloklari chiqishlari ham holat: ular ham q
+// nomlarini oladi (D-triggerlardan keyin, har bit alohida) va keyingi qiymati blok jadvalidan.
+import {
+  BLOCKS,
+  GATE_ARITY,
+  gateOutputs,
+  isBlock,
+  isStateful,
+  parseSource,
+  sourcePort,
+  type BlockType,
+  type Circuit,
+  type GateType,
+} from './types';
 
 export interface FormulaLine {
   name: string;
@@ -133,12 +145,29 @@ function blockExpr(type: BlockType, k: number, x: Expr[]): Expr {
       if (k === 4) return bin('AND', neg(f1), s[4]);
       return k === 5 ? neg([0, 1, 2, 3].map(r).reduce((a, b) => bin('OR', a, b))) : r(k);
     }
+    // Xotirali bloklar: keyingi takt qiymati; x — kirishlar, keyin joriy chiqishlar (holat).
+    case 'REG1':
+      return mux(x[1], x[2], x[0]);
+    case 'REG4':
+      return mux(x[4], x[5 + k], x[k]);
+    case 'PC4':
+      return mux(x[4], blockExpr('INC4', k, x.slice(5, 9)), x[k]);
   }
 }
 
 /** D-triggerlar holat nomlari (sxemadagi tartibda): maydondagi yozuv va formula bir xil bo'lsin. */
 export function stateNames(c: Circuit): Map<string, string> {
   return new Map(c.gates.filter((g) => g.type === 'DFF').map((g, i) => [g.id, `q${i + 1}`]));
+}
+
+/** Formuladagi barcha holatlar (manba → nom): D-triggerlar, keyin registrlar chiqishlari (har bit alohida). */
+function formulaStates(c: Circuit): Map<string, string> {
+  const names = stateNames(c);
+  for (const g of c.gates) {
+    if (g.type === 'DFF' || !isStateful(g.type)) continue;
+    for (let k = 0; k < gateOutputs(g.type); k++) names.set(sourcePort(g.id, k), `q${names.size + 1}`);
+  }
+  return names;
 }
 
 export function formulaLines(c: Circuit, outputs: string[]): FormulaLine[] {
@@ -157,11 +186,11 @@ export function formulaLines(c: Circuit, outputs: string[]): FormulaLine[] {
     }
     fanout.set(w.from, (fanout.get(w.from) ?? 0) + 1);
   }
-  const states = stateNames(c);
-  // Doimiy manba (1 yoki 0) nom olmaydi: ifodaga qiymatning o'zi qo'yiladi va soddalashadi.
+  const states = formulaStates(c);
+  // Doimiy manba (1 yoki 0) va holat nom olmaydi: ifodaga qiymat yoki holat nomining o'zi qo'yiladi.
   const shared = (src: string) => {
     const t = gates.get(parseSource(src).id)?.type;
-    return ((fanout.get(src) ?? 0) > 1 || blockFed.has(src)) && t !== 'DFF' && t !== 'ONE' && t !== 'ZERO';
+    return ((fanout.get(src) ?? 0) > 1 || blockFed.has(src)) && t !== undefined && !isStateful(t) && t !== 'ONE' && t !== 'ZERO';
   };
 
   // Umumiy element chiqishga ham ulangan bo'lsa, uning nomi — chiqish nomi.
@@ -199,7 +228,7 @@ export function formulaLines(c: Circuit, outputs: string[]): FormulaLine[] {
     const { id, k } = parseSource(src);
     const g = gates.get(id);
     if (!g || k < 0 || k >= (isBlock(g.type) ? BLOCKS[g.type].outputs.length : 1)) return UNKNOWN;
-    if (g.type === 'DFF') return { text: states.get(src)!, op: 'atom' };
+    if (isStateful(g.type)) return { text: states.get(src)!, op: 'atom' };
     if (!shared(src)) return build(src);
     if (!names.has(src)) names.set(src, `t${++tmp}`);
     const name = names.get(src)!;
@@ -220,6 +249,14 @@ export function formulaLines(c: Circuit, outputs: string[]): FormulaLine[] {
     }
     lines.push({ name: o, expr: ref(s).text, kind: 'out' });
   }
-  for (const [id, q] of states) lines.push({ name: `${q}⁺`, expr: ref(pin.get(`${id}:0`)).text, kind: 'next' });
+  for (const [src, q] of states) {
+    const { id, k } = parseSource(src);
+    const g = gates.get(id)!;
+    const ins = Array.from({ length: GATE_ARITY[g.type] }, (_, i) => ref(pin.get(`${id}:${i}`)));
+    const expr = isBlock(g.type)
+      ? blockExpr(g.type, k, [...ins, ...Array.from({ length: gateOutputs(g.type) }, (_, j) => ({ text: states.get(sourcePort(id, j))!, op: 'atom' as const }))])
+      : ins[0];
+    lines.push({ name: `${q}⁺`, expr: expr.text, kind: 'next' });
+  }
   return lines;
 }

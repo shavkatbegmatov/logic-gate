@@ -243,6 +243,19 @@ const EXAMPLES: Partial<Record<BlockType, number[][]>> = {
     [12, 10, 1, 0],
     [12, 10, 1, 1],
   ],
+  // Xotirali bloklar: oxirgi ustun — joriy Q (holat), natija — keyingi taktdagi Q⁺.
+  // D LD Q: yozish va saqlash.
+  REG4: [
+    [5, 1, 9],
+    [5, 0, 9],
+    [0, 1, 7],
+  ],
+  // D J Q: sanash, 15 dan keyin 0, o'tish.
+  PC4: [
+    [9, 0, 3],
+    [9, 0, 15],
+    [9, 1, 3],
+  ],
 };
 
 export interface BusExamples {
@@ -255,13 +268,14 @@ export interface BusExamples {
 export function busExamples(type: GateType): BusExamples | null {
   if (!isBlock(type) || !BLOCKS[type].bus) return null;
   const d = BLOCKS[type];
-  const gi = blockGroups(d.inputs, d.bus?.in);
   const go = blockGroups(d.outputs, d.bus?.out);
+  // Xotirali blok: joriy chiqishlar (Q) ham kirish ustuni, natija — keyingi taktdagi qiymat (Q⁺).
+  const gi = [...blockGroups(d.inputs, d.bus?.in), ...(d.state ? go : [])];
   const toBits = (v: number, w: number) => Array.from({ length: w }, (_, j) => (v >> (w - 1 - j)) & 1);
   const rows = (EXAMPLES[type] ?? []).map((vals) => {
     const bits = gi.flatMap((g, j) => toBits(vals[j], g.width));
     const out = gateOutputValues(type, bits);
     return { ins: vals, outs: go.map((g) => out.slice(g.start, g.start + g.width).reduce((v, b) => v * 2 + b, 0)) };
   });
-  return { ins: gi.map((g) => g.name), outs: go.map((g) => g.name), rows };
+  return { ins: gi.map((g) => g.name), outs: go.map((g) => (d.state ? `${g.name}⁺` : g.name)), rows };
 }

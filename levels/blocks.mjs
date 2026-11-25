@@ -8,6 +8,10 @@
 //        build da tekshiriladi (bo'laklovchi va birlashtirgich — o'sha darajaning o'zida beriladi, tekshiruvsiz).
 // bus  — shina oyoqlari: [boshi, kengligi] — ketma-ket oyoqlar bitta keng port bo'lib chiziladi (birinchisi —
 //        eng katta bit). Hisoblash bitlar bo'yicha, shina faqat ko'rinish va ulash qulayligi.
+// state — xotirali blok (registr): chiqishlar saqlangan qiymat (D-trigger kabi), fn esa (...kirishlar,
+//        ...joriy chiqishlar) → keyingi taktdagi chiqishlar. Jadval kirishlar va chiqishlar ustida. Chiqishi
+//        kirishiga shu taktda bog'liq emas — u orqali o'tgan aylana sikl emas (ALU + registr halqasi).
+//        `from` — ketma-ket daraja: build blok va daraja avtomatlari tengligini tekshiradi.
 
 const num = (bits) => bits.reduce((a, b) => a * 2 + b, 0);
 const bitsOf = (v, n) => Array.from({ length: n }, (_, i) => (v >> (n - 1 - i)) & 1);
@@ -107,17 +111,41 @@ export const blocks = {
     bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
     fn: (...a) => alu(num(a.slice(0, 4)), num(a.slice(4, 8)), a[8] * 2 + a[9]),
   },
+  // ── Registrlar va xotira (xotirali bloklar) ──
+  // Yuklanuvchi bit: LD = 1 bo'lgan taktdan keyin Q = D, aks holda Q saqlanadi.
+  REG1: { inputs: ['D', 'LD'], outputs: ['Q'], from: 'g1', state: true, fn: (D, LD, Q) => [LD ? D : Q] },
+  // To'rt bitli registr: xuddi shunday, D va Q — shinalar.
+  REG4: {
+    inputs: [...pins('D'), 'LD'],
+    outputs: pins('Q'),
+    from: 'g2',
+    bus: { in: [[0, 4]], out: [[0, 4]] },
+    state: true,
+    fn: (...a) => (a[4] ? a.slice(0, 4) : a.slice(5, 9)),
+  },
+  // Dastur hisoblagichi: J = 1 bo'lsa PC := D (o'tish), aks holda PC := PC + 1 (16 dan keyin 0).
+  PC4: {
+    inputs: [...pins('D'), 'J'],
+    outputs: pins('Q'),
+    from: 'g4',
+    bus: { in: [[0, 4]], out: [[0, 4]] },
+    state: true,
+    fn: (...a) => (a[4] ? a.slice(0, 4) : bitsOf(num(a.slice(5, 9)) + 1, 4)),
+  },
 };
+
+/** Jadval ustunlari: kirishlar, xotirali blokda — keyin joriy chiqishlar ham. */
+export const tableInputs = (b) => (b.state ? [...b.inputs, ...b.outputs] : b.inputs);
 
 /**
  * Har chiqish uchun jadval — o'n oltilik son (satr): r-bit — r-qatordagi qiymat (birinchi kirish — eng
  * katta bit). Satr, son emas: 9–10 kirishli blokda jadval 512–1024 bit.
  */
 export function lutsOf(b) {
-  const n = b.inputs.length;
+  const n = tableInputs(b).length;
   const luts = b.outputs.map(() => 0n);
   for (let r = 0; r < 1 << n; r++) {
-    const bits = b.inputs.map((_, k) => (r >> (n - 1 - k)) & 1);
+    const bits = Array.from({ length: n }, (_, k) => (r >> (n - 1 - k)) & 1);
     b.fn(...bits).forEach((v, i) => {
       if (v) luts[i] |= 1n << BigInt(r);
     });
@@ -125,7 +153,7 @@ export function lutsOf(b) {
   return luts.map((l) => l.toString(16));
 }
 
-/** Blok chiqishlari (bitlar massividan). */
+/** Blok chiqishlari (bitlar massividan). Xotirali blokda — keyingi takt chiqishlari (ins — kirishlar va joriy chiqishlar). */
 export function blockOutputs(type, ins) {
   return blocks[type].fn(...ins);
 }

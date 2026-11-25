@@ -3,7 +3,7 @@
 // ro'parasida, sim to'g'ri bo'lsin), ustma-ust tushmaydi.
 // Simlar o'zgarmaydi — faqat joylar. Formuladan sxema (formula-build.ts) ham shu joylashni ishlatadi.
 // D-trigger chiqishi manba kabi hisoblanadi: teskari bog'lanish halqa bo'lib qolmasin.
-import { parseSource, type Circuit, type Gate, type Spec } from '../sim/types';
+import { isStateful, parseSource, type Circuit, type Gate, type Spec } from '../sim/types';
 import { GATE_W, GRID, layout } from './geometry';
 import { gateHeight, inputLeads, outputLeads } from './shapes';
 
@@ -40,7 +40,12 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
   // Manba elementi id si (blok chiqishi `gid.k` → gid).
   const srcId = (f: string) => parseSource(f).id;
 
-  // Chuqurlik: kirish va D-trigger chiqishi — 0; element — manbalari chuqurligining eng kattasi + 1.
+  // Chuqurlik: kirish va xotirali element (D-trigger, registr) chiqishi — 0; element — manbalari
+  // chuqurligining eng kattasi + 1.
+  const isStatefulId = (id: string) => {
+    const g = byId.get(id);
+    return !!g && isStateful(g.type);
+  };
   const depth = new Map<string, number>();
   const visiting = new Set<string>();
   const depthOf = (id: string): number => {
@@ -50,7 +55,7 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
     if (known !== undefined) return known;
     if (visiting.has(id)) return 0; // tekshiruvdan o'tmagan sxemadagi sikl — yiqilmasin
     visiting.add(id);
-    const d = 1 + Math.max(0, ...inputsOf(id).map((f) => (byId.get(srcId(f))?.type === 'DFF' ? 0 : depthOf(srcId(f)))));
+    const d = 1 + Math.max(0, ...inputsOf(id).map((f) => (isStatefulId(srcId(f)) ? 0 : depthOf(srcId(f)))));
     visiting.delete(id);
     depth.set(id, d);
     return d;
