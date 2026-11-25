@@ -36,6 +36,20 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.27.0',
+    date: '2026-11-25',
+    uz: [
+      "Hikoya: endi o'yin Ko'hna Minor shahrida o'tadi — shahar mashinasi Ustoz jim bo'lib qolgan, shogird qiz Lola va mis chiroq-robot Chiroq uni sxemalarni tushunib qayta yoqadi. Birinchi bo'lim «Buvining ustaxonasi»: kirish va yakuniy sahnalar, har darajada qisqa hikoya qatori. Qolgan bo'limlar keyingi versiyalarda.",
+      "Yangi uslub «Mis va lojuvard»: Samarqand koshinlari ranglari va girih naqshlari, signal — mis-oltin. Sozlamalar → «Mavzu va uslub».",
+      "Hikoyani Sozlamalarda o'chirib qo'yish mumkin; bo'lim kartasidagi «Hikoya» sahnani qayta ko'rsatadi.",
+    ],
+    ru: [
+      "История: теперь игра происходит в городе Кохна-Минор — городская машина Устоз замолчала, ученица Лола и медный робот-фонарик Огонёк запускают её снова, разбираясь в схемах. Первая глава «Мастерская бабушки»: вступительная и финальная сцены, короткая строка сюжета на каждом уровне. Остальные главы — в следующих версиях.",
+      "Новый стиль «Медь и лазурит»: цвета самаркандских изразцов и узоры гирих, сигнал — медно-золотой. Настройки → «Тема и стиль».",
+      "Историю можно выключить в Настройках; кнопка «История» на карточке главы показывает сцену заново.",
+    ],
+  },
+  {
     version: '2.25.0',
     date: '2026-11-25',
     uz: [

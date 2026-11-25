@@ -69,7 +69,7 @@ function errorMessage(err: SimError): string {
  * Masala yechiladigan ekran: maydon, vazifa, haqiqat jadvali, palitra va tekshirish.
  * Daraja ham, kunlik boshqotirma ham shundan foydalanadi; yechilgandan keyingi ish — onSolved da.
  */
-export function Workbench({ level, editor, title, sub, onBack, onSolved, topInset = 64, banner, children }: {
+export function Workbench({ level, editor, title, sub, onBack, onSolved, topInset = 64, banner, story, children }: {
   level: Level;
   editor: Editor;
   title: string;
@@ -79,6 +79,8 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
   topInset?: number;
   /** Maydon ustidagi qo'shimcha yozuv (o'rgatuvchi qadamlar). */
   banner?: ComponentChildren;
+  /** Kampaniya hikoyasi qatori (story.ts) — masala matni ustida. */
+  story?: string;
   /** Oynalar (natija, tanishtiruv). */
   children?: ComponentChildren;
 }) {
@@ -373,6 +375,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
         <aside class={`side${showSide.value ? ' open' : ''}`}>
           <section class="task">
             <h2>{t.play.task}</h2>
+            {story && <p class="story-hint">{story}</p>}
             <p>{level.task}</p>
             <div class="meta">
               <span>{t.play.goal(level.goal)}</span>

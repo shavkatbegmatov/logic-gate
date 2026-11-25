@@ -8,6 +8,7 @@
    *   - bench: Laboratoriya stoli — qorong'i ESD gilamcha, alyuminiy modullar, jez klemmalar, ossillograf ranglari.
    *   - breadboard: Maket platasi — teshikchali issiq oq plata, +5V/GND shinalar, rangli jumperlar.
    *   - scifi: Kiber Sci-Fi — titan-shisha deka, plazma kanallar, golografik indikatorlar.
+ *   - minor: Mis va lojuvard — kampaniya uslubi: koshin ranglari, girih naqshi, mis elektronika.
    * Klassik mavzular (saqlangan): plata, haqiqiy, daftar, chizma.
    *
    * Barcha 8 ta mavzuda o'zgaruvchilar to'plami bir xil (--mono va --sans bundan mustasno).
@@ -282,6 +283,75 @@
   --accent-rgb: 0, 229, 255;
   --bad-rgb: 255, 92, 124;
   --sel-rgb: 255, 209, 102;
+  color-scheme: dark;
+}
+
+[data-theme='minor'] {
+  /* Mis va lojuvard: Samarqand koshinlari (lojuvard, feruza, terrakota) + mis/oltin elektronika. Oltin — faqat «tok bor». */
+  --bg: #0b1630;
+  --bg2: #101e3d;
+  --panel: #13244a;
+  --raise: #1b3060;
+  --accent-soft: #2e2a1c;
+  --edge: rgba(60, 192, 180, 0.18);
+  --edge-strong: rgba(242, 184, 75, 0.42);
+  --line: #1c2e58;
+  --board: #081128;
+  --board-mat: #0e1b3a;
+  --board-frame: #2a4a86;
+  --pin: #12203f;
+  --pin-stroke: #5b7fb8;
+  --grid: #172a52;
+  --text: #f3e9d2;
+  --muted: #b4bcd3;
+  --dim: #8f9bbb;
+  --accent: #f2b84b;
+  --accent-ink: #1e1402;
+  --on: #f2b84b;
+  --off: #2b3a5c;
+  --copper: #d08a4a;
+  --sel: #3cc0b4;
+  --bad: #ef7a52;
+  --good: #6fdc9c;
+  --gold: #f2b84b;
+  --gold-ink: #f2b84b;
+  --star-off: #2a3b63;
+  --gate-fill: #0e1a36;
+  --gate-stroke: #5fc9bf;
+  --gate-on-fill: #241f16;
+  --gate-on-stroke: #f2b84b;
+  --lead: #c7c2b4;
+  --trace: #2a4f8a;
+  --trace-on: #f2b84b;
+  --trace-w: 4px;
+  --glow: rgba(242, 184, 75, 0.26);
+  --glow-w: 12px;
+  --pulse: #fff1c9;
+  --lamp-on: #f5c25a;
+  --lamp-on-stroke: #ffe3a3;
+  --bezel: #1a2440;
+  --knob: #f3e9d2;
+  --knob-ink: #0b1630;
+  --shine: rgba(255, 255, 255, 0.85);
+  --lamp: #142343;
+  --lamp-stroke: #3d5f9a;
+  --tint: #172748;
+  --chip: #18305c;
+  --solved: #2f8f86;
+  --silver: #e1d9c6;
+  --bronze: #b5703a;
+  --tg: #2aabee;
+  --scrim: rgba(3, 8, 20, 0.78);
+  --float: rgba(16, 30, 61, 0.92);
+  --shadow: rgba(0, 3, 12, 0.6);
+  --hover: rgba(60, 192, 180, 0.06);
+  --bevel-top: rgba(243, 233, 210, 0.1);
+  --bevel-bottom: rgba(0, 0, 0, 0.5);
+  --ambient: rgba(60, 192, 180, 0.1);
+  --on-rgb: 242, 184, 75;
+  --accent-rgb: 242, 184, 75;
+  --bad-rgb: 239, 122, 82;
+  --sel-rgb: 60, 192, 180;
   color-scheme: dark;
 }
 
@@ -5243,4 +5313,22 @@ body:has(.stage.has-check) .toast {
     box-shadow: none;
     border-radius: 0;
   }
+}
+
+/* Kampaniya hikoyasi qatori (Workbench: masala ustida) — story.ts. */
+.story-hint {
+  margin: 0 0 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--sel);
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Bo'lim kartasi: hikoyadagi joy nomi (texnik nom ikkinchi qatorda). */
+.chapter-place {
+  display: block;
+  font: 600 11px/1.3 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sel);
 }
