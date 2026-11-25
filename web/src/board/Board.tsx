@@ -133,7 +133,9 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
     const selected = b.sel?.kind === 'wire' && b.sel.index === i;
     if (selected) {
       const m = routeMid(route);
-      deleteAt = { x: m.x, y: m.y + (b.vertical ? 14 : -14) };
+      // Shina simida o'rtada son turadi — o'chirish tugmasi undan nariroqda.
+      const off = bus === undefined ? 14 : 26;
+      deleteAt = { x: m.x, y: m.y + (b.vertical ? off : -off) };
     }
     return (
       <g

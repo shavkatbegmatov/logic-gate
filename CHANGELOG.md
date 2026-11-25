@@ -5,6 +5,12 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.31.0 — 2026-11-25
+
+- Yangi, 10-bo'lim — «Shinalar» (100 ★ dan ochiladi): to'rt sim — bitta yo'l. Shina maydonda bitta keng pin va bitta qalin sim bo'lib ko'rinadi, ustida qiymati son bilan yoziladi; ulaganda to'rttala bit birga ulanadi, o'chirganda birga o'chadi.
+- 6 ta yangi daraja: teskari shina, «Nolmi?», to'rt bitli summator, shina tanlovchi, bittaga oshirish va hisoblagichning bir qadami.
+- Yangi bloklar: bo'laklovchi (SPLIT), birlashtiruvchi (JOIN), shina inkori (NOT4), to'rt bitli summator (ADD4), shina tanlovchi (MUX4) va bittaga oshiruvchi (INC4). Shinali darajalarda haqiqat jadvali sonlarda — 512 qatorli jadval ham oson o'qiladi.
+
 ## 2.30.0 — 2026-11-25
 
 - Hikoyaning 2-bo'limi — «Bozor darvozalari»: Lola va Chiroq qulflangan bozorning oltita darvozasini ochadi. Kirish va yakuniy sahnalar, har darajada o'z hikoya qatori; Chiroq yangi so'zlar o'rganadi.

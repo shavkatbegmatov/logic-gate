@@ -384,7 +384,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
           const r = cur.routed.routes[cur.selection.index];
           if (r) {
             const m = routeMid(r);
-            wp = [m.x, 12, m.y];
+            // Shina simida o'rtada son plastinkasi — tugma undan yuqoriroq va nariroqda.
+            const bus = cur.bundles.bus.has(cur.bundles.rep[cur.selection.index] ?? -1);
+            wp = bus ? [m.x, 24, m.y - 22] : [m.x, 12, m.y];
           }
         }
         const sp = wp ? projectPoint(wp, vp, sizeRef.current.w, sizeRef.current.h) : null;

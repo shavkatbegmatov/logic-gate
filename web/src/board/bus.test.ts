@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import levelsData from '../../../levels/levels.json';
 import solutionsData from '../../../levels/solutions.json';
-import type { Circuit, Gate, Level } from '../sim/types';
+import { levels } from '../levels';
+import type { Circuit, Gate } from '../sim/types';
 import { blockPinLabels, blockPortNames, bundles, busExamples, busValue, groupValue, isHiddenBit, pinGroups, portGroup } from './bus';
 import { Editor } from './editor';
 import { bounds, layout, outputColumn } from './geometry';
 import { routeAll } from './routing';
 
-const levels = (levelsData as { levels: Level[] }).levels;
-const solutions = solutionsData as Record<string, Circuit>;
+const solutions = solutionsData as unknown as Record<string, Circuit>;
 const busLevels = levels.filter((l) => l.buses);
 const gmapOf = (c: Circuit) => new Map<string, Gate>(c.gates.map((g) => [g.id, g]));
 

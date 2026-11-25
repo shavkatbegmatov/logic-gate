@@ -200,7 +200,9 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
     const selected = b.sel?.kind === 'wire' && b.sel.index === i;
     if (selected) {
       const m = routeMid(route);
-      deleteAt = { x: m.x, y: m.y + (b.vertical ? 14 : -14) };
+      // Shina simida o'rtada son turadi — o'chirish tugmasi undan nariroqda.
+      const off = bus === undefined ? 14 : 26;
+      deleteAt = { x: m.x, y: m.y + (b.vertical ? off : -off) };
     }
     const insulated = style === 'breadboard' || style === 'bench';
     const offStroke = insulated ? netColor(w.from) : undefined;
