@@ -112,6 +112,9 @@ function Picture({ art }: { art: Art }) {
       {art === 'wake' && <Wake />}
       {(art === 'talk' || art === 'laugh') && <Talk laugh={art === 'laugh'} />}
       {art === 'window' && <Window />}
+      {(art === 'bazaar' || art === 'bazaarlit') && <Bazaar lit={art === 'bazaarlit'} />}
+      {art === 'gatelock' && <GateLock />}
+      {art === 'tower' && <Tower />}
     </svg>
   );
 }
@@ -275,3 +278,75 @@ function Window() {
     </>
   );
 }
+
+// ── 2-bo'lim: Bozor darvozalari ─────────────────────────────
+
+/** Bozor: uchta pishtoq-darvoza, rastalar soyabonlari va fonarlar. lit — darvozalar ochilgan, fonarlar yonadi. */
+function Bazaar({ lit }: { lit: boolean }) {
+  const gates = [56, 160, 264];
+  return (
+    <>
+      <rect width="320" height="180" class="sky" />
+      <Stars />
+      <Skyline lit={lit} />
+      <rect y="150" width="320" height="30" class="table" />
+      {gates.map((x) => (
+        <g key={x}>
+          <rect x={x - 38} y="66" width="76" height="86" class="pishtoq" />
+          <rect x={x - 38} y="66" width="76" height="86" fill="url(#girih)" class="girih" />
+          <path class={lit ? 'gate-open' : 'gate-door'} d={`M${x - 20} 152V100q0-22 20-22t20 22v52z`} />
+          {!lit && <circle cx={x} cy="122" r="3.4" class="gate-lock" />}
+        </g>
+      ))}
+      {[108, 212].map((x) => (
+        <g key={x}>
+          <path class="lantern-cord" d={`M${x} 66v14`} />
+          <circle cx={x} cy="86" r="6" class={lit ? 'lantern lit' : 'lantern'} />
+          {lit && <circle cx={x} cy="86" r="18" fill="url(#glow)" class="chiroq-glow" />}
+        </g>
+      ))}
+    </>
+  );
+}
+
+/** Darvoza qulfi yaqindan: ikki kalit teshigi, ulardan yuqoridagi chiroqqa mis yo'l — qulf ham sxema. */
+function GateLock() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih" />
+      <path class="arch-frame" d="M70 180V80q0-62 90-62t90 62v100z" />
+      <path class="gate-door" d="M86 180V84q0-50 74-50t74 50v96z" />
+      <path class="trace" d="M128 122V96h64v26M160 96V70" />
+      <circle cx="160" cy="62" r="8" class="lantern" />
+      <g class="keyhole">
+        <circle cx="128" cy="130" r="6" />
+        <path d="M125 134h6l2 12h-10z" />
+        <circle cx="192" cy="130" r="6" />
+        <path d="M189 134h6l2 12h-10z" />
+      </g>
+      <Chiroq x={268} y={150} s={0.6} awake />
+    </>
+  );
+}
+
+/** Tarozi minorasi: bozor o'rtasida, tepasida tarozi pallalari — hali qorong'i (3-bo'limga ko'prik). */
+function Tower() {
+  return (
+    <>
+      <rect width="320" height="180" class="sky" />
+      <Stars />
+      <Skyline lit />
+      <path class="tower" d="M142 180V60l18-14 18 14v120z" />
+      <path class="scale-beam" d="M118 40h84M160 46V30M118 40l-10 18h20zM202 40l-10 18h20z" />
+      <rect x="152" y="96" width="16" height="22" rx="8" class="tower-window" />
+      <g class="crowd">
+        <circle cx="104" cy="150" r="6" />
+        <path d="M96 172q8-18 16 0z" />
+        <circle cx="216" cy="150" r="6" />
+        <path d="M208 172q8-18 16 0z" />
+      </g>
+    </>
+  );
+}
+
