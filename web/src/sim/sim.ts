@@ -2,6 +2,7 @@
 // o'zgartirsangiz, ikkalasini ham yangilang (umumiy testlar levels/solutions.json orqali).
 import {
   BLOCKS,
+  blockTable,
   GATE_ARITY,
   gateOutputs,
   isBlock,
@@ -60,7 +61,8 @@ export function gateOutputValues(type: GateType, ins: number[]): number[] {
   if (!isBlock(type)) return [OPS[type](ins[0] ?? 0, ins[1] ?? 0)];
   const b = BLOCKS[type];
   const r = b.inputs.reduce((acc, _, i) => (acc << 1) | (ins[i] ? 1 : 0), 0);
-  return b.luts.map((lut) => (lut >> r) & 1);
+  const m = blockTable(type)[r];
+  return b.outputs.map((_, k) => (m >> k) & 1);
 }
 
 /** Element manbasi (`gid` yoki `gid.k`) bo'lsa — element id si, aks holda null. */

@@ -266,6 +266,34 @@ const uz: Record<string, Lesson> = {
       },
     ],
   },
+  buses: {
+    title: "Shinalar — to'rt bit bitta yo'lda",
+    blocks: [
+      {
+        p: "Protsessor bitlar bilan emas, sonlar bilan ishlaydi. To'rt bitli son to'rtta sim bo'ylab bir vaqtda yuradi — bunday simlar to'plami shina deyiladi. Maydonda shina bitta qalin chiziq, ustida esa uning qiymati (0–15).",
+      },
+      { h: 'Shina bilan ishlash' },
+      {
+        table: [
+          ['Blok', 'Kirish', 'Chiqish', 'Ichida'],
+          ['SPLIT', 'A[3:0]', 'A3, A2, A1, A0', '—'],
+          ['JOIN', 'A3, A2, A1, A0', 'Q[3:0]', '—'],
+          ['NOT4', 'A', 'Q', '4 NOT'],
+          ['ADD4', 'A, B, Ci', 'S, Co', '4 FA'],
+          ['MUX4', 'A, B, S', 'Q', '4 MUX'],
+          ['INC4', 'A', 'Q, C', 'NOT + 3 HA'],
+        ],
+      },
+      { h: 'Ikkilik son' },
+      { f: ['A = 8·A3 + 4·A2 + 2·A1 + A0', '0111 + 1 = 1000,  1111 + 1 = 0000 (C = 1)'] },
+      {
+        p: "Shina faqat bir xil kenglikdagi shinaga ulanadi. Bitta bitni olish kerak bo'lsa — bo'laklovchi, bitlardan son yasash kerak bo'lsa — birlashtiruvchi. Shina bloklari esa bir xil ishni har bitda takrorlaydi: NOT4 — to'rtta NOT, MUX4 — umumiy S bilan to'rtta MUX.",
+      },
+      {
+        tip: "Kompyuterdagi «64 bitli protsessor» degani — uning shinalari va registrlari 64 bit kenglikda. Birinchi mikroprotsessor Intel 4004 (1971) esa xuddi shu bo'limdagidek to'rt bitli edi.",
+      },
+    ],
+  },
 };
 
 const ru: Record<string, Lesson> = {
@@ -519,6 +547,34 @@ const ru: Record<string, Lesson> = {
       },
       {
         tip: 'Первые микросхемы (1960-е) содержали несколько элементов. В современном процессоре миллиарды транзисторов, но и он собран из блоков внутри блоков: сумматор → АЛУ → процессор.',
+      },
+    ],
+  },
+  buses: {
+    title: 'Шины — четыре бита по одной дороге',
+    blocks: [
+      {
+        p: 'Процессор работает не с битами, а с числами. Четырёхбитное число идёт по четырём проводам одновременно — такой пучок проводов называется шиной. На поле шина — одна толстая линия, а над ней её значение (0–15).',
+      },
+      { h: 'Работа с шиной' },
+      {
+        table: [
+          ['Блок', 'Вход', 'Выход', 'Внутри'],
+          ['SPLIT', 'A[3:0]', 'A3, A2, A1, A0', '—'],
+          ['JOIN', 'A3, A2, A1, A0', 'Q[3:0]', '—'],
+          ['NOT4', 'A', 'Q', '4 NOT'],
+          ['ADD4', 'A, B, Ci', 'S, Co', '4 FA'],
+          ['MUX4', 'A, B, S', 'Q', '4 MUX'],
+          ['INC4', 'A', 'Q, C', 'NOT + 3 HA'],
+        ],
+      },
+      { h: 'Двоичное число' },
+      { f: ['A = 8·A3 + 4·A2 + 2·A1 + A0', '0111 + 1 = 1000,  1111 + 1 = 0000 (C = 1)'] },
+      {
+        p: 'Шина соединяется только с шиной той же ширины. Нужен один бит — разделитель, нужно собрать число из битов — объединитель. А блоки шины повторяют одно и то же для каждого бита: NOT4 — четыре NOT, MUX4 — четыре MUX с общим S.',
+      },
+      {
+        tip: '«64-битный процессор» значит, что его шины и регистры шириной 64 бита. А первый микропроцессор Intel 4004 (1971) был четырёхбитным — как в этом разделе.',
       },
     ],
   },

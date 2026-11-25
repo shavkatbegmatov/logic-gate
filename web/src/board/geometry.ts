@@ -40,14 +40,48 @@ export interface Layout {
   outX: number;
   inputs: Map<string, Point>;
   outputs: Map<string, Point>;
+  /** Kirish / chiqish shinasi bor: shina pini kengroq (BUS_IN_X, BUS_OUT_X) — maydon chegarasi ham. */
+  busIn?: boolean;
+  busOut?: boolean;
+}
+
+/** Shina kirish pini qutisining chap cheti (oddiy pin: -78) va chiqish pini qutisining o'ng cheti (oddiy: 74). */
+export const BUS_IN_X = -150;
+export const BUS_OUT_X = 92;
+/** Shina kirish pinidagi j-bit tugmasi markazi (eng katta bit chapda; n — shina kengligi). */
+export const busBitX = (j: number, n: number) => -34 - (n - 1 - j) * 24;
+
+/**
+ * Pinlar qatori: shina (spec.buses) — bitta qator, uning hamma bitlari bir nuqtada (maydonda bitta keng pin).
+ * Qaytadi: har pin uchun qator raqami va qatorlar soni.
+ */
+export function pinRows(pins: string[], buses: Spec['buses']): { row: number[]; count: number } {
+  const first = new Map<string, string>();
+  for (const bits of Object.values(buses ?? {})) for (const p of bits) first.set(p, bits[0]);
+  const row: number[] = [];
+  const at = new Map<string, number>();
+  let count = 0;
+  for (const p of pins) {
+    const head = first.get(p);
+    if (head !== undefined && head !== p && at.has(head)) row.push(at.get(head)!);
+    else {
+      at.set(p, count);
+      row.push(count++);
+    }
+  }
+  return { row, count };
 }
 
 export function layout(spec: Spec, outX: number): Layout {
-  const rows = Math.max(spec.inputs.length, spec.outputs.length, 2);
+  const ins = pinRows(spec.inputs, spec.buses);
+  const outs = pinRows(spec.outputs, spec.buses);
+  const rows = Math.max(ins.count, outs.count, 2);
   return {
     outX,
-    inputs: new Map(spec.inputs.map((n, k) => [n, { x: 0, y: pinY(spec.inputs.length, rows, k) }])),
-    outputs: new Map(spec.outputs.map((n, k) => [n, { x: outX, y: pinY(spec.outputs.length, rows, k) }])),
+    inputs: new Map(spec.inputs.map((n, k) => [n, { x: 0, y: pinY(ins.count, rows, ins.row[k]) }])),
+    outputs: new Map(spec.outputs.map((n, k) => [n, { x: outX, y: pinY(outs.count, rows, outs.row[k]) }])),
+    busIn: ins.count < spec.inputs.length,
+    busOut: outs.count < spec.outputs.length,
   };
 }
 
@@ -169,8 +203,8 @@ export function isSourcePort(port: string): boolean {
  * chiqish qutisining ostida (dunyoda — o'ngida) turadi, shuning uchun joy ko'proq.
  */
 export function bounds(circuit: Circuit, lay: Layout, vertical = false) {
-  let minX = -80;
-  let maxX = lay.outX + (vertical ? 104 : 80);
+  let minX = lay.busIn ? BUS_IN_X - 2 : -80;
+  let maxX = lay.outX + (vertical ? 104 : 80) + (lay.busOut ? BUS_OUT_X - 74 : 0);
   let minY = Infinity;
   let maxY = -Infinity;
   for (const p of [...lay.inputs.values(), ...lay.outputs.values()]) {

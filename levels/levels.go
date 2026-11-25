@@ -44,8 +44,9 @@ type Seq struct {
 type Block struct {
 	Inputs  []string `json:"inputs"`
 	Outputs []string `json:"outputs"`
-	Luts    []int    `json:"luts"`
-	From    string   `json:"from"`
+	// Luts — har chiqish jadvali o'n oltilik son: r-bit — r-qatordagi qiymat.
+	Luts []string `json:"luts"`
+	From string   `json:"from"`
 }
 
 type Pack struct {

@@ -410,6 +410,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
               target={level.target}
               current={row}
               onRow={(r) => editor.setRow(r)}
+              buses={level.buses}
             />
           )}
           {allOk && <p class="all-ok">{seq ? t.play.seqOk : t.play.rowsOk}</p>}

@@ -3,6 +3,7 @@ package sim
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"math/rand/v2"
 	"os"
 	"slices"
@@ -30,8 +31,8 @@ func TestReferenceSolutions(t *testing.T) {
 	if err := json.Unmarshal(raw, &sols); err != nil {
 		t.Fatal(err)
 	}
-	if len(pack.Levels) != 54 {
-		t.Fatalf("54 ta daraja kutilgan, %d bor", len(pack.Levels))
+	if len(pack.Levels) != 60 {
+		t.Fatalf("60 ta daraja kutilgan, %d bor", len(pack.Levels))
 	}
 	for _, l := range pack.Levels {
 		var (
@@ -61,12 +62,17 @@ func TestBlocksMatchLevels(t *testing.T) {
 	}
 	for name, want := range pack.Blocks {
 		got, ok := Blocks[name]
-		if !ok || !slices.Equal(got.Inputs, want.Inputs) || !slices.Equal(got.Outputs, want.Outputs) || len(got.Luts) != len(want.Luts) {
+		if !ok || !slices.Equal(got.Inputs, want.Inputs) || !slices.Equal(got.Outputs, want.Outputs) || len(got.Outputs) != len(want.Luts) {
 			t.Fatalf("%s: sim %+v, levels.json %+v", name, got, want)
 		}
 		for i, l := range want.Luts {
-			if int(got.Luts[i]) != l {
-				t.Errorf("%s: %d-chiqish jadvali %#x, kutilgan %#x", name, i, got.Luts[i], l)
+			lut := new(big.Int)
+			for r := len(got.Table) - 1; r >= 0; r-- {
+				lut.Lsh(lut, 1)
+				lut.SetBit(lut, 0, uint(got.Table[r]>>i&1))
+			}
+			if lut.Text(16) != l {
+				t.Errorf("%s: %d-chiqish jadvali %s, kutilgan %s", name, i, lut.Text(16), l)
 			}
 		}
 		if arity[name] != len(want.Inputs) {
@@ -262,12 +268,12 @@ func (c *compiled) oldStep(r int, state uint64) ([]uint8, uint64) {
 		}
 		if b, ok := Blocks[g.Type]; ok {
 			// Blok: jadval qatori — kirishlar bitlari, birinchisi eng katta.
-			r := 0
+			ins := make([]uint8, len(b.Inputs))
 			for i := range b.Inputs {
-				r = r<<1 | int(values[c.drivers[fmt.Sprintf("%s:%d", g.ID, i)]])
+				ins[i] = values[c.drivers[fmt.Sprintf("%s:%d", g.ID, i)]]
 			}
-			for k, l := range b.Luts {
-				values[sourcePort(g.ID, k)] = l >> r & 1
+			for k, v := range b.Fn(ins) {
+				values[sourcePort(g.ID, k)] = v
 			}
 			continue
 		}
@@ -348,7 +354,7 @@ func oldCheckSeq(spec Spec, m Machine, c Circuit) (gates int, trace []int, err *
 // randomCircuit — tasodifiy spec va sxema: ko'pincha to'g'ri (kombinatsion manba — oldingi element yoki
 // istalgan trigger), ba'zan sikl, ulanmagan kirish yoki ko'p trigger bilan.
 func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
-	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC"}}
+	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC", "SPLIT", "JOIN", "NOT4", "ADD4", "MUX4", "INC4"}}
 	for i := range 1 + rng.IntN(4) {
 		spec.Inputs = append(spec.Inputs, string(rune('A'+i)))
 	}

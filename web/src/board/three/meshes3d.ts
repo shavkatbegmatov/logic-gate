@@ -1,7 +1,8 @@
 // 3D apparat geometriyasi quruvchisi: PCB platasi, DIP mikrosxemalar, egilgan jumper simlar, tumbler va svetodiodlar.
 import { sourcePort, type Circuit, type Spec } from '../../sim/types';
 import type { RealStyle } from '../../theme';
-import { bounds, gateH, GATE_W, inputPortY, isSourcePort, outputPortY, type Layout, type Point } from '../geometry';
+import { busValue, groupValue, isHiddenBit, pinGroups, portGroup, type Bundles, type PinGroup } from '../bus';
+import { bounds, BUS_IN_X, BUS_OUT_X, busBitX, gateH, GATE_W, inputPortY, isSourcePort, outputPortY, routeMid, type Layout, type Point } from '../geometry';
 import type { Routed } from '../routing';
 import { inputLeads, outputLeads } from '../shapes';
 import { clamp, normalize3, sub3, type Vec3 } from './math3d';
@@ -71,6 +72,8 @@ export interface SceneBuildInput {
   leverAngles: Map<string, number>;
   stateNames: Map<string, string>;
   labelUVs: Map<string, UVRect>;
+  /** Shina simlari (bus.ts bundles): boshi chiziladi — qalinroq, ustida son. */
+  bundles?: Bundles;
 }
 
 const JUMPER_RGB: [number, number, number][] = [
@@ -526,15 +529,22 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     a[2] * 0.85 + b[2] * 0.15,
   ];
 
+  const rep = input.bundles?.rep;
+  const gmap = new Map(input.circuit.gates.map((g) => [g.id, g]));
   input.circuit.wires.forEach((w, i) => {
     const route = input.routed.routes[i];
-    if (!route) return;
+    // Shinaning qolgan bitlari — boshi bilan bitta qalin sim.
+    if (!route || (rep && rep[i] !== i)) return;
     const pts = wirePath3D(route, input.routed.hops[i], input.style);
     wireHits.push({ index: i, pts });
 
+    const members = input.bundles?.bus.get(i);
+    const busV = members ? busValue(members.map((m) => input.circuit.wires[m].from), input.values) : undefined;
     const live = input.reached(w.from, 1);
-    const on = live && input.values.get(w.from) === 1;
-    const sel = input.selection?.kind === 'wire' && input.selection.index === i;
+    const on = live && (members ? !!busV : input.values.get(w.from) === 1);
+    const selIdx = input.selection?.kind === 'wire' ? input.selection.index : -1;
+    const sel = selIdx >= 0 && (rep?.[selIdx] ?? selIdx) === i;
+    const wide = members ? 1.9 : 1;
 
     const baseCol = sel
       ? pal.sel
@@ -546,7 +556,7 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const em = sel ? 1.15 : on ? 1.08 : 0;
 
     if (input.style === 'pcb') {
-      solid.addFlatTrace(pts, on || sel ? 2.8 : 1.75, on || sel ? 1.7 : 0.9, baseCol, on ? 0.22 : 0.42, 0.78, em);
+      solid.addFlatTrace(pts, (on || sel ? 2.8 : 1.75) * wide, on || sel ? 1.7 : 0.9, baseCol, on ? 0.22 : 0.42, 0.78, em);
       // Kesishish ustiga 3D SMD 000 rezistor ko'prik
       input.routed.hops[i].forEach((list, segIdx) => {
         if (!list.length || segIdx >= route.length - 1) return;
@@ -565,10 +575,22 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
         }
       });
     } else {
-      solid.addTube(pts, on || sel ? 2.65 : 1.65, 8, baseCol, on ? 0.25 : 0.48, input.style === 'scifi' ? 0.35 : 0.08, em);
+      solid.addTube(pts, (on || sel ? 2.65 : 1.65) * wide, 8, baseCol, on ? 0.25 : 0.48, input.style === 'scifi' ? 0.35 : 0.08, em);
       solid.addCylinderY(pts[0][0], 0, 3.2, pts[0][2], 2.7, 2.2, 8, pal.metal, 0.2, 0.9, 0);
       const endP = pts[pts.length - 1];
       solid.addCylinderY(endP[0], 0, 3.2, endP[2], 2.7, 2.2, 8, pal.metal, 0.2, 0.9, 0);
+    }
+
+    // Shina qiymati: sim o'rtasida kichik plastinka va son.
+    if (members) {
+      const m = routeMid(route);
+      const top = input.style === 'pcb' ? 3.2 : (input.style === 'scifi' ? 3.2 : 7.5) + 5.5;
+      solid.addBox(m.x - 11, top - 2.4, m.y - 7.5, m.x + 11, top, m.y + 7.5, pal.pinBox, 0.45, 0.18, 0);
+      solid.addFrameBox(m.x - 10.4, top, m.y - 6.9, m.x + 10.4, top + 0.5, m.y + 6.9, 1.2, on ? pal.traceOn : pal.slabSide, 0.3, 0.25, on ? 0.9 : 0);
+      const nuv = input.labelUVs.get(live && busV !== null && busV !== undefined ? String(busV) : '–');
+      if (nuv) {
+        labels.quad([m.x - 12, top + 0.1, m.y - 6], [m.x + 12, top + 0.1, m.y - 6], [m.x + 12, top + 0.1, m.y + 6], [m.x - 12, top + 0.1, m.y + 6], [0, 1, 0], on ? pal.pulse : [0.78, 0.82, 0.88], 0.45, 0, on ? 0.95 : 0.25, nuv);
+      }
     }
   });
 
@@ -617,6 +639,9 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
 
   // Port yaratish yordamchisi
   const addPort = (id: string, x: number, y: number, src: boolean, connected: boolean, on: boolean) => {
+    // Shinaning qolgan bitlari boshi bilan bir joyda — bitta (kattaroq) port.
+    if (isHiddenBit(id, gmap, input.spec.buses)) return;
+    const wideK = portGroup(id, gmap, input.spec.buses) ? 1.35 : 1;
     const act = input.activePort === id;
     const want =
       input.activePort !== null &&
@@ -624,7 +649,7 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       (isSourcePort(input.activePort) ? !src && !connected : src);
     const col = act ? pal.sel : want ? pal.sel : on ? pal.lampOn : src ? pal.brass : pal.metal;
     const em = act ? 1.5 : want ? 0.95 : on ? 1.1 : 0;
-    const r = act || want ? 5.6 : 4.2;
+    const r = (act || want ? 5.6 : 4.2) * wideK;
     solid.addCylinderY(x, 0, 2.2, y, r + 1.1, r, 10, pal.brass, 0.25, 0.85, 0);
     solid.addSphere(x, 2.4, y, r * 0.72, 8, 4, col, 0.22, 0.75, em, true);
   };
@@ -721,8 +746,80 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     }
   }
 
+  // Shina pinlari (bus.ts): kirish — keng panel, har bit o'z kichik tumbleri; chiqish — son oynasi.
+  const label = (txt: string, x0: number, x1: number, y: number, z0: number, z1: number, col: [number, number, number], em: number) => {
+    const uv = input.labelUVs.get(txt);
+    if (uv) labels.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1], [0, 1, 0], col, 0.45, 0, em, uv);
+  };
+  const busInPin = (group: PinGroup) => {
+    const p = input.layout.inputs.get(group.pins[0])!;
+    const value = groupValue(input.bits, group.idx) ?? 0;
+    const lit = value > 0;
+    const x0 = p.x + BUS_IN_X;
+    const x1 = p.x - 14;
+    const z0 = p.y - 23;
+    const z1 = p.y + 23;
+    solid.addBox(x0, 0, z0, x1, 7.2, z1, pal.pinBox, 0.45, 0.18, 0);
+    solid.addBox(x0 + 2.2, 7.2, z0 + 2.2, x1 - 2.2, 7.65, z1 - 2.2, pal.gateBody, 0.55, 0.1, 0);
+    solid.addFrameBox(x0 + 0.6, 7.2, z0 + 0.6, x1 - 0.6, lit ? 8.3 : 7.8, z1 - 0.6, 2.0, lit ? pal.traceOn : pal.slabSide, 0.3, 0.25, lit ? 1.0 : 0);
+    solid.addBox(x1, 1.2, p.y - 3.4, p.x, 3.8, p.y + 3.4, lit ? pal.traceOn : pal.metal, 0.2, 0.9, lit ? 0.8 : 0);
+    label(group.name, x0 + 3, x0 + 27, 7.78, p.y - 18, p.y - 2, [0.95, 0.98, 1.0], 0.55);
+    label(String(value), x0 + 3, x0 + 27, 7.78, p.y + 2, p.y + 18, lit ? pal.pulse : [0.58, 0.64, 0.72], lit ? 0.95 : 0.2);
+    const n = group.pins.length;
+    group.pins.forEach((name, j) => {
+      const on = input.bits[group.idx[j]] === 1;
+      const swX = p.x + busBitX(j, n);
+      solid.addBox(swX - 9, 7.6, p.y - 3, swX, 7.9, p.y + 3, [0.05, 0.06, 0.08], 0.7, 0.05, 0);
+      solid.addBox(swX, 7.6, p.y - 3, swX + 9, 7.9, p.y + 3, on ? pal.traceOn : [0.05, 0.06, 0.08], 0.4, 0.1, on ? 0.85 : 0);
+      solid.addCylinderY(swX, 7.65, 9.4, p.y, 4.6, 4.0, 6, pal.brass, 0.22, 0.88, 0);
+      const angle = input.leverAngles.get(name) ?? (on ? 0.6 : -0.6);
+      solid.addTiltedLever(swX, 9.4, p.y, angle, 12.5, 1.9, [0.88, 0.91, 0.95], on ? pal.pulse : [0.68, 0.74, 0.82], on ? 0.92 : 0.12, on ? pal.lampOn : undefined);
+      solid.addCylinderY(swX, 7.65, 7.95, p.y - 14, 3.4, 3.2, 10, pal.brass, 0.22, 0.88, 0);
+      solid.addSphere(swX, 7.7, p.y - 14, 2.7, 8, 4, on ? pal.lampOn : pal.lampOff, 0.2, 0.1, on ? 1.15 : 0, true);
+      label(on ? '1' : '0', swX - 8, swX + 8, 7.78, p.y + 10, p.y + 20, on ? pal.pulse : [0.58, 0.64, 0.72], on ? 0.95 : 0.2);
+    });
+    addPort(`in:${group.pins[0]}`, p.x, p.y, true, usedSources.has(`in:${group.pins[0]}`), lit);
+  };
+  const busOutPin = (group: PinGroup) => {
+    const p = input.layout.outputs.get(group.pins[0])!;
+    const got = input.outputs.map((o, i) => {
+      const src = input.drivers.get(`out:${input.spec.outputs[i]}`);
+      return src === undefined || input.reached(src, 2) ? o : null;
+    });
+    const v = groupValue(got, group.idx);
+    const exp = input.expected ? groupValue(input.expected, group.idx) : null;
+    const err = group.pins.some((n) => input.highlight === n);
+    const good = exp !== null && v !== null && v === exp;
+    const bad = exp !== null && v !== null && v !== exp;
+    const lit = !!v;
+    const x0 = p.x + 14;
+    const x1 = p.x + BUS_OUT_X;
+    const z0 = p.y - 23;
+    const z1 = p.y + 23;
+    solid.addBox(p.x, 1.2, p.y - 3.4, x0, 3.8, p.y + 3.4, lit ? pal.traceOn : pal.metal, 0.2, 0.9, lit ? 0.8 : 0);
+    solid.addBox(x0, 0, z0, x1, 6.5, z1, pal.pinBox, 0.45, 0.18, 0);
+    solid.addBox(x0 + 2.2, 6.5, z0 + 2.2, x1 - 2.2, 6.95, z1 - 2.2, pal.gateBody, 0.55, 0.1, 0);
+    const frameCol = err || bad ? pal.bad : good ? pal.good : pal.slabSide;
+    solid.addFrameBox(x0 + 0.6, 6.5, z0 + 0.6, x1 - 0.6, err || bad || good ? 7.7 : 7.1, z1 - 0.6, 2.0, frameCol, 0.3, 0.22, err || bad ? 1.05 : good ? 0.85 : 0);
+    label(group.name, x0 + 2, x0 + 26, 7.08, p.y - 8, p.y + 8, [0.95, 0.98, 1.0], 0.55);
+    // Son oynasi: to'q botiq ekran va yonib turgan raqam.
+    solid.addBox(p.x + 44, 6.95, p.y - 15, x1 - 6, 7.4, p.y + 15, [0.04, 0.05, 0.07], 0.6, 0.05, 0);
+    label(v === null ? '–' : String(v), p.x + 46, x1 - 8, 7.5, p.y - 11, p.y + 11, lit ? pal.lampOn : [0.5, 0.56, 0.64], lit ? 1.1 : 0.2);
+    if (lit && lights.length < 8) lights.push({ pos: [p.x + 64, 22, p.y], color: pal.lampOn, intensity: 0.8 });
+    if (exp !== null) {
+      label(`exp:${exp}`, x0 - 2, x1 + 4, 0.25, z1 + 2, z1 + 15, pal.gateAccent, input.style === 'scifi' ? 0.45 : 0.15);
+    }
+    addPort(`out:${group.pins[0]}`, p.x, p.y, false, driven.has(`out:${group.pins[0]}`), lit);
+  };
+
   // 4. Kirish tumblerlari (pin-in): botiq to'q panel, yorug' ramka va ikki rangli dasta
-  input.spec.inputs.forEach((name, k) => {
+  for (const group of pinGroups(input.spec.inputs, input.spec.buses)) {
+    if (group.bus) {
+      busInPin(group);
+      continue;
+    }
+    const name = group.name;
+    const k = group.idx[0];
     const p = input.layout.inputs.get(name)!;
     const on = input.bits[k] === 1;
     const x0 = p.x - 78;
@@ -769,10 +866,16 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       labels.quad([p.x - 73, 7.78, p.y + 1], [p.x - 49, 7.78, p.y + 1], [p.x - 49, 7.78, p.y + 17], [p.x - 73, 7.78, p.y + 17], [0, 1, 0], on ? pal.pulse : [0.58, 0.64, 0.72], 0.45, 0, on ? 0.95 : 0.2, bitUv);
     }
     addPort(`in:${name}`, p.x, p.y, true, usedSources.has(`in:${name}`), on);
-  });
+  }
 
   // 5. Chiqish chiroqlari (pin-out)
-  input.spec.outputs.forEach((name, i) => {
+  for (const group of pinGroups(input.spec.outputs, input.spec.buses)) {
+    if (group.bus) {
+      busOutPin(group);
+      continue;
+    }
+    const name = group.name;
+    const i = group.idx[0];
     const p = input.layout.outputs.get(name)!;
     const src = input.drivers.get(`out:${name}`);
     const v = src === undefined || input.reached(src, 2) ? input.outputs[i] : null;
@@ -824,7 +927,7 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       }
     }
     addPort(`out:${name}`, p.x, p.y, false, driven.has(`out:${name}`), on);
-  });
+  }
 
   const buckets = { solid: solid.finish(), boardTop: boardTop.finish(), chipTops: chipTops.finish(), labels: labels.finish() };
   return {

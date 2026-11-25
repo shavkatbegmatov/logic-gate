@@ -1415,6 +1415,10 @@ p.join-or {
   stroke-linejoin: round;
 }
 
+.mini-wire.bus {
+  stroke-width: 9px;
+}
+
 .mini-dot {
   fill: var(--trace);
 }
@@ -2781,6 +2785,108 @@ p.join-or {
 
 .pin-out.bad .pin-exp {
   fill: var(--bad);
+}
+
+/* Shina (board/bus.ts): to'rt bit — bitta qalin sim, ustida son; keng port; keng pinlar — bit tugmalari va
+   son oynasi. Bitlar alohida tugma: har biri o'z tumbleri (data-pin). */
+.wire.bus .wire-line {
+  stroke-width: calc(var(--trace-w) * 2.2);
+}
+
+.wire.bus .wire-glow {
+  stroke-width: calc(var(--glow-w) * 1.5);
+}
+
+.wire.bus .wire-hit {
+  stroke-width: 22;
+}
+
+.wire.bus .real-wire-base {
+  stroke-width: calc(var(--trace-w) * 2.2 + 3px);
+}
+
+.bus-tag {
+  pointer-events: none;
+}
+
+.bus-tag rect {
+  fill: var(--pin);
+  stroke: var(--trace);
+  stroke-width: 1.6;
+}
+
+.bus-tag.on rect {
+  stroke: var(--trace-on);
+}
+
+.bus-tag.idle {
+  opacity: 0.55;
+}
+
+.bus-tag text {
+  font: 700 11px var(--mono);
+  fill: var(--text);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.port.bus .port-dot {
+  stroke-width: 3;
+}
+
+.bus-lead {
+  stroke-width: 5;
+}
+
+.bus-bit {
+  cursor: pointer;
+}
+
+.bus-bit.on > rect {
+  fill: var(--gate-on-fill);
+  stroke: var(--gate-on-stroke);
+}
+
+.bus-bit-val,
+.bus-val,
+.bus-num {
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.bus-bit-val {
+  font: 700 12px var(--mono);
+  fill: var(--muted);
+}
+
+.bus-bit.on .bus-bit-val {
+  fill: var(--text);
+}
+
+.bus-val {
+  font: 600 11px var(--mono);
+  fill: var(--muted);
+}
+
+.bus-screen {
+  fill: var(--lamp);
+  stroke: var(--lamp-stroke);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.bus-num {
+  font: 700 17px var(--mono);
+  fill: var(--muted);
+}
+
+.pin-out.pin-bus.on .bus-num {
+  fill: var(--on);
+}
+
+.pin-out.pin-bus.on .bus-screen {
+  stroke: var(--lamp-on-stroke);
 }
 
 .delete-btn {

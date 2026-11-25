@@ -36,6 +36,20 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.31.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 10-bo'lim — «Shinalar» (100 ★ dan ochiladi): to'rt sim — bitta yo'l. Shina maydonda bitta keng pin va bitta qalin sim bo'lib ko'rinadi, ustida qiymati son bilan yoziladi; ulaganda to'rttala bit birga ulanadi, o'chirganda birga o'chadi.",
+      "6 ta yangi daraja: teskari shina, «Nolmi?», to'rt bitli summator, shina tanlovchi, bittaga oshirish va hisoblagichning bir qadami.",
+      "Yangi bloklar: bo'laklovchi (SPLIT), birlashtiruvchi (JOIN), shina inkori (NOT4), to'rt bitli summator (ADD4), shina tanlovchi (MUX4) va bittaga oshiruvchi (INC4). Shinali darajalarda haqiqat jadvali sonlarda — 512 qatorli jadval ham oson o'qiladi.",
+    ],
+    ru: [
+      "Новая, 10-я глава — «Шины» (открывается со 100 ★): четыре провода — одна дорога. Шина на поле — один широкий вывод и один толстый провод с числом-значением; при подключении все четыре бита соединяются сразу и так же вместе удаляются.",
+      "6 новых уровней: обратная шина, «Ноль?», четырёхбитный сумматор, выбор шины, плюс один и шаг счётчика.",
+      "Новые блоки: разделитель (SPLIT), объединитель (JOIN), инверсия шины (NOT4), четырёхбитный сумматор (ADD4), выбор шины (MUX4) и плюс один (INC4). В уровнях с шинами таблица истинности — в числах: даже таблицу на 512 строк легко читать.",
+    ],
+  },
+  {
     version: '2.30.0',
     date: '2026-11-25',
     uz: [

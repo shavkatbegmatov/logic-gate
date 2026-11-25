@@ -1,8 +1,9 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { t } from '../i18n';
-import { BLOCKS, GATE_ARITY, gateOutputs, isBlock, sourcePort, type GateType } from '../sim/types';
+import { GATE_ARITY, gateOutputs, isBlock, sourcePort, type GateType } from '../sim/types';
 import { activeTheme, resolveRealStyle, type RealStyle } from '../theme';
 import type { Editor } from './editor';
+import { BusInPin, BusOutPin } from './BusPins';
 import { CHIP_CODE, GateShape } from './GateShape';
 import { bounds, GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { routeD } from './routing';
@@ -153,7 +154,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
 
   const port = (id: string, x: number, y: number, src: boolean, connected: boolean, on: boolean, name: string) => (
     <g
-      class={`port ${src ? 'src' : 'sink'}${connected ? ' linked' : ''}${on ? ' on' : ''}${b.active === id ? ' active' : ''}`}
+      class={`port ${src ? 'src' : 'sink'}${b.busPort(id) ? ' bus' : ''}${connected ? ' linked' : ''}${on ? ' on' : ''}${b.active === id ? ' active' : ''}`}
       data-kind="port"
       data-port={id}
       transform={`translate(${x},${y})`}
@@ -164,7 +165,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
       onKeyDown={(e) => b.onPortKey(e, id)}
     >
       <circle class="port-hit" r={15} />
-      <circle class="port-dot" r={5.5} />
+      <circle class="port-dot" r={b.busPort(id) ? 7.5 : 5.5} />
     </g>
   );
 
@@ -175,19 +176,33 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
   const sh = slab.maxY - slab.minY + 44;
 
   let deleteAt = b.gateDeleteAt;
+  const tags: ComponentChildren[] = [];
   const wireEls = b.wires.map((w, i) => {
     const route = b.routed.routes[i];
-    if (!route) return null;
+    // Shinaning qolgan bitlari — boshi bilan bitta qalin sim (lenta kabel).
+    if (!route || b.bund.rep[i] !== i) return null;
     // PCB rejimida kesishish ustiga SMD 000 ko'prik qo'yiladi; boshqa uslublarda — ko'tarilgan yoy.
     const hops = style === 'pcb' ? [] : b.routed.hops[i];
     const d = routeD(route, hops, b.sharp);
     const live = b.reached(w.from, 1);
-    const on = live && b.values.get(w.from) === 1;
+    const bus = b.busWireValue(i);
+    const on = live && (bus === undefined ? b.values.get(w.from) === 1 : !!bus);
+    if (bus !== undefined) {
+      const m = routeMid(route);
+      tags.push(
+        <g key={`tag${i}`} class={`bus-tag${on ? ' on' : ''}${live ? '' : ' idle'}`} transform={`translate(${m.x},${m.y})`}>
+          <rect x={-12} y={-9} width={24} height={18} rx={9} />
+          {upright(0, 0, <text>{live && bus !== null ? bus : '–'}</text>)}
+        </g>,
+      );
+    }
     const front = b.wave !== null && b.stepOf(w.from, 1) === b.wave;
     const selected = b.sel?.kind === 'wire' && b.sel.index === i;
     if (selected) {
       const m = routeMid(route);
-      deleteAt = { x: m.x, y: m.y + (b.vertical ? 14 : -14) };
+      // Shina simida o'rtada son turadi — o'chirish tugmasi undan nariroqda.
+      const off = bus === undefined ? 14 : 26;
+      deleteAt = { x: m.x, y: m.y + (b.vertical ? off : -off) };
     }
     const insulated = style === 'breadboard' || style === 'bench';
     const offStroke = insulated ? netColor(w.from) : undefined;
@@ -216,7 +231,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
     return (
       <g
         key={`${w.from}>${w.to}`}
-        class={`wire${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
+        class={`wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
         data-kind="wire"
         data-index={i}
       >
@@ -316,6 +331,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 </g>
               );
             })}
+            {tags}
           </g>
 
           {b.gates.map((g) => {
@@ -342,12 +358,10 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   {isBlock(g.type) ? (
                     <>
                       {label('gate-label block-label', 36, gateH(g) / 2, g.type)}
-                      {BLOCKS[g.type].inputs.map((n, i) => (
-                        <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>
-                      ))}
-                      {BLOCKS[g.type].outputs.map((n, k) => (
-                        <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>
-                      ))}
+                      {b.blockLabels(g).ins.map((n, i) => n && <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>)}
+                      {b.blockLabels(g).outs.map(
+                        (n, k) => n && <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>,
+                      )}
                     </>
                   ) : g.type === 'DFF' ? (
                     <>
@@ -362,19 +376,25 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   )}
                 </g>
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
-                  port(`${g.id}:${i}`, 0, inputPortY(g, i), false, b.driven.has(`${g.id}:${i}`), false, a11y.gateIn(b.gateName.get(g.id)!, i)),
+                  b.hidden(`${g.id}:${i}`)
+                    ? null
+                    : port(`${g.id}:${i}`, 0, inputPortY(g, i), false, b.driven.has(`${g.id}:${i}`), false, a11y.gateIn(b.gateName.get(g.id)!, i)),
                 )}
                 {Array.from({ length: gateOutputs(g.type) }, (_, k) => {
                   const id = sourcePort(g.id, k);
+                  if (b.hidden(id)) return null;
                   const outOn = b.reached(id, 0) && b.values.get(id) === 1;
-                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${BLOCKS[g.type].outputs[k]}` : b.gateName.get(g.id)!;
+                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${b.blockOutName(g, k)}` : b.gateName.get(g.id)!;
                   return port(id, GATE_W, outputPortY(g, k), true, b.usedSources.has(id), outOn, a11y.gateOut(name));
                 })}
               </g>
             );
           })}
 
-          {b.spec.inputs.map((name, k) => {
+          {b.inGroups.map((group) => {
+            if (group.bus) return <BusInPin key={`in:${group.name}`} b={b} group={group} port={port} real />;
+            const name = group.name;
+            const k = group.idx[0];
             const p = b.lay.inputs.get(name)!;
             const on = b.bits[k] === 1;
             return (
@@ -412,7 +432,10 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             );
           })}
 
-          {b.spec.outputs.map((name, i) => {
+          {b.outGroups.map((group) => {
+            if (group.bus) return <BusOutPin key={`out:${group.name}`} b={b} group={group} port={port} real />;
+            const name = group.name;
+            const i = group.idx[0];
             const p = b.lay.outputs.get(name)!;
             const src = b.drivers.get(`out:${name}`);
             const v = src === undefined || b.reached(src, 2) ? b.outputs[i] : null;

@@ -325,15 +325,16 @@ export interface LabelAtlas {
 }
 
 export function buildLabelAtlasCanvas(_style: RealStyle, labels: string[], expWord = 'kerak'): LabelAtlas {
+  // Shinali darajada sonlar (0–15) ham yoziladi — 32 katak yetmaydi; boshqa darajalarda avvalgidek 512×512.
+  const unique = [...new Set(['000', '0', '1', ...labels])].slice(0, 64);
+  const rows = unique.length > 32 ? 16 : 8;
   const c = document.createElement('canvas');
   c.width = 512;
-  c.height = 512;
+  c.height = rows * 64;
   const ctx = c.getContext('2d')!;
   const uvs = new Map<string, UVRect>();
 
-  const unique = [...new Set(['000', '0', '1', ...labels])].slice(0, 32);
   const cols = 4;
-  const rows = 8;
   const cw = c.width / cols;
   const ch = c.height / rows;
 
