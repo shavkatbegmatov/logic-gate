@@ -3,6 +3,7 @@ import solutionsData from '../../../levels/solutions.json';
 import { levels } from '../levels';
 import type { Circuit, Gate } from '../sim/types';
 import { blockPinLabels, blockPortNames, bundles, busExamples, busValue, groupValue, isHiddenBit, pinGroups, portGroup } from './bus';
+import { check } from '../sim/sim';
 import { Editor } from './editor';
 import { bounds, layout, outputColumn } from './geometry';
 import { routeAll } from './routing';
@@ -201,5 +202,44 @@ describe('muharrir: shina ulash va o\'chirish', () => {
     // A = 1011 (11), S = 1 → Q = 12 = 1100.
     ed.setRow(0b10111);
     expect(ed.evaluation.value.outputs).toEqual([1, 1, 0, 0]);
+  });
+});
+
+describe('muharrir: ALU darajalari', () => {
+  it('ayirgich: NOT4, doimiy 1 va ADD4 — 3★, 3 − 5 = 14 (qarz bor)', () => {
+    const l2 = levels.find((l) => l.id === 'l2')!;
+    const ed = new Editor();
+    const gates: Gate[] = [
+      { id: 'n', type: 'NOT4', x: 120, y: 0 },
+      { id: 'one', type: 'ONE', x: 120, y: 120 },
+      { id: 's', type: 'ADD4', x: 264, y: 0 },
+    ];
+    ed.load(l2, { gates, wires: [] }, outputColumn(l2.goal));
+    expect(ed.connect('in:B3', 'n:0')).toBe('ok');
+    expect(ed.connect('in:A3', 's:0')).toBe('ok');
+    expect(ed.connect('n', 's:4')).toBe('ok');
+    expect(ed.connect('one', 's:4')).toBe('width');
+    expect(ed.connect('one', 's:8')).toBe('ok');
+    expect(ed.connect('s', 'out:D3')).toBe('ok');
+    expect(ed.connect('s.4', 'out:C')).toBe('ok');
+    ed.setRow(0b00110101);
+    expect(ed.evaluation.value.outputs).toEqual([1, 1, 1, 0, 0]);
+    expect(check(l2, ed.circuit.value)).toEqual({ ok: true, gates: 3, stars: 3 });
+  });
+
+  it("qo'sh yoki ayir: SUB4 siz, S — ham B inkori tanlovi, ham Ci", () => {
+    const l3 = levels.find((l) => l.id === 'l3')!;
+    expect(l3.gates).not.toContain('SUB4');
+    const sol = solutions.l3;
+    expect(check(l3, sol)).toEqual({ ok: true, gates: 3, stars: 3 });
+    // Ci ga S o'rniga doimiy 0 — ayirishda bitta kam chiqadi.
+    const adder = sol.gates.find((g) => g.type === 'ADD4')!;
+    const ci = `${adder.id}:8`;
+    expect(sol.wires.find((w) => w.to === ci)?.from).toBe('in:S');
+    const wrong: Circuit = {
+      gates: [...sol.gates, { id: 'z', type: 'ZERO', x: 0, y: 300 }],
+      wires: sol.wires.map((w) => (w.to === ci ? { ...w, from: 'z' } : w)),
+    };
+    expect(check(l3, wrong).ok).toBe(false);
   });
 });
