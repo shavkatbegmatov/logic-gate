@@ -7,6 +7,7 @@ import { showToast, Toast } from './components/Toast';
 import { reportCaught } from './errors';
 import { imported } from './migrate';
 import { lang, t } from './i18n';
+import { loadLevelDetails } from './levels';
 import { go, route } from './router';
 import './achievements';
 import { DailyScreen } from './screens/DailyScreen';
@@ -33,8 +34,10 @@ const Achievements = lazy(() => import('./screens/Achievements').then((m) => m.A
 const CustomScreen = lazy(() => import('./screens/CustomScreen').then((m) => m.CustomScreen));
 // Sozlamalar (mavzu tanlagichi, sinflar, qo'llanmalar) — 2.17.0: ikki yangi mavzu bosh yuklamani chegaraga yetkazgach.
 const Settings = lazy(() => import('./screens/Settings').then((m) => m.Settings));
-// Sinf musobaqasi — faqat dars paytida.
-const ContestScreen = lazy(() => import('./screens/ContestScreen').then((m) => m.ContestScreen));
+// Sinf musobaqasi — faqat dars paytida. Daraja tafsilotlari (jadvallar, vazifa) bilan birga yuklanadi.
+const ContestScreen = lazy(() =>
+  Promise.all([import('./screens/ContestScreen'), loadLevelDetails()]).then(([m]) => m.ContestScreen),
+);
 // O'qituvchi tarqatmasi (QR-kod) — kamdan-kam: chop etish oldidan.
 const HandoutScreen = lazy(() => import('./screens/HandoutScreen').then((m) => m.HandoutScreen));
 

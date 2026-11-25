@@ -7,6 +7,7 @@ import { installErrorReporting } from './errors';
 import { startFunnel } from './funnel';
 import './install';
 import './theme';
+import { loadLevelDetails } from './levels';
 import { route } from './router';
 import { freshDevice, langReady } from './state';
 import { inTelegram } from './telegram';
@@ -46,6 +47,9 @@ void langReady.then((ok) => {
   startMusic(route);
   // O'yinchilar voronkasi (faqat bosqich nomlari, har biri qurilmadan bir marta).
   startFunnel();
+  // Daraja tafsilotlari (jadvallar, vazifa matni) — birinchi chizishdan keyin, bo'sh paytda: daraja darhol ochiladi.
+  const idle = window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300));
+  idle(() => void loadLevelDetails().catch(() => {}));
 });
 
 // Oflayn rejim (scripts/sw.template.js). Faqat build'da va HTTPS/localhost'da: eski manzil

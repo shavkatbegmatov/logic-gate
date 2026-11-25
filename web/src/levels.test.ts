@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { levelById, levels, newGates } from './levels';
+import pack from '../../levels/levels.json';
+import { detailsLoaded, levelById, levels, newGates } from './levels';
 import { ALL_GATE_TYPES, BLOCK_TYPES } from './sim/types';
+
+describe("daraja ma'lumotlari bo'laklari", () => {
+  it("tafsilotlar yuklangach daraja obyektlari — aynan levels.json (test-setup ularni yuklagan)", () => {
+    expect(detailsLoaded.value).toBe(true);
+    expect(levels.map((l) => l.id)).toEqual(pack.levels.map((l) => l.id));
+    for (const want of pack.levels as Record<string, unknown>[]) {
+      expect({ ...levelById(want.id as string) }).toEqual(want);
+    }
+  });
+});
 
 describe('newGates', () => {
   it('har bir element birinchi chiqqan darajada tanishtiriladi', () => {

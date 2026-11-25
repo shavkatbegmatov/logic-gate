@@ -1,7 +1,9 @@
 /// <reference types="vitest/config" />
 import preact from '@preact/preset-vite';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
+import { splitLevels } from './scripts/level-data.mjs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
@@ -32,8 +34,30 @@ function dictHints(): Plugin {
   };
 }
 
+/**
+ * Daraja ma'lumotlari ikki bo'lakda (scripts/level-data.mjs): `virtual:levels/meta` — bosh yuklamada,
+ * `virtual:levels/detail` — alohida bo'lakda, daraja ochilishidan oldin yuklanadi (src/levels.ts).
+ */
+function levelData(): Plugin {
+  const file = fileURLToPath(new URL('../levels/levels.json', import.meta.url));
+  const parts = { 'virtual:levels/meta': 'meta', 'virtual:levels/detail': 'detail' } as const;
+  return {
+    name: 'lg-level-data',
+    resolveId: (id) => (Object.hasOwn(parts, id) ? '\0' + id : undefined),
+    load(id) {
+      const name = id.slice(1);
+      if (!id.startsWith('\0') || !Object.hasOwn(parts, name)) return;
+      const part = parts[name as keyof typeof parts];
+      this.addWatchFile(file);
+      const data = splitLevels(JSON.parse(readFileSync(file, 'utf8')))[part];
+      // JSON.parse obyekt literalidan tezroq tahlil qilinadi (katta ma'lumot uchun V8 tavsiyasi).
+      return `export default JSON.parse(${JSON.stringify(JSON.stringify(data))});`;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [preact(), dictHints()],
+  plugins: [preact(), dictHints(), levelData()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

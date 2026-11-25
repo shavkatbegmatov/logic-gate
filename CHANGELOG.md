@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.33.1 — 2026-11-25
+
+- O'yin tezroq ochiladi: darajalar jadvallari, vazifa matnlari va maslahatlar endi o'yin ochilgandan keyin, fonda yuklanadi (ochilishda yuklanadigan hajm 123 → 111 KB).
+
 ## 2.32.0 — 2026-11-25
 
 - Yangi, 11-bo'lim — «ALU» (112 ★ dan ochiladi): protsessorning hisoblovchi yuragini yig'asiz. 6 ta daraja: manfiy son, ayirgich, «qo'sh yoki ayir», mantiqiy blok, taqqoslagich va to'rt amalli ALU.

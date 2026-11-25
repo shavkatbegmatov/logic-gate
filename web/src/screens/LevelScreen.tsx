@@ -12,7 +12,7 @@ import { ShareButtons } from '../components/ShareButtons';
 import { Icon, Modal, Stars } from '../components/ui';
 import { t } from '../i18n';
 import { chapterDone, lessonsRead } from '../lessons';
-import { chapterOf, chapters, levelById, levelNumber, levels } from '../levels';
+import { chapterOf, chapters, levelById, levelNumber, levels, loadLevelDetails } from '../levels';
 import { go } from '../router';
 import { levelShareText } from '../share';
 import { emptyCircuit, type Level } from '../sim/types';
@@ -35,6 +35,8 @@ import { submitSolve } from '../sync';
 import { Workbench, type Solved } from './Workbench';
 
 const StoryScene = lazy(() => import('./StoryScene').then((m) => m.StoryScene));
+// Jadval, vazifa matni va maslahatlar alohida bo'lakda (levels.ts): ish stoli ular kelgach chiziladi.
+const Ready = lazy(() => loadLevelDetails().then(() => Play));
 
 interface Result {
   stars: number;
@@ -48,7 +50,7 @@ interface Result {
 export function LevelScreen({ id }: { id: string }) {
   const level = levelById(id);
   if (!level || !levelUnlocked(level)) return <Redirect to="levels" />;
-  return <Play key={level.id} level={level} />;
+  return <Ready key={level.id} level={level} />;
 }
 
 function Redirect({ to }: { to: string }) {
