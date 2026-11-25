@@ -2,10 +2,12 @@
 import { onOldHost } from './migrate';
 import { render } from 'preact';
 import { App } from './app';
+import { startMusic } from './audio';
 import { installErrorReporting } from './errors';
 import { startFunnel } from './funnel';
 import './install';
 import './theme';
+import { route } from './router';
 import { freshDevice, langReady } from './state';
 import { inTelegram } from './telegram';
 import { startTelegram } from './telegram-app';
@@ -40,6 +42,8 @@ void langReady.then((ok) => {
 
   // Telegram Mini App sifatida ochilgan bo'lsa: Telegram oynasi, marshrut, bulutdagi profil.
   if (inTelegram) void startTelegram();
+  // Fon musiqasi va boy ovozlar (birinchi bosishdan keyin, alohida bo'lak).
+  startMusic(route);
   // O'yinchilar voronkasi (faqat bosqich nomlari, har biri qurilmadan bir marta).
   startFunnel();
 });
