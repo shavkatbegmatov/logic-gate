@@ -18,7 +18,7 @@ export const HOP_R = 7;
 /** Qiyalik joyi qadami. */
 const STEP = GRID / 2;
 /** Bir sim uchun ko'rib chiqiladigan joylar soni (eng yaqinlari). */
-const MAX_CANDIDATES = 40;
+const MAX_CANDIDATES = 80;
 /** Bundan yaqin parallel simlar bir chiziqdek ko'rinadi. */
 const NEAR = 7;
 const EPS = 0.5;
@@ -31,7 +31,8 @@ const COST = {
   cross: 40, // boshqa sim bilan kesishadi (ko'prikcha)
   sameCross: 40, // o'z tarmog'i bilan kesishadi
   sameNear: 100, // o'z tarmog'iga yaqin parallel (qo'sh chiziq)
-  cramped: 25, // kesishish burchakka juda yaqin
+  tightCross: 180, // kesishish pin yoki burchakka juda yopishgan (ko'prik siqiladi)
+  cramped: 25, // kesishish burchakka yaqinroq
   shift: 0.15, // markazdan siljish (birligiga)
 };
 
@@ -142,9 +143,19 @@ function onInterior(s: Seg, x: number, y: number): boolean {
   return Math.hypot(x - s.ax, y - s.ay) > EPS && Math.hypot(x - s.bx, y - s.by) > EPS;
 }
 
-/** Biri ikkinchisining ichiga uchi bilan tegadimi (T shaklida — ulangandek ko'rinadi). */
+/** Biri ikkinchisining ichiga uchi bilan tegadimi (T shaklida) yoki ikki uchi ustma-ust tushadimi (ulangandek ko'rinadi). */
 function touches(s: Seg, q: Seg): boolean {
-  return onInterior(s, q.ax, q.ay) || onInterior(s, q.bx, q.by) || onInterior(q, s.ax, s.ay) || onInterior(q, s.bx, s.by);
+  const samePt = (ax: number, ay: number, bx: number, by: number) => Math.hypot(ax - bx, ay - by) <= EPS;
+  return (
+    onInterior(s, q.ax, q.ay) ||
+    onInterior(s, q.bx, q.by) ||
+    onInterior(q, s.ax, s.ay) ||
+    onInterior(q, s.bx, s.by) ||
+    samePt(s.ax, s.ay, q.ax, q.ay) ||
+    samePt(s.ax, s.ay, q.bx, q.by) ||
+    samePt(s.bx, s.by, q.ax, q.ay) ||
+    samePt(s.bx, s.by, q.bx, q.by)
+  );
 }
 
 interface Box {
@@ -265,14 +276,22 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
             cost += same ? -Math.min(lap, 30) * 0.1 : COST.overlap + lap * 5;
             continue;
           }
-          if (lap > -EPS) continue; // bir chiziqda, uchma-uch
+          if (lap > -EPS) {
+            // Turli tarmoqlar uchma-uch tegsa — bitta uzluksiz simdek ko'rinib qoladi.
+            if (!same) cost += COST.touch;
+            continue;
+          }
           const gap = parallelGap(s, q);
           if (gap < NEAR) cost += same ? COST.sameNear : COST.near;
           const x = crossing(s, q);
           if (x) {
             cost += same ? COST.sameCross : COST.cross;
-            // Burchakka yaqin kesishish: ko'prikcha burchak bilan siqilib qoladi.
-            if (!same && Math.min(endDist(s, x), endDist(q, x)) < HOP_R + 12) cost += COST.cramped;
+            // Pin yoki burchakka yopishgan kesishish: ko'prikcha bemalol sig'ishi uchun bo'shroq yo'lak tanlansin.
+            if (!same) {
+              const dEnd = Math.min(endDist(s, x), endDist(q, x));
+              if (dEnd < HOP_R + 4) cost += COST.tightCross;
+              else if (dEnd < HOP_R + 10) cost += COST.cramped;
+            }
           } else if (!same && touches(s, q)) cost += COST.touch;
         }
         if (cost >= bestCost) break;
@@ -300,15 +319,19 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
 }
 
 /**
- * Ko'prikchalar: turli tarmoqlarning kesishishida biri ustidan o'tadi — gorizontal qism vertikal va
- * qiyalik ustidan, qiyalik vertikal ustidan; ikki qiyalikdan — keyin chizilgani. Qismning uchiga (burchak)
- * juda yaqin kesishish ko'prikchasiz qoladi — kesilgan burchak bilan ustma-ust tushardi.
+ * Ko'prikchalar: turli tarmoqlarning kesishishida biri ustidan o'tadi — avval gorizontal (keyin qiyalik,
+ * so'ng vertikal) qismga qo'yiladi. Agar tanlangan qismda joy tor bo'lsa yoki yonida boshqa ko'prikcha
+ * turgan bo'lsa — ikkinchi kesishuvchi qismga o'tkaziladi, shunda kesishish ko'priksiz qolib ulangandek
+ * ko'rinmaydi.
  */
 function hopsFor(wires: Wire[], routes: (Point[] | null)[]): Point[][][] {
   const hops: Point[][][] = routes.map((r) => (r ? r.slice(1).map(() => []) : []));
   const all: Seg[] = [];
   routes.forEach((r, i) => r && all.push(...segments(r, wires[i].from, i)));
   const rank = { h: 2, d: 1, v: 0 };
+  const roomOf = (seg: Seg, p: Point) => Math.min(Math.hypot(p.x - seg.ax, p.y - seg.ay), Math.hypot(p.x - seg.bx, p.y - seg.by));
+  const freeOf = (seg: Seg, p: Point, minGap: number) =>
+    !hops[seg.wire][seg.index].some((h) => Math.hypot(h.x - p.x, h.y - p.y) < minGap);
   for (let x = 0; x < all.length; x++) {
     for (let y = x + 1; y < all.length; y++) {
       const s = all[x];
@@ -316,14 +339,20 @@ function hopsFor(wires: Wire[], routes: (Point[] | null)[]): Point[][][] {
       if (s.net === q.net || s.maxX < q.minX || s.minX > q.maxX || s.maxY < q.minY || s.minY > q.maxY) continue;
       const p = crossing(s, q);
       if (!p) continue;
-      const top = rank[s.kind] > rank[q.kind] ? s : rank[q.kind] > rank[s.kind] ? q : s.wire > q.wire ? s : q;
-      // Yoy qism ichiga sig'sin (yonidagi burchak kesigi routeD da kichraytiriladi).
-      const room = Math.min(Math.hypot(p.x - top.ax, p.y - top.ay), Math.hypot(p.x - top.bx, p.y - top.by));
-      if (room < HOP_R + 2) continue;
-      const list = hops[top.wire][top.index];
-      // Juda yaqin ikki ko'prikcha bitta bo'lib ko'rinadi — ikkinchisi tashlanadi.
-      if (list.some((h) => Math.hypot(h.x - p.x, h.y - p.y) < 2 * HOP_R + 2)) continue;
-      list.push(p);
+      const first = rank[s.kind] > rank[q.kind] ? s : rank[q.kind] > rank[s.kind] ? q : s.wire > q.wire ? s : q;
+      const second = first === s ? q : s;
+      let host: Seg | null = null;
+      if (roomOf(first, p) >= HOP_R + 2 && freeOf(first, p, 2 * HOP_R + 2)) {
+        host = first;
+      } else if (roomOf(second, p) >= HOP_R + 2 && freeOf(second, p, 2 * HOP_R + 2)) {
+        host = second;
+      } else {
+        // Ikkalasi ham burchakka yaqin bo'lsa — kengroq joyli qismga ixcham ko'prikcha qo'yiladi.
+        const [a, b] = roomOf(first, p) >= roomOf(second, p) ? [first, second] : [second, first];
+        if (roomOf(a, p) >= 4.5 && freeOf(a, p, HOP_R + 2)) host = a;
+        else if (roomOf(b, p) >= 4.5 && freeOf(b, p, HOP_R + 2)) host = b;
+      }
+      if (host) hops[host.wire][host.index].push(p);
     }
   }
   return hops;
@@ -426,7 +455,7 @@ export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => 
     const len = Math.hypot(e.x - s.x, e.y - s.y);
     const list = (hops[k] ?? [])
       .map((h) => ({ h, at: Math.hypot(h.x - s.x, h.y - s.y) }))
-      .filter((x) => x.at >= HOP_R && len - x.at >= HOP_R)
+      .filter((x) => x.at >= 4 && len - x.at >= 4)
       .sort((x, y) => x.at - y.at);
     if (list.length && len > 0) {
       const ux = (e.x - s.x) / len;
@@ -434,8 +463,15 @@ export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => 
       // sweep 1 — yoy harakat yo'nalishining chap tomoniga bo'rtadi (ekranda y pastga): o'ngga ketayotganda
       // bu — yuqori; chapga ketayotganda yuqori o'ng tomonda (sweep 0). Vertikal qism — chapga bo'rtadi.
       const sweep = ux > 1e-9 || (Math.abs(ux) < 1e-9 && uy < 0) ? 1 : 0;
-      for (const { h } of list) {
-        d += ` L${n(h.x - ux * HOP_R)},${n(h.y - uy * HOP_R)} A${HOP_R},${HOP_R} 0 0 ${sweep} ${n(h.x + ux * HOP_R)},${n(h.y + uy * HOP_R)}`;
+      let prevEnd = 0;
+      for (let m = 0; m < list.length; m++) {
+        const { h, at } = list[m];
+        const nextMid = m + 1 < list.length ? (at + list[m + 1].at) / 2 : len;
+        const maxR = Math.min(HOP_R, at - prevEnd, len - at, nextMid - at);
+        if (maxR < 3.5) continue;
+        const hr = maxR >= HOP_R ? HOP_R : Math.round(maxR * 10) / 10;
+        d += ` L${n(h.x - ux * hr)},${n(h.y - uy * hr)} A${hr},${hr} 0 0 ${sweep} ${n(h.x + ux * hr)},${n(h.y + uy * hr)}`;
+        prevEnd = at + hr;
       }
     }
     d += ` L${n(e.x)},${n(e.y)}`;

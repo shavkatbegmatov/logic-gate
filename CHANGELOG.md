@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.33.2 — 2026-11-25
+
+- Kesishgan simlar burchak yoki pinga yaqin bo'lganda ko'priksiz qolib ulangandek ko'rinishi tuzatildi — yo'naltiruvchi kengroq yo'lak tanlaydi, tor joylarda esa ko'prik kesishuvchi ikkinchi simga qo'yiladi.
+- 3D PCB uslubidagi «000» ko'prik rezistori ikki uchli metall kontaktlar va vertikal burilgan yozuv bilan yangilandi; boshqa 3D uslublarda sim yoyi silliqlashtirildi.
+
 ## 2.33.1 — 2026-11-25
 
 - O'yin tezroq ochiladi: darajalar jadvallari, vazifa matnlari va maslahatlar endi o'yin ochilgandan keyin, fonda yuklanadi (ochilishda yuklanadigan hajm 123 → 111 KB).

@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.33.2',
+    date: '2026-11-25',
+    uz: [
+      "Kesishgan simlar burchak yoki pinga yaqin bo'lganda ko'priksiz qolib ulangandek ko'rinishi tuzatildi — yo'naltiruvchi kengroq yo'lak tanlaydi, tor joylarda esa ko'prik kesishuvchi ikkinchi simga qo'yiladi.",
+      "3D PCB uslubidagi «000» ko'prik rezistori ikki uchli metall kontaktlar va vertikal burilgan yozuv bilan yangilandi; boshqa 3D uslublarda sim yoyi silliqlashtirildi.",
+    ],
+    ru: [
+      'Исправлено отображение пересекающихся проводов рядом с углами и контактами: трассировщик выбирает более свободный коридор, а при нехватке места перемычка переносится на второй пересекающийся провод.',
+      'Обновлена 3D-перемычка «000» на печатной плате (раздельные контактные площадки и вертикальная маркировка); в остальных 3D-стилях дуги переброса стали плавнее.',
+    ],
+  },
+  {
     version: '2.33.1',
     date: '2026-11-25',
     uz: [
