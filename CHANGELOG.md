@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.30.0 — 2026-11-25
+
+- Hikoyaning 2-bo'limi — «Bozor darvozalari»: Lola va Chiroq qulflangan bozorning oltita darvozasini ochadi. Kirish va yakuniy sahnalar, har darajada o'z hikoya qatori; Chiroq yangi so'zlar o'rganadi.
+
 ## 2.29.0 — 2026-11-25
 
 - «Bloklar» bo'limiga hikoya qo'shildi: Chiroq buvining sandig'idan oyoqchali qora qutichalarni topadi, bo'lim oxirida esa buvining chizmasida Ustozning hisob xonasi va to'rt simli yo'l — shina paydo bo'ladi.

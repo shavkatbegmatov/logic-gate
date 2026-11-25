@@ -10,7 +10,7 @@ import type * as Texts from './story-texts';
 import { asString, cleanList } from './validate';
 
 /** Hikoyasi yozilgan bo'limlar (story.test.ts story-texts.ts bilan solishtiradi). */
-export const STORY_CHAPTERS = ['basics', 'chips'];
+export const STORY_CHAPTERS = ['basics', 'xor', 'chips'];
 
 export type SceneKind = 'intro' | 'outro';
 export interface SceneRef {

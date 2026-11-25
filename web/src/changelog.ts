@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.30.0',
+    date: '2026-11-25',
+    uz: [
+      "Hikoyaning 2-bo'limi — «Bozor darvozalari»: Lola va Chiroq qulflangan bozorning oltita darvozasini ochadi. Kirish va yakuniy sahnalar, har darajada o'z hikoya qatori; Chiroq yangi so'zlar o'rganadi.",
+    ],
+    ru: [
+      "Вторая глава истории — «Ворота базара»: Лола и Огонёк открывают шесть запертых ворот базара. Вступительная и финальная сцены, своя строка сюжета на каждом уровне; Огонёк учит новые слова.",
+    ],
+  },
+  {
     version: '2.29.0',
     date: '2026-11-25',
     uz: [
