@@ -118,7 +118,13 @@ function Picture({ art }: { art: Art }) {
       {art === 'bus' && <Bus />}
       {(art === 'bazaar' || art === 'bazaarlit') && <Bazaar lit={art === 'bazaarlit'} />}
       {art === 'gatelock' && <GateLock />}
-      {art === 'tower' && <Tower />}
+      {(art === 'tower' || art === 'towerlit') && <Tower lit={art === 'towerlit'} />}
+      {art === 'scales' && <Scales />}
+      {art === 'vault' && <Vault />}
+      {art === 'fountain' && <Fountain />}
+      {(art === 'counter' || art === 'counterlit') && <Counter lit={art === 'counterlit'} />}
+      {(art === 'heart' || art === 'heartlit') && <Heart lit={art === 'heartlit'} />}
+      {art === 'citylit' && <City lit />}
     </svg>
   );
 }
@@ -178,13 +184,13 @@ function Lola({ x, y, tilt = 0 }: { x: number; y: number; tilt?: number }) {
   );
 }
 
-function City() {
+function City({ lit = false }: { lit?: boolean }) {
   return (
     <>
       <rect width="320" height="180" class="sky" />
       <Stars />
       <circle cx="262" cy="40" r="11" class="moon" />
-      <Skyline />
+      <Skyline lit={lit} />
     </>
   );
 }
@@ -419,22 +425,130 @@ function GateLock() {
   );
 }
 
-/** Tarozi minorasi: bozor o'rtasida, tepasida tarozi pallalari — hali qorong'i (3-bo'limga ko'prik). */
-function Tower() {
+/** Tarozi minorasi: bozor o'rtasida, tepasida tarozi pallalari. lit — minora hisoblayapti, derazasi yoniq. */
+function Tower({ lit = false }: { lit?: boolean }) {
   return (
     <>
       <rect width="320" height="180" class="sky" />
       <Stars />
       <Skyline lit />
+      {lit && <circle cx="160" cy="70" r="46" fill="url(#glow)" class="chiroq-glow" />}
       <path class="tower" d="M142 180V60l18-14 18 14v120z" />
-      <path class="scale-beam" d="M118 40h84M160 46V30M118 40l-10 18h20zM202 40l-10 18h20z" />
-      <rect x="152" y="96" width="16" height="22" rx="8" class="tower-window" />
+      <path class="scale-beam" d={lit ? 'M118 44l84-8M160 46V30M118 44l-10 18h20zM202 36l-10 18h20z' : 'M118 40h84M160 46V30M118 40l-10 18h20zM202 40l-10 18h20z'} />
+      <rect x="152" y="96" width="16" height="22" rx="8" class={lit ? 'tower-window lit' : 'tower-window'} />
       <g class="crowd">
         <circle cx="104" cy="150" r="6" />
         <path d="M96 172q8-18 16 0z" />
         <circle cx="216" cy="150" r="6" />
         <path d="M208 172q8-18 16 0z" />
       </g>
+    </>
+  );
+}
+
+// ── 3-bo'lim: Tarozi minorasi ───────────────────────────────
+
+/** Minora ichida: katta tarozi, pallalarida bit-toshlar «1» va «1» — tarozi ularni qo'shadi. */
+function Scales() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih" />
+      <path class="scale-beam big" d="M160 160V40M140 160h40M88 50l144-10" />
+      <path class="scale-beam" d="M88 50l-22 46M88 50l22 46M232 40l-22 46M232 40l22 46" />
+      <path class="pan" d="M62 96q26 16 52 0zM206 86q26 16 52 0z" />
+      {[[78, 82], [222, 72]].map(([x, y]) => (
+        <g key={x}>
+          <rect x={x} y={y} width="20" height="16" rx="2" class="weight" />
+          <text x={x + 10} y={y + 8} class="weight-bit">1</text>
+        </g>
+      ))}
+      <circle cx="160" cy="44" r="5" class="chiroq-tip" />
+      <Chiroq x={276} y={150} s={0.55} awake />
+    </>
+  );
+}
+
+// ── 4-bo'lim: Kumush ombor ─────────────────────────────────
+
+/** Ombor javonlari: bir xil kumush quymalar, oldinda bittasi yaqindan — ustida NAND. */
+function Vault() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih" />
+      {[44, 86, 128].map((y) => (
+        <g key={y}>
+          <rect x="20" y={y} width="280" height="5" class="shelf" />
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => (
+            <path key={k} class="ingot" d={`M${30 + k * 27} ${y}l4-14h14l4 14z`} />
+          ))}
+        </g>
+      ))}
+      <path class="ingot big" d="M110 180l12-34h76l12 34z" />
+      <text x="160" y="166" class="ingot-name">NAND</text>
+    </>
+  );
+}
+
+/** Shahar hovuzi: favvora yana otiladi (nasoslar ishlayapti). */
+function Fountain() {
+  return (
+    <>
+      <rect width="320" height="180" class="sky" />
+      <Stars />
+      <Skyline lit />
+      <rect x="60" y="160" width="200" height="20" class="pool" />
+      <path class="pool-rim" d="M54 160h212" />
+      <path class="water-jet" d="M160 160V108M160 108q-30 0-46 48M160 108q30 0 46 48" />
+      {[[120, 128], [200, 128], [160, 98]].map(([x, y]) => (
+        <circle key={x} cx={x} cy={y} r="3" class="drop" />
+      ))}
+      <path class="water" d="M66 172q14-6 28 0t28 0t28 0t28 0t28 0t28 0t28 0" />
+    </>
+  );
+}
+
+// ── Shinalar: hisob xonasi ─────────────────────────────────
+
+/** Ustozning hisoblagichi: to'rt bit-chiroq va raqam; pastdan shina kiradi. lit — son yetib keldi (0101 = 5). */
+function Counter({ lit }: { lit: boolean }) {
+  const bits = [0, 1, 0, 1];
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class={lit ? 'girih lit' : 'girih'} />
+      {lit && <circle cx="160" cy="88" r="80" fill="url(#glow)" class="chiroq-glow" />}
+      {bits.map((_, k) => (
+        <path key={k} class="bus-line" d={`M${112 + k * 32} 136V180`} />
+      ))}
+      <rect x="80" y="36" width="160" height="100" rx="8" class="chip-body" />
+      {bits.map((b, k) => (
+        <circle key={k} cx={112 + k * 32} cy="66" r="9" class={lit && b ? 'lantern lit' : 'lantern'} />
+      ))}
+      <text x="160" y="108" class="chip-name">{lit ? '5' : '·'}</text>
+    </>
+  );
+}
+
+// ── ALU: Ustozning yuragi ──────────────────────────────────
+
+/** ALU belgisi: tepadan ikki shina (A, B), pastdan natija, chapda F1 F0 amal kalitlari. lit — yurak uradi. */
+function Heart({ lit }: { lit: boolean }) {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class={lit ? 'girih lit' : 'girih'} />
+      {lit && <circle cx="160" cy="90" r="76" fill="url(#glow)" class="chiroq-glow" />}
+      {[0, 4, 8, 12].map((d) => (
+        <path key={d} class="bus-line thin" d={`M${116 + d} 0V40M${192 + d} 0V40M${154 + d} 140V180`} />
+      ))}
+      <path class={lit ? 'alu lit' : 'alu'} d="M98 40h52l10 20 10-20h52l-26 100h-72z" />
+      <text x="160" y="102" class="chip-name small">ALU</text>
+      <path class="chip-leg" d="M58 84h51M58 100h55" />
+      <rect x="44" y="78" width="14" height="12" rx="2" class="switch" />
+      <rect x="44" y="94" width="14" height="12" rx="2" class="switch" />
+      <Chiroq x={270} y={150} s={0.55} awake={lit} />
     </>
   );
 }

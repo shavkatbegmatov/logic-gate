@@ -45,7 +45,7 @@ describe('kampaniya hikoyasi: matnlar', () => {
     expect(storyFor('basics')?.place).toBe(STORIES.uz.basics.place);
     await setLang('ru');
     expect(storyFor('basics')?.place).toBe(STORIES.ru.basics.place);
-    expect(storyFor('circuits')).toBeUndefined();
+    expect(storyFor('master')).toBeUndefined();
   });
 });
 
@@ -78,11 +78,11 @@ describe('kampaniya hikoyasi: qachon ko\'rsatiladi', () => {
   });
 
   it("hikoyasiz bo'lim va o'chirilgan hikoya — sahna ham, qator ham yo'q", async () => {
-    expect(introFor(chapterLevels('circuits')[0].id)).toBeNull();
+    expect(introFor(chapterLevels('master')[0].id)).toBeNull();
     await preloadStory();
     expect(storyLine('basics', basics[0])).toBe(STORIES.uz.basics.lines[basics[0]]);
     expect(storyPlace('basics')).toBe(STORIES.uz.basics.place);
-    expect(storyLine('circuits', chapterLevels('circuits')[0].id)).toBeUndefined();
+    expect(storyLine('master', chapterLevels('master')[0].id)).toBeUndefined();
     settings.value = { ...settings.value, story: false };
     expect(introFor(basics[0])).toBeNull();
     expect(storyLine('basics', basics[0])).toBeUndefined();
