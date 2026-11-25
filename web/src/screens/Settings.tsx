@@ -293,6 +293,21 @@ export function Settings() {
           </section>
 
           <section class="card">
+            <div class="row between">
+              <span>{t.settings.music}</span>
+              <button
+                class={`btn toggle${settings.value.sound && settings.value.music !== false ? ' on' : ''}`}
+                onClick={() => (settings.value = { ...settings.value, music: settings.value.music === false })}
+                aria-pressed={settings.value.sound && settings.value.music !== false}
+                disabled={!settings.value.sound}
+              >
+                <Icon name={settings.value.sound && settings.value.music !== false ? 'sound' : 'mute'} />{' '}
+                {settings.value.sound && settings.value.music !== false ? t.settings.on : t.settings.off}
+              </button>
+            </div>
+          </section>
+
+          <section class="card">
             <h2>{t.settings.reset}</h2>
             <p class="muted">{p ? t.settings.resetTextProfile : t.settings.resetText}</p>
             {teacherCount > 0 && <p class="muted small">{t.settings.resetTeacher(teacherCount)}</p>}

@@ -39,6 +39,8 @@ export interface Profile {
 
 export interface Settings {
   sound: boolean;
+  /** Fon musiqasi (audio-rich.ts); yo'q bo'lsa — yoqilgan. Ovoz effektlari o'chiq bo'lsa, u ham jim. */
+  music?: boolean;
   lang?: Lang;
   /** Rang mavzusi (theme.ts); yo'q bo'lsa — Sanoat PCB. */
   theme?: Theme;
@@ -64,6 +66,7 @@ const cleanSettings = (v: unknown): Partial<Settings> | null => {
   if (!isObj(v)) return null;
   const out: Partial<Settings> = {};
   if (typeof v.sound === 'boolean') out.sound = v.sound;
+  if (typeof v.music === 'boolean') out.music = v.music;
   if (v.lang === 'uz' || v.lang === 'ru') out.lang = v.lang;
   // theme.ts dan THEMES olinmaydi: u state.ts ni import qiladi (aylana).
   if (

@@ -5,6 +5,12 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.26.0 — 2026-11-25
+
+- Musiqa: har bo'limning o'z fon kuyi bor — «Asoslar» yorqin va xotirjam, «Faqat NAND» qorong'iroq, «Xotira» va «Avtomatlar»da takt soati chiqillaydi. Menyu, kunlik masala va qum qutining ham o'z musiqasi bor.
+- Yangi ovozlar: element qo'yish, sim ulash, tumbler va yechim endi boyroq eshitiladi va musiqa bilan bir tonallikda. Tekshiruvda signal simlardan oqayotgani ham eshitiladi.
+- Sozlamalarda — «Fon musiqasi»: musiqani alohida o'chirsa bo'ladi, ovoz effektlari qoladi.
+
 ## 2.25.0 — 2026-11-25
 
 - Sozlamalarda — «Qurilmalar»: Telegram orqali kirgan har bir qurilma (brauzer, tizim, kirgan va oxirgi faol sana) ko'rinadi, keraksizini bir bosishda profildan chiqarasiz.

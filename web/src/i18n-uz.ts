@@ -782,6 +782,7 @@ Sen ham urinib ko'r!`,
     motionSystem:
       "Bu qurilmada animatsiya effektlari o'chirilgan (Windows yoki telefon sozlamasi): tekshiruv ko'rsatiladi, bezak harakatlari — yo'q. Hammasini ko'rish uchun — «Yoqilgan».",
     sound: 'Ovoz effektlari',
+    music: 'Fon musiqasi',
     on: 'Yoqilgan',
     off: "O'chirilgan",
     reset: "Progressni o'chirish",

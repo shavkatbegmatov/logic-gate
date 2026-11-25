@@ -162,6 +162,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
         editor.setRow(r);
         for (let k = 0; k < time.steps && !me.skip && !me.dead; k += time.stride) {
           editor.wave.value = k;
+          sfx.flow(k / time.steps);
           await sleep(time.step);
         }
         editor.wave.value = null;
@@ -213,6 +214,7 @@ export function Workbench({ level, editor, title, sub, onBack, onSolved, topInse
         editor.setRow(trace[i]);
         for (let k = 0; k < time.steps && !me.skip && !me.dead; k += time.stride) {
           editor.wave.value = k;
+          sfx.flow(k / time.steps);
           await sleep(time.step);
         }
         editor.wave.value = null;
