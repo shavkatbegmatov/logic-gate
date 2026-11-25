@@ -112,6 +112,10 @@ function Picture({ art }: { art: Art }) {
       {art === 'wake' && <Wake />}
       {(art === 'talk' || art === 'laugh') && <Talk laugh={art === 'laugh'} />}
       {art === 'window' && <Window />}
+      {art === 'chest' && <Chest />}
+      {art === 'chip' && <ChipClose />}
+      {art === 'plan' && <Plan />}
+      {art === 'bus' && <Bus />}
     </svg>
   );
 }
@@ -272,6 +276,91 @@ function Window() {
       <path class="arch-frame" d="M80 150V70q0-50 80-50t80 50v80z" />
       <rect x="64" y="150" width="192" height="10" class="table-top" />
       <Chiroq x={226} y={132} s={0.7} awake reach />
+    </>
+  );
+}
+
+/** Buvining sandig'i: ochiq qopqoq, ichida oyoqchali qutichalar; Chiroq bittasini ko'taradi. */
+function Chest() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="118" fill="url(#girih)" class="girih" />
+      <rect y="138" width="320" height="42" class="table" />
+      <path class="chest-lid" d="M92 92l-8-40h152l-8 40z" />
+      <rect x="92" y="92" width="136" height="54" rx="3" class="chest-box" />
+      <path class="chest-band" d="M92 108h136M160 92v54" />
+      {[106, 132, 178, 204].map((x) => (
+        <MiniChip key={x} x={x} y={96} />
+      ))}
+      <Chiroq x={254} y={104} s={0.75} awake reach />
+      <MiniChip x={216} y={44} />
+    </>
+  );
+}
+
+/** Kichik mikrosxema: qora quti, ikki yonida oyoqchalar. */
+function MiniChip({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <path class="chip-leg" d="M2 2v-4M8 2v-4M14 2v-4M2 12v4M8 12v4M14 12v4" />
+      <rect width="16" height="14" rx="2" class="chip-body" />
+    </g>
+  );
+}
+
+/** Yaqindan: «To'liq summator» qutichasi — uchta kiruvchi, ikkita chiquvchi oyoq. */
+function ChipClose() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih" />
+      <path class="chip-leg big" d="M86 56h30M86 90h30M86 124h30M204 70h30M204 110h30" />
+      <rect x="116" y="36" width="88" height="108" rx="6" class="chip-body" />
+      <circle cx="130" cy="50" r="4" class="chip-dot" />
+      <text x="160" y="96" class="chip-name">FA</text>
+      {[56, 90, 124].map((y) => (
+        <circle key={y} cx="86" cy={y} r="3" class="spark" />
+      ))}
+    </>
+  );
+}
+
+/** Buvining chizmasi: hisob xonasi — bo'sh uyalar, ular orasida to'rttalik simlar (shina). */
+function Plan() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect x="34" y="18" width="252" height="146" rx="4" class="paper" transform="rotate(-1.5 160 90)" />
+      <g class="plan" transform="rotate(-1.5 160 90)">
+        {[[64, 44], [64, 112], [212, 44], [212, 112]].map(([x, y], k) => (
+          <rect key={k} x={x} y={y} width="44" height="30" rx="3" class="socket" />
+        ))}
+        <rect x="136" y="74" width="48" height="36" rx="3" class="socket core" />
+        {[0, 4, 8, 12].map((d) => (
+          <path key={d} class="plan-wire" d={`M108 ${54 + d}H136M184 ${54 + d}H212M108 ${120 + d}H136M184 ${120 + d}H212M${150 + d} 74V${64 + d}M${150 + d} 110V${120 + d}`} />
+        ))}
+        <path class="ink sign" d="M236 150q6-14 10 0q4-14 10 0" />
+      </g>
+    </>
+  );
+}
+
+/** Shina: to'rt parallel sim bo'ylab to'rt bit bir ustunda, birga oqadi, oxirida — Ustozning hisoblagichi. */
+function Bus() {
+  return (
+    <>
+      <rect width="320" height="180" class="wall" />
+      <rect width="320" height="180" fill="url(#girih)" class="girih lit" />
+      {[66, 82, 98, 114].map((y, k) => (
+        <g key={y}>
+          <path class="bus-line" d={`M20 ${y}H236`} />
+          <circle class={`bus-bit${k % 2 ? ' one' : ''}`} cx={60} cy={y} r="4" />
+        </g>
+      ))}
+      <rect x="236" y="54" width="60" height="72" rx="6" class="chip-body" />
+      <text x="266" y="96" class="chip-name small">Σ</text>
+      <Chiroq x={40} y={150} s={0.6} awake />
     </>
   );
 }
