@@ -4,19 +4,7 @@
 import { lang } from './i18n';
 
 /** Kadr rasmi: StoryScene.tsx dagi SVG sahnalardan biri. */
-export type Art =
-  | 'city'
-  | 'workshop'
-  | 'note'
-  | 'orb'
-  | 'wake'
-  | 'talk'
-  | 'laugh'
-  | 'window'
-  | 'bazaar'
-  | 'gatelock'
-  | 'bazaarlit'
-  | 'tower';
+export type Art = 'city' | 'workshop' | 'note' | 'orb' | 'wake' | 'talk' | 'laugh' | 'window' | 'chest' | 'chip' | 'plan' | 'bus' | 'bazaar' | 'gatelock' | 'bazaarlit' | 'tower';
 
 /** Bitta kadr: rasm, matn; who — gapiruvchi (yo'q bo'lsa — hikoyachi), note — buvining daftaridan. */
 export interface Frame {
@@ -101,6 +89,35 @@ const uz: Record<string, ChapterStory> = {
       x6: "Bosh darvozani oqsoqollar kengashi ochadi: uch oqsoqoldan kamida ikkitasi «ha» desa, darvoza ochiladi.",
     },
   },
+  chips: {
+    place: "Buvining sandig'i",
+    intro: {
+      title: 'Qora qutichalar',
+      frames: [
+        { art: 'chest', text: "Chiroq ustaxona burchagidagi eski sandiqni ochdi. Ichida — oyoqchali qora qutichalar, har biri qog'ozga o'ralgan." },
+        { art: 'chip', text: "Qutichaga ikki harf o'yilgan: FA — «to'liq summator». Uchta oyog'i kiradi, ikkitasi chiqadi." },
+        { art: 'note', note: true, text: "«Tushunib yig'ganing endi senga g'isht. Ichini qayta terma — oyoqlarini bil, kifoya. Ustozning yuragi shunday g'ishtlardan qurilgan. M.»" },
+        { art: 'talk', who: 'lola', text: "Demak, summatorni qaytadan yig'mayman — qutichani qo'yaman, xolos. Qani, sinab ko'ramiz!" },
+      ],
+    },
+    outro: {
+      title: 'Hisob xonasi',
+      frames: [
+        { art: 'plan', text: "Sandiq tubida buvining chizmasi: Ustozning hisob xonasi. Unda o'nlab bo'sh uya, har birining shakli qutichalarnikiday." },
+        { art: 'talk', who: 'lola', text: "Uyalar orasidagi simlarni qara — to'rttadan, yonma-yon ketyapti. Nega bittadan emas?" },
+        { art: 'talk', who: 'chiroq', text: '…shi-na.' },
+        { art: 'bus', text: "To'rt sim — bitta yo'l: to'rt bit bir vaqtda yuradi. Ustozning hisoblagichiga shu yo'l olib boradi." },
+      ],
+    },
+    lines: {
+      k1: "Birinchi qutichani sinash: Chiroq uchta kalitdan nechtasi burilganini bilmoqchi.",
+      k2: "Ikki qutichani zanjir qilib ulang: o'tkazma bir qutichadan ikkinchisiga o'tadi.",
+      k3: "Sandiq ustida to'rtta chiroq, derazada esa bitta tirqish. Ikki kalit qaysi chiroq nuri tirqishdan o'tishini tanlaydi.",
+      k4: "Buvining chizmasidagi hisoblagich uch bitli: uchta summator — bitta zanjir.",
+      k5: "Ustaxona javonining sakkiz tortmasi bor: uch bitli raqam qaysi biri ochilishini aytadi.",
+      k6: "Lola, Chiroq va ikki qo'shni ovoz berdi. Nechta «ha» borligini qutichalar sanab bersin.",
+    },
+  },
 };
 
 const ru: Record<string, ChapterStory> = {
@@ -161,6 +178,35 @@ const ru: Record<string, ChapterStory> = {
       x4: 'Ворота стражников-близнецов: если оба ответят одинаково (оба «да» или оба «нет»), ворота поверят и откроются.',
       x5: 'Фонарь базара: ключ S переключает день и ночь. Днём (S = 0) сигнал проходит без изменений, ночью (S = 1) — наоборот.',
       x6: 'Главные ворота открывает совет старейшин: если хотя бы двое из трёх скажут «да», ворота откроются.',
+    },
+  },
+  chips: {
+    place: 'Бабушкин сундук',
+    intro: {
+      title: 'Чёрные коробочки',
+      frames: [
+        { art: 'chest', text: 'Огонёк открыл старый сундук в углу мастерской. Внутри — чёрные коробочки на ножках, каждая завёрнута в бумагу.' },
+        { art: 'chip', text: 'На коробочке вырезаны две буквы: FA — «полный сумматор». Три ножки входят, две выходят.' },
+        { art: 'note', note: true, text: '«То, что ты собрала с пониманием, теперь твой кирпичик. Не перебирай его заново — знай его ножки, этого довольно. Сердце Устоза сложено из таких кирпичиков. М.»' },
+        { art: 'talk', who: 'lola', text: 'Значит, сумматор не надо собирать заново — просто ставлю коробочку. Ну-ка, попробуем!' },
+      ],
+    },
+    outro: {
+      title: 'Счётная палата',
+      frames: [
+        { art: 'plan', text: 'На дне сундука — бабушкин чертёж: счётная палата Устоза. В ней десятки пустых гнёзд, и каждое по форме как коробочка.' },
+        { art: 'talk', who: 'lola', text: 'Смотри на провода между гнёздами — идут по четыре, рядом. Почему не по одному?' },
+        { art: 'talk', who: 'chiroq', text: '…ши-на.' },
+        { art: 'bus', text: 'Четыре провода — одна дорога: четыре бита идут разом. Эта дорога ведёт к счётчику Устоза.' },
+      ],
+    },
+    lines: {
+      k1: 'Испытание первой коробочки: Огонёк хочет знать, сколько из трёх ключей повёрнуто.',
+      k2: 'Соедините две коробочки цепочкой: перенос переходит из одной в другую.',
+      k3: 'На сундуке четыре фонарика, а в окне одна щель. Два ключа выбирают, чей свет пройдёт сквозь щель.',
+      k4: 'Счётчик на бабушкином чертеже трёхбитный: три сумматора — одна цепочка.',
+      k5: 'У полки в мастерской восемь ящиков: трёхбитное число говорит, какой из них открыть.',
+      k6: 'Лола, Огонёк и двое соседей проголосовали. Пусть коробочки посчитают, сколько «да».',
     },
   },
 };
