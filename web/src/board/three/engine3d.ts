@@ -21,11 +21,29 @@ interface FBO {
   h: number;
 }
 
-const SHADOW_SIZE = 1024;
+interface MsaaFBO {
+  fbo: WebGLFramebuffer;
+  color: WebGLRenderbuffer;
+  depth: WebGLRenderbuffer;
+  samples: number;
+  w: number;
+  h: number;
+}
+
+interface AnisoExt {
+  TEXTURE_MAX_ANISOTROPY_EXT: number;
+  MAX_TEXTURE_MAX_ANISOTROPY_EXT: number;
+}
+
+const SHADOW_SIZE = 2048;
 const SUN_DIR: [number, number, number] = normalize3([0.45, 0.85, 0.35]);
+const isPow2 = (n: number) => n > 0 && (n & (n - 1)) === 0;
 
 export class Engine3D {
   readonly gl: GL;
+  private isWebGL2: boolean;
+  private anisoExt: AnisoExt | null;
+  private maxAniso: number;
   private shadowProg: WebGLProgram;
   private mainProg: WebGLProgram;
   private extractProg: WebGLProgram;
@@ -43,6 +61,7 @@ export class Engine3D {
   labelUVs = new Map<string, UVRect>();
 
   private shadowFbo: FBO | null = null;
+  private msaaFbo: MsaaFBO | null = null;
   private sceneFbo: FBO | null = null;
   private bloomA: FBO | null = null;
   private bloomB: FBO | null = null;
@@ -58,6 +77,13 @@ export class Engine3D {
 
   private constructor(gl: GL) {
     this.gl = gl;
+    this.isWebGL2 = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+    this.anisoExt = (gl.getExtension('EXT_texture_filter_anisotropic') ||
+      gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+      gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')) as AnisoExt | null;
+    this.maxAniso = this.anisoExt
+      ? Math.min(8, Number(gl.getParameter(this.anisoExt.MAX_TEXTURE_MAX_ANISOTROPY_EXT)) || 1)
+      : 1;
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
 
     this.shadowProg = this.program(SHADOW_VERT, SHADOW_FRAG);
@@ -169,7 +195,8 @@ export class Engine3D {
     if (withDepth) {
       depth = gl.createRenderbuffer()!;
       gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
-      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, w, h);
+      const depthFmt = this.isWebGL2 ? (gl as WebGL2RenderingContext).DEPTH_COMPONENT24 : gl.DEPTH_COMPONENT16;
+      gl.renderbufferStorage(gl.RENDERBUFFER, depthFmt, w, h);
       gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
     }
 
@@ -184,6 +211,59 @@ export class Engine3D {
     return { fbo, tex, depth, w, h };
   }
 
+  /** WebGL2 apparat MSAA buferi: post-ishlov (bloom) paytida ham barcha 3D qirralar silliq chiziladi. */
+  private createMsaaFBO(w: number, h: number, targetSamples: number): MsaaFBO | null {
+    if (!this.isWebGL2) return null;
+    const gl2 = this.gl as WebGL2RenderingContext;
+    const maxSamples = Number(gl2.getParameter(gl2.MAX_SAMPLES)) || 0;
+    const samples = Math.min(targetSamples, maxSamples);
+    if (samples < 2) return null;
+
+    const fbo = gl2.createFramebuffer();
+    const color = gl2.createRenderbuffer();
+    const depth = gl2.createRenderbuffer();
+    if (!fbo || !color || !depth) {
+      if (fbo) gl2.deleteFramebuffer(fbo);
+      if (color) gl2.deleteRenderbuffer(color);
+      if (depth) gl2.deleteRenderbuffer(depth);
+      return null;
+    }
+
+    gl2.bindFramebuffer(gl2.FRAMEBUFFER, fbo);
+    gl2.bindRenderbuffer(gl2.RENDERBUFFER, color);
+    gl2.renderbufferStorageMultisample(gl2.RENDERBUFFER, samples, gl2.RGBA8, w, h);
+    gl2.framebufferRenderbuffer(gl2.FRAMEBUFFER, gl2.COLOR_ATTACHMENT0, gl2.RENDERBUFFER, color);
+
+    let ok = false;
+    for (const depthFmt of [gl2.DEPTH_COMPONENT24, gl2.DEPTH_COMPONENT16]) {
+      gl2.bindRenderbuffer(gl2.RENDERBUFFER, depth);
+      gl2.renderbufferStorageMultisample(gl2.RENDERBUFFER, samples, depthFmt, w, h);
+      gl2.framebufferRenderbuffer(gl2.FRAMEBUFFER, gl2.DEPTH_ATTACHMENT, gl2.RENDERBUFFER, depth);
+      if (gl2.checkFramebufferStatus(gl2.FRAMEBUFFER) === gl2.FRAMEBUFFER_COMPLETE) {
+        ok = true;
+        break;
+      }
+    }
+    gl2.bindRenderbuffer(gl2.RENDERBUFFER, null);
+    gl2.bindFramebuffer(gl2.FRAMEBUFFER, null);
+
+    if (!ok) {
+      gl2.deleteFramebuffer(fbo);
+      gl2.deleteRenderbuffer(color);
+      gl2.deleteRenderbuffer(depth);
+      return null;
+    }
+    return { fbo, color, depth, samples, w, h };
+  }
+
+  private deleteMsaaFBO(f: MsaaFBO | null) {
+    if (!f) return;
+    const gl = this.gl;
+    gl.deleteFramebuffer(f.fbo);
+    gl.deleteRenderbuffer(f.color);
+    gl.deleteRenderbuffer(f.depth);
+  }
+
   private deleteFBO(f: FBO | null) {
     if (!f) return;
     const gl = this.gl;
@@ -196,10 +276,19 @@ export class Engine3D {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE);
-    gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    const canMip = this.isWebGL2 || (isPow2(canvas.width) && isPow2(canvas.height));
+    const wrap = repeat && canMip ? gl.REPEAT : gl.CLAMP_TO_EDGE;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+    if (canMip) {
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      if (this.anisoExt && this.maxAniso > 1) {
+        gl.texParameterf(gl.TEXTURE_2D, this.anisoExt.TEXTURE_MAX_ANISOTROPY_EXT, this.maxAniso);
+      }
+    } else {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    }
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   }
 
@@ -247,13 +336,15 @@ export class Engine3D {
     gl.canvas.width = pw;
     gl.canvas.height = ph;
 
+    this.deleteMsaaFBO(this.msaaFbo);
     this.deleteFBO(this.sceneFbo);
     this.deleteFBO(this.bloomA);
     this.deleteFBO(this.bloomB);
 
     const bw = Math.max(64, Math.floor(pw / 2));
     const bh = Math.max(64, Math.floor(ph / 2));
-    this.sceneFbo = this.createFBO(pw, ph, true, true);
+    this.msaaFbo = this.createMsaaFBO(pw, ph, dpr > 1.5 ? 4 : 8);
+    this.sceneFbo = this.createFBO(pw, ph, !this.msaaFbo, true);
     this.bloomA = this.createFBO(bw, bh, false, true);
     this.bloomB = this.createFBO(bw, bh, false, true);
     this.usePost = !!(this.sceneFbo && this.bloomA && this.bloomB);
@@ -308,6 +399,7 @@ export class Engine3D {
     const lightVP = mat4Multiply(lProj, lView);
 
     gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
     gl.disable(gl.CULL_FACE);
 
     // 1. Soya xaritasi bosqichi
@@ -327,9 +419,10 @@ export class Engine3D {
       }
     }
 
-    // 2. Asosiy PBR + dinamik LED yoritish bosqichi
+    // 2. Asosiy PBR + dinamik LED yoritish bosqichi (WebGL2 da apparat MSAA orqali)
     const direct = !this.usePost;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, direct ? null : this.sceneFbo!.fbo);
+    const renderTarget = direct ? null : (this.msaaFbo?.fbo ?? this.sceneFbo!.fbo);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, renderTarget);
     gl.viewport(0, 0, this.pixelW, this.pixelH);
     gl.clearColor(pal.clearColor[0], pal.clearColor[1], pal.clearColor[2], 0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -396,6 +489,16 @@ export class Engine3D {
 
     if (direct) return;
 
+    // 2b. WebGL2 MSAA buferini teksturali sceneFbo ga aniq ko'chirish (resolve)
+    if (this.msaaFbo) {
+      const gl2 = gl as WebGL2RenderingContext;
+      gl2.bindFramebuffer(gl2.READ_FRAMEBUFFER, this.msaaFbo.fbo);
+      gl2.bindFramebuffer(gl2.DRAW_FRAMEBUFFER, this.sceneFbo!.fbo);
+      gl2.blitFramebuffer(0, 0, this.pixelW, this.pixelH, 0, 0, this.pixelW, this.pixelH, gl2.COLOR_BUFFER_BIT, gl2.NEAREST);
+      gl2.bindFramebuffer(gl2.READ_FRAMEBUFFER, null);
+      gl2.bindFramebuffer(gl2.DRAW_FRAMEBUFFER, null);
+    }
+
     // 3. Bloom va ACES Filmic kompozit bosqichi
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
@@ -426,7 +529,7 @@ export class Engine3D {
     gl.uniform2f(gl.getUniformLocation(this.blurProg, 'uStep'), 0, 1.6 / bh);
     this.drawQuad(this.blurProg);
 
-    // 3c. Ekranga yakuniy kompozit
+    // 3c. Ekranga yakuniy kompozit (WebGL1 da FXAA silliqlash bilan)
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.pixelW, this.pixelH);
     gl.useProgram(this.compProg);
@@ -436,6 +539,8 @@ export class Engine3D {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.bloomA!.tex);
     gl.uniform1i(gl.getUniformLocation(this.compProg, 'uBloom'), 1);
+    gl.uniform2f(gl.getUniformLocation(this.compProg, 'uTexel'), 1 / this.pixelW, 1 / this.pixelH);
+    gl.uniform1f(gl.getUniformLocation(this.compProg, 'uFxaa'), this.msaaFbo ? 0 : 1);
     this.drawQuad(this.compProg);
 
     gl.activeTexture(gl.TEXTURE1);
@@ -460,6 +565,7 @@ export class Engine3D {
     gl.deleteTexture(this.boardTex);
     gl.deleteTexture(this.labelTex);
     this.deleteFBO(this.shadowFbo);
+    this.deleteMsaaFBO(this.msaaFbo);
     this.deleteFBO(this.sceneFbo);
     this.deleteFBO(this.bloomA);
     this.deleteFBO(this.bloomB);

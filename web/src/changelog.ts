@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.31.1',
+    date: '2026-11-25',
+    uz: [
+      "3D rejimda apparat 8×/4× MSAA, 2048px yumshoq soyalar va anizotrop filtrlash yoqildi — simlar va elementlar chetidagi g'adir-budirlik yo'qoldi.",
+      "PCB mis yo'llari 45° qiyalik (bevel) qirrali uzluksiz geometriyaga o'tkazildi va o'chiq (0) simlar rangi platadan aniq ajralib turadigan sovuq metall ohangga keltirildi.",
+    ],
+    ru: [
+      'В 3D-режиме включены аппаратное сглаживание MSAA (8×/4×), тени 2048px и анизотропная фильтрация — края проводов и элементов стали гладкими.',
+      'Дорожки печатной платы переведены на непрерывную 3D-геометрию со снятыми фасками, а выключенные (0) проводники получили чёткий контрастный металлический оттенок.',
+    ],
+  },
+  {
     version: '2.31.0',
     date: '2026-11-25',
     uz: [

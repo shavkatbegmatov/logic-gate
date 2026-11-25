@@ -391,47 +391,261 @@ export class MeshBuilder {
         this.tri(r0[s], r1[s + 1], r0[s + 1]);
       }
       if (p < pts.length - 2) {
-        this.addSphere(bPt[0], bPt[1], bPt[2], radius, segs, 4, col, rough, metal, emissive, false, dist);
+        this.addSphere(bPt[0], bPt[1], bPt[2], radius, segs, Math.max(5, Math.floor(segs / 2)), col, rough, metal, emissive, false, dist);
       }
     }
   }
 
-  /** Tekis to'rtburchak mis/plazma yo'l (PCB / Sci-Fi sirtidagi bo'rtma yo'l). */
-  addFlatTrace(pts: Vec3[], halfW: number, height: number, col: [number, number, number], rough: number, metal: number, emissive = 0) {
-    if (pts.length < 2) return;
-    let dist = 0;
-    for (let k = 0; k < pts.length - 1; k++) {
-      const a = pts[k];
-      const b = pts[k + 1];
-      const dx = b[0] - a[0];
-      const dz = b[2] - a[2];
-      const len = Math.hypot(dx, dz);
-      if (len < 1e-4) continue;
-      const nx = (-dz / len) * halfW;
-      const nz = (dx / len) * halfW;
-      const d0 = dist;
-      const d1 = dist + len;
-      dist = d1;
+  /** Silliq qirrali (beveled) uzluksiz PCB mis yo'li: Z-fighting'siz 45°/90° tirsaklar va oxirgi qalpoqchalar bilan. */
+  addFlatTrace(
+    pts: Vec3[],
+    halfW: number,
+    height: number,
+    col: [number, number, number],
+    rough: number,
+    metal: number,
+    emissive = 0,
+    skirtCol?: [number, number, number],
+  ) {
+    const clean: Vec3[] = [];
+    for (const p of pts) {
+      const prev = clean[clean.length - 1];
+      if (!prev || Math.hypot(p[0] - prev[0], p[2] - prev[2]) >= 0.05) clean.push(p);
+    }
+    if (clean.length < 2) return;
 
-      const y0 = a[1];
-      const y1 = a[1] + height;
-      const t0 = this.vert(a[0] - nx, y1, a[2] - nz, 0, 1, 0, 0, 0, col, rough, metal, emissive, d0);
-      const t1 = this.vert(a[0] + nx, y1, a[2] + nz, 0, 1, 0, 1, 0, col, rough, metal, emissive, d0);
-      const t2 = this.vert(b[0] + nx, y1, b[2] + nz, 0, 1, 0, 1, 1, col, rough, metal, emissive, d1);
-      const t3 = this.vert(b[0] - nx, y1, b[2] - nz, 0, 1, 0, 0, 1, col, rough, metal, emissive, d1);
+    const n = clean.length;
+    const segLens: number[] = [];
+    const dists: number[] = [0];
+    const tangents: [number, number][] = [];
+    const normals: [number, number][] = [];
+    for (let k = 0; k < n - 1; k++) {
+      const dx = clean[k + 1][0] - clean[k][0];
+      const dz = clean[k + 1][2] - clean[k][2];
+      const len = Math.hypot(dx, dz) || 1;
+      segLens.push(len);
+      dists.push(dists[k] + len);
+      tangents.push([dx / len, dz / len]);
+      normals.push([-dz / len, dx / len]);
+    }
+
+    const ySkirt = 0.02;
+    const y0 = 0.05;
+    const y1 = y0 + height;
+    const topW = halfW * 0.72;
+    const baseW = halfW * 1.14;
+    const skirtW = baseW + 0.65;
+
+    interface Slice {
+      lxTop: number;
+      lzTop: number;
+      rxTop: number;
+      rzTop: number;
+      lxBot: number;
+      lzBot: number;
+      rxBot: number;
+      rzBot: number;
+      lxSk: number;
+      lzSk: number;
+      rxSk: number;
+      rzSk: number;
+      nlx: number;
+      nlz: number;
+      nrx: number;
+      nrz: number;
+      d: number;
+    }
+
+    const slices: Slice[] = [];
+    const pushSlice = (
+      px: number,
+      pz: number,
+      lx: number,
+      lz: number,
+      lScale: number,
+      rx: number,
+      rz: number,
+      rScale: number,
+      d: number,
+    ) => {
+      slices.push({
+        lxTop: px + lx * topW * lScale,
+        lzTop: pz + lz * topW * lScale,
+        rxTop: px + rx * topW * rScale,
+        rzTop: pz + rz * topW * rScale,
+        lxBot: px + lx * baseW * lScale,
+        lzBot: pz + lz * baseW * lScale,
+        rxBot: px + rx * baseW * rScale,
+        rzBot: pz + rz * baseW * rScale,
+        lxSk: px + lx * skirtW * lScale,
+        lzSk: pz + lz * skirtW * lScale,
+        rxSk: px + rx * skirtW * rScale,
+        rzSk: pz + rz * skirtW * rScale,
+        nlx: lx,
+        nlz: lz,
+        nrx: rx,
+        nrz: rz,
+        d,
+      });
+    };
+
+    // Boshlang'ich kesim
+    pushSlice(clean[0][0], clean[0][2], normals[0][0], normals[0][1], 1, -normals[0][0], -normals[0][1], 1, 0);
+
+    // Oraliq burchaklar: 45° aniq miter, 90° keskin burchaklarda silliq yoy (fillet)
+    for (let k = 1; k < n - 1; k++) {
+      const px = clean[k][0];
+      const pz = clean[k][2];
+      const d = dists[k];
+      const n0 = normals[k - 1];
+      const n1 = normals[k];
+      const dotN = n0[0] * n1[0] + n0[1] * n1[1];
+      const minAdj = Math.min(segLens[k - 1], segLens[k]);
+      const maxMiter = Math.max(1.0, Math.min(1.48, (minAdj * 0.45) / skirtW));
+
+      if (dotN > 0.999) {
+        pushSlice(px, pz, n0[0], n0[1], 1, -n0[0], -n0[1], 1, d);
+        continue;
+      }
+
+      const bx = n0[0] + n1[0];
+      const bz = n0[1] + n1[1];
+      const bl = Math.hypot(bx, bz);
+      if (bl < 1e-4) {
+        pushSlice(px, pz, n0[0], n0[1], 1, -n0[0], -n0[1], 1, d);
+        pushSlice(px, pz, n1[0], n1[1], 1, -n1[0], -n1[1], 1, d);
+        continue;
+      }
+      const ux = bx / bl;
+      const uz = bz / bl;
+      const cosHalf = Math.max(0.5, ux * n0[0] + uz * n0[1]);
+      const mScale = Math.min(maxMiter, 1 / cosHalf);
+
+      if (dotN > 0.35) {
+        pushSlice(px, pz, ux, uz, mScale, -ux, -uz, mScale, d);
+      } else {
+        const t0 = tangents[k - 1];
+        const t1 = tangents[k];
+        const leftIsInner = t0[0] * t1[1] - t0[1] * t1[0] > 0;
+        const arcSteps = 4;
+        const out0: [number, number] = leftIsInner ? [-n0[0], -n0[1]] : [n0[0], n0[1]];
+        const out1: [number, number] = leftIsInner ? [-n1[0], -n1[1]] : [n1[0], n1[1]];
+        const a0 = Math.atan2(out0[1], out0[0]);
+        let da = Math.atan2(out1[1], out1[0]) - a0;
+        while (da > Math.PI) da -= Math.PI * 2;
+        while (da < -Math.PI) da += Math.PI * 2;
+
+        for (let s = 0; s <= arcSteps; s++) {
+          const a = a0 + da * (s / arcSteps);
+          const ox = Math.cos(a);
+          const oz = Math.sin(a);
+          if (leftIsInner) {
+            pushSlice(px, pz, ux, uz, mScale, ox, oz, 1, d);
+          } else {
+            pushSlice(px, pz, ox, oz, 1, -ux, -uz, mScale, d);
+          }
+        }
+      }
+    }
+
+    // Yakuniy kesim
+    const lastN = normals[n - 2];
+    pushSlice(clean[n - 1][0], clean[n - 1][2], lastN[0], lastN[1], 1, -lastN[0], -lastN[1], 1, dists[n - 1]);
+
+    // Kesimlarni uzluksiz lenta bilan bog'lash (ustki yuz + 45° qiyalik qirralar + ixtiyoriy chegara soyasi)
+    const bevelN = (nx: number, nz: number): Vec3 => normalize3([nx * 0.72, 0.69, nz * 0.72]);
+    for (let s = 0; s < slices.length - 1; s++) {
+      const a = slices[s];
+      const b = slices[s + 1];
+
+      // Tekis ustki yuza
+      const t0 = this.vert(a.lxTop, y1, a.lzTop, 0, 1, 0, 0, 0, col, rough, metal, emissive, a.d);
+      const t1 = this.vert(a.rxTop, y1, a.rzTop, 0, 1, 0, 1, 0, col, rough, metal, emissive, a.d);
+      const t2 = this.vert(b.rxTop, y1, b.rzTop, 0, 1, 0, 1, 1, col, rough, metal, emissive, b.d);
+      const t3 = this.vert(b.lxTop, y1, b.lzTop, 0, 1, 0, 0, 1, col, rough, metal, emissive, b.d);
       this.tri(t0, t2, t1);
       this.tri(t0, t3, t2);
 
-      // Yo'lning ikki yon qirrasi
-      const sN1 = normalize3([-nx, 0, -nz]);
-      const sN2 = normalize3([nx, 0, nz]);
-      this.quad([a[0] - nx, y1, a[2] - nz], [b[0] - nx, y1, b[2] - nz], [b[0] - nx, y0, b[2] - nz], [a[0] - nx, y0, a[2] - nz], sN1, col, rough, metal, emissive);
-      this.quad([b[0] + nx, y1, b[2] + nz], [a[0] + nx, y1, a[2] + nz], [a[0] + nx, y0, a[2] + nz], [b[0] + nx, y0, b[2] + nz], sN2, col, rough, metal, emissive);
+      // Chap qiyalik (45° bevel)
+      const lnA = bevelN(a.nlx, a.nlz);
+      const lnB = bevelN(b.nlx, b.nlz);
+      const lb0 = this.vert(a.lxBot, y0, a.lzBot, lnA[0], lnA[1], lnA[2], 0, 0, col, rough, metal, emissive, a.d);
+      const lt0 = this.vert(a.lxTop, y1, a.lzTop, lnA[0], lnA[1], lnA[2], 0, 1, col, rough, metal, emissive, a.d);
+      const lt1 = this.vert(b.lxTop, y1, b.lzTop, lnB[0], lnB[1], lnB[2], 1, 1, col, rough, metal, emissive, b.d);
+      const lb1 = this.vert(b.lxBot, y0, b.lzBot, lnB[0], lnB[1], lnB[2], 1, 0, col, rough, metal, emissive, b.d);
+      this.tri(lb0, lt1, lt0);
+      this.tri(lb0, lb1, lt1);
+
+      // O'ng qiyalik (45° bevel)
+      const rnA = bevelN(a.nrx, a.nrz);
+      const rnB = bevelN(b.nrx, b.nrz);
+      const rt0 = this.vert(a.rxTop, y1, a.rzTop, rnA[0], rnA[1], rnA[2], 0, 1, col, rough, metal, emissive, a.d);
+      const rb0 = this.vert(a.rxBot, y0, a.rzBot, rnA[0], rnA[1], rnA[2], 0, 0, col, rough, metal, emissive, a.d);
+      const rb1 = this.vert(b.rxBot, y0, b.rzBot, rnB[0], rnB[1], rnB[2], 1, 0, col, rough, metal, emissive, b.d);
+      const rt1 = this.vert(b.rxTop, y1, b.rzTop, rnB[0], rnB[1], rnB[2], 1, 1, col, rough, metal, emissive, b.d);
+      this.tri(rt0, rb1, rb0);
+      this.tri(rt0, rt1, rb1);
+
+      // To'q lak chegarasi (yo'lni plata foni va teshikchalaridan aniq ajratadi)
+      if (skirtCol) {
+        const ls0 = this.vert(a.lxSk, ySkirt, a.lzSk, 0, 1, 0, 0, 0, skirtCol, 0.72, 0.04, 0, 0);
+        const lsb0 = this.vert(a.lxBot, y0, a.lzBot, 0, 1, 0, 0, 1, skirtCol, 0.72, 0.04, 0, 0);
+        const lsb1 = this.vert(b.lxBot, y0, b.lzBot, 0, 1, 0, 1, 1, skirtCol, 0.72, 0.04, 0, 0);
+        const ls1 = this.vert(b.lxSk, ySkirt, b.lzSk, 0, 1, 0, 1, 0, skirtCol, 0.72, 0.04, 0, 0);
+        this.tri(ls0, lsb1, lsb0);
+        this.tri(ls0, ls1, lsb1);
+
+        const rsb0 = this.vert(a.rxBot, y0, a.rzBot, 0, 1, 0, 0, 1, skirtCol, 0.72, 0.04, 0, 0);
+        const rs0 = this.vert(a.rxSk, ySkirt, a.rzSk, 0, 1, 0, 0, 0, skirtCol, 0.72, 0.04, 0, 0);
+        const rs1 = this.vert(b.rxSk, ySkirt, b.rzSk, 0, 1, 0, 1, 0, skirtCol, 0.72, 0.04, 0, 0);
+        const rsb1 = this.vert(b.rxBot, y0, b.rzBot, 0, 1, 0, 1, 1, skirtCol, 0.72, 0.04, 0, 0);
+        this.tri(rsb0, rs1, rs0);
+        this.tri(rsb0, rsb1, rs1);
+      }
     }
-    // Bo'g'in nuqtalarida silliq doira
-    for (const p of pts) {
-      this.addCylinderY(p[0], p[1], p[1] + height, p[2], halfW, halfW, 8, col, rough, metal, emissive);
-    }
+
+    // Yarim doirali silliq bosh va oxirgi qalpoqchalar
+    const addHalfCap = (px: number, pz: number, dirX: number, dirZ: number, d: number) => {
+      const leftX = -dirZ;
+      const leftZ = dirX;
+      const steps = 6;
+      const centerTop = this.vert(px, y1, pz, 0, 1, 0, 0.5, 0.5, col, rough, metal, emissive, d);
+      const dirs: [number, number][] = [];
+      for (let s = 0; s <= steps; s++) {
+        const theta = -Math.PI * 0.5 + (s / steps) * Math.PI;
+        const c = Math.cos(theta);
+        const si = Math.sin(theta);
+        dirs.push([dirX * c + leftX * si, dirZ * c + leftZ * si]);
+      }
+      for (let s = 0; s < steps; s++) {
+        const [u0x, u0z] = dirs[s];
+        const [u1x, u1z] = dirs[s + 1];
+        const vt0 = this.vert(px + u0x * topW, y1, pz + u0z * topW, 0, 1, 0, 0.5, 0.5, col, rough, metal, emissive, d);
+        const vt1 = this.vert(px + u1x * topW, y1, pz + u1z * topW, 0, 1, 0, 0.5, 0.5, col, rough, metal, emissive, d);
+        this.tri(centerTop, vt0, vt1);
+
+        const bn0 = bevelN(u0x, u0z);
+        const bn1 = bevelN(u1x, u1z);
+        const bTop0 = this.vert(px + u0x * topW, y1, pz + u0z * topW, bn0[0], bn0[1], bn0[2], 0, 1, col, rough, metal, emissive, d);
+        const bBot0 = this.vert(px + u0x * baseW, y0, pz + u0z * baseW, bn0[0], bn0[1], bn0[2], 0, 0, col, rough, metal, emissive, d);
+        const bBot1 = this.vert(px + u1x * baseW, y0, pz + u1z * baseW, bn1[0], bn1[1], bn1[2], 1, 0, col, rough, metal, emissive, d);
+        const bTop1 = this.vert(px + u1x * topW, y1, pz + u1z * topW, bn1[0], bn1[1], bn1[2], 1, 1, col, rough, metal, emissive, d);
+        this.tri(bTop0, bBot1, bBot0);
+        this.tri(bTop0, bTop1, bBot1);
+
+        if (skirtCol) {
+          const skB0 = this.vert(px + u0x * baseW, y0, pz + u0z * baseW, 0, 1, 0, 0, 1, skirtCol, 0.72, 0.04, 0, 0);
+          const skO0 = this.vert(px + u0x * skirtW, ySkirt, pz + u0z * skirtW, 0, 1, 0, 0, 0, skirtCol, 0.72, 0.04, 0, 0);
+          const skO1 = this.vert(px + u1x * skirtW, ySkirt, pz + u1z * skirtW, 0, 1, 0, 1, 0, skirtCol, 0.72, 0.04, 0, 0);
+          const skB1 = this.vert(px + u1x * baseW, y0, pz + u1z * baseW, 0, 1, 0, 1, 1, skirtCol, 0.72, 0.04, 0, 0);
+          this.tri(skB0, skO1, skO0);
+          this.tri(skB0, skB1, skO1);
+        }
+      }
+    };
+
+    addHalfCap(clean[0][0], clean[0][2], -tangents[0][0], -tangents[0][1], 0);
+    addHalfCap(clean[n - 1][0], clean[n - 1][2], tangents[n - 2][0], tangents[n - 2][1], dists[n - 1]);
   }
 
   finish(): MeshBucket {
@@ -515,8 +729,8 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       [bx0 + 12, bz1 - 12],
       [bx1 - 12, bz1 - 12],
     ]) {
-      solid.addCylinderY(cx, 0, 2.5, cz, 5.5, 5.5, 10, pal.brass, 0.25, 0.88, 0);
-      solid.addCylinderY(cx, 2.5, 3.6, cz, 3.2, 2.8, 8, pal.metal, 0.2, 0.92, 0);
+      solid.addCylinderY(cx, 0, 2.5, cz, 5.5, 5.5, 14, pal.brass, 0.25, 0.88, 0);
+      solid.addCylinderY(cx, 2.5, 3.6, cz, 3.2, 2.8, 12, pal.metal, 0.2, 0.92, 0);
     }
   }
 
@@ -556,7 +770,17 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const em = sel ? 1.15 : on ? 1.08 : 0;
 
     if (input.style === 'pcb') {
-      solid.addFlatTrace(pts, (on || sel ? 2.8 : 1.75) * wide, on || sel ? 1.7 : 0.9, baseCol, on ? 0.22 : 0.42, 0.78, em);
+      const pcbSkirt: [number, number, number] = [0.018, 0.065, 0.044];
+      solid.addFlatTrace(
+        pts,
+        (on || sel ? 2.95 : 2.15) * wide,
+        on || sel ? 1.8 : 1.15,
+        baseCol,
+        on || sel ? 0.2 : 0.3,
+        on || sel ? 0.68 : 0.46,
+        em,
+        pcbSkirt,
+      );
       // Kesishish ustiga 3D SMD 000 rezistor ko'prik
       input.routed.hops[i].forEach((list, segIdx) => {
         if (!list.length || segIdx >= route.length - 1) return;
@@ -575,10 +799,10 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
         }
       });
     } else {
-      solid.addTube(pts, (on || sel ? 2.65 : 1.65) * wide, 8, baseCol, on ? 0.25 : 0.48, input.style === 'scifi' ? 0.35 : 0.08, em);
-      solid.addCylinderY(pts[0][0], 0, 3.2, pts[0][2], 2.7, 2.2, 8, pal.metal, 0.2, 0.9, 0);
+      solid.addTube(pts, (on || sel ? 2.7 : 1.85) * wide, 12, baseCol, on ? 0.24 : 0.44, input.style === 'scifi' ? 0.35 : 0.1, em);
+      solid.addCylinderY(pts[0][0], 0, 3.2, pts[0][2], 2.7, 2.2, 12, pal.metal, 0.2, 0.9, 0);
       const endP = pts[pts.length - 1];
-      solid.addCylinderY(endP[0], 0, 3.2, endP[2], 2.7, 2.2, 8, pal.metal, 0.2, 0.9, 0);
+      solid.addCylinderY(endP[0], 0, 3.2, endP[2], 2.7, 2.2, 12, pal.metal, 0.2, 0.9, 0);
     }
 
     // Shina qiymati: sim o'rtasida kichik plastinka va son.
@@ -609,18 +833,18 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const jEm = sel ? 1.15 : on ? 1.08 : 0;
 
     if (input.style === 'pcb') {
-      solid.addCylinderY(at.x, 0, 1.2, at.y, 5.2, 4.8, 12, pal.brass, 0.25, 0.88, 0);
-      const r = on || sel ? 4.0 : 3.0;
-      const topY = on || sel ? 2.3 : 1.5;
-      solid.addCylinderY(at.x, 0.8, topY, at.y, r, r * 0.9, 12, jCol, 0.22, 0.8, jEm);
-      solid.addSphere(at.x, topY, at.y, r * 0.85, 10, 5, jCol, 0.2, 0.82, jEm, true);
+      solid.addCylinderY(at.x, 0, 1.25, at.y, 5.4, 4.9, 16, pal.brass, 0.25, 0.88, 0);
+      const r = on || sel ? 4.1 : 3.2;
+      const topY = on || sel ? 2.4 : 1.65;
+      solid.addCylinderY(at.x, 0.8, topY, at.y, r, r * 0.9, 16, jCol, on || sel ? 0.22 : 0.3, on || sel ? 0.68 : 0.46, jEm);
+      solid.addSphere(at.x, topY, at.y, r * 0.85, 14, 6, jCol, on || sel ? 0.2 : 0.28, on || sel ? 0.68 : 0.46, jEm, true);
     } else {
       const baseH = input.style === 'scifi' ? 3.2 : 7.5;
-      solid.addCylinderY(at.x, 0, 2.4, at.y, 4.8, 3.9, 12, pal.brass, 0.25, 0.85, 0);
-      solid.addCylinderY(at.x, 1.6, baseH, at.y, on || sel ? 2.2 : 1.75, on || sel ? 2.2 : 1.75, 10, sel ? pal.sel : on ? pal.traceOn : pal.metal, 0.2, 0.88, jEm * 0.85);
-      const hubR = (on || sel ? 2.65 : 1.65) * 1.45;
-      solid.addCylinderY(at.x, baseH - 1.4, baseH + 1.4, at.y, hubR * 1.06, hubR * 1.06, 12, sel ? pal.sel : on ? pal.traceOn : pal.brass, 0.22, 0.85, jEm);
-      solid.addSphere(at.x, baseH, at.y, hubR, 12, 6, jCol, on ? 0.22 : 0.35, on ? 0.2 : 0.6, jEm);
+      solid.addCylinderY(at.x, 0, 2.4, at.y, 4.8, 3.9, 14, pal.brass, 0.25, 0.85, 0);
+      solid.addCylinderY(at.x, 1.6, baseH, at.y, on || sel ? 2.2 : 1.85, on || sel ? 2.2 : 1.85, 12, sel ? pal.sel : on ? pal.traceOn : pal.metal, 0.2, 0.88, jEm * 0.85);
+      const hubR = (on || sel ? 2.7 : 1.85) * 1.42;
+      solid.addCylinderY(at.x, baseH - 1.4, baseH + 1.4, at.y, hubR * 1.06, hubR * 1.06, 14, sel ? pal.sel : on ? pal.traceOn : pal.brass, 0.22, 0.85, jEm);
+      solid.addSphere(at.x, baseH, at.y, hubR, 14, 7, jCol, on ? 0.22 : 0.35, on ? 0.2 : 0.52, jEm);
     }
   }
 
@@ -628,13 +852,13 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
   if (input.ghost) {
     const { a, b } = input.ghost;
     const gPts: Vec3[] = [];
-    const segs = 14;
+    const segs = 16;
     for (let s = 0; s <= segs; s++) {
       const k = s / segs;
       const arch = Math.sin(k * Math.PI) * 24;
       gPts.push([a.x + (b.x - a.x) * k, 3.2 + arch, a.y + (b.y - a.y) * k]);
     }
-    solid.addTube(gPts, 1.8, 8, pal.sel, 0.2, 0.2, 1.35);
+    solid.addTube(gPts, 1.85, 12, pal.sel, 0.2, 0.2, 1.35);
   }
 
   // Port yaratish yordamchisi
@@ -650,8 +874,8 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const col = act ? pal.sel : want ? pal.sel : on ? pal.lampOn : src ? pal.brass : pal.metal;
     const em = act ? 1.5 : want ? 0.95 : on ? 1.1 : 0;
     const r = (act || want ? 5.6 : 4.2) * wideK;
-    solid.addCylinderY(x, 0, 2.2, y, r + 1.1, r, 10, pal.brass, 0.25, 0.85, 0);
-    solid.addSphere(x, 2.4, y, r * 0.72, 8, 4, col, 0.22, 0.75, em, true);
+    solid.addCylinderY(x, 0, 2.2, y, r + 1.1, r, 14, pal.brass, 0.25, 0.85, 0);
+    solid.addSphere(x, 2.4, y, r * 0.72, 12, 6, col, 0.22, 0.75, em, true);
   };
 
   // 3. Elementlar (3D DIP mikrosxemalar / modullar)

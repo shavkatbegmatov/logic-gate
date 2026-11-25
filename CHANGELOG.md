@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.31.1 — 2026-11-25
+
+- 3D rejimda apparat 8×/4× MSAA, 2048px yumshoq soyalar va anizotrop filtrlash yoqildi — simlar va elementlar chetidagi g'adir-budirlik yo'qoldi.
+- PCB mis yo'llari 45° qiyalik (bevel) qirrali uzluksiz geometriyaga o'tkazildi va o'chiq (0) simlar rangi platadan aniq ajralib turadigan sovuq metall ohangga keltirildi.
+
 ## 2.31.0 — 2026-11-25
 
 - Yangi, 10-bo'lim — «Shinalar» (100 ★ dan ochiladi): to'rt sim — bitta yo'l. Shina maydonda bitta keng pin va bitta qalin sim bo'lib ko'rinadi, ustida qiymati son bilan yoziladi; ulaganda to'rttala bit birga ulanadi, o'chirganda birga o'chadi.
