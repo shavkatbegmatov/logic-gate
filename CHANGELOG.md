@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.29.0 — 2026-11-25
+
+- «Bloklar» bo'limiga hikoya qo'shildi: Chiroq buvining sandig'idan oyoqchali qora qutichalarni topadi, bo'lim oxirida esa buvining chizmasida Ustozning hisob xonasi va to'rt simli yo'l — shina paydo bo'ladi.
+- Bo'limning har bir darajasi ustida endi hikoya qatori bor (uz va ru).
+
 ## 2.28.0 — 2026-11-25
 
 - Yangi, 9-bo'lim — «Bloklar» (88 ★ dan ochiladi): Chiroq buvining sandig'idan topilgan tayyor mikrosxemalar — yarim summator, to'liq summator, multipleksor va dekoder. Har biri ichidagi sxemani qayta yig'masdan bitta element sifatida qo'yiladi.

@@ -320,6 +320,101 @@
   stroke-width: 1.2;
 }
 
+.story-svg .chest-box,
+.story-svg .chest-lid {
+  fill: var(--raise);
+  stroke: var(--copper);
+  stroke-width: 2;
+}
+
+.story-svg .chest-lid {
+  opacity: 0.85;
+}
+
+.story-svg .chest-band {
+  fill: none;
+  stroke: var(--copper);
+  stroke-width: 3;
+  opacity: 0.7;
+}
+
+.story-svg .chip-body {
+  fill: var(--bg2);
+  stroke: var(--gate-stroke);
+  stroke-width: 1.5;
+}
+
+.story-svg .chip-leg {
+  fill: none;
+  stroke: var(--silver);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.story-svg .chip-leg.big {
+  stroke-width: 4;
+}
+
+.story-svg .chip-dot {
+  fill: var(--lead);
+}
+
+.story-svg .chip-name {
+  fill: var(--copper);
+  font: 600 34px var(--mono, monospace);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.story-svg .chip-name.small {
+  font-size: 30px;
+}
+
+.story-svg .socket {
+  fill: none;
+  stroke: var(--bg2);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+  opacity: 0.6;
+}
+
+.story-svg .socket.core {
+  stroke-dasharray: none;
+  opacity: 0.8;
+}
+
+.story-svg .plan-wire {
+  fill: none;
+  stroke: var(--bg2);
+  stroke-width: 1.4;
+  opacity: 0.55;
+}
+
+.story-svg .bus-line {
+  fill: none;
+  stroke: var(--trace);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.story-svg .bus-bit {
+  fill: var(--lead);
+  animation: story-flow 2.6s linear infinite;
+}
+
+.story-svg .bus-bit.one {
+  fill: var(--accent);
+}
+
+@keyframes story-flow {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(150px);
+  }
+}
+
 @keyframes story-blink {
   50% {
     opacity: 0.2;

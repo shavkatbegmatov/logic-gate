@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.29.0',
+    date: '2026-11-25',
+    uz: [
+      "«Bloklar» bo'limiga hikoya qo'shildi: Chiroq buvining sandig'idan oyoqchali qora qutichalarni topadi, bo'lim oxirida esa buvining chizmasida Ustozning hisob xonasi va to'rt simli yo'l — shina paydo bo'ladi.",
+      "Bo'limning har bir darajasi ustida endi hikoya qatori bor (uz va ru).",
+    ],
+    ru: [
+      "В раздел «Блоки» добавлена история: Огонёк находит в бабушкином сундуке чёрные коробочки на ножках, а в конце раздела на бабушкином чертеже появляется счётная палата Устоза и дорога из четырёх проводов — шина.",
+      "Над каждым уровнем раздела теперь есть строка истории (uz и ru).",
+    ],
+  },
+  {
     version: '2.28.0',
     date: '2026-11-25',
     uz: [
