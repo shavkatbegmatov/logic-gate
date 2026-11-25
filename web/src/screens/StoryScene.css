@@ -415,6 +415,60 @@
   }
 }
 
+/* 2-bo'lim: bozor darvozalari. */
+.story-svg .pishtoq {
+  fill: var(--panel);
+  stroke: var(--copper);
+  stroke-width: 1.5;
+}
+
+.story-svg .gate-open {
+  fill: var(--lamp-on);
+  opacity: 0.35;
+}
+
+.story-svg .gate-lock,
+.story-svg .keyhole {
+  fill: var(--off);
+}
+
+.story-svg .lantern-cord {
+  stroke: var(--lead);
+  stroke-width: 1.2;
+}
+
+.story-svg .lantern {
+  fill: var(--off);
+  stroke: var(--copper);
+  stroke-width: 1.5;
+}
+
+.story-svg .lantern.lit {
+  fill: var(--lamp-on);
+}
+
+.story-svg .tower {
+  fill: var(--raise);
+  stroke: var(--copper);
+  stroke-width: 1.5;
+}
+
+.story-svg .scale-beam {
+  fill: none;
+  stroke: var(--copper);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.story-svg .tower-window {
+  fill: var(--off);
+}
+
+.story-svg .crowd {
+  fill: var(--muted);
+  opacity: 0.6;
+}
+
 @keyframes story-blink {
   50% {
     opacity: 0.2;
