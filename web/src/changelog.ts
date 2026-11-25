@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.25.0',
+    date: '2026-11-25',
+    uz: [
+      "Sozlamalarda — «Qurilmalar»: Telegram orqali kirgan har bir qurilma (brauzer, tizim, kirgan va oxirgi faol sana) ko'rinadi, keraksizini bir bosishda profildan chiqarasiz.",
+      "«Boshqa qurilmalardan chiqish»: telefon yo'qolsa yoki umumiy kompyuterda kirib qolgan bo'lsangiz — tiklash kodingiz yangisiga almashadi va boshqa hamma qurilma profildan chiqadi. Natijalar saqlanadi.",
+    ],
+    ru: [
+      'В Настройках — «Устройства»: видно каждое устройство, вошедшее через Telegram (браузер, система, дата входа и последней активности), лишнее отключается в одно касание.',
+      '«Выйти на других устройствах»: если потеряли телефон или забыли выйти на общем компьютере — код восстановления сменится на новый, и все остальные устройства выйдут из профиля. Результаты сохранятся.',
+    ],
+  },
+  {
     version: '2.24.0',
     date: '2026-11-25',
     uz: [

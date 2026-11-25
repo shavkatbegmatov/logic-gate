@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.25.0 — 2026-11-25
+
+- Sozlamalarda — «Qurilmalar»: Telegram orqali kirgan har bir qurilma (brauzer, tizim, kirgan va oxirgi faol sana) ko'rinadi, keraksizini bir bosishda profildan chiqarasiz.
+- «Boshqa qurilmalardan chiqish»: telefon yo'qolsa yoki umumiy kompyuterda kirib qolgan bo'lsangiz — tiklash kodingiz yangisiga almashadi va boshqa hamma qurilma profildan chiqadi. Natijalar saqlanadi.
+
 ## 2.24.0 — 2026-11-25
 
 - O'qituvchilar uchun tarqatma: sinf havolasining QR-kodi bilan A4 plakat (devorga yoki proyektorga) va qirqib tarqatiladigan 8 ta kartochka. O'quvchi telefon kamerasini QR-kodga qaratadi — va sinfga qo'shiladi. Sinf sahifasida — «QR-kod va tarqatma».

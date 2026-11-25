@@ -5,6 +5,7 @@ import { api, type PlayerInfo } from '../api';
 import { sfx } from '../audio';
 import { copyText, selectContents } from '../clipboard';
 import { ClassesCard } from '../components/ClassesCard';
+import { Devices } from '../components/Devices';
 import { askConfirm } from '../components/Dialogs';
 import { JoinForm } from '../components/JoinForm';
 import { Avatar } from '../components/PlayerChip';
@@ -193,6 +194,7 @@ export function Settings() {
                     )}
                   </>
                 )}
+                {me.value && <Devices telegram={inTelegram || !!me.value.telegram} />}
               </>
             ) : (
               // Kod bilan tiklash — pastdagi alohida kartada.

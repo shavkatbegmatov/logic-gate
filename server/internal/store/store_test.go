@@ -76,13 +76,71 @@ func TestPlayerByToken(t *testing.T) {
 	}
 }
 
+func TestDevicesList(t *testing.T) {
+	st := testStore(t)
+	ctx := t.Context()
+	players(t, st, 2)
+	if err := st.AddToken(ctx, "p1", tokenHash(101), "Chrome · Windows"); err != nil {
+		t.Fatal(err)
+	}
+	// Asosiy kod bilan kirganda Device yo'q, qurilma kaliti bilan — o'sha kalit.
+	if p, _ := st.PlayerByToken(ctx, tokenHash(1)); p.Device != nil {
+		t.Fatalf("asosiy kod: %+v", p)
+	}
+	p, err := st.PlayerByToken(ctx, tokenHash(101))
+	if err != nil || string(p.Device) != string(tokenHash(101)) || p.DeviceUsed.IsZero() {
+		t.Fatalf("kalit: %+v %v", p, err)
+	}
+	// Touch kalitning oxirgi ishlatilgan vaqtini soatiga bir marta yangilaydi.
+	st.db.ExecContext(ctx, `UPDATE player_tokens SET used_at = 100`)
+	p, _ = st.PlayerByToken(ctx, tokenHash(101))
+	if err := st.Touch(ctx, p); err != nil {
+		t.Fatal(err)
+	}
+	ds, err := st.Devices(ctx, "p1")
+	if err != nil || len(ds) != 1 || ds[0].Label != "Chrome · Windows" || time.Since(ds[0].UsedAt) > time.Minute {
+		t.Fatalf("ro'yxat: %+v %v", ds, err)
+	}
+	if ds, _ := st.Devices(ctx, "p2"); len(ds) != 0 {
+		t.Fatalf("boshqa o'yinchi: %+v", ds)
+	}
+
+	// Bitta qurilma xesh boshi bo'yicha o'chadi — faqat o'z profilidan.
+	if err := st.DeleteDevice(ctx, "p2", tokenHash(101)[:8]); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("begona: %v", err)
+	}
+	if err := st.DeleteDevice(ctx, "p1", tokenHash(101)[:8]); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.PlayerByToken(ctx, tokenHash(101)); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("o'chirilgan kalit: %v", err)
+	}
+
+	// Hammasidan chiqish: yangi asosiy kod, kalitlar yo'q.
+	st.AddToken(ctx, "p1", tokenHash(102), "")
+	if err := st.ResetTokens(ctx, "p1", tokenHash(103)); err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range []int{1, 102} {
+		if _, err := st.PlayerByToken(ctx, tokenHash(n)); !errors.Is(err, ErrNotFound) {
+			t.Fatalf("eski %d: %v", n, err)
+		}
+	}
+	if p, err := st.PlayerByToken(ctx, tokenHash(103)); err != nil || p.ID != "p1" {
+		t.Fatalf("yangi kod: %+v %v", p, err)
+	}
+	if err := st.ResetTokens(ctx, "yo'q", tokenHash(104)); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("yo'q o'yinchi: %v", err)
+	}
+}
+
 func TestDeviceTokensAndTelegramLink(t *testing.T) {
 	st := testStore(t)
 	ctx := t.Context()
 	players(t, st, 2)
 
 	// Qurilma kaliti tiklash kodi kabi ishlaydi; asosiy kod ham ishlashda davom etadi.
-	if err := st.AddToken(ctx, "p1", tokenHash(101)); err != nil {
+	if err := st.AddToken(ctx, "p1", tokenHash(101), ""); err != nil {
 		t.Fatal(err)
 	}
 	for _, n := range []int{1, 101} {
@@ -92,7 +150,7 @@ func TestDeviceTokensAndTelegramLink(t *testing.T) {
 	}
 	// Bir o'yinchida ko'pi bilan maxTokens ta kalit: eskilari o'chadi, oxirgisi qoladi.
 	for i := range maxTokens + 5 {
-		if err := st.AddToken(ctx, "p2", tokenHash(200+i)); err != nil {
+		if err := st.AddToken(ctx, "p2", tokenHash(200+i), ""); err != nil {
 			t.Fatal(err)
 		}
 	}

@@ -132,7 +132,7 @@ func (s *Server) telegramLoginStatus(w http.ResponseWriter, r *http.Request) {
 // finishWithToken — so'rovni yopadi va brauzerga profil hamda uning qurilma kalitini beradi.
 func (s *Server) finishWithToken(w http.ResponseWriter, r *http.Request, hub *tglogin.Hub, id string, p *store.Player, status int) {
 	code := newCode()
-	if err := s.store.AddToken(r.Context(), p.ID, hashCode(normalizeCode(code))); err != nil {
+	if err := s.store.AddToken(r.Context(), p.ID, hashCode(normalizeCode(code)), deviceLabel(r.UserAgent(), false)); err != nil {
 		s.internal(w, r, err)
 		return
 	}
@@ -239,7 +239,7 @@ func (s *Server) telegramAppLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	code := newCode()
-	if err := s.store.AddToken(r.Context(), p.ID, hashCode(normalizeCode(code))); err != nil {
+	if err := s.store.AddToken(r.Context(), p.ID, hashCode(normalizeCode(code)), deviceLabel(r.UserAgent(), true)); err != nil {
 		s.internal(w, r, err)
 		return
 	}

@@ -404,6 +404,7 @@ Server bot tokeni bilan ishga tushsa (`server/internal/bot`), bot:
 - **inline rejim** (BotFather → `/setinline` → @LogicGateUzBot → masalan `masala`): istalgan suhbatda `@LogicGateUzBot` yozilsa — «Bugungi masala» (o'yinga bog'langan va bugun yechgan bo'lsa — natijasi bilan) va «O'yinga taklif» kartalari, «Yechish»/«O'ynash» tugmasi Mini App'ni ochadi;
 - o'yin ichida (Telegram'da) kunlik masala yechilgan oynada va sozlamalarda «🔔 Har kuni eslatish» tugmasi: Telegram'dan ruxsat so'raladi, server `initData` imzosini token bilan tekshiradi (`POST /api/telegram/remind`);
 - **saytga Telegram orqali kirish** (2.21.0): brauzerda «Telegram orqali kirish» — server bir martalik so'rov ochadi (`POST /api/auth/telegram`, 5 daqiqa, xotirada — `server/internal/tglogin`), sayt raqam va `t.me/<bot>?start=auth_<id>` havolasini ko'rsatadi. Bot so'rovni shu foydalanuvchiga biriktiradi va uchta raqam tugmasini beradi: saytdagi raqam tanlansa — tasdiq, noto'g'ri raqam yoki «Bu men emas» — rad (begona yuborgan havola bilan birovning brauzeri profilga kira olmaydi). Sayt holatni so'rab turadi (`GET /api/auth/telegram/{id}`) va profilga **qurilma kaliti** bilan kiradi (`player_tokens`, tiklash kodi kabi ishlaydi; asosiy kod o'zgarmaydi, profil o'chirilsa kalitlari ham o'chadi). Telegram hali profilga bog'lanmagan bo'lsa — yangi profil (`…/player`) yoki tiklash kodi bilan mavjudini bog'lash (`…/attach`). Sozlamalarda — «Telegram'ni bog'lash» (`POST /api/me/telegram`). Mini App'da profil o'zi bog'lanadi (`POST /api/me/telegram/app`), bulut bo'sh yoki eskirgan bo'lsa — server orqali tiklanadi (`POST /api/auth/telegram/app`). BotFather'da qo'shimcha sozlash kerak emas.
+- **qurilmalar** (2.25.0): Sozlamalar → «Qurilmalar» — profilning qurilma kalitlari (taxminiy nom User-Agent'dan, masalan «Chrome · Android»; User-Agent'ning o'zi saqlanmaydi), kirgan va oxirgi ishlatilgan sana (soatiga bir marta yangilanadi); keraksizini chiqarish. Tiklash kodi bilan kirganlar ro'yxatda yo'q (bitta umumiy kod) — «Boshqa qurilmalardan chiqish» kodni yangisiga almashtiradi va barcha kalitlarni o'chiradi; Telegram bog'lanishi qoladi.
 
 Yangilanishlar long polling bilan olinadi — webhook manzili kerak emas. Token faqat muhitdan o'qiladi; Bot API xatolarida u `***` bilan almashtiriladi.
 
@@ -549,6 +550,9 @@ Favqulodda holatda (service worker buzilgan bo'lsa) foydalanuvchilarga "sayt ma'
 | POST | `/api/players` | `{nickname}` → `{id, nickname, code}` — yangi o'yinchi va tiklash kodi |
 | GET | `/api/me` | profil (`Authorization: Bearer <kod>`) |
 | PATCH | `/api/me` | `{nickname}` — taxallusni o'zgartirish |
+| GET | `/api/me/devices` | Telegram orqali kirgan qurilmalar: `{devices: [{id, label, createdAt, usedAt, current}], viaCode}` |
+| DELETE | `/api/me/devices/{id}` | qurilmani profildan chiqarish (shu qurilmaning o'zini emas — 400 `current_device`) |
+| POST | `/api/me/logout-others` | `{code}` — tiklash kodi shu yangisiga almashadi, barcha qurilma kalitlari o'chadi |
 | GET | `/api/progress` | o'yinchining eng yaxshi yechimlari |
 | POST | `/api/levels/{id}/solve` | `{circuit}` — server sxemani tekshiradi va saqlaydi |
 | GET | `/api/levels/{id}/stats` | yechganlar soni, eng kam element va taqsimot `spread: [[element, o'yinchilar], ...]` |

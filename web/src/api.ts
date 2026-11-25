@@ -37,6 +37,15 @@ async function request<T>(method: string, path: string, body?: unknown, code?: s
   return data as T;
 }
 
+export interface DeviceInfo {
+  id: string;
+  /** «Chrome · Android»; aniqlanmasa — bo'sh */
+  label: string;
+  createdAt: number;
+  usedAt: number;
+  current: boolean;
+}
+
 export interface PlayerInfo {
   id: string;
   nickname: string;
@@ -281,6 +290,11 @@ export const api = {
   telegramAppLogin: (initData: string) => request<{ player: PlayerInfo }>('POST', '/auth/telegram/app', { initData }),
   /** Mini App: ochiq profilni shu Telegram foydalanuvchisiga bog'lash. */
   telegramAppLink: (initData: string) => request<{ linked: boolean }>('POST', '/me/telegram/app', { initData }),
+  /** Profilga Telegram orqali kirgan qurilmalar (viaCode — shu qurilma asosiy tiklash kodi bilan). */
+  devices: () => request<{ devices: DeviceInfo[]; viaCode: boolean }>('GET', '/me/devices'),
+  removeDevice: (id: string) => request<unknown>('DELETE', `/me/devices/${encodeURIComponent(id)}`),
+  /** Boshqa hamma qurilmadan chiqish: tiklash kodi shu yangisiga almashadi, qurilma kalitlari o'chadi. */
+  logoutOthers: (code: string) => request<unknown>('POST', '/me/logout-others', { code }),
   /** Telegram ichida: kunlik eslatma holati (on yo'q) yoki uni o'zgartirish. Profil bo'lsa, chat unga bog'lanadi. */
   telegramRemind: (initData: string, on?: boolean, lang?: string) =>
     request<{ remind: boolean }>('POST', '/telegram/remind', on === undefined ? { initData } : { initData, on, lang }),

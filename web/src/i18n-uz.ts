@@ -197,14 +197,41 @@ export const uz = {
     text: "Bu — tiklash kodingiz. Uni daftaringizga yozib qo'ying: boshqa kompyuter yoki telefonda Sozlamalar → «Progressni tiklash» orqali shu kod bilan davom etasiz.",
     hint: "Kodni hech kimga bermang. U Sozlamalarda ham turadi.",
     ok: 'Yozib oldim',
+    rotatedTitle: 'Yangi tiklash kodi',
+    rotatedText: "Boshqa qurilmalar profildan chiqdi, eski kod endi ishlamaydi. Bu — yangi tiklash kodingiz: uni yozib qo'ying.",
   },
 
   lostProfile: {
     title: 'Profil topilmadi',
-    text: (name: string) => `«${name}» profili serverda yo'q — o'chirilgan bo'lishi mumkin. Natijalaringiz shu qurilmada saqlanib turibdi.`,
+    text: (name: string) =>
+      `«${name}» profiliga bu qurilmadan kirib bo'lmadi: u o'chirilgan yoki boshqa qurilmadan chiqarib yuborilgan bo'lishi mumkin. Natijalaringiz shu qurilmada saqlanib turibdi.`,
     codeHint: "Asosiy profilingizning tiklash kodini kiriting — shu qurilmadagi natijalar unga qo'shiladi.",
     newHint: "Kodingiz bo'lmasa — yangi profil oching, natijalar unga yuboriladi.",
     later: 'Keyinroq',
+  },
+
+  devices: {
+    title: 'Qurilmalar',
+    hint: "Telegram orqali kirgan qurilmalar. Tiklash kodi bilan kirganlari bu yerda ko'rinmaydi — ularni «Boshqa qurilmalardan chiqish» chiqaradi.",
+    current: 'shu qurilma',
+    viaCode: 'Shu qurilma (tiklash kodi bilan)',
+    unknown: "Noma'lum qurilma",
+    meta: (created: string, used: string) => `kirgan: ${created} · oxirgi: ${used}`,
+    remove: 'Chiqarish',
+    removeTitle: 'Qurilmani chiqarish',
+    removeConfirm: (name: string) =>
+      `«${name}» profildan chiqarilsinmi? U qurilmada qayta kirish uchun Telegram yoki tiklash kodi kerak bo'ladi.`,
+    removed: 'Qurilma profildan chiqarildi',
+    logoutOthers: 'Boshqa qurilmalardan chiqish',
+    logoutConfirm:
+      "Tiklash kodingiz yangisiga almashadi va boshqa barcha qurilmalar — kod yoki Telegram orqali kirganlar — profildan chiqadi. Natijalar saqlanadi. Yangi kod shu qurilmada ko'rsatiladi.",
+    logoutTgNote:
+      "Profil Telegram'ga bog'langan: Telegram ochiq turgan qurilmada u orqali qayta kirish mumkin. Begona qurilmada Telegram'ingiz ochiq qolgan bo'lsa, undan Telegram sozlamalarida («Qurilmalar») chiqing.",
+    logoutOk: 'Chiqish',
+    errors: {
+      no_device: "Qurilma topilmadi — u allaqachon chiqarilgan bo'lishi mumkin.",
+      current_device: 'Shu qurilmani bu yerdan chiqarib bo\'lmaydi.',
+    } as Record<string, string>,
   },
 
   tgLogin: {

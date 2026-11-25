@@ -128,6 +128,10 @@ var migrations = []string{
 		PRIMARY KEY (contest_id, player_id, level_id)
 	) WITHOUT ROWID;
 	CREATE INDEX contest_solves_player ON contest_solves(player_id);`,
+	// Qurilmalar ro'yxati (Sozlamalar): kalit qaysi brauzer/OS dan olingani (taxminiy; User-Agent'ning o'zi
+	// saqlanmaydi) va oxirgi ishlatilgan vaqti — o'yinchi begona qurilmani tanib, chiqarib yuborsin.
+	`ALTER TABLE player_tokens ADD COLUMN label TEXT NOT NULL DEFAULT '';
+	ALTER TABLE player_tokens ADD COLUMN used_at INTEGER NOT NULL DEFAULT 0;`,
 }
 
 type Store struct {
@@ -139,6 +143,10 @@ type Player struct {
 	Nickname  string
 	CreatedAt time.Time
 	LastSeen  time.Time
+	// Device — qurilma kaliti xeshi (AddToken), agar o'yinchi shu bilan kirgan bo'lsa; asosiy tiklash kodi
+	// bilan kirganda nil. DeviceUsed — o'sha kalitning oxirgi ishlatilgan vaqti.
+	Device     []byte
+	DeviceUsed time.Time
 }
 
 type Solution struct {
@@ -238,21 +246,22 @@ func (s *Store) CreatePlayer(ctx context.Context, id string, tokenHash []byte, n
 // PlayerByToken — tiklash kodi yoki qurilma kaliti (AddToken) xeshi bo'yicha o'yinchi.
 func (s *Store) PlayerByToken(ctx context.Context, tokenHash []byte) (*Player, error) {
 	var p Player
-	var created, seen int64
+	var created, seen, used int64
 	err := s.db.QueryRowContext(ctx,
-		`SELECT id, nickname, created_at, last_seen_at FROM players WHERE token_hash = ?
+		`SELECT id, nickname, created_at, last_seen_at, NULL, 0 FROM players WHERE token_hash = ?
 		 UNION ALL
-		 SELECT p.id, p.nickname, p.created_at, p.last_seen_at FROM player_tokens t JOIN players p ON p.id = t.player_id
+		 SELECT p.id, p.nickname, p.created_at, p.last_seen_at, t.token_hash, t.used_at
+		 FROM player_tokens t JOIN players p ON p.id = t.player_id
 		 WHERE t.token_hash = ?
 		 LIMIT 1`, tokenHash, tokenHash).
-		Scan(&p.ID, &p.Nickname, &created, &seen)
+		Scan(&p.ID, &p.Nickname, &created, &seen, &p.Device, &used)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
-	p.CreatedAt, p.LastSeen = time.Unix(created, 0), time.Unix(seen, 0)
+	p.CreatedAt, p.LastSeen, p.DeviceUsed = time.Unix(created, 0), time.Unix(seen, 0), time.Unix(used, 0)
 	return &p, nil
 }
 
@@ -260,15 +269,17 @@ func (s *Store) PlayerByToken(ctx context.Context, tokenHash []byte) (*Player, e
 const maxTokens = 20
 
 // AddToken o'yinchiga yangi qurilma kalitini qo'shadi (Telegram orqali kirish). Kalit tiklash kodi
-// kabi ishlaydi; eng eski kalitlar maxTokens dan ortig'i o'chiriladi.
-func (s *Store) AddToken(ctx context.Context, playerID string, tokenHash []byte) error {
+// kabi ishlaydi; eng eski kalitlar maxTokens dan ortig'i o'chiriladi. label — qurilma nomi (Devices).
+func (s *Store) AddToken(ctx context.Context, playerID string, tokenHash []byte, label string) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	if _, err := tx.ExecContext(ctx, `INSERT INTO player_tokens (token_hash, player_id, created_at) VALUES (?, ?, ?)`,
-		tokenHash, playerID, time.Now().Unix()); err != nil {
+	now := time.Now().Unix()
+	if _, err := tx.ExecContext(ctx,
+		`INSERT INTO player_tokens (token_hash, player_id, created_at, label, used_at) VALUES (?, ?, ?, ?, ?)`,
+		tokenHash, playerID, now, label, now); err != nil {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `DELETE FROM player_tokens WHERE player_id = ? AND token_hash NOT IN (
@@ -279,12 +290,19 @@ func (s *Store) AddToken(ctx context.Context, playerID string, tokenHash []byte)
 	return tx.Commit()
 }
 
-// Touch last_seen_at ni yangilaydi, lekin soatiga ko'pi bilan bir marta (diskka kam yozish uchun).
+// Touch last_seen_at ni (qurilma kaliti bilan kirgan bo'lsa — kalitning used_at ini ham) yangilaydi,
+// lekin soatiga ko'pi bilan bir marta (diskka kam yozish uchun).
 func (s *Store) Touch(ctx context.Context, p *Player) error {
-	if time.Since(p.LastSeen) < time.Hour {
+	now := time.Now()
+	if p.Device != nil && now.Sub(p.DeviceUsed) >= time.Hour {
+		if _, err := s.db.ExecContext(ctx, `UPDATE player_tokens SET used_at = ? WHERE token_hash = ?`, now.Unix(), p.Device); err != nil {
+			return err
+		}
+	}
+	if now.Sub(p.LastSeen) < time.Hour {
 		return nil
 	}
-	_, err := s.db.ExecContext(ctx, `UPDATE players SET last_seen_at = ? WHERE id = ?`, time.Now().Unix(), p.ID)
+	_, err := s.db.ExecContext(ctx, `UPDATE players SET last_seen_at = ? WHERE id = ?`, now.Unix(), p.ID)
 	return err
 }
 

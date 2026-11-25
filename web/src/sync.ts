@@ -20,11 +20,57 @@ export function errorText(e: unknown): string {
   if (e.code === 'rate_limited') return t.rateLimited;
   if (e.code === 'unauthorized') return t.settings.badCode;
   if (t.classes.errors[e.code]) return t.classes.errors[e.code];
+  if (t.devices.errors[e.code]) return t.devices.errors[e.code];
   return t.network;
 }
 
 /** Yangi ochilgan profilning tiklash kodi — o'quvchi uni darhol ko'rib, yozib olsin (NewProfileCode). */
 export const newProfileCode = signal<string | null>(null);
+
+/** «Boshqa qurilmalardan chiqish» dan keyingi yangi tiklash kodi — xuddi shunday darhol ko'rsatiladi. */
+export const rotatedCode = signal<string | null>(null);
+
+/** Kod almashayotganda eski kod bilan ketgan so'rovning 401 javobi profilni «yo'qolgan» qilmasin. */
+let rotating = false;
+
+const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/** 80 bitli tasodifiy tiklash kodi (server bilan bir xil alifbo va ko'rinish). */
+export function randomCode(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  // 256 soni 32 ga bo'linadi — har belgi teng ehtimolli.
+  return formatCode([...bytes].map((b) => CODE_ALPHABET[b & 31]).join(''));
+}
+
+/**
+ * Boshqa hamma qurilmadan chiqish: tiklash kodi almashadi, qurilma kalitlari o'chadi. Yangi kod shu
+ * qurilmada yaratiladi: javob tarmoqda yo'qolsa ham, server uni qabul qilganmi — yangi kod bilan
+ * tekshiriladi, aks holda profil hech kim bilmaydigan kod bilan qulflanib qolardi.
+ */
+export async function logoutOthers(): Promise<string> {
+  const p = profile.peek();
+  if (!p) throw new ApiError(401, 'unauthorized');
+  const code = randomCode();
+  rotating = true;
+  try {
+    try {
+      await api.logoutOthers(code);
+    } catch (e) {
+      const unknown = e instanceof ApiError && (e.status === 0 || e.status >= 500);
+      if (!unknown) throw e;
+      try {
+        await api.me(code);
+      } catch {
+        throw e;
+      }
+    }
+    if (profile.peek()?.id === p.id) profile.value = { ...profile.peek()!, code };
+    rotatedCode.value = code;
+    return code;
+  } finally {
+    rotating = false;
+  }
+}
 
 /** Server bilmaydigan (o'chirilgan) profilning taxallusi — o'quvchi kod bilan kirishi yoki yangisini ochishi kerak (LostProfile). */
 export const lostProfile = signal<string | null>(null);
@@ -115,7 +161,10 @@ async function doSync() {
   } catch (e) {
     // Server profilni bilmaydi: dublikat sifatida o'chirilgan, uzoq vaqt bo'sh turib tozalangan yoki baza
     // zaxiradan tiklangan. Kutish paytida boshqa profilga o'tilmagan bo'lsa — qurilma profilsiz qoladi.
-    if (e instanceof ApiError && e.status === 401 && asked && profile.value?.id === asked.id) return forgetLostProfile(asked.nickname);
+    // Kod shu orada almashgan bo'lsa (boshqa qurilmalardan chiqish) — eski kodning 401 i hisobga olinmaydi.
+    if (e instanceof ApiError && e.status === 401 && asked && !rotating && profile.value?.code === asked.code) {
+      return forgetLostProfile(asked.nickname);
+    }
     throw e;
   }
   const next = { ...progress.value };
