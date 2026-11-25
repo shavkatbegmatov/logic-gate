@@ -13,9 +13,20 @@ export function hintSteps(level: Level): HintStep[] {
     const parts = Object.entries(level.hints.gates).map(([g, n]) => `${n} × ${g}`);
     steps.push({ kind: 'text', text: t.hints.gates(parts.join(', ')) });
     const [type, ...sources] = level.hints.first as [GateType, ...string[]];
-    steps.push({ kind: 'place', text: t.hints.first(type, sources), type, sources });
+    steps.push({ kind: 'place', text: t.hints.first(type, busNames(sources, level.buses)), type, sources });
   }
   return steps;
+}
+
+/** Matn uchun: shinaning hamma bitlari ketma-ket kelsa — shina nomi (A3 A2 A1 A0 → A). */
+function busNames(sources: string[], buses: Level['buses']): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < sources.length; ) {
+    const bus = Object.entries(buses ?? {}).find(([, pins]) => pins.every((p, j) => sources[i + j] === p));
+    out.push(bus ? bus[0] : sources[i]);
+    i += bus ? bus[1].length : 1;
+  }
+  return out;
 }
 
 /** Maydonda shu turdagi, aynan shu kirishlarga ulangan element bormi (kirishlar tartibi ahamiyatsiz). */

@@ -65,6 +65,32 @@ function blockExpr(type: BlockType, k: number, x: Expr[]): Expr {
       return bin('OR', bin('AND', neg(x[2]), x[0]), bin('AND', x[2], x[1]));
     case 'DEC':
       return bin('AND', k & 2 ? x[0] : neg(x[0]), k & 1 ? x[1] : neg(x[1]));
+    // Shina bloklari: k-chiqish (0 — eng katta bit) bitlar bo'yicha.
+    case 'SPLIT':
+    case 'JOIN':
+      return x[k];
+    case 'NOT4':
+      return neg(x[k]);
+    case 'MUX4':
+      return bin('OR', bin('AND', neg(x[8]), x[k]), bin('AND', x[8], x[4 + k]));
+    case 'INC4': {
+      // Qk = Ak ⊕ (undan kichik bitlarning hammasi 1); C — hammasi 1. A0 = x[3].
+      const all = (n: number) => x.slice(4 - n).reduce((a, b) => bin('AND', a, b));
+      if (k === 4) return all(4);
+      return k === 3 ? neg(x[3]) : bin('XOR', x[k], all(3 - k));
+    }
+    case 'ADD4': {
+      // Ko'chirish zanjiri: c0 = Ci, c(j+1) = Aj∧Bj ∨ cj∧(Aj⊕Bj); Sj = Aj⊕Bj⊕cj (j — bit raqami, A0 = x[3]).
+      let c = x[8];
+      const sum: Expr[] = [];
+      for (let j = 0; j < 4; j++) {
+        const a = x[3 - j];
+        const b = x[7 - j];
+        sum[j] = bin('XOR', bin('XOR', a, b), c);
+        c = bin('OR', bin('AND', a, b), bin('AND', c, bin('XOR', a, b)));
+      }
+      return k === 4 ? c : sum[3 - k];
+    }
   }
 }
 

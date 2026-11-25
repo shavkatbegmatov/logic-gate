@@ -17,14 +17,14 @@ import {
   validate,
   wouldCycle,
 } from './sim';
-import { BLOCKS, type Circuit, type Level, type LevelPack, type Spec } from './types';
+import { BLOCKS, blockLuts, type BlockType, type Circuit, type Level, type LevelPack, type Spec } from './types';
 
 const levels = (pack as unknown as LevelPack).levels;
 const sols = solutions as Record<string, Circuit>;
 
 describe('darajalar', () => {
-  it('54 ta daraja va har birida yechim bor', () => {
-    expect(levels).toHaveLength(54);
+  it('60 ta daraja va har birida yechim bor', () => {
+    expect(levels).toHaveLength(60);
     for (const l of levels) expect(sols[l.id], l.id).toBeDefined();
   });
 
@@ -288,7 +288,7 @@ describe('sxemadan avtomat', () => {
 describe('bloklar', () => {
   it("jadvallar levels.json dagi (levels/blocks.mjs dan) bilan bir xil", () => {
     const fromJson = (pack as unknown as { blocks: Record<string, unknown> }).blocks;
-    const mine = Object.fromEntries(Object.entries(BLOCKS).map(([k, b]) => [k, { inputs: b.inputs, outputs: b.outputs, luts: b.luts, from: b.from }]));
+    const mine = Object.fromEntries(Object.entries(BLOCKS).map(([k, b]) => [k, { inputs: b.inputs, outputs: b.outputs, luts: blockLuts(k as BlockType), from: b.from, ...(b.bus && { bus: b.bus }) }]));
     expect(mine).toEqual(fromJson);
   });
 

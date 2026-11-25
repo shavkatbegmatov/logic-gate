@@ -2,10 +2,11 @@ import { Fragment, type ComponentChildren, type ComponentType } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { showToast } from '../components/Toast';
 import { t } from '../i18n';
-import { BLOCKS, GATE_ARITY, gateOutputs, isBlock, sourcePort } from '../sim/types';
+import { GATE_ARITY, gateOutputs, isBlock, sourcePort } from '../sim/types';
 import { settings } from '../state';
 import { activeBoardMode, activeTheme } from '../theme';
 import type { Editor } from './editor';
+import { BusInPin, BusOutPin } from './BusPins';
 import { CHIP_CODE, GateShape } from './GateShape';
 import { GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { routeD } from './routing';
@@ -94,50 +95,6 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
   const chip = activeTheme.value === 'haqiqiy';
   const cut = activeTheme.value === 'chizma' ? 0 : undefined;
 
-  let deleteAt = b.gateDeleteAt;
-  const wireEls = b.wires.map((w, i) => {
-    const route = b.routed.routes[i];
-    if (!route) return null;
-    const d = routeD(route, b.routed.hops[i], b.sharp, cut);
-    const live = b.reached(w.from, 1);
-    const on = live && b.values.get(w.from) === 1;
-    const front = b.wave !== null && b.stepOf(w.from, 1) === b.wave;
-    const selected = b.sel?.kind === 'wire' && b.sel.index === i;
-    if (selected) {
-      const m = routeMid(route);
-      deleteAt = { x: m.x, y: m.y + (b.vertical ? 14 : -14) };
-    }
-    return (
-      <g
-        key={`${w.from}>${w.to}`}
-        class={`wire${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
-        data-kind="wire"
-        data-index={i}
-      >
-        <path class="wire-hit" d={d} />
-        {on && <path class="wire-glow" d={d} />}
-        <path class="wire-line" d={d} />
-      </g>
-    );
-  });
-
-  const port = (id: string, x: number, y: number, src: boolean, connected: boolean, on: boolean, name: string) => (
-    <g
-      class={`port ${src ? 'src' : 'sink'}${connected ? ' linked' : ''}${on ? ' on' : ''}${b.active === id ? ' active' : ''}`}
-      data-kind="port"
-      data-port={id}
-      transform={`translate(${x},${y})`}
-      tabindex={0}
-      role="button"
-      aria-pressed={b.pending === id}
-      aria-label={`${name}${connected ? `, ${a11y.linked}` : ''}${b.pending === id ? `. ${a11y.wiring}` : ''}`}
-      onKeyDown={(e) => b.onPortKey(e, id)}
-    >
-      <circle class="port-hit" r={15} />
-      <circle class="port-dot" r={5.5} />
-    </g>
-  );
-
   const upright = (x: number, y: number, children: ComponentChildren, vx = x, vy = y) => (
     <g transform={b.vertical ? `translate(${vx},${vy}) ${TRANSPOSE}` : `translate(${x},${y})`}>{children}</g>
   );
@@ -152,6 +109,62 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
         {text}
       </text>
     );
+
+  let deleteAt = b.gateDeleteAt;
+  const tags: ComponentChildren[] = [];
+  const wireEls = b.wires.map((w, i) => {
+    const route = b.routed.routes[i];
+    // Shinaning qolgan bitlari — boshi bilan bitta qalin sim.
+    if (!route || b.bund.rep[i] !== i) return null;
+    const d = routeD(route, b.routed.hops[i], b.sharp, cut);
+    const live = b.reached(w.from, 1);
+    const bus = b.busWireValue(i);
+    const on = live && (bus === undefined ? b.values.get(w.from) === 1 : !!bus);
+    if (bus !== undefined) {
+      const m = routeMid(route);
+      tags.push(
+        <g key={`tag${i}`} class={`bus-tag${on ? ' on' : ''}${live ? '' : ' idle'}`} transform={`translate(${m.x},${m.y})`}>
+          <rect x={-12} y={-9} width={24} height={18} rx={9} />
+          {upright(0, 0, <text>{live && bus !== null ? bus : '–'}</text>)}
+        </g>,
+      );
+    }
+    const front = b.wave !== null && b.stepOf(w.from, 1) === b.wave;
+    const selected = b.sel?.kind === 'wire' && b.sel.index === i;
+    if (selected) {
+      const m = routeMid(route);
+      deleteAt = { x: m.x, y: m.y + (b.vertical ? 14 : -14) };
+    }
+    return (
+      <g
+        key={`${w.from}>${w.to}`}
+        class={`wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
+        data-kind="wire"
+        data-index={i}
+      >
+        <path class="wire-hit" d={d} />
+        {on && <path class="wire-glow" d={d} />}
+        <path class="wire-line" d={d} />
+      </g>
+    );
+  });
+
+  const port = (id: string, x: number, y: number, src: boolean, connected: boolean, on: boolean, name: string) => (
+    <g
+      class={`port ${src ? 'src' : 'sink'}${b.busPort(id) ? ' bus' : ''}${connected ? ' linked' : ''}${on ? ' on' : ''}${b.active === id ? ' active' : ''}`}
+      data-kind="port"
+      data-port={id}
+      transform={`translate(${x},${y})`}
+      tabindex={0}
+      role="button"
+      aria-pressed={b.pending === id}
+      aria-label={`${name}${connected ? `, ${a11y.linked}` : ''}${b.pending === id ? `. ${a11y.wiring}` : ''}`}
+      onKeyDown={(e) => b.onPortKey(e, id)}
+    >
+      <circle class="port-hit" r={15} />
+      <circle class="port-dot" r={b.busPort(id) ? 7.5 : 5.5} />
+    </g>
+  );
 
   return (
     <div class="board" ref={b.wrapRef}>
@@ -188,6 +201,7 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
               const on = live && b.values.get(net) === 1;
               return <circle key={`${net}@${at.x},${at.y}`} class={`wire-dot${on ? ' on' : ''}${live ? '' : ' idle'}`} cx={at.x} cy={at.y} r={4} />;
             })}
+            {tags}
           </g>
 
           {b.gates.map((g) => {
@@ -214,12 +228,10 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
                   {isBlock(g.type) ? (
                     <>
                       {label('gate-label block-label', 36, gateH(g) / 2, g.type)}
-                      {BLOCKS[g.type].inputs.map((n, i) => (
-                        <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>
-                      ))}
-                      {BLOCKS[g.type].outputs.map((n, k) => (
-                        <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>
-                      ))}
+                      {b.blockLabels(g).ins.map((n, i) => n && <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>)}
+                      {b.blockLabels(g).outs.map(
+                        (n, k) => n && <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>,
+                      )}
                     </>
                   ) : g.type === 'DFF' ? (
                     <>
@@ -236,19 +248,25 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
                   )}
                 </g>
                 {Array.from({ length: GATE_ARITY[g.type] }, (_, i) =>
-                  port(`${g.id}:${i}`, 0, inputPortY(g, i), false, b.driven.has(`${g.id}:${i}`), false, a11y.gateIn(b.gateName.get(g.id)!, i)),
+                  b.hidden(`${g.id}:${i}`)
+                    ? null
+                    : port(`${g.id}:${i}`, 0, inputPortY(g, i), false, b.driven.has(`${g.id}:${i}`), false, a11y.gateIn(b.gateName.get(g.id)!, i)),
                 )}
                 {Array.from({ length: gateOutputs(g.type) }, (_, k) => {
                   const id = sourcePort(g.id, k);
+                  if (b.hidden(id)) return null;
                   const outOn = b.reached(id, 0) && b.values.get(id) === 1;
-                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${BLOCKS[g.type].outputs[k]}` : b.gateName.get(g.id)!;
+                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${b.blockOutName(g, k)}` : b.gateName.get(g.id)!;
                   return port(id, GATE_W, outputPortY(g, k), true, b.usedSources.has(id), outOn, a11y.gateOut(name));
                 })}
               </g>
             );
           })}
 
-          {b.spec.inputs.map((name, k) => {
+          {b.inGroups.map((group) => {
+            if (group.bus) return <BusInPin key={`in:${group.name}`} b={b} group={group} port={port} />;
+            const name = group.name;
+            const k = group.idx[0];
             const p = b.lay.inputs.get(name)!;
             const on = b.bits[k] === 1;
             return (
@@ -283,7 +301,10 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
             );
           })}
 
-          {b.spec.outputs.map((name, i) => {
+          {b.outGroups.map((group) => {
+            if (group.bus) return <BusOutPin key={`out:${group.name}`} b={b} group={group} port={port} />;
+            const name = group.name;
+            const i = group.idx[0];
             const p = b.lay.outputs.get(name)!;
             const src = b.drivers.get(`out:${name}`);
             const v = src === undefined || b.reached(src, 2) ? b.outputs[i] : null;

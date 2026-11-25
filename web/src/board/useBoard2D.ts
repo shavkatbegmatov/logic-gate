@@ -5,7 +5,8 @@ import { showToast } from '../components/Toast';
 import { t } from '../i18n';
 import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
-import { GATE_ARITY, gateOutputs, sourcePort, type Gate } from '../sim/types';
+import { GATE_ARITY, gateOutputs, isBlock, sourcePort, type Gate } from '../sim/types';
+import { blockPinLabels, blockPortNames, bundles, busValue, isHiddenBit, pinGroups, portGroup } from './bus';
 import type { Editor } from './editor';
 import { gateH, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, type Point } from './geometry';
 import { routeAll } from './routing';
@@ -77,7 +78,11 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
     const lay = editor.layout.value;
     let best: string | null = null;
     let bestD = radius;
+    const buses = editor.spec.value.buses;
+    const gates = new Map(editor.circuit.value.gates.map((g) => [g.id, g]));
     const consider = (id: string, w: Point) => {
+      // Shinaning qolgan bitlari boshi bilan bir nuqtada: tanlanadigani — boshi (ulash hammasini ulaydi).
+      if (isHiddenBit(id, gates, buses)) return;
       const sp = editor.toScreen(w.x, w.y);
       const d = Math.hypot(sp.x - p.x, sp.y - p.y);
       if (d < bestD) {
@@ -103,6 +108,9 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
       showToast(t.play.cycle, 'error');
     } else if (res === 'kind' && fromDrag) {
       showToast(t.play.sameKind, 'error');
+    } else if (res === 'width') {
+      sfx.error();
+      showToast(t.play.busWidth, 'error');
     }
     return res;
   };
@@ -337,8 +345,11 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
   }
 
   const quick = moving.value && wires.length > 40;
-  const geomKey = `${quick}|${lay.outX}|${spec.inputs.length}|${spec.outputs.length}|${JSON.stringify(gates)}|${JSON.stringify(wires)}`;
-  const routed = useMemo(() => routeAll(wires, gmap, lay, quick), [geomKey]);
+  const busKey = spec.buses ? JSON.stringify(spec.buses) : '';
+  const geomKey = `${quick}|${lay.outX}|${spec.inputs.join()}|${spec.outputs.join()}|${busKey}|${JSON.stringify(gates)}|${JSON.stringify(wires)}`;
+  // Shina simlari: to'liq ulangan shina — bitta qalin sim (boshi chiziladi, qolgan bitlari uning yo'lida).
+  const bund = useMemo(() => bundles(wires, gmap, spec.buses), [geomKey]);
+  const routed = useMemo(() => routeAll(wires, gmap, lay, quick, bund.rep), [geomKey]);
   const junctions = useMemo(() => new Set(routed.dots.map(({ at }) => `${at.x},${at.y}`)), [routed]);
   const sharp = (p: Point) => junctions.has(`${p.x},${p.y}`);
 
@@ -353,6 +364,23 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
       return [g.id, `${g.type} ${n}`];
     }),
   );
+
+  // ── Shinalar ─────────────────────────────────────────────
+  const inGroups = pinGroups(spec.inputs, spec.buses);
+  const outGroups = pinGroups(spec.outputs, spec.buses);
+  /** Shinaning boshidan boshqa biti: alohida port chizilmaydi. */
+  const hidden = (port: string) => isHiddenBit(port, gmap, spec.buses);
+  /** Shina boshi porti: keng port bo'lib chiziladi. */
+  const busPort = (port: string) => portGroup(port, gmap, spec.buses)?.bit === 0;
+  /** Blok oyoqlari yozuvlari (shina — bitta nom). */
+  const blockLabels = (g: Gate) => (isBlock(g.type) ? blockPinLabels(g.type) : { ins: [], outs: [] });
+  /** Blok chiqishi nomi (ekran o'quvchi uchun): shina — shina nomi. */
+  const blockOutName = (g: Gate, k: number) => (isBlock(g.type) ? (blockPortNames(g.type).outs[k] ?? '') : '');
+  /** Shina simi boshi bo'lsa — shina qiymati (son yoki null), oddiy sim — undefined. */
+  const busWireValue = (i: number): number | null | undefined => {
+    const members = bund.bus.get(i);
+    return members ? busValue(members.map((m) => wires[m].from), values) : undefined;
+  };
 
   return {
     wrapRef,
@@ -386,6 +414,14 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
     usedSources,
     gateName,
     expected,
+    bund,
+    inGroups,
+    outGroups,
+    hidden,
+    busPort,
+    blockLabels,
+    blockOutName,
+    busWireValue,
     onDown,
     onMove,
     onUp,

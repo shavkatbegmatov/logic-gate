@@ -18,6 +18,8 @@ describe('newGates', () => {
       k2: ['HA'],
       k3: ['MUX'],
       k5: ['DEC'],
+      w1: ['SPLIT', 'JOIN'],
+      w6: ['NOT4', 'ADD4', 'MUX4', 'INC4'],
     });
   });
 

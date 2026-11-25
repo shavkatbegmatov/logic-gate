@@ -43,6 +43,13 @@ export const BLOCK_SHAPE: Record<BlockType, { h: number; ins: number[]; outs: nu
   FA: { h: 72, ins: [12, 36, 60], outs: [24, 48] },
   MUX: { h: 72, ins: [12, 36, 60], outs: [36] },
   DEC: { h: 96, ins: [36, 60], outs: [12, 36, 60, 84] },
+  // Shina oyoqlari bitta uchda (bus.ts): to'rt bit — bitta keng port.
+  SPLIT: { h: 96, ins: [48, 48, 48, 48], outs: [12, 36, 60, 84] },
+  JOIN: { h: 96, ins: [12, 36, 60, 84], outs: [48, 48, 48, 48] },
+  NOT4: { h: 48, ins: [24, 24, 24, 24], outs: [24, 24, 24, 24] },
+  ADD4: { h: 72, ins: [12, 12, 12, 12, 36, 36, 36, 36, 60], outs: [24, 24, 24, 24, 48] },
+  MUX4: { h: 72, ins: [12, 12, 12, 12, 36, 36, 36, 36, 60], outs: [36, 36, 36, 36] },
+  INC4: { h: 48, ins: [24, 24, 24, 24], outs: [12, 12, 12, 12, 36] },
 };
 
 /** Blok korpusi x bo'yicha: oyoqlar uchun ikki chetda joy qoladi. */

@@ -1,5 +1,6 @@
+import { bundles, pinGroups } from '../board/bus';
 import { GateShape } from '../board/GateShape';
-import { bounds, layout, outputColumn } from '../board/geometry';
+import { bounds, BUS_IN_X, BUS_OUT_X, layout, outputColumn } from '../board/geometry';
 import { routeAll, routeD } from '../board/routing';
 import type { Circuit, Gate, Level } from '../sim/types';
 import { activeBoardMode, activeTheme, isAaaTheme } from '../theme';
@@ -15,7 +16,8 @@ export function MiniBoard({ level, circuit = EMPTY }: { level: Level; circuit?: 
   const lay = layout(level, outputColumn(level.goal));
   const gmap = new Map<string, Gate>(circuit.gates.map((g) => [g.id, g]));
   // Maydon bilan bir xil yo'llar: ko'prikchalar va tarmoqlanish nuqtalari bilan.
-  const routed = routeAll(circuit.wires, gmap, lay);
+  const bund = bundles(circuit.wires, gmap, level.buses);
+  const routed = routeAll(circuit.wires, gmap, lay, false, bund.rep);
   const junctions = new Set(routed.dots.map(({ at }) => `${at.x},${at.y}`));
   const sharp = (p: { x: number; y: number }) => junctions.has(`${p.x},${p.y}`);
   const b = bounds(circuit, lay);
@@ -35,7 +37,9 @@ export function MiniBoard({ level, circuit = EMPTY }: { level: Level; circuit?: 
     >
       {circuit.wires.map((w, i) => {
         const r = routed.routes[i];
-        return r ? <path key={`${w.from}>${w.to}`} class="mini-wire" d={routeD(r, routed.hops[i], sharp, cut)} /> : null;
+        if (!r || bund.rep[i] !== i) return null;
+        const cls = bund.bus.has(i) ? 'mini-wire bus' : 'mini-wire';
+        return <path key={`${w.from}>${w.to}`} class={cls} d={routeD(r, routed.hops[i], sharp, cut)} />;
       })}
       {routed.dots.map(({ net, at }) => (
         <circle key={`${net}@${at.x},${at.y}`} class="mini-dot" cx={at.x} cy={at.y} r={4} />
@@ -51,24 +55,33 @@ export function MiniBoard({ level, circuit = EMPTY }: { level: Level; circuit?: 
           <text>?</text>
         </g>
       )}
-      {[...lay.inputs].map(([name, p]) => (
-        <g key={`in:${name}`} transform={`translate(${p.x},${p.y})`}>
-          <line class="lead" x1={-14} y1={0} x2={0} y2={0} />
-          <rect class="mini-pin" x={-76} y={-24} width={62} height={48} rx={10} />
-          <text class="mini-name" x={-45}>
-            {name}
-          </text>
-        </g>
-      ))}
-      {[...lay.outputs].map(([name, p]) => (
-        <g key={`out:${name}`} transform={`translate(${p.x},${p.y})`}>
-          <line class="lead" x1={0} y1={0} x2={14} y2={0} />
-          <rect class="mini-pin" x={14} y={-24} width={62} height={48} rx={10} />
-          <text class="mini-name" x={45}>
-            {name}
-          </text>
-        </g>
-      ))}
+      {/* Shina — bitta keng pin (maydondagi kabi). */}
+      {pinGroups(level.inputs, level.buses).map(({ name, pins, bus }) => {
+        const p = lay.inputs.get(pins[0])!;
+        const x0 = bus ? BUS_IN_X : -76;
+        return (
+          <g key={`in:${name}`} transform={`translate(${p.x},${p.y})`}>
+            <line class="lead" x1={-14} y1={0} x2={0} y2={0} />
+            <rect class="mini-pin" x={x0} y={-24} width={-14 - x0} height={48} rx={10} />
+            <text class="mini-name" x={(x0 - 14) / 2}>
+              {name}
+            </text>
+          </g>
+        );
+      })}
+      {pinGroups(level.outputs, level.buses).map(({ name, pins, bus }) => {
+        const p = lay.outputs.get(pins[0])!;
+        const x1 = bus ? BUS_OUT_X : 76;
+        return (
+          <g key={`out:${name}`} transform={`translate(${p.x},${p.y})`}>
+            <line class="lead" x1={0} y1={0} x2={14} y2={0} />
+            <rect class="mini-pin" x={14} y={-24} width={x1 - 14} height={48} rx={10} />
+            <text class="mini-name" x={(x1 + 14) / 2}>
+              {name}
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }

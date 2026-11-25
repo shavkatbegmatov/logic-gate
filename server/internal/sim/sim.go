@@ -26,22 +26,84 @@ var gateIDRe = regexp.MustCompile(`^[a-z0-9_]{1,16}$`)
 var arity = map[string]int{
 	"NOT": 1, "AND": 2, "OR": 2, "XOR": 2, "NAND": 2, "NOR": 2, "XNOR": 2, "DFF": 1,
 	"HA": 2, "FA": 3, "MUX": 3, "DEC": 2,
+	"SPLIT": 4, "JOIN": 4, "NOT4": 4, "ADD4": 9, "MUX4": 9, "INC4": 4,
 }
 
-// Block — blok (mikrosxema): har chiqish uchun haqiqat jadvali bitmaskasi, r-bit — r-qatordagi qiymat
-// (birinchi kirish — qatorning eng katta biti). web/src/sim/types.ts dagi BLOCKS va levels/blocks.mjs
-// bilan bir xil bo'lishi shart — testlar levels.json dagi `blocks` bilan solishtiradi.
+// Block — blok (mikrosxema): Fn kirish bitlaridan chiqish bitlarini beradi (birinchi kirish — qatorning eng
+// katta biti); hisoblashda undan tuzilgan jadval (Table) ishlatiladi. web/src/sim/types.ts dagi BLOCKS va
+// levels/blocks.mjs bilan bir xil bo'lishi shart — testlar levels.json dagi `blocks` jadvallari bilan solishtiradi.
 type Block struct {
 	Inputs  []string
 	Outputs []string
-	Luts    []uint8
+	Fn      func(in []uint8) []uint8
+	// Table[r] — r-qatordagi chiqishlar maskasi (k-bit — k-chiqish); init da Fn dan.
+	Table []uint8
 }
 
-var Blocks = map[string]Block{
-	"HA":  {Inputs: []string{"A", "B"}, Outputs: []string{"S", "C"}, Luts: []uint8{0b0110, 0b1000}},
-	"FA":  {Inputs: []string{"A", "B", "Ci"}, Outputs: []string{"S", "Co"}, Luts: []uint8{0x96, 0xe8}},
-	"MUX": {Inputs: []string{"A", "B", "S"}, Outputs: []string{"Q"}, Luts: []uint8{0xd8}},
-	"DEC": {Inputs: []string{"A", "B"}, Outputs: []string{"Y0", "Y1", "Y2", "Y3"}, Luts: []uint8{0b0001, 0b0010, 0b0100, 0b1000}},
+func pins4(name string) []string {
+	return []string{name + "3", name + "2", name + "1", name + "0"}
+}
+
+func num(bits []uint8) int {
+	v := 0
+	for _, b := range bits {
+		v = v<<1 | int(b)
+	}
+	return v
+}
+
+// withCarry — to'rt bit (eng kattasi birinchi) va beshinchi bit (ko'chirish) oxirida.
+func withCarry(v int) []uint8 {
+	return []uint8{uint8(v >> 3 & 1), uint8(v >> 2 & 1), uint8(v >> 1 & 1), uint8(v & 1), uint8(v >> 4 & 1)}
+}
+
+func ident(a []uint8) []uint8 { return append([]uint8(nil), a...) }
+
+var Blocks = map[string]*Block{
+	"HA":  {Inputs: []string{"A", "B"}, Outputs: []string{"S", "C"}, Fn: func(a []uint8) []uint8 { return []uint8{a[0] ^ a[1], a[0] & a[1]} }},
+	"FA":  {Inputs: []string{"A", "B", "Ci"}, Outputs: []string{"S", "Co"}, Fn: func(a []uint8) []uint8 { s := a[0] + a[1] + a[2]; return []uint8{s & 1, s >> 1} }},
+	"MUX": {Inputs: []string{"A", "B", "S"}, Outputs: []string{"Q"}, Fn: func(a []uint8) []uint8 { return []uint8{a[a[2]]} }},
+	"DEC": {Inputs: []string{"A", "B"}, Outputs: []string{"Y0", "Y1", "Y2", "Y3"}, Fn: func(a []uint8) []uint8 {
+		out := make([]uint8, 4)
+		out[a[0]*2+a[1]] = 1
+		return out
+	}},
+	// Shinalar (4 bit): bo'laklovchi va birlashtiruvchi — simlar, qolganlari har bit uchun.
+	"SPLIT": {Inputs: pins4("A"), Outputs: pins4("A"), Fn: ident},
+	"JOIN":  {Inputs: pins4("A"), Outputs: pins4("Q"), Fn: ident},
+	"NOT4": {Inputs: pins4("A"), Outputs: pins4("Q"), Fn: func(a []uint8) []uint8 {
+		out := ident(a)
+		for i := range out {
+			out[i] ^= 1
+		}
+		return out
+	}},
+	"ADD4": {Inputs: append(append(pins4("A"), pins4("B")...), "Ci"), Outputs: append(pins4("S"), "Co"), Fn: func(a []uint8) []uint8 {
+		return withCarry(num(a[:4]) + num(a[4:8]) + int(a[8]))
+	}},
+	"MUX4": {Inputs: append(append(pins4("A"), pins4("B")...), "S"), Outputs: pins4("Q"), Fn: func(a []uint8) []uint8 {
+		if a[8] == 1 {
+			return ident(a[4:8])
+		}
+		return ident(a[:4])
+	}},
+	"INC4": {Inputs: pins4("A"), Outputs: append(pins4("Q"), "C"), Fn: func(a []uint8) []uint8 { return withCarry(num(a) + 1) }},
+}
+
+func init() {
+	for _, b := range Blocks {
+		n := len(b.Inputs)
+		b.Table = make([]uint8, 1<<n)
+		in := make([]uint8, n)
+		for r := range b.Table {
+			for k := range n {
+				in[k] = uint8(r>>(n-1-k)) & 1
+			}
+			for k, v := range b.Fn(in) {
+				b.Table[r] |= (v & 1) << k
+			}
+		}
+	}
 }
 
 // outputs — element chiqishlari soni: blokda bir nechta, qolganlarida 1.
@@ -115,7 +177,7 @@ type op struct {
 	lut       uint8
 	a, b, dst int32
 	ins       []int32
-	luts      []uint8
+	table     []uint8
 	dsts      []int32
 }
 
@@ -287,7 +349,7 @@ func (c *compiled) program() {
 			continue
 		}
 		if b, ok := Blocks[g.Type]; ok {
-			o := op{luts: b.Luts}
+			o := op{table: b.Table}
 			for i := range b.Inputs {
 				o.ins = append(o.ins, src(fmt.Sprintf("%s:%d", g.ID, i)))
 			}
@@ -330,12 +392,13 @@ func (c *compiled) step(r int, state uint64, vals, out []uint8) uint64 {
 			vals[o.dst] = o.lut >> (vals[o.a]<<1 | vals[o.b]) & 1
 			continue
 		}
-		var r uint8
+		r := 0
 		for _, at := range o.ins {
-			r = r<<1 | vals[at]
+			r = r<<1 | int(vals[at])
 		}
+		m := o.table[r]
 		for k, at := range o.dsts {
-			vals[at] = o.luts[k] >> r & 1
+			vals[at] = m >> k & 1
 		}
 	}
 	for i, at := range c.outSrc {

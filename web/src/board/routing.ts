@@ -217,7 +217,11 @@ function candidates(a: Point, b: Point): Candidate[] {
  * quick — joy tanlamasdan (har sim markazda): katta sxemada element sudralayotgan paytda, har kadrda;
  * qo'yib yuborilgach to'liq hisoblanadi.
  */
-export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, quick = false): Routed {
+/**
+ * rep — shinalar (bus.ts bundles): rep[i] !== i bo'lgan sim alohida yo'naltirilmaydi, shina boshi (rep[i])
+ * yo'lini oladi — hamma bitlar bitta qalin sim bo'lib chiziladi.
+ */
+export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, quick = false, rep?: number[]): Routed {
   const ends = wires.map((w) => {
     const a = portPoint(w.from, gates, lay);
     const b = portPoint(w.to, gates, lay);
@@ -228,7 +232,7 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
   // Avval tanlovi kam (tor joydagi) simlar; teng bo'lsa — chapdan o'ngga, yuqoridan pastga.
   const order = wires
     .map((_, i) => i)
-    .filter((i) => ends[i])
+    .filter((i) => ends[i] && (!rep || rep[i] === i))
     .sort((i, j) => {
       const a = ends[i]!;
       const b = ends[j]!;
@@ -282,7 +286,17 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
     placed.push(...segments(best!.pts, net, i));
   }
 
-  return { routes, hops: hopsFor(wires, routes), dots: dotsFor(wires, routes) };
+  const hops = hopsFor(wires, routes);
+  const dots = dotsFor(wires, routes);
+  if (rep) {
+    rep.forEach((r, i) => {
+      if (r !== i) {
+        routes[i] = routes[r];
+        hops[i] = hops[r];
+      }
+    });
+  }
+  return { routes, hops, dots };
 }
 
 /**

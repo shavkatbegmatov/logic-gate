@@ -214,7 +214,9 @@ function exampleRows(level) {
 const outBlocks = {};
 for (const [type, b] of Object.entries(blocks)) {
   const src = levels.find((l) => l.id === b.from);
-  if (!src || src.step) fail(type, `blok manbasi ${b.from} kombinatsion daraja emas`);
+  if (b.free) {
+    if (!src) fail(type, `blok manbasi ${b.from} yo'q`);
+  } else if (!src || src.step) fail(type, `blok manbasi ${b.from} kombinatsion daraja emas`);
   else if (JSON.stringify(src.inputs) !== JSON.stringify(b.inputs) || JSON.stringify(src.outputs) !== JSON.stringify(b.outputs)) {
     fail(type, `oyoqlar ${b.from} darajasidagi kirish/chiqishlardan farq qiladi`);
   } else {
@@ -224,7 +226,7 @@ for (const [type, b] of Object.entries(blocks)) {
       if (src.fn(...bits).join() !== b.fn(...bits).join()) fail(type, `${b.from} bilan ${r}-qatorda farq`);
     }
   }
-  outBlocks[type] = { inputs: b.inputs, outputs: b.outputs, luts: lutsOf(b), from: b.from };
+  outBlocks[type] = { inputs: b.inputs, outputs: b.outputs, luts: lutsOf(b), from: b.from, ...(b.bus && { bus: b.bus }) };
 }
 
 const ids = new Set();
@@ -238,6 +240,13 @@ for (const level of levels) {
   if (!chapterIds.has(level.chapter)) fail(level.id, `noma'lum bo'lim ${level.chapter}`);
   const gateCount = Object.keys(level.sol.g).length;
   if (gateCount !== level.goal) fail(level.id, `maqsad ${level.goal}, yechimda ${gateCount} element`);
+
+  // Shina: daraja oyoqlaridan ketma-ket bo'lak (hammasi kirish yoki hammasi chiqish), eng katta bit birinchi.
+  for (const [name, pins] of Object.entries(level.buses ?? {})) {
+    const list = level.inputs.includes(pins[0]) ? level.inputs : level.outputs;
+    const at = list.indexOf(pins[0]);
+    if (pins.length < 2 || at < 0 || pins.some((p, i) => list[at + i] !== p)) fail(level.id, `${name} shinasi oyoqlari ketma-ket emas`);
+  }
 
   const { fn, sol, step, init, example, ...rest } = level;
   const tr = ru.levels[level.id];
