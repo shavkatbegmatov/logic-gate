@@ -144,4 +144,56 @@ describe('tartibga keltirish', () => {
   it("bo'sh sxema", () => {
     expect(tidy(spec(2), { gates: [], wires: [] }, 380)).toEqual({ circuit: { gates: [], wires: [] }, outX: 380 });
   });
+
+  it("to'liq ayirgich (m4): barcha chiqish elementlari oxirgi ustunda, simlari to'g'ri va zanjirlar tartibli", () => {
+    const m4Spec: Spec = { inputs: ['A', 'B', 'Bi'], outputs: ['D', 'Bo'], gates: ['AND', 'OR', 'NOT', 'XOR'] };
+    const m4: Circuit = {
+      gates: [
+        { id: 'n1', type: 'NOT', x: 0, y: 0 },
+        { id: 'n2', type: 'NOT', x: 0, y: 0 },
+        { id: 'x1', type: 'XOR', x: 0, y: 0 },
+        { id: 'n3', type: 'NOT', x: 0, y: 0 },
+        { id: 'x2', type: 'XOR', x: 0, y: 0 },
+        { id: 'a1', type: 'AND', x: 0, y: 0 },
+        { id: 'a2', type: 'AND', x: 0, y: 0 },
+        { id: 'or1', type: 'OR', x: 0, y: 0 },
+      ],
+      wires: [
+        { from: 'in:A', to: 'n1:0' },
+        { from: 'n1', to: 'x1:0' },
+        { from: 'in:B', to: 'x1:1' },
+        { from: 'x1', to: 'x2:0' },
+        { from: 'in:Bi', to: 'x2:1' },
+        { from: 'x2', to: 'out:D' },
+        { from: 'x1', to: 'n3:0' },
+        { from: 'n3', to: 'a1:0' },
+        { from: 'in:B', to: 'a1:1' },
+        { from: 'in:A', to: 'n2:0' },
+        { from: 'n2', to: 'a2:0' },
+        { from: 'in:Bi', to: 'a2:1' },
+        { from: 'a1', to: 'or1:0' },
+        { from: 'a2', to: 'or1:1' },
+        { from: 'or1', to: 'out:Bo' },
+      ],
+    };
+    const t = tidy(m4Spec, m4, 680, { fit: true });
+    noOverlap(t.circuit);
+    const byId = new Map(t.circuit.gates.map((g) => [g.id, g]));
+    // Ikkala chiqish elementi (XOR2 → D va OR → Bo) bir xil oxirgi ustunda.
+    expect(byId.get('x2')!.x).toBe(byId.get('or1')!.x);
+    // Ikkala AND bir ustunda, ikkala ichki NOT (n3 va n2) ularning chap ustunida.
+    expect(byId.get('a1')!.x).toBe(byId.get('a2')!.x);
+    expect(byId.get('n3')!.x).toBe(byId.get('n2')!.x);
+    expect(byId.get('n3')!.x).toBeLessThan(byId.get('a1')!.x);
+    expect(byId.get('a1')!.x).toBeLessThan(byId.get('or1')!.x);
+    // Tartib kesishmasin: n3 (→ a1) n2 (→ a2) dan yuqorida; a1 (→ or1:0) a2 (→ or1:1) dan yuqorida.
+    expect(byId.get('n3')!.y).toBeLessThan(byId.get('n2')!.y);
+    expect(byId.get('a1')!.y).toBeLessThan(byId.get('a2')!.y);
+    // Chiqish simlari va ichki NOT → AND ulanishlari to'g'ri gorizontal chiziq.
+    const lay = layout(m4Spec, t.outX);
+    expect(wireRoute(portPoint('x2', byId, lay)!, portPoint('out:D', byId, lay)!)).toHaveLength(2);
+    expect(wireRoute(portPoint('or1', byId, lay)!, portPoint('out:Bo', byId, lay)!)).toHaveLength(2);
+    expect(wireRoute(portPoint('n3', byId, lay)!, portPoint('a1:0', byId, lay)!)).toHaveLength(2);
+    expect(wireRoute(portPoint('n2', byId, lay)!, portPoint('a2:0', byId, lay)!)).toHaveLength(2);
+  });
 });

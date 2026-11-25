@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.34.1',
+    date: '2026-11-25',
+    uz: [
+      "«Tartibga keltirish» algoritmi yangilandi: chiqish elementlari oxirgi ustunda pinlar ro'parasiga, ichki zanjirlar esa qo'shni ustunlarga kesishishlarni kamaytirib va to'g'ri gorizontal simlar bilan joylanadi.",
+    ],
+    ru: [
+      'Обновлён алгоритм «Упорядочить»: выходные элементы выравниваются в последнем столбце напротив выходов, а внутренние цепочки раскладываются по соседним столбцам с минимумом пересечений и прямыми линиями.',
+    ],
+  },
+  {
     version: '2.34.0',
     date: '2026-11-25',
     uz: [

@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.34.1 — 2026-11-25
+
+- «Tartibga keltirish» algoritmi yangilandi: chiqish elementlari oxirgi ustunda pinlar ro'parasiga, ichki zanjirlar esa qo'shni ustunlarga kesishishlarni kamaytirib va to'g'ri gorizontal simlar bilan joylanadi.
+
 ## 2.34.0 — 2026-11-25
 
 - Yangi, 12-bo'lim — «Registrlar va xotira» (124 ★ dan ochiladi): protsessor sonlarni qayerda saqlashini yig'asiz. 6 ta daraja: yuklanuvchi bit, registr, siljitish registri, dastur hisoblagichi, manzilli xotira va akkumulyator — ALU bilan registrning birinchi halqasi.
