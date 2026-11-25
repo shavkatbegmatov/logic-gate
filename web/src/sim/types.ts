@@ -244,8 +244,8 @@ export interface Level extends Spec {
   seq?: SeqSpec;
   /** Bosqichli maslahat: 3 ★ yechim tarkibi va kirishlarga ulangan birinchi element [tur, manba...]. */
   hints?: { gates: Record<string, number>; first: string[] };
-  /** Boshqa tillardagi matnlar (masalan, ru). */
-  i18n?: Record<string, { title: string; task: string; hint: string }>;
+  /** Boshqa tillardagi matnlar (masalan, ru). Vazifa va maslahat — tafsilotlar yuklangach (levels.ts). */
+  i18n?: Record<string, Partial<Pick<Level, 'title' | 'task' | 'hint'>>>;
 }
 
 /**

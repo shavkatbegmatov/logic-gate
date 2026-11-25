@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.33.1',
+    date: '2026-11-25',
+    uz: [
+      "O'yin tezroq ochiladi: darajalar jadvallari, vazifa matnlari va maslahatlar endi o'yin ochilgandan keyin, fonda yuklanadi (ochilishda yuklanadigan hajm 123 → 111 KB).",
+    ],
+    ru: [
+      'Игра открывается быстрее: таблицы уровней, тексты заданий и подсказки теперь загружаются в фоне после открытия игры (объём при открытии 123 → 111 КБ).',
+    ],
+  },
+  {
     version: '2.33.0',
     date: '2026-11-25',
     uz: [

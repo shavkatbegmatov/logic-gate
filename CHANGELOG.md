@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.33.1 — 2026-11-25
+
+- O'yin tezroq ochiladi: darajalar jadvallari, vazifa matnlari va maslahatlar endi o'yin ochilgandan keyin, fonda yuklanadi (ochilishda yuklanadigan hajm 123 → 111 KB).
+
 ## 2.33.0 — 2026-11-25
 
 - Hikoya yana to'rt bo'limga yetdi: «Tarozi minorasi» (Kombinatsion sxemalar), «Kumush ombor» (Faqat NAND), «Hisob xonasi» (Shinalar) va «Ustozning yuragi» (ALU). Har birida kirish va yakuniy sahnalar, har darajada o'z hikoya qatori; Chiroq «qo'sh», «hammasi bittadan», «birga» va «hisobla» degan so'zlarni o'rganadi.
