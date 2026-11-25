@@ -87,7 +87,7 @@ float unpackDepth(vec4 rgba) {
 float calcShadow(vec4 sp, vec3 n, vec3 l) {
   vec3 p = sp.xyz / max(sp.w, 0.0001) * 0.5 + 0.5;
   if (p.x < 0.01 || p.x > 0.99 || p.y < 0.01 || p.y > 0.99 || p.z > 0.995) return 1.0;
-  float bias = max(0.0022 * (1.0 - dot(n, l)), 0.0007);
+  float bias = max(0.0026 * (1.0 - dot(n, l)), 0.0009);
   float sum = 0.0;
   for (int x = -1; x <= 1; x++) {
     for (int y = -1; y <= 1; y++) {
@@ -95,7 +95,7 @@ float calcShadow(vec4 sp, vec3 n, vec3 l) {
       sum += (p.z - bias <= d) ? 1.0 : 0.0;
     }
   }
-  return mix(0.26, 1.0, sum / 9.0);
+  return mix(0.38, 1.0, sum / 9.0);
 }
 
 vec3 aces(vec3 x) {
@@ -141,9 +141,13 @@ void main() {
   vec3 diff = base * (1.0 - metal) * 0.85;
   vec3 direct = (diff + spec) * NdotL * shadow * 1.15;
 
-  // Kontur (rim) yorug'ligi: qirralarni ajratib ko'rsatadi
+  // Kontur (rim) yorug'ligi va studiya softboks metall aksi (analitik IBL)
   float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0) * 0.18;
   vec3 rimLight = uSkyCol * rim * (0.4 + metal * 0.8);
+  vec3 R = reflect(-V, N);
+  float envGrad = smoothstep(-0.25, 0.85, R.y);
+  float strip = pow(max(0.0, dot(R, normalize(vec3(-0.28, 0.86, 0.42)))), mix(24.0, 3.5, rough));
+  vec3 envSpec = F * (mix(uGroundCol, uSkyCol * 1.4, envGrad) + uSkyCol * strip * 0.7) * (0.2 + metal * 0.8) * (1.0 - rough * 0.5);
 
   // Yonib turgan LED va elementlardan dinamik nuqtaviy yorug'lik
   vec3 pts = vec3(0.0);
@@ -165,7 +169,7 @@ void main() {
     pulseBoost = wave * 0.85;
   }
 
-  vec3 lit = aces(ambient + direct + rimLight + pts);
+  vec3 lit = aces(ambient + direct + envSpec + rimLight + pts);
   vec3 col = mix(lit, base, clamp(emissive * 0.82, 0.0, 0.94));
   if (pulseBoost > 0.001) {
     col = mix(col, uPulseCol, clamp(pulseBoost * 0.85, 0.0, 0.9));
@@ -223,13 +227,53 @@ void main() {
 `;
 
 export const COMPOSITE_FRAG = `
-precision mediump float;
+precision highp float;
 uniform sampler2D uScene;
 uniform sampler2D uBloom;
+uniform vec2 uTexel;
+uniform float uFxaa;
 varying vec2 vUV;
 
+float luma(vec3 c) {
+  return dot(c, vec3(0.299, 0.587, 0.114));
+}
+
+vec3 sampleScene(vec2 uv) {
+  vec3 rgbM = texture2D(uScene, uv).rgb;
+  if (uFxaa < 0.5) return rgbM;
+  vec3 rgbNW = texture2D(uScene, uv + vec2(-1.0, -1.0) * uTexel).rgb;
+  vec3 rgbNE = texture2D(uScene, uv + vec2( 1.0, -1.0) * uTexel).rgb;
+  vec3 rgbSW = texture2D(uScene, uv + vec2(-1.0,  1.0) * uTexel).rgb;
+  vec3 rgbSE = texture2D(uScene, uv + vec2( 1.0,  1.0) * uTexel).rgb;
+
+  float lM = luma(rgbM);
+  float lNW = luma(rgbNW);
+  float lNE = luma(rgbNE);
+  float lSW = luma(rgbSW);
+  float lSE = luma(rgbSE);
+  float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+  float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+  if (lMax - lMin < max(0.04, lMax * 0.12)) return rgbM;
+
+  vec2 dir = vec2(-((lNW + lNE) - (lSW + lSE)), (lNW + lSW) - (lNE + lSE));
+  float dirReduce = max((lNW + lNE + lSW + lSE) * 0.03125, 0.0078125);
+  float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + dirReduce);
+  dir = clamp(dir * rcpDirMin, vec2(-6.0), vec2(6.0)) * uTexel;
+
+  vec3 rgbA = 0.5 * (
+    texture2D(uScene, uv + dir * (1.0 / 3.0 - 0.5)).rgb +
+    texture2D(uScene, uv + dir * (2.0 / 3.0 - 0.5)).rgb
+  );
+  vec3 rgbB = rgbA * 0.5 + 0.25 * (
+    texture2D(uScene, uv + dir * -0.5).rgb +
+    texture2D(uScene, uv + dir *  0.5).rgb
+  );
+  float lB = luma(rgbB);
+  return (lB < lMin || lB > lMax) ? rgbA : rgbB;
+}
+
 void main() {
-  vec3 scene = texture2D(uScene, vUV).rgb;
+  vec3 scene = sampleScene(vUV);
   vec3 bloom = texture2D(uBloom, vUV).rgb;
   vec3 col = clamp(scene + bloom * 0.52, 0.0, 1.0);
   vec2 d = vUV - 0.5;

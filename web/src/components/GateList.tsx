@@ -1,3 +1,4 @@
+import { busExamples } from '../board/bus';
 import { GateIcon } from '../board/GateShape';
 import { t } from '../i18n';
 import { applyGate, gateOutputValues, rowBits } from '../sim/sim';
@@ -6,10 +7,17 @@ import { BLOCKS, GATE_ARITY, isBlock, type GateType } from '../sim/types';
 /** "00→0 01→0 10→0 11→1" ko'rinishidagi qisqa haqiqat jadvali. */
 function truthLine(type: GateType): string {
   if (type === 'DFF') return `D → Q ${t.play.nextTick}: 0→0  1→1`;
+  const ex = busExamples(type);
+  if (ex) {
+    // Shinali blok: to'liq jadval juda uzun (ADD4 — 512 qator) — misollar sonlarda.
+    return `${ex.ins.join(' ')} → ${ex.outs.join(' ')}:  ${ex.rows.map((r) => `${r.ins.join(' ')}→${r.outs.join(' ')}`).join('  ')}`;
+  }
   if (isBlock(type)) {
     // Blok: "A B Ci → S Co" sarlavhasi va har qator bitlari.
     const b = BLOCKS[type];
     const n = b.inputs.length;
+    // Doimiy manba: kirishi yo'q.
+    if (!n) return `${b.outputs[0]} = ${gateOutputValues(type, [])[0]}`;
     const rows = Array.from({ length: 1 << n }, (_, r) => `${rowBits(n, r).join('')}→${gateOutputValues(type, rowBits(n, r)).join('')}`);
     return `${b.inputs.join(' ')} → ${b.outputs.join(' ')}:  ${rows.join('  ')}`;
   }

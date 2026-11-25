@@ -2,7 +2,7 @@
 import { BLOCK_TYPES, GATE_TYPES, isBlock, type GateType } from '../../sim/types';
 import type { RealStyle } from '../../theme';
 import { CHIP_CODE } from '../GateShape';
-import { DFF_BODY, SHAPES } from '../shapes';
+import { blockText, DFF_BODY, SHAPES } from '../shapes';
 
 export interface UVRect {
   u0: number;
@@ -40,7 +40,7 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
     floor: [0.042, 0.088, 0.068],
     gateBody: [0.09, 0.1, 0.12],
     gateAccent: [1.0, 0.75, 0.26],
-    traceOff: [0.13, 0.33, 0.24],
+    traceOff: [0.46, 0.62, 0.58],
     traceOn: [1.0, 0.73, 0.1],
     pulse: [1.0, 0.98, 0.84],
     lampOff: [0.1, 0.16, 0.13],
@@ -61,7 +61,7 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
     floor: [0.04, 0.055, 0.07],
     gateBody: [0.13, 0.16, 0.21],
     gateAccent: [0.22, 0.74, 0.97],
-    traceOff: [0.23, 0.28, 0.35],
+    traceOff: [0.4, 0.48, 0.58],
     traceOn: [1.0, 0.72, 0.1],
     pulse: [1.0, 0.97, 0.84],
     lampOff: [0.11, 0.14, 0.18],
@@ -82,7 +82,7 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
     floor: [0.82, 0.79, 0.73],
     gateBody: [0.12, 0.13, 0.16],
     gateAccent: [0.95, 0.18, 0.14],
-    traceOff: [0.33, 0.37, 0.43],
+    traceOff: [0.32, 0.37, 0.44],
     traceOn: [0.95, 0.16, 0.12],
     pulse: [1.0, 0.86, 0.08],
     lampOff: [0.54, 0.52, 0.49],
@@ -103,7 +103,7 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
     floor: [0.015, 0.03, 0.07],
     gateBody: [0.05, 0.1, 0.2],
     gateAccent: [0.0, 0.9, 1.0],
-    traceOff: [0.1, 0.2, 0.34],
+    traceOff: [0.26, 0.44, 0.64],
     traceOn: [0.04, 0.92, 1.0],
     pulse: [0.96, 1.0, 1.0],
     lampOff: [0.06, 0.11, 0.2],
@@ -120,27 +120,31 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
   },
 };
 
-/** Atlasdagi kataklar: 4 ustun, har holat (0/1) uchun ATLAS_ROWS qator. */
+/**
+ * Atlasdagi kataklar (256×256): ATLAS_COLS ustun, har holat (0/1) uchun ATLAS_ROWS qator. 8 ustunda 26 tur —
+ * 2048×2048: telefonlardagi eng kichik WebGL chegarasi (4096) ichida, 64 turgacha sig'adi.
+ */
 const ATLAS_TYPES: GateType[] = [...GATE_TYPES, 'DFF', ...BLOCK_TYPES];
-const ATLAS_ROWS = Math.ceil(ATLAS_TYPES.length / 4);
+const ATLAS_COLS = 8;
+const ATLAS_ROWS = Math.ceil(ATLAS_TYPES.length / ATLAS_COLS);
 
 export function gateAtlasUV(type: GateType, on = false): UVRect {
   const idx = Math.max(0, ATLAS_TYPES.indexOf(type));
-  const col = idx % 4;
-  const row = Math.floor(idx / 4) + (on ? ATLAS_ROWS : 0);
-  const pad = 0.004;
+  const col = idx % ATLAS_COLS;
+  const row = Math.floor(idx / ATLAS_COLS) + (on ? ATLAS_ROWS : 0);
+  const pad = 0.004 / 2;
   const rows = ATLAS_ROWS * 2;
   return {
-    u0: col * 0.25 + pad,
+    u0: col / ATLAS_COLS + pad,
     v0: row / rows + pad,
-    u1: (col + 1) * 0.25 - pad,
+    u1: (col + 1) / ATLAS_COLS - pad,
     v1: (row + 1) / rows - pad,
   };
 }
 
 export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = 1024;
+  c.width = 256 * ATLAS_COLS;
   c.height = 256 * ATLAS_ROWS * 2;
   const ctx = c.getContext('2d')!;
 
@@ -159,8 +163,8 @@ export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
 
   for (const on of [false, true]) {
     ATLAS_TYPES.forEach((type, idx) => {
-      const col = idx % 4;
-      const row = Math.floor(idx / 4) + (on ? ATLAS_ROWS : 0);
+      const col = idx % ATLAS_COLS;
+      const row = Math.floor(idx / ATLAS_COLS) + (on ? ATLAS_ROWS : 0);
       const ox = col * 256;
       const oy = row * 256;
 
@@ -220,7 +224,7 @@ export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
       ctx.textBaseline = 'middle';
       ctx.fillStyle = on ? onText : offStroke;
       ctx.font = '700 42px "IBM Plex Mono", monospace';
-      ctx.fillText(type, 128, 162);
+      ctx.fillText(blockText(type), 128, 162);
 
       ctx.fillStyle = on ? onCol : offSub;
       ctx.font = '600 24px "IBM Plex Mono", monospace';
@@ -325,15 +329,16 @@ export interface LabelAtlas {
 }
 
 export function buildLabelAtlasCanvas(_style: RealStyle, labels: string[], expWord = 'kerak'): LabelAtlas {
+  // Shinali darajada sonlar (0–15) ham yoziladi — 32 katak yetmaydi; boshqa darajalarda avvalgidek 512×512.
+  const unique = [...new Set(['000', '0', '1', ...labels])].slice(0, 64);
+  const rows = unique.length > 32 ? 16 : 8;
   const c = document.createElement('canvas');
   c.width = 512;
-  c.height = 512;
+  c.height = rows * 64;
   const ctx = c.getContext('2d')!;
   const uvs = new Map<string, UVRect>();
 
-  const unique = [...new Set(['000', '0', '1', ...labels])].slice(0, 32);
   const cols = 4;
-  const rows = 8;
   const cw = c.width / cols;
   const ch = c.height / rows;
 

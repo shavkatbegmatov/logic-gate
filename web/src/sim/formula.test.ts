@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import solutions from '../../../levels/solutions.json';
 import { formulaLines } from './formula';
-import type { Circuit, GateType } from './types';
+import { gateOutputValues, rowBits } from './sim';
+import { BLOCK_TYPES, BLOCKS, GATE_ARITY, type Circuit, type GateType } from './types';
 
 /** Qisqa yozuv: { nom: [tur, manba1, manba2?] }, chiqishlar { Q: manba }. Katta harf — kirish. */
 function circuit(g: Record<string, [GateType, string, string?]>, out: Record<string, string>): Circuit {
@@ -96,5 +97,52 @@ describe('formula: bloklar', () => {
       { name: 't2', expr: 'A ∧ B', kind: 'tmp' },
       { name: 'Co', expr: '(t1 ∧ B) ∨ (t2 ∧ (t1 ⊕ B))', kind: 'out' },
     ]);
+  });
+});
+
+describe('formula: har bir blok ifodasi jadvaliga mos', () => {
+  // Ifoda matnini JS ga: ¬ → !, ∧ → &, ∨ → |, ⊕ → ^ (aralash amallar formulada doim qavsda).
+  const compileExpr = (expr: string, names: string[]) =>
+    new Function(...names, `return +(${expr.replace(/¬/g, '!').replace(/∧/g, '&').replace(/∨/g, '|').replace(/⊕/g, '^')});`) as (
+      ...a: number[]
+    ) => number;
+
+  it.each(BLOCK_TYPES)('%s', (type) => {
+    const n = GATE_ARITY[type];
+    const names = Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i));
+    const outs = BLOCKS[type].outputs.map((_, k) => `O${k}`);
+    const c: Circuit = {
+      gates: [{ id: 'b', type, x: 0, y: 0 }],
+      wires: [
+        ...names.map((x, i) => ({ from: `in:${x}`, to: `b:${i}` })),
+        ...outs.map((o, k) => ({ from: k ? `b.${k}` : 'b', to: `out:${o}` })),
+      ],
+    };
+    const lines = formulaLines(c, outs);
+    expect(lines.map((l) => l.name)).toEqual(outs);
+    const fns = lines.map((l) => compileExpr(l.expr, names));
+    for (let r = 0; r < 1 << n; r++) {
+      const bits = rowBits(n, r);
+      expect(fns.map((f) => f(...bits)), `${type} ${bits.join('')}`).toEqual(gateOutputValues(type, bits));
+    }
+  });
+
+  it('doimiy manba amallarda soddalashadi: A ∧ 1 = A, A ⊕ 1 = ¬A', () => {
+    const c: Circuit = {
+      gates: [
+        { id: 'one', type: 'ONE', x: 0, y: 0 },
+        { id: 'a', type: 'AND', x: 0, y: 0 },
+        { id: 'x', type: 'XOR', x: 0, y: 0 },
+      ],
+      wires: [
+        { from: 'in:A', to: 'a:0' },
+        { from: 'one', to: 'a:1' },
+        { from: 'in:B', to: 'x:0' },
+        { from: 'one', to: 'x:1' },
+        { from: 'a', to: 'out:P' },
+        { from: 'x', to: 'out:Q' },
+      ],
+    };
+    expect(text(c, ['P', 'Q'])).toEqual(['P = A', 'Q = ¬B']);
   });
 });

@@ -36,6 +36,46 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.32.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 11-bo'lim — «ALU» (112 ★ dan ochiladi): protsessorning hisoblovchi yuragini yig'asiz. 6 ta daraja: manfiy son, ayirgich, «qo'sh yoki ayir», mantiqiy blok, taqqoslagich va to'rt amalli ALU.",
+      'Yangi elementlar: doimiy 1 va 0 manbalari (ONE, ZERO) — masalan, summatorning Ci kirishiga. Yangi bloklar: ayirgich (SUB4), shina AND/OR/XOR (AND4, OR4, XOR4) va nol aniqlagich (NOR4 — «Nolmi?» darajasidan ochiladi).',
+      '«ALU» darajasidan keyin Qum qutida tayyor ALU4 bloki ochiladi: ikki son va amal kodi F1 F0 → natija, C va Z bayroqlari.',
+    ],
+    ru: [
+      'Новая, 11-я глава — «АЛУ» (открывается со 112 ★): соберите вычислительное сердце процессора. 6 уровней: отрицательное число, вычитатель, «сложить или вычесть», логический блок, компаратор и АЛУ на четыре операции.',
+      'Новые элементы: постоянные 1 и 0 (ONE, ZERO) — например, для входа Ci сумматора. Новые блоки: вычитатель (SUB4), AND/OR/XOR шины (AND4, OR4, XOR4) и детектор нуля (NOR4 — открывается уровнем «Ноль?»).',
+      'После уровня «АЛУ» в Песочнице открывается готовый блок ALU4: два числа и код операции F1 F0 → результат, флаги C и Z.',
+    ],
+  },
+  {
+    version: '2.31.1',
+    date: '2026-11-25',
+    uz: [
+      "3D rejimda apparat 8×/4× MSAA, 2048px yumshoq soyalar va anizotrop filtrlash yoqildi — simlar va elementlar chetidagi g'adir-budirlik yo'qoldi.",
+      "PCB mis yo'llari 45° qiyalik (bevel) qirrali uzluksiz geometriyaga o'tkazildi va o'chiq (0) simlar rangi platadan aniq ajralib turadigan sovuq metall ohangga keltirildi.",
+    ],
+    ru: [
+      'В 3D-режиме включены аппаратное сглаживание MSAA (8×/4×), тени 2048px и анизотропная фильтрация — края проводов и элементов стали гладкими.',
+      'Дорожки печатной платы переведены на непрерывную 3D-геометрию со снятыми фасками, а выключенные (0) проводники получили чёткий контрастный металлический оттенок.',
+    ],
+  },
+  {
+    version: '2.31.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 10-bo'lim — «Shinalar» (100 ★ dan ochiladi): to'rt sim — bitta yo'l. Shina maydonda bitta keng pin va bitta qalin sim bo'lib ko'rinadi, ustida qiymati son bilan yoziladi; ulaganda to'rttala bit birga ulanadi, o'chirganda birga o'chadi.",
+      "6 ta yangi daraja: teskari shina, «Nolmi?», to'rt bitli summator, shina tanlovchi, bittaga oshirish va hisoblagichning bir qadami.",
+      "Yangi bloklar: bo'laklovchi (SPLIT), birlashtiruvchi (JOIN), shina inkori (NOT4), to'rt bitli summator (ADD4), shina tanlovchi (MUX4) va bittaga oshiruvchi (INC4). Shinali darajalarda haqiqat jadvali sonlarda — 512 qatorli jadval ham oson o'qiladi.",
+    ],
+    ru: [
+      "Новая, 10-я глава — «Шины» (открывается со 100 ★): четыре провода — одна дорога. Шина на поле — один широкий вывод и один толстый провод с числом-значением; при подключении все четыре бита соединяются сразу и так же вместе удаляются.",
+      "6 новых уровней: обратная шина, «Ноль?», четырёхбитный сумматор, выбор шины, плюс один и шаг счётчика.",
+      "Новые блоки: разделитель (SPLIT), объединитель (JOIN), инверсия шины (NOT4), четырёхбитный сумматор (ADD4), выбор шины (MUX4) и плюс один (INC4). В уровнях с шинами таблица истинности — в числах: даже таблицу на 512 строк легко читать.",
+    ],
+  },
+  {
     version: '2.30.0',
     date: '2026-11-25',
     uz: [

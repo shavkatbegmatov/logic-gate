@@ -67,7 +67,26 @@ export const chapters = [
     description: "Chiroq buvining sandig'idan eski mikrosxemalarni topdi: summator, multipleksor, dekoder. Yechilgan qurilma endi bitta blok — kattaroq mashinaning g'ishti.",
     unlockStars: 88,
   },
+  {
+    id: 'buses',
+    title: 'Shinalar',
+    description: "To'rt sim — bitta yo'l. Shina to'rt bitli sonni bir vaqtda olib yuradi: bo'laklovchi uni bitlarga ajratadi, birlashtiruvchi yana yig'adi.",
+    unlockStars: 100,
+  },
+  {
+    id: 'alu',
+    title: 'ALU',
+    description: "Arifmetik-mantiqiy qurilma — protsessorning hisoblovchi yuragi: manfiy son, ayirish, solishtirish va amal kodi bilan tanlanadigan to'rt amal.",
+    unlockStars: 112,
+  },
 ];
+
+// To'rt bitli shina oyoqlari: A3 (eng katta bit) … A0.
+const bus4 = (name) => [3, 2, 1, 0].map((i) => `${name}${i}`);
+const num4 = (bits) => bits.reduce((a, b) => a * 2 + b, 0);
+const bits4 = (v) => [3, 2, 1, 0].map((i) => (v >> i) & 1);
+// Blokning to'rt bitli chiqish shinasi yechimda: "g", "g.1", "g.2", "g.3" (eng katta bit birinchi).
+const out4 = (g) => [g, `${g}.1`, `${g}.2`, `${g}.3`];
 
 const not = (a) => a ^ 1;
 
@@ -1042,6 +1061,299 @@ export const levels = [
     sol: {
       g: { f: ['FA', 'A', 'B', 'C'], h1: ['HA', 'f', 'D'], h2: ['HA', 'f.1', 'h1.1'] },
       out: { Q2: 'h2.1', Q1: 'h2', Q0: 'h1' },
+    },
+  },
+  // ── 10. Shinalar ───────────────────────────────────────────
+  // buses — daraja oyoqlari shinaga birlashadi (maydonda bitta keng pin). Tekshiruv bitlar bo'yicha.
+  // SPLIT (bo'laklovchi): shina → 4 bit ("s" — eng katta, "s.3" — eng kichik); JOIN — aksincha.
+  {
+    id: 'w1',
+    chapter: 'buses',
+    title: 'Teskari shina',
+    task: "A — to'rt bitli shina. Q shinasining har biti A dagi o'sha bitning teskarisi bo'lsin: Q = NOT A.",
+    hint: "Bo'laklovchi shinani to'rtta alohida simga ajratadi. Har simga NOT qo'ying va natijalarni birlashtiruvchi bilan yana shinaga yig'ing.",
+    inputs: bus4('A'),
+    outputs: bus4('Q'),
+    buses: { A: bus4('A'), Q: bus4('Q') },
+    gates: ['NOT', 'SPLIT', 'JOIN'],
+    goal: 6,
+    fn: (...a) => a.map((v) => v ^ 1),
+    sol: {
+      g: {
+        s: ['SPLIT', ...bus4('A')],
+        n3: ['NOT', 's'],
+        n2: ['NOT', 's.1'],
+        n1: ['NOT', 's.2'],
+        n0: ['NOT', 's.3'],
+        j: ['JOIN', 'n3', 'n2', 'n1', 'n0'],
+      },
+      out: { Q3: 'j', Q2: 'j.1', Q1: 'j.2', Q0: 'j.3' },
+    },
+  },
+  {
+    id: 'w2',
+    chapter: 'buses',
+    title: 'Nolmi?',
+    task: "A — to'rt bitli shina. Z = 1 faqat A = 0 bo'lganda (to'rttala bit ham 0).",
+    hint: "Bitlarni juft-juft OR bilan yig'ing: biror bit 1 bo'lsa, natija 1. Oxirgi qadamda NOR — «hech biri 1 emas».",
+    inputs: bus4('A'),
+    outputs: ['Z'],
+    buses: { A: bus4('A') },
+    gates: ['NOT', 'AND', 'OR', 'NOR', 'SPLIT'],
+    goal: 4,
+    fn: (...a) => [num4(a) === 0 ? 1 : 0],
+    sol: {
+      g: { s: ['SPLIT', ...bus4('A')], o1: ['OR', 's', 's.1'], o2: ['OR', 's.2', 's.3'], z: ['NOR', 'o1', 'o2'] },
+      out: { Z: 'z' },
+    },
+  },
+  {
+    id: 'w3',
+    chapter: 'buses',
+    title: "To'rt bitli summator",
+    task: "A va B — to'rt bitli shinalar. S = A + B + Ci (to'rt bit) va Co — ko'chirish (natija 15 dan oshsa 1).",
+    hint: "Ikkala shinani bo'laklang. Eng kichik bitlardan boshlab to'rtta to'liq summatorni zanjir qiling: har birining Co si keyingisining Ci siga. Yig'indilarni birlashtiruvchi bilan S ga yig'ing.",
+    inputs: [...bus4('A'), ...bus4('B'), 'Ci'],
+    outputs: [...bus4('S'), 'Co'],
+    buses: { A: bus4('A'), B: bus4('B'), S: bus4('S') },
+    gates: ['HA', 'FA', 'SPLIT', 'JOIN'],
+    goal: 7,
+    fn: (...a) => {
+      const v = num4(a.slice(0, 4)) + num4(a.slice(4, 8)) + a[8];
+      return [...bits4(v), v >> 4];
+    },
+    sol: {
+      g: {
+        sa: ['SPLIT', ...bus4('A')],
+        sb: ['SPLIT', ...bus4('B')],
+        f0: ['FA', 'sa.3', 'sb.3', 'Ci'],
+        f1: ['FA', 'sa.2', 'sb.2', 'f0.1'],
+        f2: ['FA', 'sa.1', 'sb.1', 'f1.1'],
+        f3: ['FA', 'sa', 'sb', 'f2.1'],
+        j: ['JOIN', 'f3', 'f2', 'f1', 'f0'],
+      },
+      out: { S3: 'j', S2: 'j.1', S1: 'j.2', S0: 'j.3', Co: 'f3.1' },
+    },
+  },
+  {
+    id: 'w4',
+    chapter: 'buses',
+    title: 'Shina tanlovchi',
+    task: "A va B — to'rt bitli shinalar. S = 0 bo'lsa Q = A, S = 1 bo'lsa Q = B.",
+    hint: "Har bit uchun alohida multipleksor: A va B ning bir xil bitlari va umumiy S. To'rtta natijani Q ga birlashtiring.",
+    inputs: [...bus4('A'), ...bus4('B'), 'S'],
+    outputs: bus4('Q'),
+    buses: { A: bus4('A'), B: bus4('B'), Q: bus4('Q') },
+    gates: ['MUX', 'NOT', 'AND', 'OR', 'SPLIT', 'JOIN'],
+    goal: 7,
+    fn: (...a) => (a[8] ? a.slice(4, 8) : a.slice(0, 4)),
+    sol: {
+      g: {
+        sa: ['SPLIT', ...bus4('A')],
+        sb: ['SPLIT', ...bus4('B')],
+        m3: ['MUX', 'sa', 'sb', 'S'],
+        m2: ['MUX', 'sa.1', 'sb.1', 'S'],
+        m1: ['MUX', 'sa.2', 'sb.2', 'S'],
+        m0: ['MUX', 'sa.3', 'sb.3', 'S'],
+        j: ['JOIN', 'm3', 'm2', 'm1', 'm0'],
+      },
+      out: { Q3: 'j', Q2: 'j.1', Q1: 'j.2', Q0: 'j.3' },
+    },
+  },
+  {
+    id: 'w5',
+    chapter: 'buses',
+    title: 'Bittaga oshirish',
+    task: "A — to'rt bitli shina. Q = A + 1 (to'rt bit), C = 1 faqat A = 15 bo'lganda (son toshib ketadi).",
+    hint: "Eng kichik bit doim teskarisiga aylanadi. Qolgan har bitga oldingi ko'chirishni yarim summator bilan qo'shing: 0111 + 1 = 1000.",
+    inputs: bus4('A'),
+    outputs: [...bus4('Q'), 'C'],
+    buses: { A: bus4('A'), Q: bus4('Q') },
+    gates: ['NOT', 'HA', 'XOR', 'AND', 'SPLIT', 'JOIN'],
+    goal: 6,
+    fn: (...a) => {
+      const v = num4(a) + 1;
+      return [...bits4(v), v >> 4];
+    },
+    sol: {
+      g: {
+        s: ['SPLIT', ...bus4('A')],
+        n: ['NOT', 's.3'],
+        h1: ['HA', 's.2', 's.3'],
+        h2: ['HA', 's.1', 'h1.1'],
+        h3: ['HA', 's', 'h2.1'],
+        j: ['JOIN', 'h3', 'h2', 'h1', 'n'],
+      },
+      out: { Q3: 'j', Q2: 'j.1', Q1: 'j.2', Q0: 'j.3', C: 'h3.1' },
+    },
+  },
+  {
+    id: 'w6',
+    chapter: 'buses',
+    title: 'Qadam',
+    task: "Hisoblagichning bir qadami: S = 1 bo'lsa Q = A + 1, S = 0 bo'lsa Q = A (to'rt bit, 15 + 1 = 0).",
+    hint: "Endi qo'lingizda to'rt bitli bloklar bor: bittaga oshiruvchi va shina tanlovchi. Ikkalasi shina bilan ulanadi.",
+    inputs: [...bus4('A'), 'S'],
+    outputs: bus4('Q'),
+    buses: { A: bus4('A'), Q: bus4('Q') },
+    gates: ['NOT4', 'ADD4', 'MUX4', 'INC4', 'SPLIT', 'JOIN', 'HA', 'MUX'],
+    goal: 2,
+    fn: (...a) => bits4((num4(a.slice(0, 4)) + a[4]) & 15),
+    sol: {
+      g: { i: ['INC4', ...bus4('A')], m: ['MUX4', ...bus4('A'), 'i', 'i.1', 'i.2', 'i.3', 'S'] },
+      out: { Q3: 'm', Q2: 'm.1', Q1: 'm.2', Q0: 'm.3' },
+    },
+  },
+  // ── 11. ALU ────────────────────────────────────────────────
+  // Manfiy son ikkilik to'ldiruvchi kodda: −A = NOT A + 1 (16 ga qoldiq). Ayirish — manfiyni qo'shish.
+  {
+    id: 'l1',
+    chapter: 'alu',
+    title: 'Manfiy son',
+    task: "Q = −A: A ga qo'shganda 0 beradigan son. To'rt bitda 16 ham 0 bo'lib qoladi, shuning uchun −3 = 13 (3 + 13 = 16 → 0). A = 0 bo'lsa Q = 0.",
+    hint: "A + NOT A doim 15 (1111). Bitlarni teskari aylantiring va natijaga 1 qo'shing: NOT A + 1 = 16 − A.",
+    inputs: bus4('A'),
+    outputs: bus4('Q'),
+    buses: { A: bus4('A'), Q: bus4('Q') },
+    gates: ['NOT4', 'INC4', 'ADD4', 'MUX4', 'NOT', 'HA', 'SPLIT', 'JOIN'],
+    goal: 2,
+    fn: (...a) => bits4(16 - num4(a)),
+    sol: {
+      g: { n: ['NOT4', ...bus4('A')], i: ['INC4', ...out4('n')] },
+      out: { Q3: 'i', Q2: 'i.1', Q1: 'i.2', Q0: 'i.3' },
+    },
+  },
+  {
+    id: 'l2',
+    chapter: 'alu',
+    title: 'Ayirgich',
+    task: "D = A − B (to'rt bit: 3 − 5 = 14, chunki son 16 ga qaytadi) va C = 1, agar qarz bo'lmasa, ya'ni A ≥ B.",
+    hint: "Ayirish — manfiy sonni qo'shish: A − B = A + NOT B + 1. Birni alohida qo'shish shart emas — summatorning Ci kirishiga doimiy 1 ulang. Uning Co chiqishi esa aynan «qarz yo'q» degani.",
+    inputs: [...bus4('A'), ...bus4('B')],
+    outputs: [...bus4('D'), 'C'],
+    buses: { A: bus4('A'), B: bus4('B'), D: bus4('D') },
+    gates: ['ONE', 'ZERO', 'NOT4', 'INC4', 'ADD4', 'MUX4', 'NOT', 'SPLIT', 'JOIN'],
+    goal: 3,
+    fn: (...a) => {
+      const A = num4(a.slice(0, 4));
+      const B = num4(a.slice(4, 8));
+      return [...bits4(A - B + 16), A >= B ? 1 : 0];
+    },
+    sol: {
+      g: { n: ['NOT4', ...bus4('B')], one: ['ONE'], s: ['ADD4', ...bus4('A'), ...out4('n'), 'one'] },
+      out: { D3: 's', D2: 's.1', D1: 's.2', D0: 's.3', C: 's.4' },
+    },
+  },
+  {
+    id: 'l3',
+    chapter: 'alu',
+    title: "Qo'sh yoki ayir",
+    task: "S = 0 bo'lsa R = A + B, S = 1 bo'lsa R = A − B (to'rt bit). C — summator ko'chirishi: qo'shishda toshib ketish, ayirishda «qarz yo'q».",
+    hint: "Bitta summator ikkala ishni qiladi. S = 1 da B o'rniga NOT B kelsin, Ci ga esa 1 kerak — bu birni S ning o'zi beradi.",
+    inputs: [...bus4('A'), ...bus4('B'), 'S'],
+    outputs: [...bus4('R'), 'C'],
+    buses: { A: bus4('A'), B: bus4('B'), R: bus4('R') },
+    gates: ['ONE', 'ZERO', 'NOT4', 'INC4', 'ADD4', 'MUX4', 'XOR', 'MUX', 'SPLIT', 'JOIN'],
+    goal: 3,
+    fn: (...a) => {
+      const A = num4(a.slice(0, 4));
+      const B = num4(a.slice(4, 8));
+      const v = a[8] ? A + (15 - B) + 1 : A + B;
+      return [...bits4(v), v >> 4];
+    },
+    sol: {
+      g: {
+        n: ['NOT4', ...bus4('B')],
+        m: ['MUX4', ...bus4('B'), ...out4('n'), 'S'],
+        s: ['ADD4', ...bus4('A'), ...out4('m'), 'S'],
+      },
+      out: { R3: 's', R2: 's.1', R1: 's.2', R0: 's.3', C: 's.4' },
+    },
+  },
+  {
+    id: 'l4',
+    chapter: 'alu',
+    title: 'Mantiqiy blok',
+    task: "Amal kodi F1 F0 tanlaydi: 00 — A AND B, 01 — A OR B, 10 — A XOR B, 11 — NOT A. Hammasi bitma-bit, natija — Q shinasida.",
+    hint: "To'rtala natijani birdaniga hisoblang, keyin bittasini tanlang: F0 juftlik ichida tanlaydi (AND yoki OR, XOR yoki NOT), F1 esa juftliklar orasida. Uchta shina tanlovchi yetadi.",
+    inputs: [...bus4('A'), ...bus4('B'), 'F1', 'F0'],
+    outputs: bus4('Q'),
+    buses: { A: bus4('A'), B: bus4('B'), Q: bus4('Q') },
+    gates: ['AND4', 'OR4', 'XOR4', 'NOT4', 'MUX4', 'MUX', 'SPLIT', 'JOIN'],
+    goal: 7,
+    fn: (...a) => {
+      const A = num4(a.slice(0, 4));
+      const B = num4(a.slice(4, 8));
+      return bits4([A & B, A | B, A ^ B, 15 - A][a[8] * 2 + a[9]]);
+    },
+    sol: {
+      g: {
+        a: ['AND4', ...bus4('A'), ...bus4('B')],
+        o: ['OR4', ...bus4('A'), ...bus4('B')],
+        x: ['XOR4', ...bus4('A'), ...bus4('B')],
+        n: ['NOT4', ...bus4('A')],
+        m1: ['MUX4', ...out4('a'), ...out4('o'), 'F0'],
+        m2: ['MUX4', ...out4('x'), ...out4('n'), 'F0'],
+        q: ['MUX4', ...out4('m1'), ...out4('m2'), 'F1'],
+      },
+      out: { Q3: 'q', Q2: 'q.1', Q1: 'q.2', Q0: 'q.3' },
+    },
+  },
+  {
+    id: 'l5',
+    chapter: 'alu',
+    title: 'Taqqoslagich',
+    task: "Ikki sonni solishtiring: L = 1, agar A < B; E = 1, agar A = B; G = 1, agar A > B. Har doim roppa-rosa bittasi 1.",
+    hint: "A − B ni hisoblang. Ayirgichning C chiqishi 0 bo'lsa, qarz bor — demak A < B. Ayirma 0 bo'lsa, sonlar teng. Qolgan hollarda A > B.",
+    inputs: [...bus4('A'), ...bus4('B')],
+    outputs: ['L', 'E', 'G'],
+    buses: { A: bus4('A'), B: bus4('B') },
+    gates: ['SUB4', 'NOR4', 'ADD4', 'NOT4', 'XOR4', 'ONE', 'NOT', 'AND', 'NOR', 'SPLIT'],
+    goal: 4,
+    fn: (...a) => {
+      const A = num4(a.slice(0, 4));
+      const B = num4(a.slice(4, 8));
+      return [A < B ? 1 : 0, A === B ? 1 : 0, A > B ? 1 : 0];
+    },
+    sol: {
+      g: { s: ['SUB4', ...bus4('A'), ...bus4('B')], e: ['NOR4', ...out4('s')], l: ['NOT', 's.4'], gt: ['NOR', 'l', 'e'] },
+      out: { L: 'l', E: 'e', G: 'gt' },
+    },
+  },
+  {
+    id: 'l6',
+    chapter: 'alu',
+    title: 'ALU',
+    task: "Protsessorning hisoblovchi yuragi. F1 F0: 00 — R = A + B, 01 — R = A − B, 10 — R = A AND B, 11 — R = A OR B. C — qo'shish va ayirishda ko'chirish, mantiqiy amallarda 0. Z = 1, agar R = 0 bo'lsa.",
+    hint: "Uch qismdan yig'ing: «Qo'sh yoki ayir» qurilmasi (S o'rnida F0), AND4 va OR4 dan birini F0 bilan tanlash, so'ng F1 bilan arifmetika yoki mantiq. Z — natijaga NOR4. C ni esa F1 = 1 da o'chiring.",
+    inputs: [...bus4('A'), ...bus4('B'), 'F1', 'F0'],
+    outputs: [...bus4('R'), 'C', 'Z'],
+    buses: { A: bus4('A'), B: bus4('B'), R: bus4('R') },
+    gates: ['ADD4', 'SUB4', 'NOT4', 'MUX4', 'AND4', 'OR4', 'NOR4', 'ZERO', 'NOT', 'AND', 'NOR', 'MUX'],
+    goal: 10,
+    fn: (...a) => {
+      const A = num4(a.slice(0, 4));
+      const B = num4(a.slice(4, 8));
+      const f = a[8] * 2 + a[9];
+      let r = [A + B, A - B, A & B, A | B][f];
+      const c = f === 0 ? (r > 15 ? 1 : 0) : f === 1 ? (A >= B ? 1 : 0) : 0;
+      r = (r + 16) % 16;
+      return [...bits4(r), c, r === 0 ? 1 : 0];
+    },
+    sol: {
+      g: {
+        n: ['NOT4', ...bus4('B')],
+        m: ['MUX4', ...bus4('B'), ...out4('n'), 'F0'],
+        s: ['ADD4', ...bus4('A'), ...out4('m'), 'F0'],
+        a: ['AND4', ...bus4('A'), ...bus4('B')],
+        o: ['OR4', ...bus4('A'), ...bus4('B')],
+        lg: ['MUX4', ...out4('a'), ...out4('o'), 'F0'],
+        r: ['MUX4', ...out4('s'), ...out4('lg'), 'F1'],
+        z: ['NOR4', ...out4('r')],
+        nf: ['NOT', 'F1'],
+        c: ['AND', 's.4', 'nf'],
+      },
+      out: { R3: 'r', R2: 'r.1', R1: 'r.2', R0: 'r.3', C: 'c', Z: 'z' },
     },
   },
 ];

@@ -7,10 +7,11 @@ import { stateNames } from '../../sim/formula';
 import { depths } from '../../sim/sim';
 import { GATE_ARITY, gateOutputs, sourcePort, type Gate } from '../../sim/types';
 import { activeTheme, instantCheck, resolveRealStyle, systemReducedMotion } from '../../theme';
+import { bundles, groupValue, isHiddenBit, pinGroups } from '../bus';
 import { settings } from '../../state';
 import { cam3d } from '../cam3d';
 import type { Editor } from '../editor';
-import { bounds, gateH, GATE_W, GRID, inputPortY, outputPortY, portPoint, routeMid, type Point } from '../geometry';
+import { bounds, busBitX, gateH, GATE_W, GRID, inputPortY, outputPortY, portPoint, routeMid, type Point } from '../geometry';
 import { routeAll } from '../routing';
 import { capture } from '../useBoard2D';
 import { Engine3D } from './engine3d';
@@ -71,9 +72,11 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
   const wave = editor.wave.value;
   const active = wiring.value ?? pending;
 
+  // Shina simlari: to'liq ulangan shina — bitta qalin sim (bus.ts).
+  const bund = useMemo(() => bundles(wires, gmap, spec.buses), [wires, gmap, spec]);
   const routed = useMemo(
-    () => routeAll(wires, gmap, lay, draggingGate.value !== null && wires.length > 40),
-    [wires, gmap, lay, draggingGate.value],
+    () => routeAll(wires, gmap, lay, draggingGate.value !== null && wires.length > 40, bund.rep),
+    [wires, gmap, lay, draggingGate.value, bund],
   );
   const states = useMemo(() => stateNames({ gates, wires }), [gates, wires]);
 
@@ -101,6 +104,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     draggingGateId: draggingGate.value,
     ghost: ghost.value,
     stateNames: states,
+    bundles: bund,
     dirty: true,
   });
 
@@ -122,6 +126,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     draggingGateId: draggingGate.value,
     ghost: ghost.value,
     stateNames: states,
+    bundles: bund,
     dirty: true,
   };
   // Animatsiya sozlamasi kadr tsiklida peek() bilan o'qiladi — o'zgarsa komponent qayta chizilsin (va tsikl
@@ -325,11 +330,17 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       let rebuilt = false;
       if (cur.dirty || leversMoving || !sceneRef.current) {
         rebuilt = true;
+        // Shina: pin nomlari o'rniga shina nomi, qiymatlar — sonlar (0–15) va kutilgani.
+        const inG = pinGroups(cur.spec.inputs, cur.spec.buses);
+        const outG = pinGroups(cur.spec.outputs, cur.spec.buses);
+        const hasBus = inG.some((g) => g.bus) || outG.some((g) => g.bus) || cur.bundles.bus.size > 0;
+        const exp = cur.expected;
         const labelStrings = [
-          ...cur.spec.inputs,
-          ...cur.spec.outputs,
+          ...inG.map((g) => g.name),
+          ...outG.map((g) => g.name),
           ...cur.stateNames.values(),
-          ...(cur.expected ? cur.expected.map((v) => `exp:${v}`) : []),
+          ...(exp ? outG.map((g) => `exp:${groupValue(exp, g.idx)}`) : []),
+          ...(hasBus ? ['–', ...Array.from({ length: 14 }, (_, n) => String(n + 2))] : []),
         ];
         eng.syncTextures(cur.style, labelStrings, t.play.expected.toLowerCase());
         const built = buildScene3D({
@@ -352,6 +363,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
           leverAngles: leverAngles.current,
           stateNames: cur.stateNames,
           labelUVs: eng.labelUVs,
+          bundles: cur.bundles,
         });
         sceneRef.current = built;
         eng.uploadScene(built);
@@ -372,7 +384,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
           const r = cur.routed.routes[cur.selection.index];
           if (r) {
             const m = routeMid(r);
-            wp = [m.x, 12, m.y];
+            // Shina simida o'rtada son plastinkasi — tugma undan yuqoriroq va nariroqda.
+            const bus = cur.bundles.bus.has(cur.bundles.rep[cur.selection.index] ?? -1);
+            wp = bus ? [m.x, 24, m.y - 22] : [m.x, 12, m.y];
           }
         }
         const sp = wp ? projectPoint(wp, vp, sizeRef.current.w, sizeRef.current.h) : null;
@@ -439,7 +453,11 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       for (let k = 0; k < gateOutputs(g.type); k++) ports.push([sourcePort(g.id, k), g.x + GATE_W, g.y + outputPortY(g, k)]);
       for (let i = 0; i < GATE_ARITY[g.type]; i++) ports.push([`${g.id}:${i}`, g.x, g.y + inputPortY(g, i)]);
     }
+    const gNow = new Map(cNow.gates.map((g) => [g.id, g]));
+    const busesNow = editor.spec.value.buses;
     for (const [id, x, y] of ports) {
+      // Shinaning qolgan bitlari boshi bilan bir joyda: tanlanadigani — boshi.
+      if (isHiddenBit(id, gNow, busesNow)) continue;
       const sp = projectPoint([x, 2.5, y], vp, w, h);
       if (!sp || sp.z > 1) continue;
       const d = Math.hypot(sp.x - sx, sp.y - sy);
@@ -459,11 +477,16 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
 
     // 3. Kirish tumblerlari (AABB)
     let bestPin: { k: number; t: number } | null = null;
-    const ins = editor.spec.value.inputs;
-    for (let k = 0; k < ins.length; k++) {
-      const p = layNow.inputs.get(ins[k])!;
-      const tHit = rayAABB(ray, p.x - 82, -2, p.y - 26, p.x - 10, 26, p.y + 26);
-      if (tHit !== null && (!bestPin || tHit < bestPin.t)) bestPin = { k, t: tHit };
+    for (const g of pinGroups(editor.spec.value.inputs, busesNow)) {
+      const p = layNow.inputs.get(g.pins[0])!;
+      // Shina: har bit — o'z tumbleri (panel chap qismi — nom va son — bosilmaydi).
+      const boxes = g.bus
+        ? g.idx.map((k, j) => ({ k, x0: p.x + busBitX(j, g.idx.length) - 12, x1: p.x + busBitX(j, g.idx.length) + 12 }))
+        : [{ k: g.idx[0], x0: p.x - 82, x1: p.x - 10 }];
+      for (const { k, x0, x1 } of boxes) {
+        const tHit = rayAABB(ray, x0, -2, p.y - 26, x1, 26, p.y + 26);
+        if (tHit !== null && (!bestPin || tHit < bestPin.t)) bestPin = { k, t: tHit };
+      }
     }
 
     if (bestGate && (!bestPin || bestGate.t <= bestPin.t)) return { kind: 'gate' as const, id: bestGate.id };
@@ -487,6 +510,9 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
       showToast(t.play.cycle, 'error');
     } else if (res === 'kind' && fromDrag) {
       showToast(t.play.sameKind, 'error');
+    } else if (res === 'width') {
+      sfx.error();
+      showToast(t.play.busWidth, 'error');
     }
     return res;
   };
@@ -726,16 +752,16 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
             onClick={() => (editor.selection.value = { kind: 'gate', id: g.id })}
           />
         ))}
-        {spec.outputs.map((name) => (
+        {pinGroups(spec.outputs, spec.buses).map(({ name, pins }) => (
           <button
             key={`out:${name}`}
             aria-label={a11y.output(name)}
             onKeyDown={(e) => {
               if (activates(e)) {
                 e.preventDefault();
-                tapPort(`out:${name}`);
+                tapPort(`out:${pins[0]}`);
               } else if (deletes(e)) {
-                const idx = wires.findIndex((w) => w.to === `out:${name}`);
+                const idx = wires.findIndex((w) => w.to === `out:${pins[0]}`);
                 if (idx >= 0) {
                   e.preventDefault();
                   editor.selection.value = { kind: 'wire', index: idx };

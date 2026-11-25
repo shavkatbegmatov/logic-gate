@@ -43,7 +43,26 @@ export const BLOCK_SHAPE: Record<BlockType, { h: number; ins: number[]; outs: nu
   FA: { h: 72, ins: [12, 36, 60], outs: [24, 48] },
   MUX: { h: 72, ins: [12, 36, 60], outs: [36] },
   DEC: { h: 96, ins: [36, 60], outs: [12, 36, 60, 84] },
+  // Shina oyoqlari bitta uchda (bus.ts): to'rt bit — bitta keng port.
+  SPLIT: { h: 96, ins: [48, 48, 48, 48], outs: [12, 36, 60, 84] },
+  JOIN: { h: 96, ins: [12, 36, 60, 84], outs: [48, 48, 48, 48] },
+  NOT4: { h: 48, ins: [24, 24, 24, 24], outs: [24, 24, 24, 24] },
+  ADD4: { h: 72, ins: [12, 12, 12, 12, 36, 36, 36, 36, 60], outs: [24, 24, 24, 24, 48] },
+  MUX4: { h: 72, ins: [12, 12, 12, 12, 36, 36, 36, 36, 60], outs: [36, 36, 36, 36] },
+  INC4: { h: 48, ins: [24, 24, 24, 24], outs: [12, 12, 12, 12, 36] },
+  NOR4: { h: 48, ins: [24, 24, 24, 24], outs: [24] },
+  // Doimiy manba: kirish oyog'i yo'q.
+  ONE: { h: 48, ins: [], outs: [24] },
+  ZERO: { h: 48, ins: [], outs: [24] },
+  SUB4: { h: 48, ins: [12, 12, 12, 12, 36, 36, 36, 36], outs: [12, 12, 12, 12, 36] },
+  AND4: { h: 48, ins: [12, 12, 12, 12, 36, 36, 36, 36], outs: [24, 24, 24, 24] },
+  OR4: { h: 48, ins: [12, 12, 12, 12, 36, 36, 36, 36], outs: [24, 24, 24, 24] },
+  XOR4: { h: 48, ins: [12, 12, 12, 12, 36, 36, 36, 36], outs: [24, 24, 24, 24] },
+  ALU4: { h: 96, ins: [12, 12, 12, 12, 36, 36, 36, 36, 60, 84], outs: [24, 24, 24, 24, 48, 72] },
 };
+
+/** Korpusdagi yozuv: doimiy manbada — qiymatning o'zi (1 yoki 0), qolganlarida — turi. */
+export const blockText = (type: GateType): string => (type === 'ONE' ? '1' : type === 'ZERO' ? '0' : type);
 
 /** Blok korpusi x bo'yicha: oyoqlar uchun ikki chetda joy qoladi. */
 export const BLOCK_BODY = { x: 12, w: 48, rx: 4 };

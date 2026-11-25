@@ -266,6 +266,63 @@ const uz: Record<string, Lesson> = {
       },
     ],
   },
+  buses: {
+    title: "Shinalar — to'rt bit bitta yo'lda",
+    blocks: [
+      {
+        p: "Protsessor bitlar bilan emas, sonlar bilan ishlaydi. To'rt bitli son to'rtta sim bo'ylab bir vaqtda yuradi — bunday simlar to'plami shina deyiladi. Maydonda shina bitta qalin chiziq, ustida esa uning qiymati (0–15).",
+      },
+      { h: 'Shina bilan ishlash' },
+      {
+        table: [
+          ['Blok', 'Kirish', 'Chiqish', 'Ichida'],
+          ['SPLIT', 'A[3:0]', 'A3, A2, A1, A0', '—'],
+          ['JOIN', 'A3, A2, A1, A0', 'Q[3:0]', '—'],
+          ['NOT4', 'A', 'Q', '4 NOT'],
+          ['ADD4', 'A, B, Ci', 'S, Co', '4 FA'],
+          ['MUX4', 'A, B, S', 'Q', '4 MUX'],
+          ['INC4', 'A', 'Q, C', 'NOT + 3 HA'],
+        ],
+      },
+      { h: 'Ikkilik son' },
+      { f: ['A = 8·A3 + 4·A2 + 2·A1 + A0', '0111 + 1 = 1000,  1111 + 1 = 0000 (C = 1)'] },
+      {
+        p: "Shina faqat bir xil kenglikdagi shinaga ulanadi. Bitta bitni olish kerak bo'lsa — bo'laklovchi, bitlardan son yasash kerak bo'lsa — birlashtiruvchi. Shina bloklari esa bir xil ishni har bitda takrorlaydi: NOT4 — to'rtta NOT, MUX4 — umumiy S bilan to'rtta MUX.",
+      },
+      {
+        tip: "Kompyuterdagi «64 bitli protsessor» degani — uning shinalari va registrlari 64 bit kenglikda. Birinchi mikroprotsessor Intel 4004 (1971) esa xuddi shu bo'limdagidek to'rt bitli edi.",
+      },
+    ],
+  },
+  alu: {
+    title: 'ALU — protsessorning hisoblovchi yuragi',
+    blocks: [
+      {
+        p: "Protsessorning deyarli har bir buyrug'i bitta qurilmadan o'tadi: arifmetik-mantiqiy qurilma (ALU). Unga ikki son va amal kodi beriladi, u esa natija va bayroqlarni qaytaradi. Bu bo'limda ALU ni qadamma-qadam yig'asiz.",
+      },
+      { h: 'Manfiy son va ayirish' },
+      { f: ["−A = NOT A + 1   (ikkilik to'ldiruvchi kod)", 'A − B = A + NOT B + 1', '3 − 5 = 3 + 1010 + 1 = 1110 = 14   (C = 0 — qarz bor)'] },
+      {
+        p: "To'rt bitda son 16 ga yetganda yana 0 dan boshlanadi — soat 12 dan keyin 1 ga o'tgani kabi. Shuning uchun ayirish uchun alohida qurilma kerak emas: summator B ning teskarisini qo'shadi, Ci = 1 esa yetishmagan birni beradi. Summator ko'chirishi Co = 1 bo'lsa, qarz yo'q (A ≥ B).",
+      },
+      { h: 'Amal kodi' },
+      {
+        table: [
+          ['F1 F0', 'Buyruq', 'R', 'C'],
+          ['00', 'ADD', 'A + B', 'Co'],
+          ['01', 'SUB', 'A − B', 'Co'],
+          ['10', 'AND', 'A AND B', '0'],
+          ['11', 'OR', 'A OR B', '0'],
+        ],
+      },
+      {
+        p: "Z bayrog'i natija 0 ekanini bildiradi. Taqqoslash ham shunga tayanadi: A − B = 0 bo'lsa, sonlar teng, qarz bo'lsa, A < B. Keyingi bo'limlarda protsessor dasturda aynan shu bayroqlarga qarab sakraydi.",
+      },
+      {
+        tip: "Mashhur 74181 mikrosxemasi (1970) — to'rt bitli ALU: bitta korpusda 32 ta amal. Bir nechtasini yonma-yon qo'yib, o'sha davrning ko'plab kompyuterlari yig'ilgan.",
+      },
+    ],
+  },
 };
 
 const ru: Record<string, Lesson> = {
@@ -519,6 +576,63 @@ const ru: Record<string, Lesson> = {
       },
       {
         tip: 'Первые микросхемы (1960-е) содержали несколько элементов. В современном процессоре миллиарды транзисторов, но и он собран из блоков внутри блоков: сумматор → АЛУ → процессор.',
+      },
+    ],
+  },
+  buses: {
+    title: 'Шины — четыре бита по одной дороге',
+    blocks: [
+      {
+        p: 'Процессор работает не с битами, а с числами. Четырёхбитное число идёт по четырём проводам одновременно — такой пучок проводов называется шиной. На поле шина — одна толстая линия, а над ней её значение (0–15).',
+      },
+      { h: 'Работа с шиной' },
+      {
+        table: [
+          ['Блок', 'Вход', 'Выход', 'Внутри'],
+          ['SPLIT', 'A[3:0]', 'A3, A2, A1, A0', '—'],
+          ['JOIN', 'A3, A2, A1, A0', 'Q[3:0]', '—'],
+          ['NOT4', 'A', 'Q', '4 NOT'],
+          ['ADD4', 'A, B, Ci', 'S, Co', '4 FA'],
+          ['MUX4', 'A, B, S', 'Q', '4 MUX'],
+          ['INC4', 'A', 'Q, C', 'NOT + 3 HA'],
+        ],
+      },
+      { h: 'Двоичное число' },
+      { f: ['A = 8·A3 + 4·A2 + 2·A1 + A0', '0111 + 1 = 1000,  1111 + 1 = 0000 (C = 1)'] },
+      {
+        p: 'Шина соединяется только с шиной той же ширины. Нужен один бит — разделитель, нужно собрать число из битов — объединитель. А блоки шины повторяют одно и то же для каждого бита: NOT4 — четыре NOT, MUX4 — четыре MUX с общим S.',
+      },
+      {
+        tip: '«64-битный процессор» значит, что его шины и регистры шириной 64 бита. А первый микропроцессор Intel 4004 (1971) был четырёхбитным — как в этом разделе.',
+      },
+    ],
+  },
+  alu: {
+    title: 'АЛУ — вычислительное сердце процессора',
+    blocks: [
+      {
+        p: 'Почти каждая команда процессора проходит через одно устройство — арифметико-логическое (АЛУ). Ему дают два числа и код операции, а оно возвращает результат и флаги. В этом разделе вы соберёте АЛУ шаг за шагом.',
+      },
+      { h: 'Отрицательное число и вычитание' },
+      { f: ['−A = NOT A + 1   (дополнительный код)', 'A − B = A + NOT B + 1', '3 − 5 = 3 + 1010 + 1 = 1110 = 14   (C = 0 — есть заём)'] },
+      {
+        p: 'В четырёх битах число, дойдя до 16, снова начинается с 0 — как часы после 12 переходят на 1. Поэтому отдельное устройство для вычитания не нужно: сумматор прибавляет инверсию B, а Ci = 1 даёт недостающую единицу. Если перенос сумматора Co = 1, заёма нет (A ≥ B).',
+      },
+      { h: 'Код операции' },
+      {
+        table: [
+          ['F1 F0', 'Команда', 'R', 'C'],
+          ['00', 'ADD', 'A + B', 'Co'],
+          ['01', 'SUB', 'A − B', 'Co'],
+          ['10', 'AND', 'A AND B', '0'],
+          ['11', 'OR', 'A OR B', '0'],
+        ],
+      },
+      {
+        p: 'Флаг Z говорит, что результат равен 0. На этом держится и сравнение: если A − B = 0, числа равны, если был заём, A < B. В следующих разделах процессор будет переходить по программе именно по этим флагам.',
+      },
+      {
+        tip: 'Знаменитая микросхема 74181 (1970) — четырёхбитное АЛУ: 32 операции в одном корпусе. Ставя несколько таких рядом, собирали многие компьютеры той эпохи.',
       },
     ],
   },

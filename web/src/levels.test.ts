@@ -18,12 +18,19 @@ describe('newGates', () => {
       k2: ['HA'],
       k3: ['MUX'],
       k5: ['DEC'],
+      w1: ['SPLIT', 'JOIN'],
+      w6: ['NOT4', 'ADD4', 'MUX4', 'INC4'],
+      l2: ['ONE', 'ZERO'],
+      l4: ['AND4', 'OR4', 'XOR4'],
+      l5: ['SUB4', 'NOR4'],
     });
   });
 
   it('har bir element turi roppa-rosa bir marta tanishtiriladi', () => {
     const all = levels.flatMap((l) => newGates(l));
-    expect([...all].sort()).toEqual([...ALL_GATE_TYPES, ...BLOCK_TYPES].sort());
+    // ALU4 — oxirgi darajadan ochiladi: hozircha faqat Qum qutida, darajada keyingi bo'limda tanishtiriladi.
+    const later = ['ALU4'];
+    expect([...all].sort()).toEqual([...ALL_GATE_TYPES, ...BLOCK_TYPES.filter((b) => !later.includes(b))].sort());
   });
 
   it("allaqachon tanish elementlar qayta ko'rsatilmaydi", () => {

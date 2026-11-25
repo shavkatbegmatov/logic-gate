@@ -1,6 +1,7 @@
 // Sxema muharririning holati: sxema, tarix (undo/redo), tanlov, ko'rinish (pan/zoom).
 import { computed, signal } from '@preact/signals';
 import { sfx } from '../audio';
+import { bundles, portGroup } from './bus';
 import { compile, evaluate, replay, rowBits, truthTable, wouldCycle } from '../sim/sim';
 import { GATE_ARITY, gateOutputs, parseSource, type Circuit, type GateType, type Spec } from '../sim/types';
 import {
@@ -26,7 +27,7 @@ export interface View {
 }
 
 /** invalid — portlardan biri sxemada yo'q (masalan, element o'chirilgan). */
-export type ConnectResult = 'ok' | 'same' | 'cycle' | 'kind' | 'invalid';
+export type ConnectResult = 'ok' | 'same' | 'cycle' | 'kind' | 'invalid' | 'width';
 
 /** Tarix qadami: sxema va kirish/chiqishlar to'plami (Qum qutida u ham o'zgaradi). */
 interface Snapshot {
@@ -368,10 +369,21 @@ export class Editor {
     if (aSrc === isSourcePort(b)) return a === b ? 'same' : 'kind';
     const [from, to] = aSrc ? [a, b] : [b, a];
     const c = this.circuit.value;
-    if (c.wires.some((w) => w.from === from && w.to === to)) return 'same';
-    const rest = c.wires.filter((w) => w.to !== to);
-    if (wouldCycle({ ...c, wires: rest }, from, to)) return 'cycle';
-    this.commit({ ...c, wires: [...rest, { from, to }] });
+    // Shina: hamma bitlar birga, eng katta bit — eng kattasiga. Kengligi farq qilsa (yoki bittasi oddiy sim) — yo'q.
+    const gmap = new Map(c.gates.map((g) => [g.id, g]));
+    const gf = portGroup(from, gmap, this.spec.value.buses);
+    const gt = portGroup(to, gmap, this.spec.value.buses);
+    if (!!gf !== !!gt || (gf && gt && gf.ports.length !== gt.ports.length)) return 'width';
+    const pairs = gf && gt ? gf.ports.map((f, k) => ({ from: f, to: gt.ports[k] })) : [{ from, to }];
+    if (pairs.every((p) => c.wires.some((w) => w.from === p.from && w.to === p.to))) return 'same';
+    const sinks = new Set(pairs.map((p) => p.to));
+    const rest = c.wires.filter((w) => !sinks.has(w.to));
+    const next = { ...c, wires: rest };
+    for (const p of pairs) {
+      if (wouldCycle(next, p.from, p.to)) return 'cycle';
+      next.wires = [...next.wires, p];
+    }
+    this.commit(next);
     sfx.connect();
     return 'ok';
   }
@@ -387,7 +399,10 @@ export class Editor {
         wires: c.wires.filter((w) => parseSource(w.from).id !== sel.id && !w.to.startsWith(prefix)),
       });
     } else {
-      this.commit({ ...c, wires: c.wires.filter((_, i) => i !== sel.index) });
+      // Shina simi — hamma bitlari birga o'chadi.
+      const { rep } = bundles(c.wires, new Map(c.gates.map((g) => [g.id, g])), this.spec.value.buses);
+      const head = rep[sel.index] ?? sel.index;
+      this.commit({ ...c, wires: c.wires.filter((_, i) => i !== sel.index && rep[i] !== head) });
     }
     this.selection.value = null;
     this.pending.value = null;

@@ -1,12 +1,11 @@
 import { effect } from '@preact/signals';
-import data from '../../levels/levels.json';
+// Nomli import: `blocks` (bloklar jadvali — faqat server va testlar uchun) bo'lakka tushmaydi.
+import { chapters as chapterData, levels as levelData } from '../../levels/levels.json';
 import { lang } from './i18n';
-import type { Chapter, GateType, Level, LevelPack } from './sim/types';
+import type { Chapter, GateType, Level } from './sim/types';
 
-const pack = data as unknown as LevelPack;
-
-export const chapters: Chapter[] = pack.chapters;
-export const levels: Level[] = pack.levels;
+export const chapters: Chapter[] = chapterData as unknown as Chapter[];
+export const levels: Level[] = levelData as unknown as Level[];
 export const MAX_STARS = levels.length * 3;
 
 const byId = new Map(levels.map((l) => [l.id, l]));

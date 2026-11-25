@@ -15,8 +15,8 @@ import {
   unprojectRay,
   type Vec3,
 } from './math3d';
-import { buildScene3D, VERTEX_FLOATS } from './meshes3d';
-import { gateAtlasUV, type UVRect } from './textures3d';
+import { buildScene3D, MeshBuilder, VERTEX_FLOATS } from './meshes3d';
+import { gateAtlasUV, PALETTES_3D, type UVRect } from './textures3d';
 
 describe('3D matematika va orbita kamerasi', () => {
   it('matritsa ko\'paytirish va teskari matritsa birlik matritsani beradi', () => {
@@ -290,5 +290,50 @@ describe('3D sahna geometriyasi', () => {
     }
     expect(scene.lights.length).toBeGreaterThan(0);
     expect(scene.wireHits).toHaveLength(circuit.wires.length);
+  });
+
+  it('o\'chiq simlar (traceOff) barcha uslublarda plata fonidan va yoniq simdan aniq ajralib turadi', () => {
+    const distRgb = (a: [number, number, number], b: [number, number, number]) =>
+      Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    for (const style of ['pcb', 'bench', 'breadboard', 'scifi'] as const) {
+      const pal = PALETTES_3D[style];
+      expect(distRgb(pal.traceOff, pal.slabTop), `${style}: traceOff vs slabTop`).toBeGreaterThan(0.5);
+      expect(distRgb(pal.traceOff, pal.traceOn), `${style}: traceOff vs traceOn`).toBeGreaterThan(0.55);
+    }
+  });
+
+  it('addFlatTrace 45° va 90° burilishlarda uzluksiz bevel qirrali yaroqli mesh yaratadi', () => {
+    const mb = new MeshBuilder();
+    mb.addFlatTrace(
+      [
+        [0, 0.2, 0],
+        [48, 0.2, 0],
+        [72, 0.2, 24],
+        [72, 0.2, 96],
+        [144, 0.2, 96],
+      ],
+      2.2,
+      1.2,
+      [0.46, 0.62, 0.58],
+      0.3,
+      0.46,
+      1.0,
+      [0.018, 0.065, 0.044],
+    );
+    const mesh = mb.finish();
+    expect(mesh.vertCount).toBeGreaterThan(40);
+    expect(mesh.indexCount).toBeGreaterThan(60);
+    let hasBevelNormal = false;
+    let maxPulse = 0;
+    for (let i = 0; i < mesh.vertCount; i++) {
+      const o = i * VERTEX_FLOATS;
+      for (let f = 0; f < VERTEX_FLOATS; f++) expect(Number.isFinite(mesh.verts[o + f])).toBe(true);
+      const ny = mesh.verts[o + 4];
+      if (ny > 0.55 && ny < 0.85) hasBevelNormal = true;
+      maxPulse = Math.max(maxPulse, mesh.verts[o + 15]);
+    }
+    for (let i = 0; i < mesh.indexCount; i++) expect(mesh.indices[i]).toBeLessThan(mesh.vertCount);
+    expect(hasBevelNormal).toBe(true);
+    expect(maxPulse).toBeGreaterThan(200);
   });
 });

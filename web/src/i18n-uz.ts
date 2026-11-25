@@ -104,6 +104,8 @@ export const uz = {
     outputs: 'Chiqishlar',
     allowed: 'Elementlar',
     cycle: "Bunday ulab bo'lmaydi: signal o'ziga qaytib keladi.",
+    busWidth: "Shina faqat bir xil kenglikdagi shinaga ulanadi. Bitlarni alohida ulash uchun bo'laklovchi yoki birlashtiruvchi qo'ying.",
+    busExamples: "Misollar: shina qiymati — son (to'liq jadval juda uzun).",
     sameKind: "Chiqishni kirishga ulang: bitta sim manbadan qabul qiluvchiga boradi.",
     rowsOk: "Barcha qatorlar to'g'ri — endi tekshiring!",
     newGate: 'Yangi element',
@@ -278,7 +280,7 @@ export const uz = {
       `Logic Gate · ${num}-daraja «${title}»
 ${stars} — ${gates} ta element (maqsad: ${goal})
 Sen ham yechib ko'r!`,
-    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 48 daraja, bepul!",
+    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 66 daraja, bepul!",
   },
 
   hints: {
@@ -863,6 +865,23 @@ Sen ham urinib ko'r!`,
     FA: { name: "To'liq summator", text: "Blok: uchta bitni qo'shadi. S — yig'indi, Co — ko'chirish. «To'liq summator» darajasidan." },
     MUX: { name: 'Multipleksor', text: "Blok: S = 0 bo'lsa Q = A, S = 1 bo'lsa Q = B. «Multipleksor» darajasidan." },
     DEC: { name: 'Dekoder', text: "Blok: AB ikkilik soniga mos Y chiqishi 1, qolganlari 0. «Dekoder» darajasidan." },
+    SPLIT: { name: "Bo'laklovchi", text: "To'rt bitli shinani to'rtta alohida simga ajratadi: A3 (eng katta bit) … A0." },
+    JOIN: { name: 'Birlashtiruvchi', text: "To'rtta alohida simni bitta to'rt bitli shinaga yig'adi: birinchisi — eng katta bit." },
+    NOT4: { name: 'Shina inkori', text: "Blok: to'rt bitli shinaning har bitini teskarisiga aylantiradi. «Teskari shina» darajasidan." },
+    ADD4: { name: "To'rt bitli summator", text: "Blok: S = A + B + Ci (to'rt bit), Co — ko'chirish. «To'rt bitli summator» darajasidan." },
+    MUX4: { name: 'Shina tanlovchi', text: "Blok: S = 0 bo'lsa Q = A, S = 1 bo'lsa Q = B (to'rt bit). «Shina tanlovchi» darajasidan." },
+    INC4: { name: 'Bittaga oshiruvchi', text: "Blok: Q = A + 1 (to'rt bit), C — toshib ketish (A = 15). «Bittaga oshirish» darajasidan." },
+    NOR4: { name: 'Nol aniqlagich', text: "Blok: to'rt kirishli NOR — Z = 1 faqat shina qiymati 0 bo'lsa. «Nolmi?» darajasidan." },
+    ONE: { name: 'Doimiy 1', text: "Kirishi yo'q, chiqishi doim 1: masalan, summatorning Ci kirishiga." },
+    ZERO: { name: 'Doimiy 0', text: "Kirishi yo'q, chiqishi doim 0." },
+    SUB4: { name: 'Ayirgich', text: "Blok: D = A − B (to'rt bit), C = 1 — qarz yo'q (A ≥ B). «Ayirgich» darajasidan." },
+    AND4: { name: 'Shina AND', text: "Blok: bitma-bit Q = A AND B (to'rtta AND)." },
+    OR4: { name: 'Shina OR', text: "Blok: bitma-bit Q = A OR B (to'rtta OR)." },
+    XOR4: { name: 'Shina XOR', text: "Blok: bitma-bit Q = A XOR B (to'rtta XOR)." },
+    ALU4: {
+      name: 'ALU',
+      text: "Blok: F1 F0 = 00 — A + B, 01 — A − B, 10 — A AND B, 11 — A OR B. C — ko'chirish (mantiqiy amalda 0), Z — natija 0. «ALU» darajasidan.",
+    },
   } satisfies Record<GateType, { name: string; text: string }>,
 };
 
