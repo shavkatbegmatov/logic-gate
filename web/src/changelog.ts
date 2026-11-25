@@ -36,6 +36,20 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.26.0',
+    date: '2026-11-25',
+    uz: [
+      "Musiqa: har bo'limning o'z fon kuyi bor — «Asoslar» yorqin va xotirjam, «Faqat NAND» qorong'iroq, «Xotira» va «Avtomatlar»da takt soati chiqillaydi. Menyu, kunlik masala va qum qutining ham o'z musiqasi bor.",
+      "Yangi ovozlar: element qo'yish, sim ulash, tumbler va yechim endi boyroq eshitiladi va musiqa bilan bir tonallikda. Tekshiruvda signal simlardan oqayotgani ham eshitiladi.",
+      "Sozlamalarda — «Fon musiqasi»: musiqani alohida o'chirsa bo'ladi, ovoz effektlari qoladi.",
+    ],
+    ru: [
+      "Музыка: у каждого раздела своя фоновая мелодия — «Основы» светлые и спокойные, «Только NAND» мрачнее, в «Памяти» и «Автоматах» тикают тактовые часы. Своя музыка есть и у меню, задачи дня и песочницы.",
+      "Новые звуки: установка элемента, соединение проводов, тумблер и решение звучат богаче и в одной тональности с музыкой. При проверке слышно, как сигнал бежит по проводам.",
+      "В Настройках — «Фоновая музыка»: музыку можно выключить отдельно, звуковые эффекты останутся.",
+    ],
+  },
+  {
     version: '2.25.0',
     date: '2026-11-25',
     uz: [
