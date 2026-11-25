@@ -68,6 +68,13 @@ describe('blok shina oyoqlari', () => {
     expect(blockPinLabels('NOT4')).toEqual({ ins: [null, null, null, null], outs: [null, null, null, null] });
     expect(blockPinLabels('MUX4').ins).toEqual(['A', null, null, null, 'B', null, null, null, 'S']);
     expect(blockPinLabels('INC4').outs).toEqual(['Q', null, null, null, 'C']);
+    // Yagona chiqish (NOR4, doimiy manba) — yozuvsiz; bitli blokda (MUX) esa avvalgidek.
+    expect(blockPinLabels('NOR4').outs).toEqual([null]);
+    expect(blockPinLabels('ONE')).toEqual({ ins: [], outs: [null] });
+    expect(blockPinLabels('MUX').outs).toEqual(['Q']);
+    expect(blockPinLabels('SUB4')).toEqual({ ins: ['A', null, null, null, 'B', null, null, null], outs: ['D', null, null, null, 'C'] });
+    expect(blockPinLabels('ALU4').ins).toEqual(['A', null, null, null, 'B', null, null, null, 'F1', 'F0']);
+    expect(blockPinLabels('ALU4').outs).toEqual(['R', null, null, null, 'C', 'Z']);
   });
 
   it('misollar jadvali blok funksiyasiga mos (sonlarda)', () => {
@@ -83,6 +90,22 @@ describe('blok shina oyoqlari', () => {
     for (const r of busExamples('NOT4')!.rows) expect(r.outs).toEqual([15 - r.ins[0]]);
     for (const r of busExamples('SPLIT')!.rows) expect(r.outs.reduce((v, b) => v * 2 + b, 0)).toBe(r.ins[0]);
     for (const r of busExamples('JOIN')!.rows) expect(r.outs[0]).toBe(r.ins.reduce((v, b) => v * 2 + b, 0));
+    for (const r of busExamples('NOR4')!.rows) expect(r.outs).toEqual([r.ins[0] === 0 ? 1 : 0]);
+    for (const r of busExamples('SUB4')!.rows) expect(r.outs).toEqual([(r.ins[0] - r.ins[1] + 16) & 15, r.ins[0] >= r.ins[1] ? 1 : 0]);
+    for (const r of busExamples('AND4')!.rows) expect(r.outs).toEqual([r.ins[0] & r.ins[1]]);
+    for (const r of busExamples('OR4')!.rows) expect(r.outs).toEqual([r.ins[0] | r.ins[1]]);
+    for (const r of busExamples('XOR4')!.rows) expect(r.outs).toEqual([r.ins[0] ^ r.ins[1]]);
+    const alu = busExamples('ALU4')!;
+    expect(alu.ins).toEqual(['A', 'B', 'F1', 'F0']);
+    expect(alu.outs).toEqual(['R', 'C', 'Z']);
+    expect(alu.rows.map((r) => r.outs)).toEqual([
+      [1, 1, 0], // 9 + 8 = 17: R = 1, toshib ketdi
+      [12, 0, 0], // 3 − 7: qarz bor
+      [0, 1, 1], // 6 − 6 = 0: qarz yo'q, Z = 1
+      [8, 0, 0], // 1100 AND 1010
+      [14, 0, 0], // 1100 OR 1010
+    ]);
+    expect(busExamples('ONE')).toBeNull();
     expect(busExamples('FA')).toBeNull();
     expect(busExamples('AND')).toBeNull();
   });

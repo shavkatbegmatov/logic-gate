@@ -12,6 +12,27 @@
 const num = (bits) => bits.reduce((a, b) => a * 2 + b, 0);
 const bitsOf = (v, n) => Array.from({ length: n }, (_, i) => (v >> (n - 1 - i)) & 1);
 const pins = (name) => [3, 2, 1, 0].map((i) => `${name}${i}`);
+/** Son + ko'chirish: to'rt bit va beshinchi bit (ko'chirish) oxirida. */
+const withCarry = (v) => {
+  const b = bitsOf(v, 5);
+  return [...b.slice(1), b[0]];
+};
+/** Bitma-bit amal ikki shina ustida: Qk = op(Ak, Bk). */
+const bitwise = (op) => ({
+  inputs: [...pins('A'), ...pins('B')],
+  outputs: pins('Q'),
+  from: 'l4',
+  bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
+  fn: (...a) => a.slice(0, 4).map((v, i) => op(v, a[4 + i])),
+  free: true,
+});
+
+/** ALU: amal kodi f (0 — ADD, 1 — SUB, 2 — AND, 3 — OR) → R (to'rt bit), C, Z. */
+export function alu(A, B, f) {
+  const v = f === 0 ? A + B : f === 1 ? A + 16 - B : f === 2 ? A & B : A | B;
+  const r = v & 15;
+  return [...bitsOf(r, 4), f < 2 ? v >> 4 : 0, r === 0 ? 1 : 0];
+}
 
 export const blocks = {
   HA: { inputs: ['A', 'B'], outputs: ['S', 'C'], from: 'c1', fn: (A, B) => [A ^ B, A & B] },
@@ -58,6 +79,33 @@ export const blocks = {
       const v = bitsOf(num(a) + 1, 5);
       return [...v.slice(1), v[0]];
     },
+  },
+  // Nolmi? (w2): to'rt kirishli NOR — Z = 1 faqat shina qiymati 0 bo'lsa.
+  NOR4: { inputs: pins('A'), outputs: ['Z'], from: 'w2', bus: { in: [[0, 4]] }, fn: (...a) => [a.some((v) => v) ? 0 : 1] },
+  // ── ALU ──
+  // Doimiy manbalar: kirishi yo'q, chiqishi doim 1 yoki 0 (ayirgichda Ci = 1 uchun). «Ayirgich» darajasida beriladi.
+  ONE: { inputs: [], outputs: ['Q'], from: 'l2', fn: () => [1], free: true },
+  ZERO: { inputs: [], outputs: ['Q'], from: 'l2', fn: () => [0], free: true },
+  // Ayirgich: D = A − B (to'rt bit, 16 ga qoldiq), C = 1 — qarz yo'q (A ≥ B). Ichida: A + NOT B + 1.
+  SUB4: {
+    inputs: [...pins('A'), ...pins('B')],
+    outputs: [...pins('D'), 'C'],
+    from: 'l2',
+    bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
+    fn: (...a) => withCarry(num(a.slice(0, 4)) + 16 - num(a.slice(4, 8))),
+  },
+  // Bitma-bit mantiqiy amallar (to'rtta AND / OR / XOR) — «Mantiqiy blok» darajasida beriladi.
+  AND4: bitwise((x, y) => x & y),
+  OR4: bitwise((x, y) => x | y),
+  XOR4: bitwise((x, y) => x ^ y),
+  // ALU: F1 F0 = 00 — A + B, 01 — A − B (C — ko'chirish / qarz yo'q), 10 — A AND B, 11 — A OR B (C = 0).
+  // Z = 1, agar natija 0 bo'lsa.
+  ALU4: {
+    inputs: [...pins('A'), ...pins('B'), 'F1', 'F0'],
+    outputs: [...pins('R'), 'C', 'Z'],
+    from: 'l6',
+    bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
+    fn: (...a) => alu(num(a.slice(0, 4)), num(a.slice(4, 8)), a[8] * 2 + a[9]),
   },
 };
 

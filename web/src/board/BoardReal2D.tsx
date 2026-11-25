@@ -7,7 +7,7 @@ import { BusInPin, BusOutPin } from './BusPins';
 import { CHIP_CODE, GateShape } from './GateShape';
 import { bounds, GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { routeD } from './routing';
-import { DFF_BODY, inputLeads, outputY, SHAPES } from './shapes';
+import { blockText, DFF_BODY, inputLeads, outputY, SHAPES } from './shapes';
 import { TRANSPOSE, useBoard2D } from './useBoard2D';
 
 interface Props {
@@ -357,7 +357,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   {isBlock(g.type) ? <GateShape type={g.type} /> : <RealGateBody type={g.type} style={style} />}
                   {isBlock(g.type) ? (
                     <>
-                      {label('gate-label block-label', 36, gateH(g) / 2, g.type)}
+                      {label('gate-label block-label', 36, gateH(g) / 2, blockText(g.type))}
                       {b.blockLabels(g).ins.map((n, i) => n && <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>)}
                       {b.blockLabels(g).outs.map(
                         (n, k) => n && <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>,

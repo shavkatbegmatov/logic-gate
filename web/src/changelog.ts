@@ -36,6 +36,20 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.32.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 11-bo'lim — «ALU» (112 ★ dan ochiladi): protsessorning hisoblovchi yuragini yig'asiz. 6 ta daraja: manfiy son, ayirgich, «qo'sh yoki ayir», mantiqiy blok, taqqoslagich va to'rt amalli ALU.",
+      'Yangi elementlar: doimiy 1 va 0 manbalari (ONE, ZERO) — masalan, summatorning Ci kirishiga. Yangi bloklar: ayirgich (SUB4), shina AND/OR/XOR (AND4, OR4, XOR4) va nol aniqlagich (NOR4 — «Nolmi?» darajasidan ochiladi).',
+      '«ALU» darajasidan keyin Qum qutida tayyor ALU4 bloki ochiladi: ikki son va amal kodi F1 F0 → natija, C va Z bayroqlari.',
+    ],
+    ru: [
+      'Новая, 11-я глава — «АЛУ» (открывается со 112 ★): соберите вычислительное сердце процессора. 6 уровней: отрицательное число, вычитатель, «сложить или вычесть», логический блок, компаратор и АЛУ на четыре операции.',
+      'Новые элементы: постоянные 1 и 0 (ONE, ZERO) — например, для входа Ci сумматора. Новые блоки: вычитатель (SUB4), AND/OR/XOR шины (AND4, OR4, XOR4) и детектор нуля (NOR4 — открывается уровнем «Ноль?»).',
+      'После уровня «АЛУ» в Песочнице открывается готовый блок ALU4: два числа и код операции F1 F0 → результат, флаги C и Z.',
+    ],
+  },
+  {
     version: '2.31.1',
     date: '2026-11-25',
     uz: [

@@ -71,7 +71,7 @@ function toCircuit(level) {
     if (depth[name] === undefined) {
       seen.add(name);
       const [, ...srcs] = g[name];
-      depth[name] = 1 + Math.max(...srcs.map((s) => (g[splitSrc(s)[0]]?.[0] === 'DFF' ? 1 : depthOf(s, seen))));
+      depth[name] = 1 + Math.max(0, ...srcs.map((s) => (g[splitSrc(s)[0]]?.[0] === 'DFF' ? 1 : depthOf(s, seen))));
       seen.delete(name);
     }
     return depth[name];
@@ -142,7 +142,7 @@ function evalSolution(level) {
 function hintsFor(level) {
   const gates = {};
   for (const [type] of Object.values(level.sol.g)) gates[type] = (gates[type] ?? 0) + 1;
-  let first = Object.values(level.sol.g).find(([, ...srcs]) => srcs.every((s) => level.inputs.includes(s)));
+  let first = Object.values(level.sol.g).find(([, ...srcs]) => srcs.length && srcs.every((s) => level.inputs.includes(s)));
   if (!first && level.step) first = ['DFF'];
   if (!first) fail(level.id, "kirishlarga ulangan element yo'q");
   return { gates, first };

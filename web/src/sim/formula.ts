@@ -22,9 +22,20 @@ interface Expr {
 const SYM: Record<'AND' | 'OR' | 'XOR', string> = { AND: '∧', OR: '∨', XOR: '⊕' };
 const UNKNOWN: Expr = { text: '?', op: 'atom' };
 
-const neg = (x: Expr): Expr => ({ text: x.op === 'atom' || x.op === 'not' ? `¬${x.text}` : `¬(${x.text})`, op: 'not' });
+// Doimiy manbalar (ONE, ZERO): ifodada 1 va 0 — amallarda soddalashtiriladi (A ∧ 1 = A, A ⊕ 1 = ¬A).
+const ONE: Expr = { text: '1', op: 'atom' };
+const ZERO: Expr = { text: '0', op: 'atom' };
+const isConst = (x: Expr) => x.op === 'atom' && (x.text === '0' || x.text === '1');
+
+const neg = (x: Expr): Expr =>
+  isConst(x) ? (x.text === '1' ? ZERO : ONE) : { text: x.op === 'atom' || x.op === 'not' ? `¬${x.text}` : `¬(${x.text})`, op: 'not' };
 
 function bin(op: 'AND' | 'OR' | 'XOR', a: Expr, b: Expr): Expr {
+  if (isConst(a) || isConst(b)) {
+    const [c, x] = isConst(a) ? [a, b] : [b, a];
+    const one = c.text === '1';
+    return op === 'AND' ? (one ? x : ZERO) : op === 'OR' ? (one ? ONE : x) : one ? neg(x) : x;
+  }
   // Bir xil amal zanjiri (A ∧ B ∧ C) qavssiz; turli amallar doim qavs bilan — o'quvchiga aniqroq.
   const part = (x: Expr) => (x.op === 'atom' || x.op === 'not' || x.op === op ? x.text : `(${x.text})`);
   return { text: `${part(a)} ${SYM[op]} ${part(b)}`, op };
@@ -47,6 +58,24 @@ function combine(type: GateType, a: Expr, b: Expr): Expr {
     default:
       return UNKNOWN;
   }
+}
+
+const mux = (s: Expr, a: Expr, b: Expr) => bin('OR', bin('AND', neg(s), a), bin('AND', s, b));
+
+/**
+ * To'rt bitli summator: a, b — eng katta bit birinchi. Natija: [S3, S2, S1, S0, Co].
+ * Ko'chirish zanjiri: c0 = Ci, c(j+1) = Aj∧Bj ∨ cj∧(Aj⊕Bj); Sj = Aj⊕Bj⊕cj (j — bit raqami, A0 = a[3]).
+ */
+function adder(a: Expr[], b: Expr[], ci: Expr): Expr[] {
+  let c = ci;
+  const sum: Expr[] = [];
+  for (let j = 0; j < 4; j++) {
+    const x = a[3 - j];
+    const y = b[3 - j];
+    sum[3 - j] = bin('XOR', bin('XOR', x, y), c);
+    c = bin('OR', bin('AND', x, y), bin('AND', c, bin('XOR', x, y)));
+  }
+  return [...sum, c];
 }
 
 /**
@@ -79,17 +108,30 @@ function blockExpr(type: BlockType, k: number, x: Expr[]): Expr {
       if (k === 4) return all(4);
       return k === 3 ? neg(x[3]) : bin('XOR', x[k], all(3 - k));
     }
-    case 'ADD4': {
-      // Ko'chirish zanjiri: c0 = Ci, c(j+1) = Aj∧Bj ∨ cj∧(Aj⊕Bj); Sj = Aj⊕Bj⊕cj (j — bit raqami, A0 = x[3]).
-      let c = x[8];
-      const sum: Expr[] = [];
-      for (let j = 0; j < 4; j++) {
-        const a = x[3 - j];
-        const b = x[7 - j];
-        sum[j] = bin('XOR', bin('XOR', a, b), c);
-        c = bin('OR', bin('AND', a, b), bin('AND', c, bin('XOR', a, b)));
-      }
-      return k === 4 ? c : sum[3 - k];
+    case 'ADD4':
+      return adder(x.slice(0, 4), x.slice(4, 8), x[8])[k];
+    case 'NOR4':
+      return neg(x.reduce((a, b) => bin('OR', a, b)));
+    case 'ONE':
+      return ONE;
+    case 'ZERO':
+      return ZERO;
+    // A − B = A + ¬B + 1.
+    case 'SUB4':
+      return adder(x.slice(0, 4), x.slice(4, 8).map(neg), ONE)[k];
+    case 'AND4':
+      return bin('AND', x[k], x[4 + k]);
+    case 'OR4':
+      return bin('OR', x[k], x[4 + k]);
+    case 'XOR4':
+      return bin('XOR', x[k], x[4 + k]);
+    case 'ALU4': {
+      // «Qo'sh yoki ayir» (B ⊕ F0, Ci = F0), mantiq — F0 bilan AND yoki OR, so'ng F1 bilan tanlov.
+      const [f1, f0] = [x[8], x[9]];
+      const s = adder(x.slice(0, 4), x.slice(4, 8).map((b) => bin('XOR', b, f0)), f0);
+      const r = (j: number) => mux(f1, s[j], mux(f0, bin('AND', x[j], x[4 + j]), bin('OR', x[j], x[4 + j])));
+      if (k === 4) return bin('AND', neg(f1), s[4]);
+      return k === 5 ? neg([0, 1, 2, 3].map(r).reduce((a, b) => bin('OR', a, b))) : r(k);
     }
   }
 }
@@ -116,8 +158,11 @@ export function formulaLines(c: Circuit, outputs: string[]): FormulaLine[] {
     fanout.set(w.from, (fanout.get(w.from) ?? 0) + 1);
   }
   const states = stateNames(c);
-  const shared = (src: string) =>
-    ((fanout.get(src) ?? 0) > 1 || blockFed.has(src)) && gates.get(parseSource(src).id)?.type !== 'DFF';
+  // Doimiy manba (1 yoki 0) nom olmaydi: ifodaga qiymatning o'zi qo'yiladi va soddalashadi.
+  const shared = (src: string) => {
+    const t = gates.get(parseSource(src).id)?.type;
+    return ((fanout.get(src) ?? 0) > 1 || blockFed.has(src)) && t !== 'DFF' && t !== 'ONE' && t !== 'ZERO';
+  };
 
   // Umumiy element chiqishga ham ulangan bo'lsa, uning nomi — chiqish nomi.
   const names = new Map<string, string>();

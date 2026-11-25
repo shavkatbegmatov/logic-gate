@@ -41,6 +41,8 @@ export const SCENES: Record<string, Scene> = {
   chips: { root: 57, mode: MIXO, bpm: 98, prog: [0, 4, 6, 3], density: 0.5, bright: 1500, hat: true, clock: true },
   // Shinalar: to'rt ovozli, tekis «shina» ritmi.
   buses: { root: 53, mode: DORIAN, bpm: 100, prog: [0, 3, 4, 6], density: 0.55, bright: 1500, hat: true },
+  // ALU: hisob-kitob — tezroq, minorda, takt bilan (protsessorga yaqinlashyapmiz).
+  alu: { root: 56, mode: MINOR, bpm: 108, prog: [0, 6, 3, 4], density: 0.6, bright: 1700, hat: true, clock: true },
   daily: { root: 64, mode: MAJOR, bpm: 96, prog: [0, 5, 3, 4], density: 0.5, bright: 1700, hat: true },
   sandbox: { root: 60, mode: LYDIAN, bpm: 66, prog: [0, 4], density: 0.2, bright: 700 },
 };

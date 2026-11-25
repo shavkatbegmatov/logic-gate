@@ -1,7 +1,25 @@
 /** Oddiy elementlar va D-trigger. */
 export type BasicGateType = 'NOT' | 'AND' | 'OR' | 'XOR' | 'NAND' | 'NOR' | 'XNOR' | 'DFF';
 /** Bloklar (mikrosxemalar): yechilgan darajadan olingan tayyor qurilma, bir nechta chiqishli bo'lishi mumkin. */
-export type BlockType = 'HA' | 'FA' | 'MUX' | 'DEC' | 'SPLIT' | 'JOIN' | 'NOT4' | 'ADD4' | 'MUX4' | 'INC4';
+export type BlockType =
+  | 'HA'
+  | 'FA'
+  | 'MUX'
+  | 'DEC'
+  | 'SPLIT'
+  | 'JOIN'
+  | 'NOT4'
+  | 'ADD4'
+  | 'MUX4'
+  | 'INC4'
+  | 'NOR4'
+  | 'ONE'
+  | 'ZERO'
+  | 'SUB4'
+  | 'AND4'
+  | 'OR4'
+  | 'XOR4'
+  | 'ALU4';
 export type GateType = BasicGateType | BlockType;
 
 /** Kombinatsion elementlar. Do'stlar masalasi kodi shu tartibga bog'liq — o'zgartirmang. */
@@ -38,6 +56,20 @@ const withCarry = (v: number) => {
   const b = bitsOf(v, 5);
   return [...b.slice(1), b[0]];
 };
+/** Bitma-bit amal ikki shina ustida: Qk = op(Ak, Bk) («Mantiqiy blok» darajasida beriladi). */
+const bitwise = (op: (x: number, y: number) => number): BlockDef => ({
+  inputs: [...pins('A'), ...pins('B')],
+  outputs: pins('Q'),
+  fn: (...a) => a.slice(0, 4).map((v, i) => op(v, a[4 + i])),
+  from: 'l4',
+  bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
+});
+/** ALU: amal kodi f (0 — ADD, 1 — SUB, 2 — AND, 3 — OR) → R (to'rt bit), C, Z. */
+function alu(a: number, b: number, f: number): number[] {
+  const v = f === 0 ? a + b : f === 1 ? a + 16 - b : f === 2 ? a & b : a | b;
+  const r = v & 15;
+  return [...bitsOf(r, 4), f < 2 ? v >> 4 : 0, r === 0 ? 1 : 0];
+}
 
 export const BLOCKS: Record<BlockType, BlockDef> = {
   // Yarim summator: S = A XOR B, C = A AND B.
@@ -68,6 +100,31 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
     bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
   },
   INC4: { inputs: pins('A'), outputs: [...pins('Q'), 'C'], fn: (...a) => withCarry(num(a) + 1), from: 'w5', bus: { in: [[0, 4]], out: [[0, 4]] } },
+  // To'rt kirishli NOR: Z = 1 faqat shina qiymati 0 bo'lsa («Nolmi?»).
+  NOR4: { inputs: pins('A'), outputs: ['Z'], fn: (...a) => [a.some((v) => v) ? 0 : 1], from: 'w2', bus: { in: [[0, 4]] } },
+  // ── ALU ──
+  // Doimiy manbalar: kirishi yo'q, chiqishi doim 1 yoki 0.
+  ONE: { inputs: [], outputs: ['Q'], fn: () => [1], from: 'l2' },
+  ZERO: { inputs: [], outputs: ['Q'], fn: () => [0], from: 'l2' },
+  // Ayirgich: D = A − B (16 ga qoldiq), C = 1 — qarz yo'q (A ≥ B).
+  SUB4: {
+    inputs: [...pins('A'), ...pins('B')],
+    outputs: [...pins('D'), 'C'],
+    fn: (...a) => withCarry(num(a.slice(0, 4)) + 16 - num(a.slice(4, 8))),
+    from: 'l2',
+    bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
+  },
+  AND4: bitwise((x, y) => x & y),
+  OR4: bitwise((x, y) => x | y),
+  XOR4: bitwise((x, y) => x ^ y),
+  // ALU: F1 F0 = 00 — A + B, 01 — A − B, 10 — A AND B, 11 — A OR B; C — ko'chirish (mantiqda 0), Z — natija 0.
+  ALU4: {
+    inputs: [...pins('A'), ...pins('B'), 'F1', 'F0'],
+    outputs: [...pins('R'), 'C', 'Z'],
+    fn: (...a) => alu(num(a.slice(0, 4)), num(a.slice(4, 8)), a[8] * 2 + a[9]),
+    from: 'l6',
+    bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
+  },
 };
 
 const tables = new Map<BlockType, Uint8Array>();
@@ -120,6 +177,14 @@ export const GATE_ARITY: Record<GateType, number> = {
   ADD4: 9,
   MUX4: 9,
   INC4: 4,
+  NOR4: 4,
+  ONE: 0,
+  ZERO: 0,
+  SUB4: 8,
+  AND4: 8,
+  OR4: 8,
+  XOR4: 8,
+  ALU4: 10,
 };
 
 /** Chiqishlar soni: oddiy elementlarda 1. */

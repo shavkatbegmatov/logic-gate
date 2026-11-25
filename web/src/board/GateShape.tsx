@@ -1,5 +1,5 @@
 import { isBlock, type BlockType, type GateType } from '../sim/types';
-import { BLOCK_BODY, BLOCK_SHAPE, DFF_BODY, gateHeight, inputLeads, leadEnd, outputLeads, outputY, SHAPE_H, SHAPE_W, SHAPES } from './shapes';
+import { BLOCK_BODY, BLOCK_SHAPE, blockText, DFF_BODY, gateHeight, inputLeads, leadEnd, outputLeads, outputY, SHAPE_H, SHAPE_W, SHAPES } from './shapes';
 
 /** Blok (mikrosxema): to'rtburchak korpus, chap tomonda kirish, o'ngda chiqish oyoqlari, burchakda kesik. */
 function BlockBody({ type }: { type: BlockType }) {
@@ -45,6 +45,14 @@ export const CHIP_CODE: Record<GateType, string> = {
   ADD4: '74HC283',
   MUX4: '74HC157',
   INC4: '74HC161',
+  NOR4: '74HC4002',
+  ONE: 'VCC',
+  ZERO: 'GND',
+  SUB4: '74HC283',
+  AND4: '74HC08',
+  OR4: '74HC32',
+  XOR4: '74HC86',
+  ALU4: '74LS181',
   NOT: '74HC04',
   AND: '74HC08',
   OR: '74HC32',
@@ -105,7 +113,7 @@ export function GateIcon({ type, size = 40 }: { type: GateType; size?: number })
       <GateShape type={type} />
       {isBlock(type) && (
         <text class="block-icon-label" x={SHAPE_W / 2} y={h / 2 + 7}>
-          {type}
+          {blockText(type)}
         </text>
       )}
     </svg>

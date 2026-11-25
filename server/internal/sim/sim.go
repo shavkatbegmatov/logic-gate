@@ -27,6 +27,7 @@ var arity = map[string]int{
 	"NOT": 1, "AND": 2, "OR": 2, "XOR": 2, "NAND": 2, "NOR": 2, "XNOR": 2, "DFF": 1,
 	"HA": 2, "FA": 3, "MUX": 3, "DEC": 2,
 	"SPLIT": 4, "JOIN": 4, "NOT4": 4, "ADD4": 9, "MUX4": 9, "INC4": 4,
+	"NOR4": 4, "ONE": 0, "ZERO": 0, "SUB4": 8, "AND4": 8, "OR4": 8, "XOR4": 8, "ALU4": 10,
 }
 
 // Block — blok (mikrosxema): Fn kirish bitlaridan chiqish bitlarini beradi (birinchi kirish — qatorning eng
@@ -88,6 +89,56 @@ var Blocks = map[string]*Block{
 		return ident(a[:4])
 	}},
 	"INC4": {Inputs: pins4("A"), Outputs: append(pins4("Q"), "C"), Fn: func(a []uint8) []uint8 { return withCarry(num(a) + 1) }},
+	// To'rt kirishli NOR: Z = 1 faqat shina qiymati 0 bo'lsa.
+	"NOR4": {Inputs: pins4("A"), Outputs: []string{"Z"}, Fn: func(a []uint8) []uint8 {
+		if num(a) == 0 {
+			return []uint8{1}
+		}
+		return []uint8{0}
+	}},
+	// ALU: doimiy manbalar (kirishsiz), ayirgich, bitma-bit amallar va ALU ning o'zi.
+	"ONE":  {Inputs: []string{}, Outputs: []string{"Q"}, Fn: func([]uint8) []uint8 { return []uint8{1} }},
+	"ZERO": {Inputs: []string{}, Outputs: []string{"Q"}, Fn: func([]uint8) []uint8 { return []uint8{0} }},
+	"SUB4": {Inputs: append(pins4("A"), pins4("B")...), Outputs: append(pins4("D"), "C"), Fn: func(a []uint8) []uint8 {
+		return withCarry(num(a[:4]) + 16 - num(a[4:8]))
+	}},
+	"AND4": bitwise(func(x, y uint8) uint8 { return x & y }),
+	"OR4":  bitwise(func(x, y uint8) uint8 { return x | y }),
+	"XOR4": bitwise(func(x, y uint8) uint8 { return x ^ y }),
+	// F1 F0: 00 — A + B, 01 — A − B, 10 — A AND B, 11 — A OR B; C — ko'chirish (mantiqda 0), Z — natija 0.
+	"ALU4": {Inputs: append(append(pins4("A"), pins4("B")...), "F1", "F0"), Outputs: append(pins4("R"), "C", "Z"), Fn: func(a []uint8) []uint8 {
+		x, y, v := num(a[:4]), num(a[4:8]), 0
+		switch a[8]<<1 | a[9] {
+		case 0:
+			v = x + y
+		case 1:
+			v = x + 16 - y
+		case 2:
+			v = x & y
+		default:
+			v = x | y
+		}
+		out := withCarry(v)
+		if a[8] == 1 {
+			out[4] = 0
+		}
+		var z uint8
+		if v&15 == 0 {
+			z = 1
+		}
+		return append(out, z)
+	}},
+}
+
+// bitwise — ikki shina ustida bitma-bit amal: Qk = op(Ak, Bk).
+func bitwise(op func(x, y uint8) uint8) *Block {
+	return &Block{Inputs: append(pins4("A"), pins4("B")...), Outputs: pins4("Q"), Fn: func(a []uint8) []uint8 {
+		out := make([]uint8, 4)
+		for i := range out {
+			out[i] = op(a[i], a[4+i])
+		}
+		return out
+	}}
 }
 
 func init() {
@@ -388,7 +439,8 @@ func (c *compiled) step(r int, state uint64, vals, out []uint8) uint64 {
 		vals[at] = uint8(state>>i) & 1
 	}
 	for _, o := range c.ops {
-		if o.ins == nil {
+		// Oddiy element; blokda jadval bor (doimiy manbada kirishlar bo'lmasa ham).
+		if o.table == nil {
 			vals[o.dst] = o.lut >> (vals[o.a]<<1 | vals[o.b]) & 1
 			continue
 		}
