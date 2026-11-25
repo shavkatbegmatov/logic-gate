@@ -14,7 +14,8 @@ import (
 const (
 	MaxGates = 64
 	MaxWires = 256
-	// MaxFlipflops — D-triggerlar soni: ketma-ket tekshiruvda holatlar 2^n gacha o'sadi.
+	// MaxFlipflops — xotira bitlari (D-trigger — 1, registr — chiqishlari soni): ketma-ket tekshiruvda holatlar
+	// 2^n gacha o'sadi.
 	MaxFlipflops = 8
 	// Koordinatalar uchun chegara: saqlanadigan JSON hajmini cheklaydi.
 	maxCoord = 100000
@@ -28,6 +29,7 @@ var arity = map[string]int{
 	"HA": 2, "FA": 3, "MUX": 3, "DEC": 2,
 	"SPLIT": 4, "JOIN": 4, "NOT4": 4, "ADD4": 9, "MUX4": 9, "INC4": 4,
 	"NOR4": 4, "ONE": 0, "ZERO": 0, "SUB4": 8, "AND4": 8, "OR4": 8, "XOR4": 8, "ALU4": 10,
+	"REG1": 2, "REG4": 5, "PC4": 5,
 }
 
 // Block — blok (mikrosxema): Fn kirish bitlaridan chiqish bitlarini beradi (birinchi kirish — qatorning eng
@@ -37,8 +39,32 @@ type Block struct {
 	Inputs  []string
 	Outputs []string
 	Fn      func(in []uint8) []uint8
-	// Table[r] — r-qatordagi chiqishlar maskasi (k-bit — k-chiqish); init da Fn dan.
+	// State — xotirali blok (registr): chiqishlar saqlangan qiymat (boshida 0), Fn esa (kirishlar, joriy
+	// chiqishlar) → keyingi takt chiqishlari. Chiqishi shu taktda kirishlariga bog'liq emas — u orqali o'tgan
+	// aylana sikl emas.
+	State bool
+	// Table[r] — r-qatordagi chiqishlar maskasi (k-bit — k-chiqish); init da Fn dan. Xotirali blokda qator —
+	// kirishlar va joriy chiqishlar.
 	Table []uint8
+}
+
+// width — jadval ustunlari: kirishlar, xotirali blokda — keyin joriy chiqishlar ham.
+func (b *Block) width() int {
+	if b.State {
+		return len(b.Inputs) + len(b.Outputs)
+	}
+	return len(b.Inputs)
+}
+
+// stateBits — element saqlaydigan bitlar soni: D-trigger — 1, registr — chiqishlari soni, qolganlari — 0.
+func stateBits(t string) int {
+	if t == "DFF" {
+		return 1
+	}
+	if b, ok := Blocks[t]; ok && b.State {
+		return len(b.Outputs)
+	}
+	return 0
 }
 
 func pins4(name string) []string {
@@ -128,6 +154,27 @@ var Blocks = map[string]*Block{
 		}
 		return append(out, z)
 	}},
+	// Registrlar va xotira (xotirali bloklar). Yuklanuvchi bit: LD = 1 bo'lsa keyingi Q = D, aks holda Q.
+	"REG1": {Inputs: []string{"D", "LD"}, Outputs: []string{"Q"}, State: true, Fn: func(a []uint8) []uint8 {
+		if a[1] == 1 {
+			return []uint8{a[0]}
+		}
+		return []uint8{a[2]}
+	}},
+	// To'rt bitli registr: LD = 1 bo'lsa keyingi Q = D, aks holda Q saqlanadi.
+	"REG4": {Inputs: append(pins4("D"), "LD"), Outputs: pins4("Q"), State: true, Fn: func(a []uint8) []uint8 {
+		if a[4] == 1 {
+			return ident(a[:4])
+		}
+		return ident(a[5:9])
+	}},
+	// Dastur hisoblagichi: J = 1 bo'lsa keyingi Q = D (o'tish), aks holda Q + 1 (15 dan keyin 0).
+	"PC4": {Inputs: append(pins4("D"), "J"), Outputs: pins4("Q"), State: true, Fn: func(a []uint8) []uint8 {
+		if a[4] == 1 {
+			return ident(a[:4])
+		}
+		return withCarry(num(a[5:9]) + 1)[:4]
+	}},
 }
 
 // bitwise — ikki shina ustida bitma-bit amal: Qk = op(Ak, Bk).
@@ -143,7 +190,7 @@ func bitwise(op func(x, y uint8) uint8) *Block {
 
 func init() {
 	for _, b := range Blocks {
-		n := len(b.Inputs)
+		n := b.width()
 		b.Table = make([]uint8, 1<<n)
 		in := make([]uint8, n)
 		for r := range b.Table {
@@ -232,20 +279,29 @@ type op struct {
 	dsts      []int32
 }
 
-// compiled — tekshiruvdan o'tgan sxema: elementlar topologik tartibda, D-triggerlar boshida.
+// cell — xotirali element (D-trigger yoki registr): holat bitmaskasida off-bitdan boshlab bits ta bit
+// (k-bit — k-chiqish).
+type cell struct {
+	id, typ   string
+	off, bits int
+	val       int32   // 0-chiqish joyi (qolganlari ketidan)
+	ins       []int32 // kirishlari manbalari
+	table     []uint8 // registr jadvali (kirishlar, joriy chiqishlar → keyingi); D-triggerda nil
+}
+
+// compiled — tekshiruvdan o'tgan sxema: elementlar topologik tartibda, xotirali elementlar boshida.
 type compiled struct {
 	spec    Spec
 	order   []Gate
 	drivers map[string]string
-	// dffs — D-triggerlar tartibi: holat bitmaskasida i-bit.
-	dffs []string
+	// cells — xotirali elementlar order tartibida; stateBits — holat bitmaskasi kengligi.
+	cells     []cell
+	stateBits int
 
 	// Hisoblash dasturi: qiymatlar slice'da (kirishlar, keyin order tartibidagi elementlar) — har taktda
 	// xarita yaratilmaydi.
 	nVals  int
-	ops    []op    // D-triggerdan boshqa elementlar, topologik tartibda
-	dffVal []int32 // i-trigger qiymati (Q) joyi
-	dffSrc []int32 // i-trigger kirishi (D) manbasi
+	ops    []op    // xotirali bo'lmagan elementlar, topologik tartibda
 	outSrc []int32 // chiqishlar manbasi, spec.Outputs tartibida
 }
 
@@ -311,8 +367,9 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 	indeg := make(map[string]int, len(gates))
 	users := make(map[string][]string, len(gates))
 	for _, g := range c.Gates {
-		// D-trigger kirishi chiqishiga shu taktda ta'sir qilmaydi — u orqali o'tgan aylana sikl emas.
-		if g.Type == "DFF" {
+		// Xotirali element (D-trigger, registr) kirishi chiqishiga shu taktda ta'sir qilmaydi — u orqali
+		// o'tgan aylana sikl emas.
+		if stateBits(g.Type) > 0 {
 			continue
 		}
 		for i := range arity[g.Type] {
@@ -349,13 +406,16 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 			}
 		}
 	}
-	var dffs []string
+	// Holat bitmaskasi: xotirali elementlar order tartibida, har biri o'z bitlari bilan (mijozda ham shunday).
+	var cells []cell
+	bits := 0
 	for _, g := range order {
-		if g.Type == "DFF" {
-			dffs = append(dffs, g.ID)
+		if n := stateBits(g.Type); n > 0 {
+			cells = append(cells, cell{id: g.ID, typ: g.Type, off: bits, bits: n})
+			bits += n
 		}
 	}
-	if len(dffs) > MaxFlipflops {
+	if bits > MaxFlipflops {
 		return nil, &Error{Code: "too_many_flipflops"}
 	}
 
@@ -371,7 +431,7 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 			return nil, &Error{Code: "unconnected_output", Ref: o}
 		}
 	}
-	cc := &compiled{spec: spec, order: order, drivers: drivers, dffs: dffs}
+	cc := &compiled{spec: spec, order: order, drivers: drivers, cells: cells, stateBits: bits}
 	cc.program()
 	return cc, nil
 }
@@ -392,11 +452,21 @@ func (c *compiled) program() {
 	}
 	src := func(sink string) int32 { return slot[c.drivers[sink]] }
 	c.nVals = int(next)
+	for i := range c.cells {
+		x := &c.cells[i]
+		x.val = slot[x.id]
+		if b, ok := Blocks[x.typ]; ok {
+			x.table = b.Table
+			for k := range b.Inputs {
+				x.ins = append(x.ins, src(fmt.Sprintf("%s:%d", x.id, k)))
+			}
+		} else {
+			x.ins = []int32{src(x.id + ":0")}
+		}
+	}
 	for _, g := range c.order {
 		at := slot[g.ID]
-		if g.Type == "DFF" {
-			c.dffVal = append(c.dffVal, at)
-			c.dffSrc = append(c.dffSrc, src(g.ID+":0"))
+		if stateBits(g.Type) > 0 {
 			continue
 		}
 		if b, ok := Blocks[g.Type]; ok {
@@ -428,15 +498,18 @@ func Validate(spec Spec, c Circuit) *Error {
 	return err
 }
 
-// step — bitta takt: state holatida (i-bit — dffs[i]) r-qator uchun chiqishlar out ga yoziladi va keyingi
-// holat qaytadi (birinchi kirish — eng katta bit). vals — c.nVals uzunlikdagi ish joyi: xotira ajratilmaydi.
+// step — bitta takt: state holatida (cells joylashuvi bo'yicha) r-qator uchun chiqishlar out ga yoziladi va
+// keyingi holat qaytadi (birinchi kirish — eng katta bit). vals — c.nVals uzunlikdagi ish joyi: xotira
+// ajratilmaydi.
 func (c *compiled) step(r int, state uint64, vals, out []uint8) uint64 {
 	n := len(c.spec.Inputs)
 	for k := range n {
 		vals[k] = uint8(r>>(n-1-k)) & 1
 	}
-	for i, at := range c.dffVal {
-		vals[at] = uint8(state>>i) & 1
+	for _, x := range c.cells {
+		for k := range x.bits {
+			vals[x.val+int32(k)] = uint8(state>>(x.off+k)) & 1
+		}
 	}
 	for _, o := range c.ops {
 		// Oddiy element; blokda jadval bor (doimiy manbada kirishlar bo'lmasa ham).
@@ -457,8 +530,20 @@ func (c *compiled) step(r int, state uint64, vals, out []uint8) uint64 {
 		out[i] = vals[at]
 	}
 	var next uint64
-	for i, at := range c.dffSrc {
-		next |= uint64(vals[at]) << i
+	for _, x := range c.cells {
+		if x.table == nil {
+			next |= uint64(vals[x.ins[0]]) << x.off
+			continue
+		}
+		// Registr: jadval qatori — kirishlar, keyin joriy chiqishlar; natija — keyingi chiqishlar maskasi.
+		row := 0
+		for _, at := range x.ins {
+			row = row<<1 | int(vals[at])
+		}
+		for k := range x.bits {
+			row = row<<1 | int(vals[x.val+int32(k)])
+		}
+		next |= uint64(x.table[row]) << x.off
 	}
 	return next
 }
@@ -504,7 +589,7 @@ func CheckSeq(spec Spec, m Machine, c Circuit) (gates int, trace []int, err *Err
 	}
 	ms := len(m.Next)
 	// prev[i] — i-juftga qaysi juftdan kelingani (-1 — hali ko'rilmagan, o'zi — boshlanish), row[i] — qator.
-	prev := make([]int32, (1<<len(cc.dffSrc))*ms)
+	prev := make([]int32, (1<<cc.stateBits)*ms)
 	row := make([]int32, len(prev))
 	for i := range prev {
 		prev[i] = -1

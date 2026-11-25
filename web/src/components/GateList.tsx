@@ -13,13 +13,14 @@ function truthLine(type: GateType): string {
     return `${ex.ins.join(' ')} → ${ex.outs.join(' ')}:  ${ex.rows.map((r) => `${r.ins.join(' ')}→${r.outs.join(' ')}`).join('  ')}`;
   }
   if (isBlock(type)) {
-    // Blok: "A B Ci → S Co" sarlavhasi va har qator bitlari.
+    // Blok: "A B Ci → S Co" sarlavhasi va har qator bitlari. Xotirali blokda: "D LD Q → Q⁺".
     const b = BLOCKS[type];
-    const n = b.inputs.length;
+    const names = b.state ? [...b.inputs, ...b.outputs] : b.inputs;
+    const n = names.length;
     // Doimiy manba: kirishi yo'q.
     if (!n) return `${b.outputs[0]} = ${gateOutputValues(type, [])[0]}`;
     const rows = Array.from({ length: 1 << n }, (_, r) => `${rowBits(n, r).join('')}→${gateOutputValues(type, rowBits(n, r)).join('')}`);
-    return `${b.inputs.join(' ')} → ${b.outputs.join(' ')}:  ${rows.join('  ')}`;
+    return `${names.join(' ')} → ${b.outputs.map((o) => (b.state ? `${o}⁺` : o)).join(' ')}:  ${rows.join('  ')}`;
   }
   if (GATE_ARITY[type] === 1) return [0, 1].map((a) => `${a}→${applyGate(type, a, 0)}`).join('  ');
   return [0, 1, 2, 3].map((r) => `${r >> 1}${r & 1}→${applyGate(type, r >> 1, r & 1)}`).join('  ');

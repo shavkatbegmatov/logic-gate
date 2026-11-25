@@ -34,13 +34,16 @@ describe('newGates', () => {
       l2: ['ONE', 'ZERO'],
       l4: ['AND4', 'OR4', 'XOR4'],
       l5: ['SUB4', 'NOR4'],
+      g2: ['REG1'],
+      g3: ['REG4'],
+      g6: ['ALU4'],
     });
   });
 
   it('har bir element turi roppa-rosa bir marta tanishtiriladi', () => {
     const all = levels.flatMap((l) => newGates(l));
-    // ALU4 — oxirgi darajadan ochiladi: hozircha faqat Qum qutida, darajada keyingi bo'limda tanishtiriladi.
-    const later = ['ALU4'];
+    // PC4 — «Dastur hisoblagichi» dan ochiladi: hozircha faqat Qum qutida, darajada boshqaruv bo'limida tanishtiriladi.
+    const later = ['PC4'];
     expect([...all].sort()).toEqual([...ALL_GATE_TYPES, ...BLOCK_TYPES.filter((b) => !later.includes(b))].sort());
   });
 

@@ -5,6 +5,12 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.34.0 — 2026-11-25
+
+- Yangi, 12-bo'lim — «Registrlar va xotira» (124 ★ dan ochiladi): protsessor sonlarni qayerda saqlashini yig'asiz. 6 ta daraja: yuklanuvchi bit, registr, siljitish registri, dastur hisoblagichi, manzilli xotira va akkumulyator — ALU bilan registrning birinchi halqasi.
+- Yangi bloklar: yuklanuvchi bit (REG1) va to'rt bitli registr (REG4) — chiqishi saqlangan qiymat, u faqat takt bosilganda yangilanadi. Shuning uchun registr chiqishini uning o'z kirishiga qaytarish mumkin: bu sikl emas. «Dastur hisoblagichi» darajasidan keyin Qum qutida tayyor PC4 bloki ochiladi.
+- Vaqt diagrammasida shinalar endi bitta qatorda son bilan ko'rinadi. Sxemadagi xotira chegarasi — 8 bit (D-trigger — 1 bit, REG4 — 4 bit).
+
 ## 2.33.2 — 2026-11-25
 
 - Kesishgan simlar burchak yoki pinga yaqin bo'lganda ko'priksiz qolib ulangandek ko'rinishi tuzatildi — yo'naltiruvchi kengroq yo'lak tanlaydi, tor joylarda esa ko'prik kesishuvchi ikkinchi simga qo'yiladi.

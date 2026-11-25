@@ -59,6 +59,10 @@ export const BLOCK_SHAPE: Record<BlockType, { h: number; ins: number[]; outs: nu
   OR4: { h: 48, ins: [12, 12, 12, 12, 36, 36, 36, 36], outs: [24, 24, 24, 24] },
   XOR4: { h: 48, ins: [12, 12, 12, 12, 36, 36, 36, 36], outs: [24, 24, 24, 24] },
   ALU4: { h: 96, ins: [12, 12, 12, 12, 36, 36, 36, 36, 60, 84], outs: [24, 24, 24, 24, 48, 72] },
+  // Xotirali bloklar: yuqorida ma'lumot (D), pastda boshqaruv (LD yoki J), chiqish o'rtada.
+  REG1: { h: 48, ins: [12, 36], outs: [24] },
+  REG4: { h: 48, ins: [12, 12, 12, 12, 36], outs: [24, 24, 24, 24] },
+  PC4: { h: 48, ins: [12, 12, 12, 12, 36], outs: [24, 24, 24, 24] },
 };
 
 /** Korpusdagi yozuv: doimiy manbada — qiymatning o'zi (1 yoki 0), qolganlarida — turi. */

@@ -19,7 +19,10 @@ export type BlockType =
   | 'AND4'
   | 'OR4'
   | 'XOR4'
-  | 'ALU4';
+  | 'ALU4'
+  | 'REG1'
+  | 'REG4'
+  | 'PC4';
 export type GateType = BasicGateType | BlockType;
 
 /** Kombinatsion elementlar. Do'stlar masalasi kodi shu tartibga bog'liq — o'zgartirmang. */
@@ -39,9 +42,15 @@ export interface BlockDef {
   /**
    * Blok nima qiladi: kirish bitlari → chiqish bitlari (outputs tartibida). Hisoblashda blok ichidagi sxema
    * emas, shundan tuzilgan jadval ishlatiladi (blockTable). Xuddi shu jadvallar server/internal/sim/sim.go va
-   * levels/blocks.mjs da — testlar levels.json dagi `blocks` bilan solishtiradi.
+   * levels/blocks.mjs da — testlar levels.json dagi `blocks` bilan solishtiradi. Xotirali blokda (state):
+   * (...kirishlar, ...joriy chiqishlar) → keyingi taktdagi chiqishlar.
    */
   fn: (...a: number[]) => number[];
+  /**
+   * Xotirali blok (registr): chiqishlar — saqlangan qiymat (D-trigger kabi, boshida 0), har taktda fn bo'yicha
+   * yangilanadi. Chiqishi shu taktda kirishlariga bog'liq emas — u orqali o'tgan aylana sikl emas.
+   */
+  state?: true;
   /** Blok qaysi daraja yechilganda ochiladi (Qum qutida). */
   from: string;
   /** Shina oyoqlari (maydonda bitta keng port bo'lib chiziladi). */
@@ -125,16 +134,43 @@ export const BLOCKS: Record<BlockType, BlockDef> = {
     from: 'l6',
     bus: { in: [[0, 4], [4, 4]], out: [[0, 4]] },
   },
+  // ── Registrlar va xotira (xotirali bloklar) ──
+  // Yuklanuvchi bit: LD = 1 bo'lgan taktdan keyin Q = D, aks holda Q saqlanadi.
+  REG1: { inputs: ['D', 'LD'], outputs: ['Q'], fn: (d, ld, q) => [ld ? d : q], from: 'g1', state: true },
+  // To'rt bitli registr: xuddi shunday, D va Q — shinalar.
+  REG4: {
+    inputs: [...pins('D'), 'LD'],
+    outputs: pins('Q'),
+    fn: (...a) => (a[4] ? a.slice(0, 4) : a.slice(5, 9)),
+    from: 'g2',
+    bus: { in: [[0, 4]], out: [[0, 4]] },
+    state: true,
+  },
+  // Dastur hisoblagichi: J = 1 bo'lsa PC := D (o'tish), aks holda PC := PC + 1 (15 dan keyin 0).
+  PC4: {
+    inputs: [...pins('D'), 'J'],
+    outputs: pins('Q'),
+    fn: (...a) => (a[4] ? a.slice(0, 4) : bitsOf(num(a.slice(5, 9)) + 1, 4)),
+    from: 'g4',
+    bus: { in: [[0, 4]], out: [[0, 4]] },
+    state: true,
+  },
 };
+
+/** Jadval ustunlari soni: kirishlar, xotirali blokda — keyin joriy chiqishlar ham. */
+export const tableWidth = (t: BlockType): number => BLOCKS[t].inputs.length + (BLOCKS[t].state ? BLOCKS[t].outputs.length : 0);
 
 const tables = new Map<BlockType, Uint8Array>();
 
-/** Blok jadvali: r-qator (kirish bitlari, birinchisi — eng katta) → chiqishlar maskasi (k-bit — k-chiqish). */
+/**
+ * Blok jadvali: r-qator (kirish bitlari, birinchisi — eng katta) → chiqishlar maskasi (k-bit — k-chiqish).
+ * Xotirali blokda qator — kirishlar va joriy chiqishlar, natija — keyingi takt chiqishlari.
+ */
 export function blockTable(t: BlockType): Uint8Array {
   let tab = tables.get(t);
   if (!tab) {
     const b = BLOCKS[t];
-    const n = b.inputs.length;
+    const n = tableWidth(t);
     tab = new Uint8Array(1 << n);
     for (let r = 0; r < 1 << n; r++) tab[r] = b.fn(...bitsOf(r, n)).reduce((m, v, k) => m | ((v & 1) << k), 0);
     tables.set(t, tab);
@@ -155,6 +191,15 @@ export function blockLuts(t: BlockType): string[] {
 export const BLOCK_TYPES = Object.keys(BLOCKS) as BlockType[];
 
 export const isBlock = (t: GateType): t is BlockType => t in BLOCKS;
+
+/** Xotirali element: D-trigger yoki registr bloki — chiqishi saqlangan qiymat, takt bosilganda yangilanadi. */
+export const isStateful = (t: GateType): boolean => t === 'DFF' || (isBlock(t) && !!BLOCKS[t].state);
+
+/** Element saqlaydigan bitlar soni (tekshiruvda holatlar 2^n gacha o'sadi). */
+export const stateBits = (t: GateType): number => (t === 'DFF' ? 1 : isBlock(t) && BLOCKS[t].state ? BLOCKS[t].outputs.length : 0);
+
+/** Elementlar ro'yxatida xotirali element bormi (takt tugmalari, vaqt diagrammasi). */
+export const hasMemory = (types: readonly GateType[]): boolean => types.some(isStateful);
 
 /** Kirishlar soni. */
 export const GATE_ARITY: Record<GateType, number> = {
@@ -185,6 +230,9 @@ export const GATE_ARITY: Record<GateType, number> = {
   OR4: 8,
   XOR4: 8,
   ALU4: 10,
+  REG1: 2,
+  REG4: 5,
+  PC4: 5,
 };
 
 /** Chiqishlar soni: oddiy elementlarda 1. */

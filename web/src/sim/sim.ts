@@ -6,8 +6,11 @@ import {
   GATE_ARITY,
   gateOutputs,
   isBlock,
+  isStateful,
   parseSource,
   sourcePort,
+  stateBits,
+  tableWidth,
   type Circuit,
   type Gate,
   type GateType,
@@ -16,7 +19,7 @@ import {
   type Spec,
 } from './types';
 
-/** flipflops — D-triggerlar: tekshiruvda holatlar soni 2^n gacha o'sadi. */
+/** flipflops — xotira bitlari (D-trigger — 1, registr — chiqishlari soni): tekshiruvda holatlar 2^n gacha o'sadi. */
 export const LIMITS = { gates: 64, wires: 256, flipflops: 8, coord: 100000 };
 export const GATE_ID_RE = /^[a-z0-9_]{1,16}$/;
 
@@ -56,11 +59,15 @@ export function applyGate(type: GateType, a: number, b: number): number {
   return isBlock(type) ? gateOutputValues(type, [a, b])[0] : OPS[type](a, b);
 }
 
-/** Element chiqishlari: blokda jadvaldan (birinchi kirish — qatorning eng katta biti). */
+/**
+ * Element chiqishlari: blokda jadvaldan (birinchi kirish — qatorning eng katta biti). Xotirali blokda ins —
+ * kirishlar va joriy chiqishlar, natija — keyingi takt chiqishlari.
+ */
 export function gateOutputValues(type: GateType, ins: number[]): number[] {
   if (!isBlock(type)) return [OPS[type](ins[0] ?? 0, ins[1] ?? 0)];
   const b = BLOCKS[type];
-  const r = b.inputs.reduce((acc, _, i) => (acc << 1) | (ins[i] ? 1 : 0), 0);
+  let r = 0;
+  for (let i = 0; i < tableWidth(type); i++) r = (r << 1) | (ins[i] ? 1 : 0);
   const m = blockTable(type)[r];
   return b.outputs.map((_, k) => (m >> k) & 1);
 }
@@ -96,7 +103,7 @@ export interface Compiled {
   spec: Spec;
   gates: Map<string, Gate>;
   drivers: Drivers;
-  /** Elementlar topologik tartibda (sikldagilar kirmaydi). D-triggerlar — manba, boshida keladi. */
+  /** Elementlar topologik tartibda (sikldagilar kirmaydi). Xotirali elementlar — manba, boshida keladi. */
   order: Gate[];
   /** Sikl ichida qolgan elementlar. */
   cyclic: Set<string>;
@@ -126,8 +133,9 @@ function topoSort(gates: Map<string, Gate>, drivers: Drivers) {
     users.set(g.id, []);
   }
   for (const g of gates.values()) {
-    // D-trigger kirishi chiqishiga shu taktda ta'sir qilmaydi — u orqali o'tgan aylana sikl emas.
-    if (g.type === 'DFF') continue;
+    // Xotirali element (D-trigger, registr) kirishi chiqishiga shu taktda ta'sir qilmaydi — u orqali o'tgan
+    // aylana sikl emas.
+    if (isStateful(g.type)) continue;
     for (let i = 0; i < GATE_ARITY[g.type]; i++) {
       const src = drivers.get(`${g.id}:${i}`);
       const from = src === undefined ? null : sourceGate(gates, src);
@@ -171,7 +179,7 @@ export function validate(spec: Spec, circuit: Circuit): SimError | null {
   }
   const { cyclic } = topoSort(gates, drivers);
   if (cyclic.size) return { code: 'cycle', ref: [...cyclic][0] };
-  if (circuit.gates.filter((g) => g.type === 'DFF').length > LIMITS.flipflops) return { code: 'too_many_flipflops' };
+  if (circuit.gates.reduce((n, g) => n + stateBits(g.type), 0) > LIMITS.flipflops) return { code: 'too_many_flipflops' };
   for (const g of gates.values()) {
     for (let i = 0; i < GATE_ARITY[g.type]; i++) {
       if (!drivers.has(`${g.id}:${i}`)) return { code: 'unconnected_input', ref: g.id };
@@ -195,7 +203,10 @@ export interface Evaluation {
   outputs: (number | null)[];
 }
 
-/** D-triggerlarda saqlangan qiymatlar (id → 0/1); yo'q bo'lsa — 0 (boshlang'ich holat). */
+/**
+ * Xotirali elementlarda saqlangan qiymatlar: id → D-triggerda 0/1, registrda chiqishlar maskasi (k-bit —
+ * k-chiqish); yo'q bo'lsa — 0 (boshlang'ich holat).
+ */
 export type State = Map<string, number>;
 
 export function evaluate(c: Compiled, bits: number[], state?: State): Evaluation {
@@ -207,7 +218,10 @@ export function evaluate(c: Compiled, bits: number[], state?: State): Evaluation
   };
   for (const g of c.order) {
     if (g.type === 'DFF') values.set(g.id, state?.get(g.id) ?? 0);
-    else if (isBlock(g.type)) {
+    else if (isStateful(g.type)) {
+      const word = state?.get(g.id) ?? 0;
+      for (let k = 0; k < gateOutputs(g.type); k++) values.set(sourcePort(g.id, k), (word >> k) & 1);
+    } else if (isBlock(g.type)) {
       const ins = Array.from({ length: GATE_ARITY[g.type] }, (_, i) => read(`${g.id}:${i}`));
       gateOutputValues(g.type, ins).forEach((v, k) => values.set(sourcePort(g.id, k), v));
     } else values.set(g.id, applyGate(g.type, read(`${g.id}:0`), read(`${g.id}:1`)));
@@ -220,13 +234,21 @@ export function evaluate(c: Compiled, bits: number[], state?: State): Evaluation
   return { values, outputs };
 }
 
-/** Takt: har bir D-trigger kirishidagi qiymatni eslab qoladi. */
+/** Takt: har bir D-trigger kirishidagi qiymatni eslab qoladi, registr esa o'z jadvali bo'yicha yangilanadi. */
 export function nextState(c: Compiled, values: Map<string, number>): State {
   const next: State = new Map();
+  const read = (sink: string) => {
+    const src = c.drivers.get(sink);
+    return src === undefined ? 0 : (values.get(src) ?? 0);
+  };
   for (const g of c.order) {
-    if (g.type !== 'DFF') continue;
-    const src = c.drivers.get(`${g.id}:0`);
-    next.set(g.id, src === undefined ? 0 : (values.get(src) ?? 0));
+    if (g.type === 'DFF') next.set(g.id, read(`${g.id}:0`));
+    else if (isStateful(g.type)) {
+      const n = gateOutputs(g.type);
+      const ins = Array.from({ length: GATE_ARITY[g.type] }, (_, i) => read(`${g.id}:${i}`));
+      const q = Array.from({ length: n }, (_, k) => values.get(sourcePort(g.id, k)) ?? 0);
+      next.set(g.id, gateOutputValues(g.type, [...ins, ...q]).reduce((m, v, k) => m | (v << k), 0));
+    }
   }
   return next;
 }
@@ -240,15 +262,15 @@ export function replay(c: Compiled, rows: number[]): State {
 }
 
 /**
- * Manbalar chuqurligi: kirishlar va D-triggerlar 0, element — o'z kirishlariga ulangan eng chuqur
+ * Manbalar chuqurligi: kirishlar va xotirali elementlar 0, element — o'z kirishlariga ulangan eng chuqur
  * manba + 1. Tekshiruv animatsiyasida signal shu tartibda "oqadi".
  */
 export function depths(c: Compiled): Map<string, number> {
   const d = new Map<string, number>();
   c.spec.inputs.forEach((name) => d.set(`in:${name}`, 0));
   for (const g of c.order) {
-    if (g.type === 'DFF') {
-      d.set(g.id, 0);
+    if (isStateful(g.type)) {
+      for (let k = 0; k < gateOutputs(g.type); k++) d.set(sourcePort(g.id, k), 0);
       continue;
     }
     let m = 0;
@@ -318,12 +340,29 @@ export function minimizeMachine(m: Machine): Machine {
   return { next: reps.map((i) => next[i].map((j) => order.get(cls[j])!)), out: reps.map((i) => out[i]) };
 }
 
-/** Sxemaning xatti-harakati — eng kichik avtomat (boshlang'ich holat: barcha triggerlar 0). */
+/**
+ * Sxema holati bitmaska sifatida: xotirali elementlar `order` tartibida, har biri o'z bitlari bilan (Go dagi
+ * bilan bir xil joylashuv). Ko'pi bilan LIMITS.flipflops bit.
+ */
+function stateCodec(c: Compiled) {
+  const cells: { id: string; off: number; bits: number }[] = [];
+  let width = 0;
+  for (const g of c.order) {
+    const bits = stateBits(g.type);
+    if (!bits) continue;
+    cells.push({ id: g.id, off: width, bits });
+    width += bits;
+  }
+  return {
+    toState: (mask: number): State => new Map(cells.map((x) => [x.id, (mask >> x.off) & ((1 << x.bits) - 1)])),
+    toMask: (st: State) => cells.reduce((mask, x) => mask | ((st.get(x.id) ?? 0) << x.off), 0),
+  };
+}
+
+/** Sxemaning xatti-harakati — eng kichik avtomat (boshlang'ich holat: barcha xotira bitlari 0). */
 export function machineOf(c: Compiled): Machine {
   const n = c.spec.inputs.length;
-  const dffs = c.order.filter((g) => g.type === 'DFF');
-  const toState = (mask: number): State => new Map(dffs.map((g, i) => [g.id, (mask >> i) & 1]));
-  const toMask = (st: State) => dffs.reduce((mask, g, i) => mask | ((st.get(g.id) ?? 0) << i), 0);
+  const { toState, toMask } = stateCodec(c);
   const ids = new Map<number, number>([[0, 0]]);
   const masks = [0];
   const next: number[][] = [];
@@ -377,9 +416,7 @@ export function exampleFor(m: Machine, length = 10): number[] {
  */
 export function counterexample(c: Compiled, m: Machine): number[] | null {
   const n = c.spec.inputs.length;
-  const dffs = c.order.filter((g) => g.type === 'DFF');
-  const toState = (mask: number): State => new Map(dffs.map((g, i) => [g.id, (mask >> i) & 1]));
-  const toMask = (st: State) => dffs.reduce((mask, g, i) => mask | ((st.get(g.id) ?? 0) << i), 0);
+  const { toState, toMask } = stateCodec(c);
   const states = m.next.length;
   const key = (mask: number, s: number) => mask * states + s;
   const parent = new Map<number, { prev: number; row: number } | null>([[key(0, 0), null]]);
@@ -440,22 +477,26 @@ export function check(level: Level, circuit: Circuit): CheckResult {
 }
 
 /**
- * `from` manbadan `to` qabul qiluvchiga sim tortilsa sikl hosil bo'ladimi. D-trigger kirishiga
- * boradigan sim sikl hosil qilmaydi: signal u orqali faqat keyingi taktda o'tadi.
+ * `from` manbadan `to` qabul qiluvchiga sim tortilsa sikl hosil bo'ladimi. Xotirali element (D-trigger,
+ * registr) kirishiga boradigan sim sikl hosil qilmaydi: signal u orqali faqat keyingi taktda o'tadi.
  */
 export function wouldCycle(circuit: Circuit, from: string, to: string): boolean {
   if (from.startsWith('in:') || to.startsWith('out:')) return false;
   from = parseSource(from).id;
   const types = new Map(circuit.gates.map((g) => [g.id, g.type]));
   const target = to.slice(0, to.lastIndexOf(':'));
-  if (types.get(target) === 'DFF') return false;
+  const stateful = (id: string) => {
+    const t = types.get(id);
+    return t !== undefined && isStateful(t);
+  };
+  if (stateful(target)) return false;
   if (target === from) return true;
   // target chiqishidan pastga qarab yurib, from ga yetib bo'ladimi?
   const next = new Map<string, string[]>();
   for (const w of circuit.wires) {
     if (w.to.startsWith('out:')) continue;
     const g = w.to.slice(0, w.to.lastIndexOf(':'));
-    if (types.get(g) === 'DFF') continue;
+    if (stateful(g)) continue;
     const src = parseSource(w.from).id;
     if (!next.has(src)) next.set(src, []);
     next.get(src)!.push(g);

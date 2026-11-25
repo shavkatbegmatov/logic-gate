@@ -136,6 +136,7 @@ export const uz = {
     seqOk: "Sxema to'g'ri ishlayapti — endi tekshiring!",
     clockText: "«Takt» tugmasi vaqtni bir qadam oldinga suradi: shu paytda barcha D-triggerlar kirishidagi qiymatni eslab qoladi.",
     nextTick: 'keyingi taktda',
+    stateNote: "Q⁺ — Q ning keyingi taktdagi qiymati (blok uni o'zida saqlaydi, boshida 0).",
     // Klaviatura va ekran o'quvchi uchun (maydon va jadval).
     a11y: {
       board:
@@ -280,7 +281,7 @@ export const uz = {
       `Logic Gate · ${num}-daraja «${title}»
 ${stars} — ${gates} ta element (maqsad: ${goal})
 Sen ham yechib ko'r!`,
-    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 66 daraja, bepul!",
+    inviteText: "Logic Gate — mantiqiy elementlardan sxema yig'ib, boshqotirma yechadigan o'yin. 72 daraja, bepul!",
   },
 
   hints: {
@@ -843,7 +844,7 @@ Sen ham urinib ko'r!`,
     cycle: "Sxemada sikl bor: signal o'ziga qaytib kelyapti.",
     unconnected_input: 'Belgilangan elementning kirishi ulanmagan.',
     unconnected_output: 'Chiqish ulanmagan.',
-    too_many_flipflops: "D-triggerlar juda ko'p (ko'pi bilan 8 ta).",
+    too_many_flipflops: "Xotira juda ko'p: D-triggerlar va registrlar birga ko'pi bilan 8 bit (REG4 — 4 bit).",
   } satisfies Record<ErrorCode, string>,
   unconnectedOutput: (name: string) => `${name} chiqishi ulanmagan.`,
   wrongRows: (n: number) => `${n} ta qatorda natija noto'g'ri. Jadvalda qizil qatorlarga qarang.`,
@@ -881,6 +882,18 @@ Sen ham urinib ko'r!`,
     ALU4: {
       name: 'ALU',
       text: "Blok: F1 F0 = 00 — A + B, 01 — A − B, 10 — A AND B, 11 — A OR B. C — ko'chirish (mantiqiy amalda 0), Z — natija 0. «ALU» darajasidan.",
+    },
+    REG1: {
+      name: 'Yuklanuvchi bit',
+      text: "Xotirali blok: LD = 1 bo'lgan taktdan keyin Q = D, LD = 0 bo'lsa Q saqlanadi. Boshida 0. «Yuklanuvchi bit» darajasidan.",
+    },
+    REG4: {
+      name: 'Registr',
+      text: "Xotirali blok: to'rt bitli son. LD = 1 bo'lgan taktdan keyin Q = D, aks holda Q saqlanadi. Chiqishi shu taktdagi kirishiga bog'liq emas — u orqali halqa qilish mumkin. «Registr» darajasidan.",
+    },
+    PC4: {
+      name: 'Dastur hisoblagichi',
+      text: "Xotirali blok: har taktda Q bittaga oshadi (15 dan keyin 0), J = 1 bo'lsa keyingi taktda Q = D. «Dastur hisoblagichi» darajasidan.",
     },
   } satisfies Record<GateType, { name: string; text: string }>,
 };
