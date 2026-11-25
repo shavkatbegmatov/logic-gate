@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.34.3 — 2026-11-25
+
+- 2D Real rejimdagi kirish manbalari (A, B, ...) haqiqiy mexanik SPDT metall tumblerlarga aylantirildi: olti qirrali xrom/jez gayka, silindrik richag, tushma soya va pilot SMD LED indikatori.
+- Chiqish lampa diodlari (S, C, Q, ...) ichki katod/anod elektrodli 5mm optik LED linza, SMD rezistor, yumshoq yorug'lik halosi va shina DIP-kalitlari bilan yangilandi.
+
 ## 2.34.2 — 2026-11-25
 
 - 2D Real rejimi AAA apparat darajasiga ko'tarildi: 2.5D qalinlikli plata, Phillips montaj vintlari, oltin chekka kontaktlari, qalaylangan metall oyoqchali 74HC chiplar va blok modullari, yaltiroq mis yo'llar hamda optik gumbazli LED chiroqlar.

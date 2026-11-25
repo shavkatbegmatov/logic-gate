@@ -3477,78 +3477,102 @@ p.join-or {
   pointer-events: none;
 }
 
-.real-led-outer {
-  fill: none;
-  stroke: var(--glow);
-  stroke-width: 4;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.pin-out.on .real-led-outer {
-  opacity: 1;
-}
-
-.real-lamp-halo {
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.pin-out.on .real-lamp-halo {
-  opacity: 1;
-}
-
-.real-lamp-bezel {
-  stroke: var(--bezel);
-  stroke-width: 0.9;
-}
-
-.real-lamp-cup {
-  fill: var(--board);
+/* ── Haqiqiy apparat kirish/chiqish modullari (SPDT tumbler va 5mm optik LED diod) ── */
+.real-mod-edge {
+  fill: var(--knob-ink);
   stroke: var(--shadow);
-  stroke-width: 0.8;
+  stroke-width: 0.7;
+  pointer-events: none;
 }
 
-.real-lamp-dome {
-  fill: url(#r-led-off);
-  stroke: var(--lamp-stroke);
-  stroke-width: 0.9;
+.real-mod-div {
+  stroke: var(--bevel-top);
+  stroke-width: 0.85;
+  opacity: 0.55;
+  pointer-events: none;
 }
 
-.pin-out.on .real-lamp-dome {
-  fill: url(#r-led-on);
-  stroke: var(--lamp-on-stroke);
+.board-real .pin-body > rect.real-sw-housing,
+.board-real .pin .pin-box.real-sw-housing,
+.board-real .pin .pin-box.real-out-housing {
+  fill: var(--gate-fill);
+  stroke: var(--gate-stroke);
+  stroke-width: 1.45;
+  transition: stroke 0.14s, fill 0.14s;
 }
 
-.real-lamp-crescent {
-  fill: none;
-  stroke: var(--shine);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-  opacity: 0.36;
-}
-
-.pin-out.on .real-lamp-crescent {
-  opacity: 0.82;
-}
-
-.real-sw-housing,
-.real-out-housing {
-  fill: var(--pin);
-  stroke: var(--pin-stroke);
-  stroke-width: 1.6;
-}
-
-.pin-in.on .real-sw-housing {
+.board-real .pin-in.on .pin-body > rect.real-sw-housing {
   fill: var(--gate-on-fill);
   stroke: var(--gate-on-stroke);
 }
 
-/* Maket platasi (yorug' mavzu): yoniq tumbler korpusi yorug' qoladi — A/B harfi aniq o'qilsin; qora epoksid chip yozuvi oqimtir. */
-:root[data-theme='breadboard'] .board-real .pin-in.on .real-sw-housing {
-  fill: color-mix(in srgb, var(--pin) 86%, var(--on));
+.board-real .pin-out.on .pin-box.real-out-housing {
+  fill: var(--gate-on-fill);
 }
 
+.board-real .pin-out.good .pin-box.real-out-housing {
+  stroke: var(--good);
+}
+
+.board-real .pin-out.bad .pin-box.real-out-housing,
+.board-real .pin-out.err .pin-box.real-out-housing {
+  stroke: var(--bad);
+}
+
+.real-in-bar {
+  fill: var(--off);
+  opacity: 0.65;
+  transition: fill 0.15s, opacity 0.15s;
+}
+
+.pin-in.on .real-in-bar {
+  fill: var(--on);
+  opacity: 1;
+}
+
+.real-out-status-bar {
+  fill: var(--off);
+  opacity: 0.5;
+  transition: fill 0.15s, opacity 0.15s;
+}
+
+.pin-out.on .real-out-status-bar {
+  fill: var(--on);
+  opacity: 0.88;
+}
+
+.pin-out.good .real-out-status-bar {
+  fill: var(--good);
+  opacity: 1;
+}
+
+.pin-out.bad .real-out-status-bar,
+.pin-out.err .real-out-status-bar {
+  fill: var(--bad);
+  opacity: 1;
+}
+
+.real-pin-name {
+  font: 700 14.5px var(--mono);
+  fill: var(--knob);
+}
+
+.pin-in.on .real-pin-name {
+  fill: var(--pulse);
+}
+
+.real-sw-state {
+  font: 700 9.5px var(--mono);
+  fill: var(--lead);
+  opacity: 0.85;
+}
+
+.pin-in.on .real-sw-state {
+  fill: var(--on);
+  opacity: 1;
+}
+
+/* Maket platasi (yorug' mavzu): qora epoksid chip va modullar ustidagi ipak bosma yozuvlar oq/kumush rangda. */
 :root[data-theme='breadboard'] .board-real .gate:not(.on) .gate-label,
 :root[data-theme='breadboard'] .board-real .gate:not(.on) .block-label {
   fill: var(--knob);
@@ -3564,58 +3588,357 @@ p.join-or {
   fill: var(--lead);
 }
 
-.pin-out.good .real-out-housing {
-  stroke: var(--good);
+:root[data-theme='breadboard'] .board-real .real-mod-div {
+  stroke: var(--lead);
+  opacity: 0.25;
 }
 
-.pin-out.bad .real-out-housing,
-.pin-out.err .real-out-housing {
-  stroke: var(--bad);
+:root[data-theme='breadboard'] .board-real .real-ic-bevel {
+  opacity: 0.18;
 }
 
-.real-sw-well {
-  stroke: var(--board);
-  stroke-width: 0.8;
+:root[data-theme='breadboard'] .board-real .real-ic-pad,
+:root[data-theme='breadboard'] .board-real .real-ic-pin,
+:root[data-theme='breadboard'] .board-real .real-ic-led-bezel,
+:root[data-theme='breadboard'] .board-real .real-micro-screw,
+:root[data-theme='breadboard'] .board-real .real-smd-pad {
+  stroke: var(--knob-ink);
 }
 
-.board-real .sw-track {
-  fill: url(#r-oled-grad);
-  stroke: var(--bezel);
-  stroke-width: 1.1;
+:root[data-theme='breadboard'] .board-real .gate.on .real-ic-led,
+:root[data-theme='breadboard'] .board-real .pin-in.on .real-sw-led {
+  stroke: var(--on);
 }
 
-.board-real .pin-in.on .sw-track {
-  fill: var(--lamp-on);
-  stroke: var(--lamp-on-stroke);
+/* «kerak: 0 / 1» yozuvi maket teshikchalari va PCB via'lari ustida aniq o'qilsin */
+.board-real .pin-exp {
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--board-mat);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
-.real-knob-shadow {
+/* Mexanik SPDT metall richagli tumbler */
+.real-tog-well {
+  fill: var(--knob-ink);
+  stroke: var(--shadow);
+  stroke-width: 0.9;
+}
+
+.real-tog-washer {
+  stroke: var(--knob-ink);
+  stroke-width: 0.65;
+}
+
+.real-tog-keyway {
+  fill: var(--knob-ink);
+}
+
+.real-tog-pip-off {
+  fill: var(--lead);
+  opacity: 0.45;
+}
+
+.real-tog-pip-on {
+  fill: var(--lead);
+  opacity: 0.35;
+  transition: fill 0.14s, opacity 0.14s;
+}
+
+.pin-in.on .real-tog-pip-on {
+  fill: var(--on);
+  opacity: 1;
+}
+
+.real-tog-nut-shadow {
   fill: var(--shadow);
-  opacity: 0.6;
-}
-
-.real-knob-cap {
-  stroke: var(--bezel);
-  stroke-width: 0.8;
-}
-
-.real-knob-ring {
-  fill: none;
-  stroke: var(--bevel-bottom);
-  stroke-width: 0.7;
   opacity: 0.55;
 }
 
-.board-real .pin-in.on .real-knob-ring {
+.real-tog-nut {
+  stroke: var(--knob-ink);
+  stroke-width: 0.75;
+  stroke-linejoin: round;
+}
+
+.real-tog-chamfer {
+  fill: none;
+  stroke: var(--shine);
+  stroke-width: 0.65;
+  opacity: 0.4;
+}
+
+.real-tog-bushing {
+  stroke: var(--knob-ink);
+  stroke-width: 0.7;
+}
+
+.real-tog-thread {
+  fill: none;
+  stroke: var(--knob-ink);
+  stroke-width: 0.6;
+  stroke-dasharray: 1.8 1.2;
+  opacity: 0.7;
+}
+
+.real-tog-cavity {
+  stroke: var(--knob-ink);
+  stroke-width: 0.6;
+}
+
+.real-tog-shadow-g {
+  fill: var(--shadow);
+  opacity: 0.56;
+}
+
+.real-tog-pivot {
+  stroke: var(--knob-ink);
+  stroke-width: 0.55;
+}
+
+.real-tog-shaft {
+  stroke: var(--knob-ink);
+  stroke-width: 0.65;
+  stroke-linejoin: round;
+}
+
+.real-tog-glint {
+  stroke: var(--shine);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: 0.82;
+}
+
+.real-tog-tip {
+  stroke: var(--knob-ink);
+  stroke-width: 0.75;
+}
+
+.real-tog-spec {
+  fill: var(--shine);
+  opacity: 0.92;
+}
+
+.real-tog-bounce {
+  fill: none;
   stroke: var(--on);
-  opacity: 0.85;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+
+/* SMD 0603 rezistor detali (LED chiqish modulida) */
+.real-smd-res-body {
+  fill: var(--knob-ink);
+  stroke: var(--lead);
+  stroke-width: 0.45;
+  opacity: 0.92;
+}
+
+.real-smd-res-mark {
+  stroke: var(--lead);
+  stroke-width: 0.75;
+  stroke-linecap: round;
+  opacity: 0.7;
+}
+
+/* Haqiqiy 5mm optik LED diod va panel gardishi */
+.real-lamp-halo {
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.pin-out.on .real-lamp-halo {
+  opacity: 1;
+}
+
+.real-led-well-shadow {
+  fill: var(--shadow);
+  opacity: 0.62;
+}
+
+.real-lamp-bezel,
+.real-led-flange {
+  stroke: var(--knob-ink);
+  stroke-width: 0.85;
+}
+
+.real-lamp-knurl {
+  fill: none;
+  stroke: var(--knob-ink);
+  stroke-width: 1.25;
+  stroke-dasharray: 1.2 3.16;
+  opacity: 0.48;
+}
+
+.real-lamp-bezel-inner {
+  fill: none;
+  stroke: var(--shine);
+  stroke-width: 0.65;
+  opacity: 0.42;
+}
+
+.real-lamp-cup {
+  stroke: var(--knob-ink);
+  stroke-width: 0.8;
+}
+
+.real-lamp-rim-glow {
+  fill: none;
+  stroke: var(--on);
+  stroke-width: 0.9;
+  opacity: 0.12;
+  transition: opacity 0.18s;
+}
+
+.pin-out.on .real-lamp-rim-glow {
+  opacity: 0.78;
+}
+
+.real-lamp-dome {
+  fill: url(#r-led-off);
+  stroke: var(--knob-ink);
+  stroke-width: 0.9;
+}
+
+.pin-out.on .real-lamp-dome {
+  fill: url(#r-led-on);
+  stroke: var(--on);
+}
+
+.real-lamp-tint {
+  fill: var(--on);
+  opacity: 0.17;
+  transition: opacity 0.18s;
+}
+
+.pin-out.on .real-lamp-tint {
+  opacity: 0;
+}
+
+.real-led-internals {
+  opacity: 0.56;
+  transition: opacity 0.18s;
+}
+
+.pin-out.on .real-led-internals {
+  opacity: 0.18;
+}
+
+.real-led-anvil,
+.real-led-post {
+  fill: var(--lead);
+  stroke: var(--knob-ink);
+  stroke-width: 0.4;
+}
+
+.real-led-bond {
+  stroke: var(--copper);
+  stroke-width: 0.55;
+}
+
+.real-led-die {
+  fill: var(--shine);
+  opacity: 0;
+  transition: opacity 0.16s;
+}
+
+.pin-out.on .real-led-die {
+  opacity: 0.96;
+}
+
+.real-lamp-crescent {
+  fill: none;
+  stroke: var(--shine);
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  opacity: 0.44;
+}
+
+.pin-out.on .real-lamp-crescent {
+  opacity: 0.88;
+}
+
+.real-lamp-spec {
+  fill: var(--shine);
+  opacity: 0.52;
+}
+
+.pin-out.on .real-lamp-spec {
+  opacity: 0.94;
+}
+
+.real-lamp-caustic {
+  fill: none;
+  stroke: var(--lead);
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.24;
+  transition: stroke 0.18s, opacity 0.18s;
+}
+
+.pin-out.on .real-lamp-caustic {
+  stroke: var(--pulse);
+  opacity: 0.88;
+}
+
+/* Shina (Bus) DIP-switch bloki va OLED displey */
+.board-real .bus-bit > rect.real-dip-well {
+  fill: var(--knob-ink);
+  stroke: var(--lead);
+  stroke-width: 0.8;
+}
+
+.board-real .bus-bit.on > rect.real-dip-well {
+  fill: var(--knob-ink);
+  stroke: var(--gate-on-stroke);
+}
+
+.real-dip-slot {
+  stroke: var(--shadow);
+  stroke-width: 0.6;
+}
+
+.real-dip-rocker {
+  stroke: var(--knob-ink);
+  stroke-width: 0.7;
+  transition: y 0.12s ease-out;
+}
+
+.real-dip-grip {
+  stroke: var(--knob-ink);
+  stroke-width: 0.7;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.real-dip-val {
+  font: 700 8.5px var(--mono);
+  fill: var(--lead);
+}
+
+.bus-bit.on .real-dip-val {
+  fill: var(--on);
+}
+
+.real-bus-val {
+  fill: var(--lead);
+}
+
+.real-bus-num {
+  fill: var(--lead);
+}
+
+.pin-out.pin-bus.on .real-bus-num {
+  fill: var(--on);
 }
 
 .real-bus-led {
-  stroke: var(--lamp-stroke);
-  stroke-width: 2;
+  stroke: var(--off);
+  stroke-width: 2.2;
   stroke-linecap: round;
-  opacity: 0.45;
+  opacity: 0.55;
   pointer-events: none;
 }
 

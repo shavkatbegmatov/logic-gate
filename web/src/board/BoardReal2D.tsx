@@ -444,43 +444,69 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.92 }} />
           </radialGradient>
 
-          {/* Panel LED xrom/jez gardishi */}
-          <linearGradient id="r-bezel-grad" x1="15%" y1="10%" x2="85%" y2="90%">
-            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.85 }} />
-            <stop offset="28%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
-            <stop offset="66%" style={{ stopColor: 'var(--bezel)', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: 'var(--silver)', stopOpacity: 0.8 }} />
+          {/* Panel LED va tumbler xrom/jez gardishi (yorug' maketda ham yuqori kontrastli metall jilo) */}
+          <linearGradient id="r-bezel-grad" x1="12%" y1="10%" x2="88%" y2="90%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.96 }} />
+            <stop offset="26%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="56%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.92 }} />
+            <stop offset="82%" style={{ stopColor: 'var(--silver)', stopOpacity: 0.95 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.96 }} />
           </linearGradient>
 
-          {/* Optik LED gumbaz linzasi (o'chiq va yoniq) + GPU yorug'lik halosi */}
-          <radialGradient id="r-led-off" cx="34%" cy="30%" r="72%">
-            <stop offset="0%" style={{ stopColor: 'var(--muted)', stopOpacity: 0.48 }} />
-            <stop offset="48%" style={{ stopColor: 'var(--lamp)', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: 'var(--board)', stopOpacity: 1 }} />
+          {/* Olti qirrali metall gayka va SPDT tumbler dastasi (silindrik xrom va sharsimon uchi) */}
+          <linearGradient id="r-hex-nut" x1="10%" y1="8%" x2="90%" y2="92%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.95 }} />
+            <stop offset="24%" style={{ stopColor: 'var(--knob)', stopOpacity: 0.95 }} />
+            <stop offset="50%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="76%" style={{ stopColor: 'var(--silver)', stopOpacity: 0.92 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.94 }} />
+          </linearGradient>
+          <linearGradient id="r-bat-shaft" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="26%" style={{ stopColor: 'var(--shine)', stopOpacity: 1 }} />
+            <stop offset="52%" style={{ stopColor: 'var(--knob)', stopOpacity: 0.96 }} />
+            <stop offset="78%" style={{ stopColor: 'var(--silver)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.96 }} />
+          </linearGradient>
+          <radialGradient id="r-bat-tip" cx="32%" cy="28%" r="68%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 1 }} />
+            <stop offset="28%" style={{ stopColor: 'var(--knob)', stopOpacity: 1 }} />
+            <stop offset="65%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.96 }} />
           </radialGradient>
-          <radialGradient id="r-led-on" cx="38%" cy="34%" r="68%">
-            <stop offset="0%" style={{ stopColor: 'var(--pulse)', stopOpacity: 1 }} />
-            <stop offset="30%" style={{ stopColor: 'var(--lamp-on-stroke)', stopOpacity: 1 }} />
-            <stop offset="70%" style={{ stopColor: 'var(--lamp-on)', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: 'var(--on)', stopOpacity: 0.95 }} />
+          <radialGradient id="r-cavity" cx="62%" cy="64%" r="66%">
+            <stop offset="0%" style={{ stopColor: 'var(--gate-fill)', stopOpacity: 1 }} />
+            <stop offset="65%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 1 }} />
+          </radialGradient>
+
+          {/* Optik 5mm LED epoksid gumbaz linzasi (o'chiq shaffof shisha + yoniq kristal yadro) + yumshoq halo */}
+          <radialGradient id="r-led-off" cx="35%" cy="32%" r="72%">
+            <stop offset="0%" style={{ stopColor: 'var(--lead)', stopOpacity: 0.36 }} />
+            <stop offset="38%" style={{ stopColor: 'var(--gate-on-fill)', stopOpacity: 0.9 }} />
+            <stop offset="80%" style={{ stopColor: 'var(--gate-fill)', stopOpacity: 0.98 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 1 }} />
+          </radialGradient>
+          <radialGradient id="r-led-on" cx="44%" cy="42%" r="62%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 1 }} />
+            <stop offset="22%" style={{ stopColor: 'var(--pulse)', stopOpacity: 1 }} />
+            <stop offset="56%" style={{ stopColor: 'var(--lamp-on)', stopOpacity: 1 }} />
+            <stop offset="86%" style={{ stopColor: 'var(--on)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--gate-on-fill)', stopOpacity: 0.9 }} />
           </radialGradient>
           <radialGradient id="r-led-halo" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" style={{ stopColor: 'var(--lamp-on)', stopOpacity: 0.6 }} />
-            <stop offset="40%" style={{ stopColor: 'var(--on)', stopOpacity: 0.24 }} />
+            <stop offset="0%" style={{ stopColor: 'var(--lamp-on)', stopOpacity: 0.68 }} />
+            <stop offset="28%" style={{ stopColor: 'var(--on)', stopOpacity: 0.3 }} />
+            <stop offset="56%" style={{ stopColor: 'var(--on)', stopOpacity: 0.08 }} />
+            <stop offset="82%" style={{ stopColor: 'var(--on)', stopOpacity: 0.015 }} />
             <stop offset="100%" style={{ stopColor: 'var(--on)', stopOpacity: 0 }} />
           </radialGradient>
 
-          {/* Tumbler tugma qalpoqchasi va chuqur OLED oynasi */}
-          <radialGradient id="r-knob-grad" cx="36%" cy="30%" r="70%">
-            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 1 }} />
-            <stop offset="42%" style={{ stopColor: 'var(--knob)', stopOpacity: 1 }} />
-            <stop offset="86%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: 'var(--pin-stroke)', stopOpacity: 1 }} />
-          </radialGradient>
+          {/* Chuqur qoraytirilgan OLED oynasi (barcha mavzularda bir xil to'q shisha) */}
           <linearGradient id="r-oled-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: 'var(--board)', stopOpacity: 0.96 }} />
-            <stop offset="50%" style={{ stopColor: 'var(--bezel)', stopOpacity: 0.9 }} />
-            <stop offset="100%" style={{ stopColor: 'var(--board)', stopOpacity: 1 }} />
+            <stop offset="0%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.98 }} />
+            <stop offset="50%" style={{ stopColor: 'var(--gate-fill)', stopOpacity: 0.94 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 1 }} />
           </linearGradient>
 
           {/* Plata sirti teksturasi (FR-4 via teshiklar, Samarqand girih, maket uyachalari, ESD, Sci-Fi) */}
@@ -677,6 +703,9 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             const k = group.idx[0];
             const p = b.lay.inputs.get(name)!;
             const on = b.bits[k] === 1;
+            const modRx = style === 'scifi' ? 5 : style === 'bench' ? 4.5 : 3.5;
+            const dir = on ? 1 : -1;
+            const tipX = dir * 10.2;
             return (
               <g key={`in:${name}`} class={`pin pin-in${on ? ' on' : ''}`} transform={`translate(${p.x},${p.y})`}>
                 <MetalLead x0={-15} x1={0} y={0} padX={0} />
@@ -690,35 +719,76 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   aria-label={name}
                   onKeyDown={(e) => b.onPinKey(e, k)}
                 >
-                  <rect class="real-ic-shadow-soft real-deco" x={-75.5} y={-16} width={64} height={40} rx={9} />
-                  <rect class="real-ic-shadow real-deco" x={-76.8} y={-17.8} width={64} height={40} rx={8.5} />
-                  <rect class="real-sw-housing" x={-78} y={-20} width={64} height={40} rx={8.5} />
-                  <rect class="real-ic-sheen real-deco" x={-78} y={-20} width={64} height={40} rx={8.5} fill="url(#r-ic-sheen)" />
-                  <rect class="real-ic-die real-deco" x={-75} y={-17} width={58} height={34} rx={6} />
-                  <rect class="real-ic-bevel real-deco" x={-76.6} y={-18.6} width={61.2} height={37.2} rx={7.5} />
-                  <line class="real-top-rim" x1={-70} y1={-18.8} x2={-22} y2={-18.8} />
-                  <MicroScrew x={-73.2} y={-15.2} r={1.6} />
-                  <MicroScrew x={-73.2} y={15.2} r={1.6} />
-                  {/* Holat mikro-LED indikatori (A/B yoniq-o'chiqligini uzoqdan ham ko'rsatadi) */}
-                  <g class="real-sw-led-g" transform="translate(-62,-11.5)">
-                    <circle class="real-ic-led-halo" r={5.5} fill="url(#r-led-halo)" />
-                    <circle class="real-ic-led-bezel" r={2.6} fill="url(#r-bezel-grad)" />
-                    <circle class="real-sw-led" r={1.8} />
+                  <rect class="real-ic-shadow-soft real-deco" x={-75.5} y={-15.5} width={64} height={40} rx={modRx + 1} />
+                  <rect class="real-ic-shadow real-deco" x={-76.8} y={-17.2} width={64} height={40} rx={modRx} />
+                  <rect class="real-mod-edge real-deco" x={-78} y={-17.8} width={64} height={40} rx={modRx} />
+                  <rect class="real-sw-housing" x={-78} y={-20} width={64} height={40} rx={modRx} />
+                  <g pointer-events="none">
+                    <rect class="real-ic-sheen" x={-78} y={-20} width={64} height={40} rx={modRx} fill="url(#r-ic-sheen)" />
+                    <rect class="real-ic-die" x={-75} y={-17} width={58} height={34} rx={Math.max(1.8, modRx - 1.2)} />
+                    <rect class="real-ic-bevel" x={-76.6} y={-18.6} width={61.2} height={37.2} rx={Math.max(2.2, modRx - 0.5)} />
+                    <line class="real-top-rim" x1={-73} y1={-18.8} x2={-19} y2={-18.8} />
+                    <rect class="real-in-bar" x={-76.6} y={-10} width={2.2} height={20} rx={1.1} />
+                    <line class="real-mod-div" x1={-51.5} y1={-14} x2={-51.5} y2={14} />
+                    <MicroScrew x={-73.6} y={-15.6} r={1.4} />
+                    <MicroScrew x={-73.6} y={15.6} r={1.4} />
+                    {/* Pilot SMD LED indikatori (A/B yoqilganligini bir qarashda ko'rsatadi) */}
+                    <g class="real-sw-led-g" transform="translate(-63,-11.5)">
+                      <circle class="real-ic-led-halo" r={6.5} fill="url(#r-led-halo)" />
+                      <circle class="real-ic-led-bezel" r={2.8} fill="url(#r-bezel-grad)" />
+                      <circle class="real-sw-led" r={2} />
+                      <circle class="real-ic-led-shine" cx={-0.65} cy={-0.65} r={0.65} />
+                    </g>
                   </g>
-                  {label('pin-name', -62, 3, name)}
+                  {label('pin-name real-pin-name', -63, 0.5, name)}
+                  {label('sw-val real-sw-state', -63, 12.4, on ? 1 : 0)}
+                  {/* Haqiqiy mexanik SPDT metall richagli tumbler (olti qirrali gayka + konus dasta + tushma soya) */}
                   {upright(
-                    -33.5,
+                    -33,
                     0,
-                    <g class="switch">
-                      {/* Chuqur metall tumbler uyasi */}
-                      <rect class="real-sw-well" x={-16} y={-10} width={32} height={20} rx={10} fill="url(#r-bezel-grad)" />
-                      <rect class="sw-track" x={-14} y={-8} width={28} height={16} rx={8} />
-                      <g class="sw-knob" style={{ transform: `translateX(${on ? 6 : -6}px)` }}>
-                        <circle class="real-knob-shadow" cy={1.2} r={7.3} />
-                        <circle class="real-knob-cap" r={7.2} fill="url(#r-knob-grad)" />
-                        <circle class="real-knob-ring" r={5.2} />
-                        <text class="sw-val">{on ? 1 : 0}</text>
+                    <g class="switch real-tog">
+                      <circle class="real-tog-well" r={12.4} />
+                      <circle class="real-tog-washer" r={11.2} fill="url(#r-bezel-grad)" />
+                      <rect class="real-tog-keyway" x={-1.3} y={-12.1} width={2.6} height={2.4} rx={0.5} />
+                      <circle class="real-tog-pip-off" cx={-14.2} cy={0} r={1.25} />
+                      <circle class="real-tog-pip-on" cx={14.2} cy={0} r={1.4} />
+                      <polygon
+                        class="real-tog-nut-shadow"
+                        points="10.4,1.2 5.6,9.5 -4.0,9.5 -8.8,1.2 -4.0,-7.1 5.6,-7.1"
+                      />
+                      <polygon
+                        class="real-tog-nut"
+                        points="9.6,0 4.8,8.31 -4.8,8.31 -9.6,0 -4.8,-8.31 4.8,-8.31"
+                        fill={isMinor ? 'url(#r-screw-brass)' : 'url(#r-hex-nut)'}
+                      />
+                      <circle class="real-tog-chamfer" r={7.3} />
+                      <circle class="real-tog-bushing" r={6.1} fill="url(#r-bezel-grad)" />
+                      <circle class="real-tog-thread" r={5.0} />
+                      <circle class="real-tog-cavity" r={4.0} fill="url(#r-cavity)" />
+                      {/* Dasta soyasi — yuqori chap studiya nuri bo'yicha past-o'ngga tushadi */}
+                      <g class="real-tog-shadow-g" transform="translate(2.1,3.1)">
+                        <polygon points={`0,-2.2 ${tipX},-3.7 ${tipX},3.7 0,2.2`} />
+                        <circle cx={tipX} cy={0} r={4.1} />
+                        <circle cx={0} cy={0} r={2.4} />
                       </g>
+                      {/* Silindrik xrom richag va sharsimon uchi (0 — chapga, 1 — o'ngga) */}
+                      <circle class="real-tog-pivot" cx={0} cy={0} r={2.5} fill="url(#r-bat-tip)" />
+                      <polygon
+                        class="real-tog-shaft"
+                        points={`0,-2.3 ${tipX},-3.8 ${tipX},3.8 0,2.3`}
+                        fill="url(#r-bat-shaft)"
+                      />
+                      <line class="real-tog-glint" x1={dir * 1.4} y1={-1.35} x2={dir * 8.2} y2={-1.85} />
+                      <circle class="real-tog-tip" cx={tipX} cy={0} r={4.1} fill="url(#r-bat-tip)" />
+                      <ellipse
+                        class="real-tog-spec"
+                        cx={tipX - 1.3}
+                        cy={-1.4}
+                        rx={1.35}
+                        ry={0.85}
+                        transform={`rotate(-32 ${tipX - 1.3} -1.4)`}
+                      />
+                      {on && <path class="real-tog-bounce" d={`M${tipX + 1.1},2.6 A3.2,3.2 0 0 0 ${tipX + 2.8},0.5`} />}
                     </g>,
                   )}
                 </g>
@@ -736,6 +806,9 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             const v = src === undefined || b.reached(src, 2) ? b.outputs[i] : null;
             const exp = expected?.[i];
             const state = exp === undefined || v === null ? '' : v === exp ? ' good' : ' bad';
+            const modRx = style === 'scifi' ? 5 : style === 'bench' ? 4.5 : 3.5;
+            const isSciFi = style === 'scifi';
+            const isBreadboard = style === 'breadboard';
             return (
               <g
                 key={`out:${name}`}
@@ -743,27 +816,83 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 transform={`translate(${p.x},${p.y})`}
               >
                 <MetalLead x0={0} x1={15} y={0} padX={0} />
-                <rect class="real-ic-shadow-soft" x={16.5} y={-16} width={62} height={40} rx={9} />
-                <rect class="real-ic-shadow" x={15.2} y={-17.8} width={62} height={40} rx={8.5} />
-                <rect class="pin-box real-out-housing" x={14} y={-20} width={62} height={40} rx={8.5} />
-                <rect class="real-ic-sheen" x={14} y={-20} width={62} height={40} rx={8.5} fill="url(#r-ic-sheen)" />
-                <rect class="real-ic-die" x={17} y={-17} width={56} height={34} rx={6} />
-                <rect class="real-ic-bevel" x={15.4} y={-18.6} width={59.2} height={37.2} rx={7.5} />
-                <line class="real-top-rim" x1={22} y1={-18.8} x2={68} y2={-18.8} />
-                <MicroScrew x={71.2} y={-15.2} r={1.6} />
-                <MicroScrew x={71.2} y={15.2} r={1.6} />
-                {label('pin-name', 29, 0, name)}
+                <rect class="real-ic-shadow-soft" x={16.5} y={-15.5} width={62} height={40} rx={modRx + 1} />
+                <rect class="real-ic-shadow" x={15.2} y={-17.2} width={62} height={40} rx={modRx} />
+                <rect class="real-mod-edge" x={14} y={-17.8} width={62} height={40} rx={modRx} />
+                <rect class="pin-box real-out-housing" x={14} y={-20} width={62} height={40} rx={modRx} />
+                <g pointer-events="none">
+                  <rect class="real-ic-sheen" x={14} y={-20} width={62} height={40} rx={modRx} fill="url(#r-ic-sheen)" />
+                  <rect class="real-ic-die" x={17} y={-17} width={56} height={34} rx={Math.max(1.8, modRx - 1.2)} />
+                  <rect class="real-ic-bevel" x={15.4} y={-18.6} width={59.2} height={37.2} rx={Math.max(2.2, modRx - 0.5)} />
+                  <line class="real-top-rim" x1={19} y1={-18.8} x2={71} y2={-18.8} />
+                  <rect class="real-out-status-bar" x={72.4} y={-10} width={2.2} height={20} rx={1.1} />
+                  <line class="real-mod-div" x1={37.5} y1={-14} x2={37.5} y2={14} />
+                  <MicroScrew x={71.6} y={-15.6} r={1.4} />
+                  <MicroScrew x={71.6} y={15.6} r={1.4} />
+                  {/* SMD 0603 tok cheklovchi rezistor (haqiqiy LED modul platasi detali) */}
+                  <g class="real-smd-res" transform="translate(27.5,11.2)">
+                    <rect class="real-smd-pad" x={-6.2} y={-2.4} width={2.7} height={4.8} rx={0.6} fill="url(#r-metal-v)" />
+                    <rect class="real-smd-pad" x={3.5} y={-2.4} width={2.7} height={4.8} rx={0.6} fill="url(#r-metal-v)" />
+                    <rect class="real-smd-res-body" x={-3.8} y={-2.5} width={7.6} height={5} rx={0.6} />
+                    <line class="real-smd-res-mark" x1={-2} y1={0} x2={2} y2={0} />
+                  </g>
+                </g>
+                {label('pin-name real-pin-name', 27.5, -3.5, name)}
+                {/* Haqiqiy 5mm optik LED diod (ichki katod/anod elektrodlar + kristal yadro + xrom gardish) */}
                 {upright(
-                  54,
+                  53.5,
                   0,
-                  <g class="lamp-g">
-                    <circle class="lamp-halo real-lamp-halo" r={22} fill="url(#r-led-halo)" />
-                    <circle class="real-led-outer" r={13.5} />
-                    <circle class="lamp-bezel real-lamp-bezel" r={11} fill="url(#r-bezel-grad)" />
-                    <circle class="real-lamp-cup" r={8.6} />
-                    <circle class="lamp real-lamp-dome" r={7.6} />
-                    <path class="real-lamp-crescent" d="M-4.6,-2.2 A5.2,5.2 0 0 1 2.2,-4.6" />
-                    <circle class="lamp-shine" cx={-2.8} cy={-2.8} r={2} />
+                  <g class="lamp-g real-led-assy">
+                    <circle class="lamp-halo real-lamp-halo" r={24} fill="url(#r-led-halo)" />
+                    <circle class="real-led-well-shadow" cx={1.1} cy={1.5} r={12.3} />
+                    {isSciFi ? (
+                      <polygon
+                        class="lamp-bezel real-lamp-bezel"
+                        points="5.1,-11.5 11.5,-5.1 11.5,5.1 5.1,11.5 -5.1,11.5 -11.5,5.1 -11.5,-5.1 -5.1,-11.5"
+                        fill="url(#r-bezel-grad)"
+                      />
+                    ) : isBreadboard ? (
+                      <>
+                        {/* 5mm through-hole svetodiodning tekis katod kesikli epoksid gardishi */}
+                        <path
+                          class="real-led-flange"
+                          d="M-9.8,-6.2 A11.6,11.6 0 1 1 -9.8,6.2 Z"
+                          fill="url(#r-bezel-grad)"
+                        />
+                        <circle class="real-lamp-bezel-inner" r={10.2} />
+                      </>
+                    ) : (
+                      <>
+                        <circle
+                          class="lamp-bezel real-lamp-bezel"
+                          r={12.1}
+                          fill={isMinor ? 'url(#r-screw-brass)' : 'url(#r-bezel-grad)'}
+                        />
+                        <circle class="real-lamp-knurl" r={11.1} />
+                        <circle class="real-lamp-bezel-inner" r={10.1} />
+                      </>
+                    )}
+                    <circle class="real-lamp-cup" r={9.2} fill="url(#r-cavity)" />
+                    <circle class="real-lamp-rim-glow" r={8.9} />
+                    <circle class="lamp real-lamp-dome" r={8.2} />
+                    <circle class="real-lamp-tint" r={7.9} />
+                    {/* Ichki metall elektrodlar (katod kosasi va anod ustunchasi) — shaffof shisha ostida ko'rinadi */}
+                    <g class="real-led-internals">
+                      <path class="real-led-anvil" d="M-5.1,-2.1 L-1.2,-2.5 L-0.4,-1.2 L-0.4,1.2 L-1.2,2.5 L-5.1,2.1 Z" />
+                      <path class="real-led-post" d="M1.3,-1.7 L4.9,-1.4 L4.9,1.4 L1.3,1.7 Z" />
+                      <line class="real-led-bond" x1={-0.6} y1={0} x2={1.5} y2={0} />
+                    </g>
+                    <circle class="real-led-die" cx={0} cy={0} r={2.2} />
+                    <path class="real-lamp-crescent" d="M-5.3,-2.2 A5.8,5.8 0 0 1 2.2,-5.3" />
+                    <ellipse
+                      class="real-lamp-spec"
+                      cx={-2.8}
+                      cy={-3.1}
+                      rx={2.2}
+                      ry={1.2}
+                      transform="rotate(-38 -2.8 -3.1)"
+                    />
+                    <path class="real-lamp-caustic" d="M1.8,5.4 A5.8,5.8 0 0 0 5.4,1.8" />
                   </g>,
                 )}
                 {exp !== undefined && label('pin-exp', 45, 32, `${t.play.expected.toLowerCase()}: ${exp}`, 90, 0)}

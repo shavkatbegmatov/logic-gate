@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.34.3',
+    date: '2026-11-25',
+    uz: [
+      "2D Real rejimdagi kirish manbalari (A, B, ...) haqiqiy mexanik SPDT metall tumblerlarga aylantirildi: olti qirrali xrom/jez gayka, silindrik richag, tushma soya va pilot SMD LED indikatori.",
+      "Chiqish lampa diodlari (S, C, Q, ...) ichki katod/anod elektrodli 5mm optik LED linza, SMD rezistor, yumshoq yorug'lik halosi va shina DIP-kalitlari bilan yangilandi.",
+    ],
+    ru: [
+      'Входные источники (A, B, ...) в режиме 2D Real переработаны в физические механические тумблеры SPDT с шестигранной гайкой, хромированным рычажком, тенью и пилотным SMD-светодиодом.',
+      'Выходные индикаторы (S, C, Q, ...) получили 5-мм оптический светодиод с видимыми внутренними электродами, SMD-резистором, мягким ореолом свечения и DIP-переключателями шин.',
+    ],
+  },
+  {
     version: '2.34.2',
     date: '2026-11-25',
     uz: [
