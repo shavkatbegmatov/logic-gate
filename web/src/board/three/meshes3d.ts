@@ -676,13 +676,25 @@ function wirePath3D(route: Point[], hops: Point[][], style: RealStyle): Vec3[] {
     const dz = b.y - a.y;
     const len = Math.hypot(dx, dz);
     const segHops = (hops[i] ?? []).slice().sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y));
-    for (const h of segHops) {
+    let minT = 0.02;
+    for (let k = 0; k < segHops.length; k++) {
+      const h = segHops[k];
       const d = Math.hypot(h.x - a.x, h.y - a.y);
-      const t0 = clamp((d - 9) / Math.max(1, len), 0.05, 0.95);
-      const t1 = clamp((d + 9) / Math.max(1, len), 0.05, 0.95);
+      const nextD = k + 1 < segHops.length ? Math.hypot(segHops[k + 1].x - a.x, segHops[k + 1].y - a.y) : len;
+      const half = Math.min(9.5, d - minT * len, len - d - 1, (nextD - d) * 0.48);
+      if (half < 2) continue;
+      const tC = clamp(d / Math.max(1, len), 0.03, 0.97);
+      const t0 = clamp((d - half) / Math.max(1, len), minT, tC - 0.005);
+      const t1 = clamp((d + half) / Math.max(1, len), tC + 0.005, 0.98);
+      const tL = (t0 + tC) * 0.5;
+      const tR = (tC + t1) * 0.5;
+      const lift = Math.min(9.0, 5.2 + half * 0.42);
       out.push([a.x + dx * t0, baseH, a.y + dz * t0]);
-      out.push([h.x, baseH + 8.5, h.y]);
+      out.push([a.x + dx * tL, baseH + lift * 0.72, a.y + dz * tL]);
+      out.push([h.x, baseH + lift, h.y]);
+      out.push([a.x + dx * tR, baseH + lift * 0.72, a.y + dz * tR]);
       out.push([a.x + dx * t1, baseH, a.y + dz * t1]);
+      minT = t1;
     }
     out.push([b.x, baseH, b.y]);
   }
@@ -781,20 +793,59 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
         em,
         pcbSkirt,
       );
-      // Kesishish ustiga 3D SMD 000 rezistor ko'prik
+      // Kesishish ustiga 3D SMD 000 rezistor ko'prik (faqat ko'prik yo'nalishidagi 2 ta kumush kontakt bilan)
       input.routed.hops[i].forEach((list, segIdx) => {
         if (!list.length || segIdx >= route.length - 1) return;
         const p0 = route[segIdx];
         const p1 = route[segIdx + 1];
         const horiz = Math.abs(p1.x - p0.x) >= Math.abs(p1.y - p0.y);
+        const bw = wide > 1 ? 1.32 : 1;
         for (const h of list) {
-          const sx = horiz ? 7 : 4.5;
-          const sz = horiz ? 4.5 : 7;
-          solid.addBox(h.x - sx, 0.8, h.y - sz, h.x + sx, 3.6, h.y + sz, pal.gateBody, 0.42, 0.1, 0);
-          solid.addBox(h.x - (horiz ? 8.5 : 4.6), 0.2, h.y - (horiz ? 4.6 : 8.5), h.x + (horiz ? 8.5 : 4.6), 2.8, h.y + (horiz ? 4.6 : 8.5), pal.metal, 0.2, 0.9, 0);
+          const sx = horiz ? 6.8 : 4.6 * bw;
+          const sz = horiz ? 4.6 * bw : 6.8;
+          // Qora izolyatsion keramika korpus — pastki sim ustidan ko'tarilib turadi
+          solid.addBox(h.x - sx, 0.95, h.y - sz, h.x + sx, 3.75, h.y + sz, pal.gateBody, 0.42, 0.1, 0);
+          // Faqat ustki (ko'prik) simning ikki uchida qalaylangan metall kontaktlar
+          if (horiz) {
+            solid.addBox(h.x - 9.1, 0.15, h.y - sz * 0.98, h.x - 6.3, 3.1, h.y + sz * 0.98, pal.metal, 0.18, 0.92, 0);
+            solid.addBox(h.x + 6.3, 0.15, h.y - sz * 0.98, h.x + 9.1, 3.1, h.y + sz * 0.98, pal.metal, 0.18, 0.92, 0);
+          } else {
+            solid.addBox(h.x - sx * 0.98, 0.15, h.y - 9.1, h.x + sx * 0.98, 3.1, h.y - 6.3, pal.metal, 0.18, 0.92, 0);
+            solid.addBox(h.x - sx * 0.98, 0.15, h.y + 6.3, h.x + sx * 0.98, 3.1, h.y + 9.1, pal.metal, 0.18, 0.92, 0);
+          }
           const uv0 = input.labelUVs.get('000');
           if (uv0) {
-            labels.quad([h.x - sx + 1, 3.7, h.y - sz + 1], [h.x + sx - 1, 3.7, h.y - sz + 1], [h.x + sx - 1, 3.7, h.y + sz - 1], [h.x - sx + 1, 3.7, h.y + sz - 1], [0, 1, 0], [0.95, 0.97, 0.98], 0.5, 0, 0.1, uv0);
+            const lx = sx - 0.9;
+            const lz = sz - 0.9;
+            const ly = 3.85;
+            if (horiz) {
+              labels.quad(
+                [h.x - lx, ly, h.y - lz],
+                [h.x + lx, ly, h.y - lz],
+                [h.x + lx, ly, h.y + lz],
+                [h.x - lx, ly, h.y + lz],
+                [0, 1, 0],
+                [0.95, 0.97, 0.98],
+                0.5,
+                0,
+                0.12,
+                uv0,
+              );
+            } else {
+              // Vertikal SMD rezistor ustida "000" 90° burib aniq yoziladi
+              labels.quad(
+                [h.x + lx, ly, h.y - lz],
+                [h.x + lx, ly, h.y + lz],
+                [h.x - lx, ly, h.y + lz],
+                [h.x - lx, ly, h.y - lz],
+                [0, 1, 0],
+                [0.95, 0.97, 0.98],
+                0.5,
+                0,
+                0.12,
+                uv0,
+              );
+            }
           }
         }
       });

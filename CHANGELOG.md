@@ -11,6 +11,11 @@ Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.
 - Yangi bloklar: yuklanuvchi bit (REG1) va to'rt bitli registr (REG4) — chiqishi saqlangan qiymat, u faqat takt bosilganda yangilanadi. Shuning uchun registr chiqishini uning o'z kirishiga qaytarish mumkin: bu sikl emas. «Dastur hisoblagichi» darajasidan keyin Qum qutida tayyor PC4 bloki ochiladi.
 - Vaqt diagrammasida shinalar endi bitta qatorda son bilan ko'rinadi. Sxemadagi xotira chegarasi — 8 bit (D-trigger — 1 bit, REG4 — 4 bit).
 
+## 2.33.2 — 2026-11-25
+
+- Kesishgan simlar burchak yoki pinga yaqin bo'lganda ko'priksiz qolib ulangandek ko'rinishi tuzatildi — yo'naltiruvchi kengroq yo'lak tanlaydi, tor joylarda esa ko'prik kesishuvchi ikkinchi simga qo'yiladi.
+- 3D PCB uslubidagi «000» ko'prik rezistori ikki uchli metall kontaktlar va vertikal burilgan yozuv bilan yangilandi; boshqa 3D uslublarda sim yoyi silliqlashtirildi.
+
 ## 2.33.1 — 2026-11-25
 
 - O'yin tezroq ochiladi: darajalar jadvallari, vazifa matnlari va maslahatlar endi o'yin ochilgandan keyin, fonda yuklanadi (ochilishda yuklanadigan hajm 123 → 111 KB).

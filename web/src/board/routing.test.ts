@@ -132,6 +132,72 @@ describe('simlarni birgalikda yo\'naltirish', () => {
     run(spec, { gates, wires }, 900);
     expect(performance.now() - t0).toBeLessThan(400);
   });
+
+  it("ko'pchilik ovozi (x6) barcha joylashuvlarida kesishgan simlar ko'priksiz qolmaydi", () => {
+    const spec3: Spec = { inputs: ['A', 'B', 'C'], outputs: ['Q'], gates: ['AND', 'OR'] };
+    const wires: Circuit['wires'] = [
+      { from: 'in:A', to: 'g2:0' },
+      { from: 'in:B', to: 'g1:0' },
+      { from: 'in:C', to: 'g1:1' },
+      { from: 'g1', to: 'g2:1' },
+      { from: 'in:B', to: 'g3:0' },
+      { from: 'in:C', to: 'g3:1' },
+      { from: 'g2', to: 'g4:0' },
+      { from: 'g3', to: 'g4:1' },
+      { from: 'g4', to: 'out:Q' },
+    ];
+    let crossings = 0;
+    for (const orX of [108, 120, 144, 180, 216]) {
+      for (const orY of [96, 120, 156, 168]) {
+        const c: Circuit = {
+          gates: [
+            { id: 'g1', type: 'OR', x: orX, y: orY },
+            { id: 'g2', type: 'AND', x: 276, y: 48 },
+            { id: 'g3', type: 'AND', x: 276, y: 192 },
+            { id: 'g4', type: 'OR', x: 420, y: 108 },
+          ],
+          wires,
+        };
+        const { routed } = run(spec3, c, outputColumn(4));
+        const all = routed.routes.flatMap((r, wi) =>
+          segs(r!).map((s, si) => ({ s: seg(s), net: wires[wi].from, wi, si })),
+        );
+        for (let i = 0; i < all.length; i++) {
+          for (let j = i + 1; j < all.length; j++) {
+            if (all[i].net === all[j].net) continue;
+            const p = crossing(all[i].s, all[j].s);
+            if (!p) continue;
+            crossings++;
+            const bridged = [
+              ...(routed.hops[all[i].wi]?.[all[i].si] ?? []),
+              ...(routed.hops[all[j].wi]?.[all[j].si] ?? []),
+            ].some((h) => Math.hypot(h.x - p.x, h.y - p.y) < 1);
+            expect(bridged, `or=(${orX},${orY}) ${all[i].net} x ${all[j].net} at (${p.x},${p.y})`).toBe(true);
+          }
+        }
+      }
+    }
+    expect(crossings).toBeGreaterThan(0);
+  });
+
+  it("gorizontal qism tor bo'lsa ham ko'prikcha vertikal qismga qo'yiladi (quick rejimda ham)", () => {
+    const spec3: Spec = { inputs: ['A', 'B', 'C'], outputs: ['Q'], gates: ['AND', 'OR'] };
+    const wires: Circuit['wires'] = [
+      { from: 'g1', to: 'g2:1' },
+      { from: 'in:B', to: 'g3:0' },
+    ];
+    // g1 chiqishi (192,180) dan atigi 6 birlikda kesishish: quick=true bo'lganda ham ko'prik tushib qolmasin.
+    const tightGates = new Map<string, Gate>([
+      ['g1', { id: 'g1', type: 'OR', x: 120, y: 156 }],
+      ['g2', { id: 'g2', type: 'AND', x: 240, y: 48 }],
+      ['g3', { id: 'g3', type: 'AND', x: 396, y: 192 }],
+    ]);
+    const routed = routeAll(wires, tightGates, layout(spec3, outputColumn(4)), true);
+    const totalHops = routed.hops.reduce((n, w) => n + w.reduce((m, s) => m + s.length, 0), 0);
+    expect(totalHops).toBe(1);
+    const hopWire = routed.hops.findIndex((w) => w.some((s) => s.length));
+    expect(routeD(routed.routes[hopWire]!, routed.hops[hopWire])).toMatch(/ A[\d.]+,[\d.]+ 0 0 [01] /);
+  });
 });
 
 function seg(s: S) {

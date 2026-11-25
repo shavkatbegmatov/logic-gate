@@ -336,4 +336,55 @@ describe('3D sahna geometriyasi', () => {
     expect(hasBevelNormal).toBe(true);
     expect(maxPulse).toBeGreaterThan(200);
   });
+
+  it("gorizontal va vertikal SMD 000 ko'priklar hamda silliq 3D yoy yaroqli geometriya yaratadi", () => {
+    const crossSpec: Spec = { inputs: ['A', 'B', 'C'], outputs: ['Q'], gates: ['AND', 'OR'] };
+    const crossCircuit: Circuit = {
+      gates: [
+        { id: 'g1', type: 'OR', x: 120, y: 156 },
+        { id: 'g2', type: 'AND', x: 240, y: 48 },
+        { id: 'g3', type: 'AND', x: 396, y: 192 },
+      ],
+      wires: [
+        { from: 'g1', to: 'g2:1' },
+        { from: 'in:B', to: 'g3:0' },
+      ],
+    };
+    const crossLay = layout(crossSpec, 520);
+    const crossGates = new Map<string, Gate>(crossCircuit.gates.map((g) => [g.id, g]));
+    // quick=true: gorizontal qism 6px tor, shuning uchun ko'prik vertikal qismga qo'yiladi
+    const crossRouted = routeAll(crossCircuit.wires, crossGates, crossLay, true);
+    for (const style of ['pcb', 'breadboard'] as const) {
+      const scene = buildScene3D({
+        style,
+        spec: crossSpec,
+        circuit: crossCircuit,
+        layout: crossLay,
+        routed: crossRouted,
+        values: new Map([['in:B', 1], ['g1', 0]]),
+        outputs: [0],
+        bits: [0, 1, 0],
+        expected: [0],
+        drivers: new Map([['g2:1', 'g1'], ['g3:0', 'in:B']]),
+        reached: () => true,
+        selection: null,
+        activePort: null,
+        highlight: null,
+        draggingGateId: null,
+        ghost: null,
+        leverAngles: new Map([['A', -0.48], ['B', 0.48], ['C', -0.48]]),
+        stateNames: new Map(),
+        labelUVs,
+      });
+      for (const bucket of [scene.solid, scene.boardTop, scene.chipTops, scene.labels]) {
+        expect(bucket.vertCount).toBeGreaterThan(0);
+        for (let i = 0; i < bucket.verts.length; i++) expect(Number.isFinite(bucket.verts[i])).toBe(true);
+        for (let i = 0; i < bucket.indexCount; i++) expect(bucket.indices[i]).toBeLessThan(bucket.vertCount);
+      }
+      if (style === 'breadboard') {
+        const lifted = scene.wireHits.some((w) => w.pts.some((p) => p[1] > 12));
+        expect(lifted).toBe(true);
+      }
+    }
+  });
 });
