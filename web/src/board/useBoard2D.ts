@@ -5,9 +5,9 @@ import { showToast } from '../components/Toast';
 import { t } from '../i18n';
 import { stateNames } from '../sim/formula';
 import { depths } from '../sim/sim';
-import { GATE_ARITY, type Gate } from '../sim/types';
+import { GATE_ARITY, gateOutputs, sourcePort, type Gate } from '../sim/types';
 import type { Editor } from './editor';
-import { GATE_H, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, type Point } from './geometry';
+import { gateH, GATE_W, GRID, inputPortY, isSourcePort, outputPortY, portPoint, type Point } from './geometry';
 import { routeAll } from './routing';
 
 type Drag =
@@ -88,7 +88,7 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
     for (const [name, w] of lay.inputs) consider(`in:${name}`, w);
     for (const [name, w] of lay.outputs) consider(`out:${name}`, w);
     for (const g of editor.circuit.value.gates) {
-      consider(g.id, { x: g.x + GATE_W, y: g.y + outputPortY(g) });
+      for (let k = 0; k < gateOutputs(g.type); k++) consider(sourcePort(g.id, k), { x: g.x + GATE_W, y: g.y + outputPortY(g, k) });
       for (let i = 0; i < GATE_ARITY[g.type]; i++) consider(`${g.id}:${i}`, { x: g.x, y: g.y + inputPortY(g, i) });
     }
     return best;
@@ -333,7 +333,7 @@ export function useBoard2D(editor: Editor, expected?: number[] | null, topInset 
   let gateDeleteAt: Point | null = null;
   if (sel?.kind === 'gate') {
     const g = gmap.get(sel.id);
-    if (g) gateDeleteAt = vertical ? { x: g.x + 2, y: g.y + GATE_H + 12 } : { x: g.x + GATE_W - 2, y: g.y - 12 };
+    if (g) gateDeleteAt = vertical ? { x: g.x + 2, y: g.y + gateH(g) + 12 } : { x: g.x + GATE_W - 2, y: g.y - 12 };
   }
 
   const quick = moving.value && wires.length > 40;

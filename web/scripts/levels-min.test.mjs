@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { proveMinimum } from '../../levels/comb-min.mjs';
+import { blocks } from '../../levels/blocks.mjs';
 import { levels } from '../../levels/source.mjs';
 
 // Kombinatsion darajalarda maqsad — isbotlangan minimum: kamroq element bilan bo'lmaydi va maqsad sonida
 // yechim bor (levels/comb-min.mjs — to'liq sanash). m5 (ikki bitli summator, 7 element) ~15 s — faqat qo'lda:
 // node levels/comb-min.mjs m5. Ketma-ket darajalar — levels/seq-min.mjs (qo'lda, ~1 daqiqa).
 const SLOW = new Set(['m5']);
+// Bloklar (FA, MUX, …) bilan darajalar to'liq sanashga kirmaydi: maqsad — mos yozuvdagi yechim (build tekshiradi).
+const BLOCK = new Set(Object.keys(blocks));
 
 describe('kombinatsion darajalar: maqsad — isbotlangan minimum', () => {
-  for (const level of levels.filter((l) => !l.step && !SLOW.has(l.id))) {
+  for (const level of levels.filter((l) => !l.step && !SLOW.has(l.id) && !l.gates.some((g) => BLOCK.has(g)))) {
     it(`${level.id}: ${level.goal} ta element`, () => {
       expect(proveMinimum(level, 5e6)).toEqual({ min: level.goal, ok: true });
     });

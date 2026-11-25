@@ -5,12 +5,12 @@ import { showToast } from '../../components/Toast';
 import { t } from '../../i18n';
 import { stateNames } from '../../sim/formula';
 import { depths } from '../../sim/sim';
-import { GATE_ARITY, type Gate } from '../../sim/types';
+import { GATE_ARITY, gateOutputs, sourcePort, type Gate } from '../../sim/types';
 import { activeTheme, instantCheck, resolveRealStyle, systemReducedMotion } from '../../theme';
 import { settings } from '../../state';
 import { cam3d } from '../cam3d';
 import type { Editor } from '../editor';
-import { bounds, GATE_H, GATE_W, GRID, inputPortY, outputPortY, portPoint, routeMid, type Point } from '../geometry';
+import { bounds, gateH, GATE_W, GRID, inputPortY, outputPortY, portPoint, routeMid, type Point } from '../geometry';
 import { routeAll } from '../routing';
 import { capture } from '../useBoard2D';
 import { Engine3D } from './engine3d';
@@ -436,7 +436,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     for (const [name, p] of layNow.inputs) ports.push([`in:${name}`, p.x, p.y]);
     for (const [name, p] of layNow.outputs) ports.push([`out:${name}`, p.x, p.y]);
     for (const g of cNow.gates) {
-      ports.push([g.id, g.x + GATE_W, g.y + outputPortY(g)]);
+      for (let k = 0; k < gateOutputs(g.type); k++) ports.push([sourcePort(g.id, k), g.x + GATE_W, g.y + outputPortY(g, k)]);
       for (let i = 0; i < GATE_ARITY[g.type]; i++) ports.push([`${g.id}:${i}`, g.x, g.y + inputPortY(g, i)]);
     }
     for (const [id, x, y] of ports) {
@@ -453,7 +453,7 @@ export function Board3D({ editor, expected, topInset = 0, onUnsupported }: Props
     // 2. Elementlar (AABB)
     let bestGate: { id: string; t: number } | null = null;
     for (const g of cNow.gates) {
-      const tHit = rayAABB(ray, g.x + 4, -2, g.y - 2, g.x + GATE_W - 4, 17, g.y + GATE_H + 2);
+      const tHit = rayAABB(ray, g.x + 4, -2, g.y - 2, g.x + GATE_W - 4, 17, g.y + gateH(g) + 2);
       if (tHit !== null && (!bestGate || tHit < bestGate.t)) bestGate = { id: g.id, t: tHit };
     }
 

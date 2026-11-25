@@ -1,5 +1,5 @@
 // 3D modellar uchun Canvas2D teksturalar generatori: chiplar ustki yozuvi, plata sirti va pin belgilari.
-import { GATE_TYPES, type GateType } from '../../sim/types';
+import { BLOCK_TYPES, GATE_TYPES, isBlock, type GateType } from '../../sim/types';
 import type { RealStyle } from '../../theme';
 import { CHIP_CODE } from '../GateShape';
 import { DFF_BODY, SHAPES } from '../shapes';
@@ -120,23 +120,28 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
   },
 };
 
+/** Atlasdagi kataklar: 4 ustun, har holat (0/1) uchun ATLAS_ROWS qator. */
+const ATLAS_TYPES: GateType[] = [...GATE_TYPES, 'DFF', ...BLOCK_TYPES];
+const ATLAS_ROWS = Math.ceil(ATLAS_TYPES.length / 4);
+
 export function gateAtlasUV(type: GateType, on = false): UVRect {
-  const idx = GATE_TYPES.indexOf(type);
+  const idx = Math.max(0, ATLAS_TYPES.indexOf(type));
   const col = idx % 4;
-  const row = Math.floor(idx / 4) + (on ? 2 : 0);
+  const row = Math.floor(idx / 4) + (on ? ATLAS_ROWS : 0);
   const pad = 0.004;
+  const rows = ATLAS_ROWS * 2;
   return {
     u0: col * 0.25 + pad,
-    v0: row * 0.25 + pad,
+    v0: row / rows + pad,
     u1: (col + 1) * 0.25 - pad,
-    v1: (row + 1) * 0.25 - pad,
+    v1: (row + 1) / rows - pad,
   };
 }
 
 export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = 1024;
-  c.height = 1024;
+  c.height = 256 * ATLAS_ROWS * 2;
   const ctx = c.getContext('2d')!;
 
   const offBg = style === 'bench' ? '#1c2430' : style === 'scifi' ? '#0a162b' : '#17191d';
@@ -153,9 +158,9 @@ export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
   ctx.fillRect(0, 0, c.width, c.height);
 
   for (const on of [false, true]) {
-    GATE_TYPES.forEach((type, idx) => {
+    ATLAS_TYPES.forEach((type, idx) => {
       const col = idx % 4;
-      const row = Math.floor(idx / 4) + (on ? 2 : 0);
+      const row = Math.floor(idx / 4) + (on ? ATLAS_ROWS : 0);
       const ox = col * 256;
       const oy = row * 256;
 
@@ -191,7 +196,10 @@ export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
       ctx.lineWidth = on ? 3.4 : 3;
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
-      if (type === 'DFF') {
+      if (isBlock(type)) {
+        // Blok: oddiy to'rtburchak korpus, belgi o'rnida nomi (pastda yoziladi).
+        ctx.strokeRect(14, 6, 44, 36);
+      } else if (type === 'DFF') {
         const d = DFF_BODY;
         ctx.strokeRect(d.x, d.y, d.w, d.h);
         ctx.stroke(new Path2D(d.clock));

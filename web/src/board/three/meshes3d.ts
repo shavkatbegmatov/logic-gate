@@ -1,9 +1,9 @@
 // 3D apparat geometriyasi quruvchisi: PCB platasi, DIP mikrosxemalar, egilgan jumper simlar, tumbler va svetodiodlar.
-import type { Circuit, Spec } from '../../sim/types';
+import { sourcePort, type Circuit, type Spec } from '../../sim/types';
 import type { RealStyle } from '../../theme';
-import { bounds, GATE_H, GATE_W, inputPortY, isSourcePort, outputPortY, type Layout, type Point } from '../geometry';
+import { bounds, gateH, GATE_W, inputPortY, isSourcePort, outputPortY, type Layout, type Point } from '../geometry';
 import type { Routed } from '../routing';
-import { inputLeads, outputY } from '../shapes';
+import { inputLeads, outputLeads } from '../shapes';
 import { clamp, normalize3, sub3, type Vec3 } from './math3d';
 import { gateAtlasUV, PALETTES_3D, type UVRect } from './textures3d';
 
@@ -638,21 +638,24 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
     const lift = input.draggingGateId === g.id ? 7 : 0;
 
     const ins = inputLeads(g.type);
-    const out = outputY(g.type);
+    const outs = outputLeads(g.type);
+    const out = outs[0];
 
     // Oyoqchalar va kavshar konusi
     for (const ly of ins) {
       solid.addBox(g.x, 1.2 + lift, g.y + ly - 2.2, g.x + 13, 3.8 + lift, g.y + ly + 2.2, pal.metal, 0.2, 0.92, 0);
       if (lift === 0) solid.addCylinderY(g.x + 2, 0, 2.5, g.y + ly, 4.4, 2.2, 8, pal.metal, 0.16, 0.94, 0);
     }
-    solid.addBox(g.x + 59, 1.2 + lift, g.y + out - 2.2, g.x + GATE_W, 3.8 + lift, g.y + out + 2.2, pal.metal, 0.2, 0.92, 0);
-    if (lift === 0) solid.addCylinderY(g.x + GATE_W - 2, 0, 2.5, g.y + out, 4.4, 2.2, 8, pal.metal, 0.16, 0.94, 0);
+    for (const oy of outs) {
+      solid.addBox(g.x + 59, 1.2 + lift, g.y + oy - 2.2, g.x + GATE_W, 3.8 + lift, g.y + oy + 2.2, pal.metal, 0.2, 0.92, 0);
+      if (lift === 0) solid.addCylinderY(g.x + GATE_W - 2, 0, 2.5, g.y + oy, 4.4, 2.2, 8, pal.metal, 0.16, 0.94, 0);
+    }
 
     // Asosiy korpus
     const gx0 = g.x + 12;
     const gx1 = g.x + 60;
     const gz0 = g.y + 4;
-    const gz1 = g.y + GATE_H - 4;
+    const gz1 = g.y + gateH(g) - 4;
 
     solid.addBox(gx0, 2 + lift, gz0, gx1, 11.4 + lift, gz1, pal.gateBody, 0.45, 0.14, 0);
     if (err || sel || on) {
@@ -711,7 +714,11 @@ export function buildScene3D(input: SceneBuildInput): Scene3DData {
       const inOn = drv !== undefined && input.reached(drv, 1) && input.values.get(drv) === 1;
       addPort(pid, g.x, g.y + inputPortY(g, k), false, driven.has(pid), inOn);
     }
-    addPort(g.id, g.x + GATE_W, g.y + outputPortY(g), true, usedSources.has(g.id), on);
+    for (let k = 0; k < outs.length; k++) {
+      const id = sourcePort(g.id, k);
+      const outOn = input.reached(id, 0) && input.values.get(id) === 1;
+      addPort(id, g.x + GATE_W, g.y + outputPortY(g, k), true, usedSources.has(id), outOn);
+    }
   }
 
   // 4. Kirish tumblerlari (pin-in): botiq to'q panel, yorug' ramka va ikki rangli dasta

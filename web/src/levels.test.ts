@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { levelById, levels, newGates } from './levels';
-import { ALL_GATE_TYPES } from './sim/types';
+import { ALL_GATE_TYPES, BLOCK_TYPES } from './sim/types';
 
 describe('newGates', () => {
   it('har bir element birinchi chiqqan darajada tanishtiriladi', () => {
@@ -14,12 +14,16 @@ describe('newGates', () => {
       m2: ['NOR'],
       m3: ['XNOR'],
       s1: ['DFF'],
+      k1: ['FA'],
+      k2: ['HA'],
+      k3: ['MUX'],
+      k5: ['DEC'],
     });
   });
 
   it('har bir element turi roppa-rosa bir marta tanishtiriladi', () => {
     const all = levels.flatMap((l) => newGates(l));
-    expect([...all].sort()).toEqual([...ALL_GATE_TYPES].sort());
+    expect([...all].sort()).toEqual([...ALL_GATE_TYPES, ...BLOCK_TYPES].sort());
   });
 
   it("allaqachon tanish elementlar qayta ko'rsatilmaydi", () => {

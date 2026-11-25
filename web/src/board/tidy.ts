@@ -3,9 +3,9 @@
 // ro'parasida, sim to'g'ri bo'lsin), ustma-ust tushmaydi.
 // Simlar o'zgarmaydi — faqat joylar. Formuladan sxema (formula-build.ts) ham shu joylashni ishlatadi.
 // D-trigger chiqishi manba kabi hisoblanadi: teskari bog'lanish halqa bo'lib qolmasin.
-import type { Circuit, Gate, Spec } from '../sim/types';
-import { GATE_H, GATE_W, GRID, layout } from './geometry';
-import { inputLeads, outputY } from './shapes';
+import { parseSource, type Circuit, type Gate, type Spec } from '../sim/types';
+import { GATE_W, GRID, layout } from './geometry';
+import { gateHeight, inputLeads, outputLeads } from './shapes';
 
 /** Birinchi ustun va ustunlar orasi (o'yin darajalaridagi yechimlar kabi); sig'dirishda — eng kami. */
 export const COL_X = 120;
@@ -37,6 +37,8 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
       .filter((w) => w.to.startsWith(`${id}:`))
       .sort((a, b) => a.to.localeCompare(b.to))
       .map((w) => w.from);
+  // Manba elementi id si (blok chiqishi `gid.k` → gid).
+  const srcId = (f: string) => parseSource(f).id;
 
   // Chuqurlik: kirish va D-trigger chiqishi — 0; element — manbalari chuqurligining eng kattasi + 1.
   const depth = new Map<string, number>();
@@ -48,7 +50,7 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
     if (known !== undefined) return known;
     if (visiting.has(id)) return 0; // tekshiruvdan o'tmagan sxemadagi sikl — yiqilmasin
     visiting.add(id);
-    const d = 1 + Math.max(0, ...inputsOf(id).map((f) => (byId.get(f)?.type === 'DFF' ? 0 : depthOf(f))));
+    const d = 1 + Math.max(0, ...inputsOf(id).map((f) => (byId.get(srcId(f))?.type === 'DFF' ? 0 : depthOf(srcId(f)))));
     visiting.delete(id);
     depth.set(id, d);
     return d;
@@ -69,15 +71,22 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
   // Manba porti y: kirish pin'i yoki element chiqishi (hali joylanmagan bo'lsa — eski joyi).
   const sourceY = (f: string) => {
     if (f.startsWith('in:')) return lay.inputs.get(f.slice(3))?.y ?? 0;
-    const g = byId.get(f);
+    const { id, k } = parseSource(f);
+    const g = byId.get(id);
     if (!g) return 0;
-    return (placed.has(f) ? g.y : original.get(f) ?? g.y) + outputY(g.type);
+    const leads = outputLeads(g.type);
+    return (placed.has(id) ? g.y : original.get(id) ?? g.y) + (leads[k] ?? leads[0]);
   };
   const outPull = new Map<string, number[]>();
   for (const w of wires) {
     if (!w.to.startsWith('out:')) continue;
     const pin = lay.outputs.get(w.to.slice(4));
-    if (pin) outPull.set(w.from, [...(outPull.get(w.from) ?? []), pin.y]);
+    if (!pin) continue;
+    // Blokda pin ro'parasiga o'sha chiqish oyog'i tushsin.
+    const { id, k } = parseSource(w.from);
+    const g = byId.get(id);
+    const off = g ? (outputLeads(g.type)[k] ?? 0) : 0;
+    outPull.set(id, [...(outPull.get(id) ?? []), pin.y - off]);
   }
 
   for (let d = 1; d <= maxDepth; d++) {
@@ -89,7 +98,7 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
         // chiziq bo'lsin (manbalardan keladigan simlar baribir qiya). Qolganlari — manbalari ro'parasida.
         const pull = outPull.get(g.id) ?? [];
         const wants = pull.length
-          ? pull.map((y) => y - outputY(g.type))
+          ? pull
           : inputsOf(g.id).map((f, i) => sourceY(f) - (leads[i] ?? leads[0]));
         const want = wants.length ? wants.reduce((s, v) => s + v, 0) / wants.length : original.get(g.id) ?? 0;
         return { g, want };
@@ -100,7 +109,7 @@ export function tidy(spec: Spec, circuit: Circuit, outX: number, opts: { fit?: b
       g.x = COL_X + (d - 1) * step;
       g.y = snap(Math.max(want, next));
       if (g.y < next) g.y += GRID;
-      next = g.y + GATE_H + ROW_GAP;
+      next = g.y + gateHeight(g.type) + ROW_GAP;
       placed.add(g.id);
     }
   }

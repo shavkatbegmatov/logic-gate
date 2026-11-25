@@ -173,7 +173,7 @@ export function decodePuzzle(code: string): CustomPuzzle | null {
 
 // ── Qum qutidan masala ─────────────────────────────────────
 
-export type CreateError = SimError | { code: 'empty' } | { code: 'too_complex' };
+export type CreateError = SimError | { code: 'empty' } | { code: 'too_complex' } | { code: 'blocks' };
 
 /** Sxemadan masala: jadval — sxema natijasi, maqsad — muallif ishlatgan elementlar soni. */
 export function puzzleFromCircuit(
@@ -188,6 +188,8 @@ export function puzzleFromCircuit(
   if (loose) return { ok: false, error: { code: 'unconnected_output', ref: loose } };
   circuit = liveCircuit(circuit);
   if (!circuit.gates.length) return { ok: false, error: { code: 'empty' } };
+  // Havola formati faqat oddiy elementlarni biladi (eski havolalar bilan mos): bloklar hali ulashilmaydi.
+  if (circuit.gates.some((g) => !ALL_GATE_TYPES.includes(g.type))) return { ok: false, error: { code: 'blocks' } };
   const err = validate(spec, circuit);
   if (err) return { ok: false, error: err };
   const c = compile(spec, circuit);

@@ -2431,6 +2431,30 @@ p.join-or {
   fill: var(--gate-on-stroke);
 }
 
+/* Blok (mikrosxema): nomi o'rtada, oyoqlar nomlari korpus ichida chetlarida. */
+.block-label {
+  font-size: 13px;
+  fill: var(--text);
+}
+
+.block-pin {
+  font: 500 8.5px var(--mono);
+  fill: var(--muted);
+  text-anchor: start;
+  dominant-baseline: central;
+  pointer-events: none;
+}
+
+.block-pin-out {
+  text-anchor: end;
+}
+
+.block-icon-label {
+  font: 700 15px var(--mono);
+  fill: var(--muted);
+  text-anchor: middle;
+}
+
 .port-hit {
   fill: transparent;
   cursor: crosshair;

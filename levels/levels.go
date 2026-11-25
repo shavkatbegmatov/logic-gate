@@ -39,10 +39,20 @@ type Seq struct {
 	Example []int      `json:"example,omitempty"`
 }
 
+// Block — blok (mikrosxema) jadvali: levels/blocks.mjs dan. Hisoblash server/internal/sim da —
+// u yerdagi jadval shu bilan testda solishtiriladi.
+type Block struct {
+	Inputs  []string `json:"inputs"`
+	Outputs []string `json:"outputs"`
+	Luts    []int    `json:"luts"`
+	From    string   `json:"from"`
+}
+
 type Pack struct {
-	Version  int       `json:"version"`
-	Chapters []Chapter `json:"chapters"`
-	Levels   []Level   `json:"levels"`
+	Version  int              `json:"version"`
+	Blocks   map[string]Block `json:"blocks"`
+	Chapters []Chapter        `json:"chapters"`
+	Levels   []Level          `json:"levels"`
 	byID     map[string]*Level
 }
 

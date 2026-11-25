@@ -36,6 +36,20 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.28.0',
+    date: '2026-11-25',
+    uz: [
+      "Yangi, 9-bo'lim — «Bloklar» (88 ★ dan ochiladi): Chiroq buvining sandig'idan topilgan tayyor mikrosxemalar — yarim summator, to'liq summator, multipleksor va dekoder. Har biri ichidagi sxemani qayta yig'masdan bitta element sifatida qo'yiladi.",
+      "6 ta yangi daraja: birlar sanog'i, ikki va uch bitli summator, «to'rtdan biri» tanlagich, sakkiz eshikli dekoder va to'rt ovozli hisoblagich. Blok bir nechta chiqishli — har oyog'i alohida ulanadi. Bu — protsessor yig'ish sari birinchi qadam.",
+      "Qum qutida: blok uni o'rgatgan daraja yechilgach palitrada paydo bo'ladi (masalan, to'liq summator — «To'liq summator» darajasidan keyin).",
+    ],
+    ru: [
+      "Новый, 9-й раздел — «Блоки» (открывается с 88 ★): готовые микросхемы из сундука бабушки Чирок — полусумматор, полный сумматор, мультиплексор и дешифратор. Каждая ставится одним элементом, без сборки схемы внутри.",
+      "6 новых уровней: подсчёт единиц, двух- и трёхбитный сумматор, селектор «один из четырёх», дешифратор на восемь дверей и счётчик четырёх голосов. У блока несколько выходов — каждая ножка подключается отдельно. Это первый шаг к сборке процессора.",
+      "В Песочнице: блок появляется в палитре, когда решён уровень, где он изучался (например, полный сумматор — после уровня «Полный сумматор»).",
+    ],
+  },
+  {
     version: '2.27.0',
     date: '2026-11-25',
     uz: [

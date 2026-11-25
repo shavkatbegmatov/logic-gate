@@ -237,6 +237,35 @@ const uz: Record<string, Lesson> = {
       },
     ],
   },
+  chips: {
+    title: "Bloklar — kattaroq mashinaning g'ishtlari",
+    blocks: [
+      {
+        p: "Yechilgan qurilmani har safar qaytadan yig'ish shart emas: u bitta blokka (mikrosxemaga) aylanadi. Blokning ichi emas, faqat oyoqlari va nima qilishi muhim — haqiqiy muhandislar ham shunday ishlaydi.",
+      },
+      { h: "Qo'lingizdagi bloklar" },
+      {
+        table: [
+          ['Blok', 'Kirish', 'Chiqish', 'Ichida'],
+          ['HA', 'A, B', 'S, C', 'XOR + AND'],
+          ['FA', 'A, B, Ci', 'S, Co', '2 HA + OR'],
+          ['MUX', 'A, B, S', 'Q', '2 AND + OR + NOT'],
+          ['DEC', 'A, B', 'Y0–Y3', '4 AND + 2 NOT'],
+        ],
+      },
+      { h: "Ko'chirish zanjiri" },
+      { f: ['S0 = A0 ⊕ B0,  C1 = A0 ∧ B0', 'Sk, Ck+1 = FA(Ak, Bk, Ck)'] },
+      {
+        p: "Ko'p bitli summator — to'liq summatorlar zanjiri: har xonaning ko'chirish biti keyingi xonaga o'tadi. Qog'ozda ustun qilib qo'shganingiz aynan shu.",
+      },
+      {
+        p: "Multipleksorlar daraxti istalgan sonli kirishdan birini tanlaydi: 4 tadan biriga 3 ta MUX, 8 tadan biriga 7 ta. Dekoder esa teskarisini qiladi — sondan bitta yonib turgan chiziq.",
+      },
+      {
+        tip: "Birinchi mikrosxemalar (1960-yillar) bir nechta elementdan iborat edi. Bugungi protsessorda milliardlab tranzistor bor, lekin u ham bloklar ichidagi bloklardan qurilgan: summator → ALU → protsessor.",
+      },
+    ],
+  },
 };
 
 const ru: Record<string, Lesson> = {
@@ -461,6 +490,35 @@ const ru: Record<string, Lesson> = {
       },
       {
         tip: 'Бортовой компьютер «Аполлона», летавшего к Луне в 1969 году, собран почти целиком из одинаковых микросхем — в каждой по два трёхвходовых NOR. Одинаковые ячейки делают производство проще и надёжнее.',
+      },
+    ],
+  },
+  chips: {
+    title: 'Блоки — кирпичи для машины побольше',
+    blocks: [
+      {
+        p: 'Решённое устройство не нужно каждый раз собирать заново: оно превращается в один блок (микросхему). Важно не то, что внутри, а только его выводы и что он делает — так работают и настоящие инженеры.',
+      },
+      { h: 'Блоки в вашем распоряжении' },
+      {
+        table: [
+          ['Блок', 'Входы', 'Выходы', 'Внутри'],
+          ['HA', 'A, B', 'S, C', 'XOR + AND'],
+          ['FA', 'A, B, Ci', 'S, Co', '2 HA + OR'],
+          ['MUX', 'A, B, S', 'Q', '2 AND + OR + NOT'],
+          ['DEC', 'A, B', 'Y0–Y3', '4 AND + 2 NOT'],
+        ],
+      },
+      { h: 'Цепочка переносов' },
+      { f: ['S0 = A0 ⊕ B0,  C1 = A0 ∧ B0', 'Sk, Ck+1 = FA(Ak, Bk, Ck)'] },
+      {
+        p: 'Многобитный сумматор — цепочка полных сумматоров: бит переноса каждого разряда идёт в следующий. Именно так вы складываете столбиком на бумаге.',
+      },
+      {
+        p: 'Дерево мультиплексоров выбирает один из любого числа входов: один из 4 — 3 MUX, один из 8 — 7. Дешифратор делает обратное — из числа получается одна горящая линия.',
+      },
+      {
+        tip: 'Первые микросхемы (1960-е) содержали несколько элементов. В современном процессоре миллиарды транзисторов, но и он собран из блоков внутри блоков: сумматор → АЛУ → процессор.',
       },
     ],
   },

@@ -17,14 +17,14 @@ import {
   validate,
   wouldCycle,
 } from './sim';
-import type { Circuit, Level, LevelPack, Spec } from './types';
+import { BLOCKS, type Circuit, type Level, type LevelPack, type Spec } from './types';
 
 const levels = (pack as unknown as LevelPack).levels;
 const sols = solutions as Record<string, Circuit>;
 
 describe('darajalar', () => {
-  it('48 ta daraja va har birida yechim bor', () => {
-    expect(levels).toHaveLength(48);
+  it('54 ta daraja va har birida yechim bor', () => {
+    expect(levels).toHaveLength(54);
     for (const l of levels) expect(sols[l.id], l.id).toBeDefined();
   });
 
@@ -282,5 +282,51 @@ describe('sxemadan avtomat', () => {
     let s = 0;
     for (const r of ex) seen.add((s = s6.next[s][r]));
     expect(seen.size).toBe(s6.next.length);
+  });
+});
+
+describe('bloklar', () => {
+  it("jadvallar levels.json dagi (levels/blocks.mjs dan) bilan bir xil", () => {
+    const fromJson = (pack as unknown as { blocks: Record<string, unknown> }).blocks;
+    const mine = Object.fromEntries(Object.entries(BLOCKS).map(([k, b]) => [k, { inputs: b.inputs, outputs: b.outputs, luts: b.luts, from: b.from }]));
+    expect(mine).toEqual(fromJson);
+  });
+
+  const fa: Spec = { inputs: ['A', 'B', 'C'], outputs: ['S', 'Co'], gates: ['FA', 'AND'] };
+  const faCircuit: Circuit = {
+    gates: [{ id: 'f', type: 'FA', x: 0, y: 0 }],
+    wires: [
+      { from: 'in:A', to: 'f:0' },
+      { from: 'in:B', to: 'f:1' },
+      { from: 'in:C', to: 'f:2' },
+      { from: 'f', to: 'out:S' },
+      { from: 'f.1', to: 'out:Co' },
+    ],
+  };
+
+  it("blok chiqishlari: `f` — 0-chiqish, `f.1` — 1-chiqish", () => {
+    expect(validate(fa, faCircuit)).toBeNull();
+    const rows = truthTable(compile(fa, faCircuit));
+    expect(rows.map((r) => r.join(''))).toEqual(['00', '10', '10', '01', '10', '01', '01', '11']);
+  });
+
+  it("noto'g'ri chiqish raqami va oddiy elementning `.1` chiqishi rad etiladi", () => {
+    for (const from of ['f.2', 'f.0', 'f.01']) {
+      const c = { ...faCircuit, wires: faCircuit.wires.map((w) => (w.to === 'out:S' ? { from, to: 'out:S' } : w)) };
+      expect(validate(fa, c), from).toEqual({ code: 'bad_wire' });
+    }
+    const extra: Circuit = {
+      gates: [...faCircuit.gates, { id: 'a', type: 'AND', x: 0, y: 0 }],
+      wires: [...faCircuit.wires.filter((w) => w.to !== 'out:S'), { from: 'in:A', to: 'a:0' }, { from: 'in:B', to: 'a:1' }, { from: 'a.1', to: 'out:S' }],
+    };
+    expect(validate(fa, extra)).toEqual({ code: 'bad_wire' });
+    // 3-kirish faqat 3 kirishli blokda bor.
+    expect(validate(fa, { ...faCircuit, wires: [...faCircuit.wires, { from: 'in:A', to: 'f:3' }] })).toEqual({ code: 'bad_wire' });
+  });
+
+  it("blok chiqishidan o'z kirishiga — sikl", () => {
+    const c = { ...faCircuit, wires: faCircuit.wires.map((w) => (w.to === 'f:2' ? { from: 'f.1', to: 'f:2' } : w)) };
+    expect(validate(fa, c)).toEqual({ code: 'cycle', ref: 'f' });
+    expect(wouldCycle(faCircuit, 'f.1', 'f:0')).toBe(true);
   });
 });

@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -24,6 +25,52 @@ var gateIDRe = regexp.MustCompile(`^[a-z0-9_]{1,16}$`)
 // DFF — D-trigger: kirish D, chiqish Q — saqlangan qiymat; har taktda Q := D.
 var arity = map[string]int{
 	"NOT": 1, "AND": 2, "OR": 2, "XOR": 2, "NAND": 2, "NOR": 2, "XNOR": 2, "DFF": 1,
+	"HA": 2, "FA": 3, "MUX": 3, "DEC": 2,
+}
+
+// Block — blok (mikrosxema): har chiqish uchun haqiqat jadvali bitmaskasi, r-bit — r-qatordagi qiymat
+// (birinchi kirish — qatorning eng katta biti). web/src/sim/types.ts dagi BLOCKS va levels/blocks.mjs
+// bilan bir xil bo'lishi shart — testlar levels.json dagi `blocks` bilan solishtiradi.
+type Block struct {
+	Inputs  []string
+	Outputs []string
+	Luts    []uint8
+}
+
+var Blocks = map[string]Block{
+	"HA":  {Inputs: []string{"A", "B"}, Outputs: []string{"S", "C"}, Luts: []uint8{0b0110, 0b1000}},
+	"FA":  {Inputs: []string{"A", "B", "Ci"}, Outputs: []string{"S", "Co"}, Luts: []uint8{0x96, 0xe8}},
+	"MUX": {Inputs: []string{"A", "B", "S"}, Outputs: []string{"Q"}, Luts: []uint8{0xd8}},
+	"DEC": {Inputs: []string{"A", "B"}, Outputs: []string{"Y0", "Y1", "Y2", "Y3"}, Luts: []uint8{0b0001, 0b0010, 0b0100, 0b1000}},
+}
+
+// outputs — element chiqishlari soni: blokda bir nechta, qolganlarida 1.
+func outputs(t string) int {
+	if b, ok := Blocks[t]; ok {
+		return len(b.Outputs)
+	}
+	return 1
+}
+
+// sourcePort — k-chiqish manbasi: `gid` (k = 0) yoki `gid.k`.
+func sourcePort(id string, k int) string {
+	if k == 0 {
+		return id
+	}
+	return id + "." + strconv.Itoa(k)
+}
+
+// parseSource — `gid` yoki `gid.k` dan element id si va chiqish raqami; noto'g'ri bo'lsa k = -1.
+func parseSource(s string) (string, int) {
+	i := strings.LastIndexByte(s, '.')
+	if i < 0 {
+		return s, 0
+	}
+	k, err := strconv.Atoi(s[i+1:])
+	if err != nil || k <= 0 {
+		return s, -1
+	}
+	return s[:i], k
 }
 
 type Gate struct {
@@ -62,10 +109,14 @@ var lut = map[string]uint8{
 	"NOT": 0b0011, "AND": 0b1000, "OR": 0b1110, "XOR": 0b0110, "NAND": 0b0111, "NOR": 0b0001, "XNOR": 0b1001,
 }
 
-// op — bitta element: vals[dst] = lut ning (vals[a]<<1 | vals[b])-biti.
+// op — bitta element: vals[dst] = lut ning (vals[a]<<1 | vals[b])-biti. Blokda (ins != nil) esa
+// r = kirishlar bitlari, dsts[k] = luts[k] ning r-biti.
 type op struct {
 	lut       uint8
 	a, b, dst int32
+	ins       []int32
+	luts      []uint8
+	dsts      []int32
 }
 
 // compiled — tekshiruvdan o'tgan sxema: elementlar topologik tartibda, D-triggerlar boshida.
@@ -89,8 +140,9 @@ func isSource(spec Spec, gates map[string]Gate, s string) bool {
 	if name, ok := strings.CutPrefix(s, "in:"); ok {
 		return slices.Contains(spec.Inputs, name)
 	}
-	_, ok := gates[s]
-	return ok
+	id, k := parseSource(s)
+	g, ok := gates[id]
+	return ok && k >= 0 && k < outputs(g.Type) && sourcePort(id, k) == s
 }
 
 func isSink(spec Spec, gates map[string]Gate, s string) bool {
@@ -103,7 +155,8 @@ func isSink(spec Spec, gates map[string]Gate, s string) bool {
 	}
 	g, ok := gates[s[:i]]
 	idx := s[i+1:]
-	return ok && (idx == "0" || (idx == "1" && arity[g.Type] == 2))
+	k, err := strconv.Atoi(idx)
+	return ok && err == nil && len(idx) == 1 && k >= 0 && k < arity[g.Type]
 }
 
 func validCoord(v float64) bool {
@@ -150,10 +203,10 @@ func compile(spec Spec, c Circuit) (*compiled, *Error) {
 			continue
 		}
 		for i := range arity[g.Type] {
-			if src, ok := drivers[fmt.Sprintf("%s:%d", g.ID, i)]; ok {
-				if _, isGate := gates[src]; isGate {
+			if src, ok := drivers[fmt.Sprintf("%s:%d", g.ID, i)]; ok && !strings.HasPrefix(src, "in:") {
+				if id, _ := parseSource(src); gates[id].Type != "" {
 					indeg[g.ID]++
-					users[src] = append(users[src], g.ID)
+					users[id] = append(users[id], g.ID)
 				}
 			}
 		}
@@ -217,15 +270,31 @@ func (c *compiled) program() {
 	for k, name := range c.spec.Inputs {
 		slot["in:"+name] = int32(k)
 	}
-	for i, g := range c.order {
-		slot[g.ID] = int32(n + i)
+	next := int32(n)
+	for _, g := range c.order {
+		for k := range outputs(g.Type) {
+			slot[sourcePort(g.ID, k)] = next
+			next++
+		}
 	}
 	src := func(sink string) int32 { return slot[c.drivers[sink]] }
-	c.nVals = n + len(c.order)
-	for i, g := range c.order {
+	c.nVals = int(next)
+	for _, g := range c.order {
+		at := slot[g.ID]
 		if g.Type == "DFF" {
-			c.dffVal = append(c.dffVal, int32(n+i))
+			c.dffVal = append(c.dffVal, at)
 			c.dffSrc = append(c.dffSrc, src(g.ID+":0"))
+			continue
+		}
+		if b, ok := Blocks[g.Type]; ok {
+			o := op{luts: b.Luts}
+			for i := range b.Inputs {
+				o.ins = append(o.ins, src(fmt.Sprintf("%s:%d", g.ID, i)))
+			}
+			for k := range b.Outputs {
+				o.dsts = append(o.dsts, at+int32(k))
+			}
+			c.ops = append(c.ops, o)
 			continue
 		}
 		a := src(g.ID + ":0")
@@ -233,7 +302,7 @@ func (c *compiled) program() {
 		if arity[g.Type] == 2 {
 			b = src(g.ID + ":1")
 		}
-		c.ops = append(c.ops, op{lut: lut[g.Type], a: a, b: b, dst: int32(n + i)})
+		c.ops = append(c.ops, op{lut: lut[g.Type], a: a, b: b, dst: at})
 	}
 	for _, o := range c.spec.Outputs {
 		c.outSrc = append(c.outSrc, src("out:"+o))
@@ -257,7 +326,17 @@ func (c *compiled) step(r int, state uint64, vals, out []uint8) uint64 {
 		vals[at] = uint8(state>>i) & 1
 	}
 	for _, o := range c.ops {
-		vals[o.dst] = o.lut >> (vals[o.a]<<1 | vals[o.b]) & 1
+		if o.ins == nil {
+			vals[o.dst] = o.lut >> (vals[o.a]<<1 | vals[o.b]) & 1
+			continue
+		}
+		var r uint8
+		for _, at := range o.ins {
+			r = r<<1 | vals[at]
+		}
+		for k, at := range o.dsts {
+			vals[at] = o.luts[k] >> r & 1
+		}
 	}
 	for i, at := range c.outSrc {
 		out[i] = vals[at]
@@ -366,7 +445,8 @@ func Canonical(c Circuit) Circuit {
 		if i := strings.LastIndexByte(p, ':'); i >= 0 {
 			return ids[p[:i]] + p[i:]
 		}
-		return ids[p]
+		id, k := parseSource(p)
+		return sourcePort(ids[id], k)
 	}
 	for i, w := range c.Wires {
 		out.Wires[i] = Wire{From: port(w.From), To: port(w.To)}
