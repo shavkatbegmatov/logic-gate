@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.33.0',
+    date: '2026-11-25',
+    uz: [
+      "Hikoya yana to'rt bo'limga yetdi: «Tarozi minorasi» (Kombinatsion sxemalar), «Kumush ombor» (Faqat NAND), «Hisob xonasi» (Shinalar) va «Ustozning yuragi» (ALU). Har birida kirish va yakuniy sahnalar, har darajada o'z hikoya qatori; Chiroq «qo'sh», «hammasi bittadan», «birga» va «hisobla» degan so'zlarni o'rganadi.",
+    ],
+    ru: [
+      'История дошла ещё до четырёх глав: «Башня весов» (Комбинационные схемы), «Серебряный склад» (Только NAND), «Счётная палата» (Шины) и «Сердце Устоза» (АЛУ). В каждой — вступительная и финальная сцены и своя строка истории на каждом уровне; Огонёк учит слова «сложи», «всё из одного», «вместе» и «считай».',
+    ],
+  },
+  {
     version: '2.32.0',
     date: '2026-11-25',
     uz: [

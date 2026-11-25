@@ -469,6 +469,102 @@
   opacity: 0.6;
 }
 
+/* 3-bo'lim: Tarozi minorasi. */
+.story-svg .tower-window.lit {
+  fill: var(--lamp-on);
+}
+
+.story-svg .scale-beam.big {
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.story-svg .pan {
+  fill: var(--raise);
+  stroke: var(--copper);
+  stroke-width: 1.5;
+}
+
+.story-svg .weight {
+  fill: var(--copper);
+}
+
+.story-svg .weight-bit {
+  fill: var(--bg2);
+  font: 600 12px var(--mono, monospace);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* 4-bo'lim: Kumush ombor. */
+.story-svg .shelf {
+  fill: var(--copper);
+  opacity: 0.6;
+}
+
+.story-svg .ingot {
+  fill: var(--silver);
+  stroke: var(--lead);
+  stroke-width: 1;
+  opacity: 0.8;
+}
+
+.story-svg .ingot.big {
+  opacity: 1;
+  stroke-width: 1.5;
+}
+
+.story-svg .ingot-name {
+  fill: var(--bg2);
+  font: 600 14px var(--mono, monospace);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.story-svg .pool {
+  fill: var(--raise);
+  stroke: var(--copper);
+  stroke-width: 1.5;
+}
+
+.story-svg .pool-rim {
+  stroke: var(--copper);
+  stroke-width: 3;
+}
+
+.story-svg .water-jet,
+.story-svg .water {
+  fill: none;
+  stroke: var(--sel);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.story-svg .water {
+  stroke-width: 2;
+}
+
+.story-svg .drop {
+  fill: var(--sel);
+  animation: story-blink 1.4s ease-in-out infinite;
+}
+
+/* Shinalar va ALU. */
+.story-svg .bus-line.thin {
+  stroke-width: 2;
+}
+
+.story-svg .alu {
+  fill: var(--bg2);
+  stroke: var(--gate-stroke);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.story-svg .alu.lit {
+  stroke: var(--accent);
+}
+
 @keyframes story-blink {
   50% {
     opacity: 0.2;
