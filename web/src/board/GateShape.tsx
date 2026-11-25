@@ -66,16 +66,25 @@ export const CHIP_CODE: Record<GateType, string> = {
   DFF: '74HC74',
 };
 
-/** Mikrosxema: qora korpus, kirish va chiqish uchlari o'rnida oyoqchalar, burchakda 1-oyoq belgisi. */
+/** Mikrosxema («Haqiqiy plata» mavzusi): qora DIP korpus, qalay oyoqchalar, 1-oyoq kesigi va holat LEDi. */
 function Chip({ type }: { type: GateType }) {
+  const out = outputY(type);
   return (
     <g class="gate-shape">
+      <rect class="chip-shadow" x={CHIP.x + 1.5} y={CHIP.y + 2.2} width={CHIP.w} height={CHIP.h} rx={3} />
       {inputLeads(type).map((y) => (
-        <rect key={y} class="chip-pin" x={0} y={y - 2.5} width={CHIP.x + 1} height={5} />
+        <g key={y}>
+          <circle class="chip-pad" cx={0} cy={y} r={5.2} />
+          <rect class="chip-pin" x={0} y={y - 2.5} width={CHIP.x + 1.5} height={5} rx={0.8} />
+        </g>
       ))}
-      <rect class="chip-pin" x={CHIP.x + CHIP.w - 1} y={outputY(type) - 2.5} width={SHAPE_W - CHIP.x - CHIP.w + 1} height={5} />
-      <rect class="chip-body" x={CHIP.x} y={CHIP.y} width={CHIP.w} height={CHIP.h} rx={2.5} />
-      <circle class="chip-dot" cx={CHIP.x + 5} cy={CHIP.y + 5} r={1.6} />
+      <circle class="chip-pad" cx={SHAPE_W} cy={out} r={5.2} />
+      <rect class="chip-pin" x={CHIP.x + CHIP.w - 1.5} y={out - 2.5} width={SHAPE_W - CHIP.x - CHIP.w + 1.5} height={5} rx={0.8} />
+      <rect class="chip-body" x={CHIP.x} y={CHIP.y} width={CHIP.w} height={CHIP.h} rx={3} />
+      <rect class="chip-die" x={CHIP.x + 2.5} y={CHIP.y + 2.5} width={CHIP.w - 5} height={CHIP.h - 5} rx={1.6} />
+      <path class="chip-notch" d={`M${CHIP.x},${SHAPE_H / 2 - 4.2} A4.2,4.2 0 0 1 ${CHIP.x},${SHAPE_H / 2 + 4.2} Z`} />
+      <circle class="chip-dot" cx={CHIP.x + 5.5} cy={CHIP.y + 5.5} r={1.7} />
+      <circle class="chip-led" cx={CHIP.x + CHIP.w - 5.5} cy={out} r={2} />
     </g>
   );
 }

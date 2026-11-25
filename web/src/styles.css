@@ -23,7 +23,7 @@
   --line: #1d3c30;
   --board: #06100c;
   --board-mat: #0a251b;
-  --board-frame: #20523d;
+  --board-frame: #2a684e;
   --pin: #13261f;
   --pin-stroke: #5b8b74;
   --grid: #183d2e;
@@ -46,7 +46,7 @@
   --gate-on-fill: #1a211b;
   --gate-on-stroke: #ffbe42;
   --lead: #c5ccd0;
-  --trace: #2b6e50;
+  --trace: #4a8f74;
   --trace-on: #ffbe42;
   --trace-w: 4px;
   --glow: rgba(255, 190, 66, 0.24);
@@ -116,7 +116,7 @@
   --gate-on-fill: #262519;
   --gate-on-stroke: #fbbf24;
   --lead: #c8cfd8;
-  --trace: #445364;
+  --trace: #5f748c;
   --trace-on: #fbbf24;
   --trace-w: 4px;
   --glow: rgba(251, 191, 36, 0.24);
@@ -252,7 +252,7 @@
   --gate-on-fill: #0b2740;
   --gate-on-stroke: #26f0ff;
   --lead: #79b8e6;
-  --trace: #1e4270;
+  --trace: #3268a8;
   --trace-on: #26f0ff;
   --trace-w: 4px;
   --glow: rgba(38, 240, 255, 0.28);
@@ -297,11 +297,11 @@
   --edge-strong: rgba(242, 184, 75, 0.42);
   --line: #1c2e58;
   --board: #081128;
-  --board-mat: #0e1b3a;
-  --board-frame: #2a4a86;
+  --board-mat: #0f2046;
+  --board-frame: #466fb0;
   --pin: #12203f;
   --pin-stroke: #5b7fb8;
-  --grid: #172a52;
+  --grid: #1a3060;
   --text: #f3e9d2;
   --muted: #b4bcd3;
   --dim: #8f9bbb;
@@ -309,19 +309,19 @@
   --accent-ink: #1e1402;
   --on: #f2b84b;
   --off: #2b3a5c;
-  --copper: #d08a4a;
+  --copper: #d9934c;
   --sel: #3cc0b4;
   --bad: #ef7a52;
   --good: #6fdc9c;
   --gold: #f2b84b;
   --gold-ink: #f2b84b;
   --star-off: #2a3b63;
-  --gate-fill: #0e1a36;
+  --gate-fill: #10192d;
   --gate-stroke: #5fc9bf;
   --gate-on-fill: #241f16;
   --gate-on-stroke: #f2b84b;
-  --lead: #c7c2b4;
-  --trace: #2a4f8a;
+  --lead: #d0cab9;
+  --trace: #4d7bc0;
   --trace-on: #f2b84b;
   --trace-w: 4px;
   --glow: rgba(242, 184, 75, 0.26);
@@ -389,7 +389,7 @@
   --gate-on-fill: #33290f;
   --gate-on-stroke: #ffb23e;
   --lead: #4b7663;
-  --trace: #75583a;
+  --trace: #98744e;
   --trace-on: #ffb23e;
   --trace-w: 3.6px;
   --glow: rgba(255, 178, 62, 0.18);
@@ -457,7 +457,7 @@
   --gate-on-fill: #17181a;
   --gate-on-stroke: #ffd15c;
   --lead: #c9ced3;
-  --trace: #2e8f63;
+  --trace: #4ea87e;
   --trace-on: #ffd15c;
   --trace-w: 4.2px;
   --glow: rgba(255, 209, 92, 0.2);
@@ -481,9 +481,9 @@
   --float: rgba(6, 42, 28, 0.94);
   --shadow: rgba(0, 0, 0, 0.45);
   --hover: rgba(255, 255, 255, 0.05);
-  --bevel-top: transparent;
-  --bevel-bottom: transparent;
-  --ambient: transparent;
+  --bevel-top: rgba(255, 255, 255, 0.11);
+  --bevel-bottom: rgba(0, 0, 0, 0.45);
+  --ambient: rgba(240, 194, 75, 0.08);
   --on-rgb: 255, 209, 92;
   --accent-rgb: 240, 194, 75;
   --bad-rgb: 255, 122, 107;
@@ -2523,7 +2523,7 @@ p.join-or {
   stroke-dasharray: 5 4;
 }
 
-.pin-body:focus-visible > rect {
+.pin-body:focus-visible > rect:not(.real-deco) {
   stroke: var(--sel);
   stroke-width: 3;
 }
@@ -2536,7 +2536,7 @@ p.join-or {
   outline: none;
 }
 
-.pin-body > rect,
+.pin-body > rect:not(.real-deco),
 .pin .pin-box {
   fill: var(--pin);
   stroke: var(--pin-stroke);
@@ -2559,7 +2559,7 @@ p.join-or {
   fill: var(--text);
 }
 
-.pin-in.on .pin-body > rect {
+.pin-in.on .pin-body > rect:not(.real-deco) {
   fill: var(--gate-on-fill);
   stroke: var(--gate-on-stroke);
 }
@@ -2680,19 +2680,61 @@ p.join-or {
 }
 
 /* ── Haqiqiy plata: element — qora mikrosxema (GateShape chip), chiroq — oltin halqadagi svetodiod ── */
+.chip-shadow {
+  fill: var(--shadow);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.chip-pad {
+  fill: var(--copper);
+  stroke: var(--bezel);
+  stroke-width: 0.6;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
 .chip-body {
   fill: var(--gate-fill);
-  stroke: var(--knob-ink);
-  stroke-width: 1;
+  stroke: var(--pin-stroke);
+  stroke-width: 1.2;
   transition: stroke 0.12s;
+}
+
+.chip-die {
+  fill: none;
+  stroke: var(--bevel-top);
+  stroke-width: 0.9;
+  pointer-events: none;
+}
+
+.chip-notch {
+  fill: var(--board);
+  stroke: var(--pin-stroke);
+  stroke-width: 0.7;
+  pointer-events: none;
 }
 
 .chip-pin {
   fill: var(--lead);
+  stroke: var(--bezel);
+  stroke-width: 0.5;
 }
 
 .chip-dot {
   fill: var(--pin-stroke);
+}
+
+.chip-led {
+  fill: var(--lamp);
+  stroke: var(--lamp-stroke);
+  stroke-width: 0.7;
+  pointer-events: none;
+}
+
+.gate.on .chip-led {
+  fill: var(--lamp-on);
+  stroke: var(--lamp-on-stroke);
 }
 
 /* Mikrosxema markasi (74HC08): bezak — haqiqiy korpusdagi yozuv kabi xira. */
@@ -2842,7 +2884,7 @@ p.join-or {
   cursor: pointer;
 }
 
-.bus-bit.on > rect {
+.bus-bit.on > rect:not(.real-deco) {
   fill: var(--gate-on-fill);
   stroke: var(--gate-on-stroke);
 }
@@ -3043,48 +3085,130 @@ p.join-or {
   box-shadow: inset 0 0 0 3px var(--on);
 }
 
-/* ── 2D Real: ko'p qatlamli apparat ko'rinishi ──────────── */
+/* ── 2D Real: ko'p qatlamli AAA apparat ko'rinishi ─────── */
+.real-slab-shadow {
+  fill: var(--shadow);
+  opacity: 0.65;
+}
+
+.real-slab-edge {
+  fill: color-mix(in srgb, var(--board-frame) 65%, var(--board));
+  stroke: var(--shadow);
+  stroke-width: 1;
+}
+
 .real-slab {
   fill: var(--board-mat);
   stroke: var(--board-frame);
-  stroke-width: 2.5;
+  stroke-width: 2.2;
+}
+
+.real-slab-tex {
+  stroke: none;
+  pointer-events: none;
 }
 
 .real-slab-bevel {
   fill: none;
   stroke: var(--bevel-top);
-  stroke-width: 1.5;
+  stroke-width: 1.4;
+}
+
+.real-slab-inner-frame {
+  fill: none;
+  stroke: var(--copper);
+  stroke-width: 0.85;
+  opacity: 0.28;
+}
+
+.style-minor .real-slab-inner-frame {
+  opacity: 0.48;
+  stroke-width: 1.1;
+}
+
+.style-breadboard .real-slab-inner-frame {
+  display: none;
+}
+
+.style-scifi .real-slab-inner-frame {
+  stroke: var(--accent);
+  opacity: 0.24;
 }
 
 .real-rail-pos {
   fill: none;
   stroke: var(--bad);
-  stroke-width: 2;
-  opacity: 0.7;
+  stroke-width: 2.2;
+  opacity: 0.78;
 }
 
 .real-rail-gnd {
   fill: none;
   stroke: var(--sel);
-  stroke-width: 2;
-  opacity: 0.7;
+  stroke-width: 2.2;
+  opacity: 0.78;
+}
+
+.real-rail-groove-shadow {
+  fill: var(--shadow);
+  opacity: 0.24;
 }
 
 .real-rail-groove {
   fill: var(--grid);
-  opacity: 0.45;
+  stroke: var(--bevel-top);
+  stroke-width: 0.7;
+  opacity: 0.65;
+}
+
+.real-screw-pad {
+  stroke: var(--board);
+  stroke-width: 0.85;
+  opacity: 0.92;
 }
 
 .real-screw-ring {
-  fill: var(--copper);
   stroke: var(--bezel);
-  stroke-width: 1.5;
+  stroke-width: 1;
 }
 
 .real-screw-slot {
   stroke: var(--knob-ink);
   stroke-width: 1.3;
   stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.real-screw-catch {
+  stroke: var(--shine);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+  opacity: 0.35;
+}
+
+.real-micro-screw {
+  stroke: var(--bezel);
+  stroke-width: 0.5;
+}
+
+.real-fid-ring {
+  fill: none;
+  stroke: var(--copper);
+  stroke-width: 0.8;
+}
+
+.real-edge-finger {
+  stroke: var(--board);
+  stroke-width: 0.6;
+  opacity: 0.82;
+}
+
+.real-scifi-corners {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.65;
 }
 
 .real-silk {
@@ -3094,16 +3218,70 @@ p.join-or {
   pointer-events: none;
 }
 
+.style-minor .real-silk {
+  fill: var(--copper);
+  opacity: 0.85;
+}
+
+.real-ic-shadow-soft {
+  fill: var(--shadow);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
 .real-ic-shadow {
   fill: var(--shadow);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.real-pad-ring {
+  fill: var(--board);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.real-ic-pad {
+  stroke: var(--bezel);
+  stroke-width: 0.7;
+  pointer-events: none;
+}
+
+.real-ic-pin-shadow {
+  fill: var(--shadow);
+  opacity: 0.52;
+  pointer-events: none;
+}
+
+.real-ic-pin {
+  stroke: var(--bezel);
+  stroke-width: 0.55;
+  pointer-events: none;
+}
+
+.real-solder-collar {
+  fill: var(--silver);
+  opacity: 0.72;
   pointer-events: none;
 }
 
 .real-ic-body {
   fill: var(--gate-fill);
   stroke: var(--gate-stroke);
-  stroke-width: 1.4;
-  transition: stroke 0.12s, fill 0.12s;
+  stroke-width: 1.45;
+  transition: stroke 0.14s, fill 0.14s;
+}
+
+.real-ic-sheen {
+  pointer-events: none;
+}
+
+.real-ic-die {
+  fill: none;
+  stroke: var(--bevel-bottom);
+  stroke-width: 1;
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 .real-ic-bevel {
@@ -3113,34 +3291,55 @@ p.join-or {
   pointer-events: none;
 }
 
+.real-top-rim {
+  stroke: var(--shine);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  opacity: 0.28;
+  pointer-events: none;
+}
+
 .real-ic-window {
-  fill: var(--board);
   stroke: var(--line);
   stroke-width: 1;
   pointer-events: none;
 }
 
-.real-ic-pin {
-  fill: var(--lead);
-  stroke: var(--bezel);
-  stroke-width: 0.6;
+.real-glass-glint {
+  stroke: var(--shine);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.25;
+  pointer-events: none;
 }
 
-.real-ic-pad {
-  fill: var(--copper);
-  opacity: 0.9;
+.real-scifi-ticks {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.1;
+  opacity: 0.65;
+  pointer-events: none;
 }
 
 .real-ic-notch {
-  fill: var(--bevel-bottom);
-  stroke: var(--line);
-  stroke-width: 0.8;
+  fill: var(--board);
+  stroke: var(--bevel-top);
+  stroke-width: 0.7;
+  pointer-events: none;
+}
+
+.real-ic-dimple {
+  fill: var(--board);
+  stroke: var(--bevel-top);
+  stroke-width: 0.7;
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .real-ic-sym {
   fill: none;
   stroke: var(--muted);
-  stroke-width: 1.6;
+  stroke-width: 1.65;
   stroke-linejoin: round;
   stroke-linecap: round;
   pointer-events: none;
@@ -3166,30 +3365,81 @@ p.join-or {
   animation: blink 0.5s 4;
 }
 
-.real-ic-led {
-  fill: var(--lamp);
-  stroke: var(--lamp-stroke);
-  stroke-width: 0.8;
+.real-ic-led-g,
+.real-sw-led-g {
+  pointer-events: none;
 }
 
-.gate.on .real-ic-led {
-  fill: var(--lamp-on);
+.real-ic-led-halo {
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+
+.gate.on .real-ic-led-halo,
+.pin-in.on .real-ic-led-halo {
+  opacity: 1;
+}
+
+.real-ic-led-bezel {
+  stroke: var(--bezel);
+  stroke-width: 0.5;
+}
+
+.real-ic-led,
+.real-sw-led {
+  fill: url(#r-led-off);
+  stroke: var(--lamp-stroke);
+  stroke-width: 0.55;
+  transition: stroke 0.15s;
+}
+
+.gate.on .real-ic-led,
+.pin-in.on .real-sw-led {
+  fill: url(#r-led-on);
   stroke: var(--lamp-on-stroke);
+}
+
+.real-ic-led-shine {
+  fill: var(--shine);
+  opacity: 0.55;
+}
+
+.gate.on .real-ic-led-shine {
+  opacity: 0.95;
 }
 
 .real-wire-base {
   fill: none;
   stroke: var(--shadow);
-  stroke-width: calc(var(--trace-w) + 2.4px);
+  stroke-width: calc(var(--trace-w) + 2.8px);
   stroke-linecap: round;
   stroke-linejoin: round;
+  opacity: 0.78;
   pointer-events: none;
+}
+
+.real-wire-spec {
+  fill: none;
+  stroke: var(--shine);
+  stroke-width: 1.15px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.wire.on .real-wire-spec {
+  opacity: 0.52;
+}
+
+.wire.bus .real-wire-spec {
+  stroke-width: 2.2px;
 }
 
 .real-wire-pulse {
   fill: none;
   stroke: var(--pulse);
-  stroke-width: 2px;
+  stroke-width: 2.1px;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 4 11;
@@ -3202,14 +3452,21 @@ p.join-or {
   opacity: 0.5;
 }
 
+.real-dot-shine {
+  fill: var(--shine);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .real-smd-pad {
-  fill: var(--lead);
+  stroke: var(--bezel);
+  stroke-width: 0.55;
 }
 
 .real-smd-body {
   fill: var(--gate-fill);
-  stroke: var(--line);
-  stroke-width: 0.8;
+  stroke: var(--bevel-top);
+  stroke-width: 0.75;
 }
 
 .real-smd-mark {
@@ -3232,7 +3489,51 @@ p.join-or {
   opacity: 1;
 }
 
-.real-sw-housing {
+.real-lamp-halo {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.pin-out.on .real-lamp-halo {
+  opacity: 1;
+}
+
+.real-lamp-bezel {
+  stroke: var(--bezel);
+  stroke-width: 0.9;
+}
+
+.real-lamp-cup {
+  fill: var(--board);
+  stroke: var(--shadow);
+  stroke-width: 0.8;
+}
+
+.real-lamp-dome {
+  fill: url(#r-led-off);
+  stroke: var(--lamp-stroke);
+  stroke-width: 0.9;
+}
+
+.pin-out.on .real-lamp-dome {
+  fill: url(#r-led-on);
+  stroke: var(--lamp-on-stroke);
+}
+
+.real-lamp-crescent {
+  fill: none;
+  stroke: var(--shine);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  opacity: 0.36;
+}
+
+.pin-out.on .real-lamp-crescent {
+  opacity: 0.82;
+}
+
+.real-sw-housing,
+.real-out-housing {
   fill: var(--pin);
   stroke: var(--pin-stroke);
   stroke-width: 1.6;
@@ -3241,6 +3542,101 @@ p.join-or {
 .pin-in.on .real-sw-housing {
   fill: var(--gate-on-fill);
   stroke: var(--gate-on-stroke);
+}
+
+/* Maket platasi (yorug' mavzu): yoniq tumbler korpusi yorug' qoladi — A/B harfi aniq o'qilsin; qora epoksid chip yozuvi oqimtir. */
+:root[data-theme='breadboard'] .board-real .pin-in.on .real-sw-housing {
+  fill: color-mix(in srgb, var(--pin) 86%, var(--on));
+}
+
+:root[data-theme='breadboard'] .board-real .gate:not(.on) .gate-label,
+:root[data-theme='breadboard'] .board-real .gate:not(.on) .block-label {
+  fill: var(--knob);
+}
+
+:root[data-theme='breadboard'] .board-real .gate:not(.on) .real-ic-sym {
+  stroke: var(--knob);
+  opacity: 0.78;
+}
+
+:root[data-theme='breadboard'] .board-real .gate .chip-code,
+:root[data-theme='breadboard'] .board-real .gate .block-pin {
+  fill: var(--lead);
+}
+
+.pin-out.good .real-out-housing {
+  stroke: var(--good);
+}
+
+.pin-out.bad .real-out-housing,
+.pin-out.err .real-out-housing {
+  stroke: var(--bad);
+}
+
+.real-sw-well {
+  stroke: var(--board);
+  stroke-width: 0.8;
+}
+
+.board-real .sw-track {
+  fill: url(#r-oled-grad);
+  stroke: var(--bezel);
+  stroke-width: 1.1;
+}
+
+.board-real .pin-in.on .sw-track {
+  fill: var(--lamp-on);
+  stroke: var(--lamp-on-stroke);
+}
+
+.real-knob-shadow {
+  fill: var(--shadow);
+  opacity: 0.6;
+}
+
+.real-knob-cap {
+  stroke: var(--bezel);
+  stroke-width: 0.8;
+}
+
+.real-knob-ring {
+  fill: none;
+  stroke: var(--bevel-bottom);
+  stroke-width: 0.7;
+  opacity: 0.55;
+}
+
+.board-real .pin-in.on .real-knob-ring {
+  stroke: var(--on);
+  opacity: 0.85;
+}
+
+.real-bus-led {
+  stroke: var(--lamp-stroke);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.bus-bit.on .real-bus-led {
+  stroke: var(--lamp-on);
+  opacity: 1;
+}
+
+.board-real .port-dot {
+  fill: var(--board);
+  stroke: var(--copper);
+  stroke-width: 1.8;
+}
+
+.board-real .port.src .port-dot {
+  fill: url(#r-pad-grad);
+}
+
+.board-real .port.on .port-dot {
+  fill: url(#r-led-on);
+  stroke: var(--lamp-on-stroke);
 }
 
 /* ── 3D Real maydon (WebGL) ────────────────────────────── */

@@ -36,6 +36,18 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.34.2',
+    date: '2026-11-25',
+    uz: [
+      "2D Real rejimi AAA apparat darajasiga ko'tarildi: 2.5D qalinlikli plata, Phillips montaj vintlari, oltin chekka kontaktlari, qalaylangan metall oyoqchali 74HC chiplar va blok modullari, yaltiroq mis yo'llar hamda optik gumbazli LED chiroqlar.",
+      "«Mis va lojuvard» (Samarqand), «Sanoat PCB», «Laboratoriya», «Maket platasi», «Sci-Fi» hamda «Haqiqiy plata» uslublarida o'chiq simlar kontrasti va chip detallari yangilandi («Daftar» va «Chizma» o'zgarishsiz qoldi).",
+    ],
+    ru: [
+      'Режим «2D Real» переведён на уровень AAA-железа: объёмная плата с крестовыми винтами и золотыми контактами, микросхемы 74HC и блоки с металлическими выводами, блестящие дорожки и объёмные оптические светодиоды.',
+      'Улучшены контрастность выключенных дорожек и детализация элементов в темах «Медь и лазурь», «Промышленная PCB», «Лаборатория», «Макетная плата», «Кибер Sci-Fi» и «Настоящая плата» («Тетрадь» и «Чертёж» без изменений).',
+    ],
+  },
+  {
     version: '2.34.1',
     date: '2026-11-25',
     uz: [

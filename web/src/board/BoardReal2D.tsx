@@ -1,13 +1,13 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { t } from '../i18n';
-import { GATE_ARITY, gateOutputs, isBlock, sourcePort, type GateType } from '../sim/types';
+import { GATE_ARITY, gateOutputs, isBlock, sourcePort, type BlockType, type GateType } from '../sim/types';
 import { activeTheme, resolveRealStyle, type RealStyle } from '../theme';
 import type { Editor } from './editor';
 import { BusInPin, BusOutPin } from './BusPins';
-import { CHIP_CODE, GateShape } from './GateShape';
+import { CHIP_CODE } from './GateShape';
 import { bounds, GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { routeD } from './routing';
-import { blockText, DFF_BODY, inputLeads, outputY, SHAPES } from './shapes';
+import { BLOCK_BODY, BLOCK_SHAPE, blockText, DFF_BODY, inputLeads, outputLeads, outputY, SHAPES } from './shapes';
 import { TRANSPOSE, useBoard2D } from './useBoard2D';
 
 interface Props {
@@ -24,12 +24,12 @@ function netColor(net: string): string {
   return JUMPER_COLORS[Math.abs(h) % JUMPER_COLORS.length];
 }
 
-/** Chip yuzasiga bosilgan kichik ANSI mantiqiy belgi (silkscreen / OLED oyna ichida). */
+/** Chip yuzasiga lazer bilan o'yilgan kichik ANSI mantiqiy belgi (silkscreen / OLED oyna ichida). */
 function MiniSymbol({ type }: { type: GateType }) {
   if (type === 'DFF') {
     const d = DFF_BODY;
     return (
-      <g class="real-ic-sym" transform="translate(22,7) scale(0.36)">
+      <g class="real-ic-sym" transform="translate(22,6.5) scale(0.36)">
         <rect x={d.x} y={d.y} width={d.w} height={d.h} rx={d.rx} />
         <path d={d.clock} />
       </g>
@@ -38,7 +38,7 @@ function MiniSymbol({ type }: { type: GateType }) {
   if (isBlock(type)) return null;
   const s = SHAPES[type];
   return (
-    <g class="real-ic-sym" transform="translate(23,5) scale(0.36)">
+    <g class="real-ic-sym" transform="translate(23,4.5) scale(0.36)">
       {s.back && <path d={s.back} />}
       <path d={s.body} />
       {s.bubble && <circle cx={s.tip + 4} cy={24} r={4} />}
@@ -46,7 +46,35 @@ function MiniSymbol({ type }: { type: GateType }) {
   );
 }
 
-/** Qavatli apparat komponenti: DIP mikrosxema, laboratoriya moduli yoki Sci-Fi yadro. */
+/** Metall qalaylangan IC oyoqcha va mis/oltin kavshar maydonchasi (2.5D yaltirash bilan). */
+function MetalLead({ x0, x1, y, padX, bus }: { x0: number; x1: number; y: number; padX: number; bus?: boolean }) {
+  const h = bus ? 7.6 : 5.2;
+  const padR = bus ? 7.4 : 5.6;
+  const left = Math.min(x0, x1);
+  const w = Math.abs(x1 - x0);
+  const collarX = padX === left ? left + 2.5 : left + w - 4.5;
+  return (
+    <g>
+      <circle class="real-pad-ring" cx={padX} cy={y} r={padR + 1.2} />
+      <circle class="real-ic-pad" cx={padX} cy={y} r={padR} fill="url(#r-pad-grad)" />
+      <rect class="real-ic-pin-shadow" x={left} y={y - h / 2 + 1.2} width={w} height={h} rx={1.1} />
+      <rect class="real-ic-pin" x={left} y={y - h / 2} width={w} height={h} rx={1.1} fill="url(#r-metal-v)" />
+      <rect class="real-solder-collar" x={collarX} y={y - h / 2 - 0.6} width={2.4} height={h + 1.2} rx={0.9} />
+    </g>
+  );
+}
+
+/** Burchakdagi kichik metall mix (Laboratoriya / Switch / Panel korpuslari uchun). */
+function MicroScrew({ x, y, r = 1.8 }: { x: number; y: number; r?: number }) {
+  return (
+    <g transform={`translate(${x},${y})`} pointer-events="none">
+      <circle class="real-micro-screw" r={r} fill="url(#r-screw-silver)" />
+      <line class="real-screw-slot" x1={-r * 0.55} y1={-r * 0.55} x2={r * 0.55} y2={r * 0.55} />
+    </g>
+  );
+}
+
+/** Qavatli AAA apparat komponenti: 74HC DIP mikrosxema, alyuminiy laboratoriya moduli yoki Sci-Fi yadro. */
 function RealGateBody({ type, style }: { type: GateType; style: RealStyle }) {
   const ins = inputLeads(type);
   const out = outputY(type);
@@ -56,69 +84,160 @@ function RealGateBody({ type, style }: { type: GateType; style: RealStyle }) {
   const by = 3;
   const bw = 48;
   const bh = 42;
+  const rx = isSciFi ? 6 : isBench ? 5 : 3;
+  const octPts = `${bx + 6},${by} ${bx + bw - 6},${by} ${bx + bw},${by + 6} ${bx + bw},${by + bh - 6} ${bx + bw - 6},${by + bh} ${bx + 6},${by + bh} ${bx},${by + bh - 6} ${bx},${by + 6}`;
 
   return (
     <g class="gate-shape">
-      <rect class="real-ic-shadow" x={bx + 2} y={by + 3} width={bw} height={bh} rx={isSciFi ? 7 : 4} />
-      {/* Kontakt maydonchalari va oyoqchalar */}
+      {/* Ikki qatlamli yumshoq tushma soya (penumbra + kontakt soyasi) */}
+      <rect class="real-ic-shadow-soft" x={bx + 2.5} y={by + 4} width={bw} height={bh} rx={rx + 1} />
+      <rect class="real-ic-shadow" x={bx + 1.2} y={by + 2.2} width={bw} height={bh} rx={rx} />
+
+      {/* Oyoqchalar va mis kavshar maydonchalari */}
       {ins.map((y) => (
-        <g key={y}>
-          <circle class="real-ic-pad" cx={0} cy={y} r={5.5} />
-          <rect class="real-ic-pin" x={0} y={y - 2.6} width={bx + 2} height={5.2} rx={1} />
-        </g>
+        <MetalLead key={`i${y}`} x0={0} x1={bx + 2.5} y={y} padX={0} />
       ))}
-      <circle class="real-ic-pad" cx={GATE_W} cy={out} r={5.5} />
-      <rect class="real-ic-pin" x={bx + bw - 2} y={out - 2.6} width={GATE_W - bx - bw + 2} height={5.2} rx={1} />
+      <MetalLead x0={bx + bw - 2.5} x1={GATE_W} y={out} padX={GATE_W} />
 
-      {/* Korpus */}
+      {/* Korpus asosiy shakli + 2.5D qalinlik qirrasi + studiya yorug'lik jilosi */}
       {isSciFi ? (
-        <polygon
-          class="real-ic-body"
-          points={`${bx + 6},${by} ${bx + bw - 6},${by} ${bx + bw},${by + 6} ${bx + bw},${by + bh - 6} ${bx + bw - 6},${by + bh} ${bx + 6},${by + bh} ${bx},${by + bh - 6} ${bx},${by + 6}`}
-        />
+        <>
+          <polygon class="real-ic-body" points={octPts} />
+          <polygon class="real-ic-sheen" points={octPts} fill="url(#r-ic-sheen)" />
+        </>
       ) : (
-        <rect class="real-ic-body" x={bx} y={by} width={bw} height={bh} rx={isBench ? 5 : 3} />
+        <>
+          <rect class="real-ic-body" x={bx} y={by} width={bw} height={bh} rx={rx} />
+          <rect class="real-ic-sheen" x={bx} y={by} width={bw} height={bh} rx={rx} fill="url(#r-ic-sheen)" />
+        </>
       )}
-      <rect class="real-ic-bevel" x={bx + 1.5} y={by + 1.5} width={bw - 3} height={bh - 3} rx={isSciFi ? 5 : 2.5} />
 
-      {/* 1-oyoqcha chuqurchasi / burchak mixlari */}
+      {/* Ichki qavariq sirt (molded epoxy die table / anodlangan qirra) */}
+      <rect class="real-ic-die" x={bx + 3} y={by + 3} width={bw - 6} height={bh - 6} rx={Math.max(1.5, rx - 1.5)} />
+      <rect class="real-ic-bevel" x={bx + 1.4} y={by + 1.4} width={bw - 2.8} height={bh - 2.8} rx={Math.max(2, rx - 0.8)} />
+      <line class="real-top-rim" x1={bx + rx + 1} y1={by + 1.2} x2={bx + bw - rx - 1} y2={by + 1.2} />
+
+      {/* Uslubga xos apparat tafsilotlari */}
       {isBench ? (
         <>
-          <circle class="real-ic-pad" cx={bx + 4} cy={by + 4} r={1.4} />
-          <circle class="real-ic-pad" cx={bx + bw - 4} cy={by + 4} r={1.4} />
-          <circle class="real-ic-pad" cx={bx + 4} cy={by + bh - 4} r={1.4} />
-          <circle class="real-ic-pad" cx={bx + bw - 4} cy={by + bh - 4} r={1.4} />
-          <rect class="real-ic-window" x={bx + 6} y={by + 4} width={bw - 12} height={22} rx={3} />
+          <MicroScrew x={bx + 4.2} y={by + 4.2} r={1.6} />
+          <MicroScrew x={bx + bw - 4.2} y={by + 4.2} r={1.6} />
+          <MicroScrew x={bx + 4.2} y={by + bh - 4.2} r={1.6} />
+          <MicroScrew x={bx + bw - 4.2} y={by + bh - 4.2} r={1.6} />
+          <rect class="real-ic-window" x={bx + 6} y={by + 4} width={bw - 12} height={21} rx={3} fill="url(#r-oled-grad)" />
+          <line class="real-glass-glint" x1={bx + 8} y1={by + 6} x2={bx + 17} y2={by + 6} />
         </>
       ) : isSciFi ? (
-        <rect class="real-ic-window" x={bx + 5} y={by + 4} width={bw - 10} height={22} rx={4} />
+        <>
+          <rect class="real-ic-window" x={bx + 5.5} y={by + 4} width={bw - 11} height={21} rx={3.5} fill="url(#r-oled-grad)" />
+          <path class="real-scifi-ticks" d={`M${bx + 4},${by + 9} v-3 h3 M${bx + bw - 4},${by + 9} v-3 h-3 M${bx + 4},${by + bh - 9} v3 h3 M${bx + bw - 4},${by + bh - 9} v3 h-3`} />
+        </>
       ) : (
         <>
-          <path class="real-ic-notch" d={`M${bx},${GATE_H / 2 - 4.5} A4.5,4.5 0 0 1 ${bx},${GATE_H / 2 + 4.5}`} />
-          <circle class="chip-dot" cx={bx + 5.5} cy={by + 5.5} r={1.7} />
+          {/* DIP-14 yarim doirali 1-oyoqcha kesigi va lazerli nuqta */}
+          <path class="real-ic-notch" d={`M${bx},${GATE_H / 2 - 4.8} A4.8,4.8 0 0 1 ${bx},${GATE_H / 2 + 4.8} Z`} />
+          <circle class="real-ic-dimple" cx={bx + 6} cy={by + 6} r={2} />
         </>
       )}
 
       <MiniSymbol type={type} />
-      {/* Korpus ustidagi holat LED chirog'i */}
-      <circle class="real-ic-led" cx={bx + bw - 6} cy={out} r={2.4} />
+
+      {/* Korpus ustidagi SMD holat LED chirog'i (gardi + optik linza + yorug'lik halosi) */}
+      <g class="real-ic-led-g" transform={`translate(${bx + bw - 6.2},${out})`}>
+        <circle class="real-ic-led-halo" r={6.5} fill="url(#r-led-halo)" />
+        <circle class="real-ic-led-bezel" r={3.1} fill="url(#r-bezel-grad)" />
+        <circle class="real-ic-led" r={2.2} />
+        <circle class="real-ic-led-shine" cx={-0.7} cy={-0.7} r={0.75} />
+      </g>
     </g>
   );
 }
 
-/** 4 burchakdagi montaj vinti (PCB / Laboratoriya / Sci-Fi). */
-function Screw({ x, y }: { x: number; y: number }) {
+/** Ko'p oyoqli AAA blok moduli (HA, FA, MUX, DEC, ADD4, ALU4, REG4, PC4 va h.k.). */
+function RealBlockBody({ type, style, isBusPort }: { type: BlockType; style: RealStyle; isBusPort: (idx: number, out: boolean) => boolean }) {
+  const b = BLOCK_BODY;
+  const h = BLOCK_SHAPE[type].h;
+  const isSciFi = style === 'scifi';
+  const isBench = style === 'bench';
+  const bx = b.x;
+  const by = 2;
+  const bw = b.w;
+  const bh = h - 4;
+  const rx = isSciFi ? 6 : isBench ? 5 : 3.5;
+
+  return (
+    <g class="gate-shape block-shape">
+      <rect class="real-ic-shadow-soft" x={bx + 2.5} y={by + 4} width={bw} height={bh} rx={rx + 1} />
+      <rect class="real-ic-shadow" x={bx + 1.2} y={by + 2.2} width={bw} height={bh} rx={rx} />
+
+      {inputLeads(type).map((y, i) => (
+        <MetalLead key={`i${i}`} x0={0} x1={bx + 2} y={y} padX={0} bus={isBusPort(i, false)} />
+      ))}
+      {outputLeads(type).map((y, k) => (
+        <MetalLead key={`o${k}`} x0={bx + bw - 2} x1={GATE_W} y={y} padX={GATE_W} bus={isBusPort(k, true)} />
+      ))}
+
+      <rect class="real-ic-body" x={bx} y={by} width={bw} height={bh} rx={rx} />
+      <rect class="real-ic-sheen" x={bx} y={by} width={bw} height={bh} rx={rx} fill="url(#r-ic-sheen)" />
+      <rect class="real-ic-die" x={bx + 3} y={by + 3} width={bw - 6} height={bh - 6} rx={Math.max(1.5, rx - 1.5)} />
+      <rect class="real-ic-bevel" x={bx + 1.4} y={by + 1.4} width={bw - 2.8} height={bh - 2.8} rx={Math.max(2, rx - 0.8)} />
+      <line class="real-top-rim" x1={bx + rx + 1} y1={by + 1.2} x2={bx + bw - rx - 1} y2={by + 1.2} />
+
+      {isBench ? (
+        <>
+          <MicroScrew x={bx + 4.2} y={by + 4.2} r={1.6} />
+          <MicroScrew x={bx + bw - 4.2} y={by + 4.2} r={1.6} />
+          <MicroScrew x={bx + 4.2} y={by + bh - 4.2} r={1.6} />
+          <MicroScrew x={bx + bw - 4.2} y={by + bh - 4.2} r={1.6} />
+        </>
+      ) : (
+        <>
+          <path class="real-ic-notch" d={`M${bx + bw / 2 - 5},${by} A5,5 0 0 0 ${bx + bw / 2 + 5},${by} Z`} />
+          <circle class="real-ic-dimple" cx={bx + 6} cy={by + 6} r={1.9} />
+        </>
+      )}
+
+      {/* Yuqori chetda holat LED indikatori */}
+      <g class="real-ic-led-g" transform={`translate(${bx + bw - 6.5},${by + 6.5})`}>
+        <circle class="real-ic-led-halo" r={6} fill="url(#r-led-halo)" />
+        <circle class="real-ic-led-bezel" r={2.9} fill="url(#r-bezel-grad)" />
+        <circle class="real-ic-led" r={2} />
+        <circle class="real-ic-led-shine" cx={-0.6} cy={-0.6} r={0.7} />
+      </g>
+    </g>
+  );
+}
+
+/** 4 burchakdagi realist Phillips montaj vinti (mis halqa + yaltiroq qalpoqcha + xoch kesik). */
+function Screw({ x, y, brass }: { x: number; y: number; brass?: boolean }) {
   return (
     <g transform={`translate(${x},${y})`}>
-      <circle class="real-screw-ring" r={5} />
-      <line class="real-screw-slot" x1={-2.6} y1={-2.6} x2={2.6} y2={2.6} />
+      <circle class="real-screw-pad" r={7.2} fill="url(#r-pad-grad)" />
+      <circle class="real-screw-ring" r={5.2} fill={brass ? 'url(#r-screw-brass)' : 'url(#r-screw-silver)'} />
+      <g transform="rotate(32)">
+        <line class="real-screw-slot" x1={-2.9} y1={0} x2={2.9} y2={0} />
+        <line class="real-screw-slot" x1={0} y1={-2.9} x2={0} y2={2.9} />
+        <line class="real-screw-catch" x1={-2.4} y1={-0.7} x2={2.4} y2={-0.7} />
+      </g>
+    </g>
+  );
+}
+
+/** PCB optik fidyusial belgisi (haqiqiy zavod platasidagi oltin nishon). */
+function Fiducial({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x},${y})`} opacity={0.75}>
+      <circle class="real-fid-ring" r={3.6} />
+      <circle class="real-fid-dot" r={1.5} fill="url(#r-pad-grad)" />
     </g>
   );
 }
 
 export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
   const b = useBoard2D(editor, expected, topInset);
-  const style = resolveRealStyle(activeTheme.value);
+  const theme = activeTheme.value;
+  const style = resolveRealStyle(theme);
+  const isMinor = theme === 'minor';
   const a11y = t.play.a11y;
 
   const upright = (x: number, y: number, children: ComponentChildren, vx = x, vy = y) => (
@@ -170,10 +289,12 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
   );
 
   const slab = bounds(editor.circuit.value, b.lay, b.vertical);
-  const sx = slab.minX - 20;
-  const sy = slab.minY - 22;
-  const sw = slab.maxX - slab.minX + 40;
-  const sh = slab.maxY - slab.minY + 44;
+  const sx = slab.minX - 24;
+  const sy = slab.minY - 26;
+  const sw = slab.maxX - slab.minX + 48;
+  const sh = slab.maxY - slab.minY + 52;
+  const edgeFingers = Math.min(12, Math.max(4, Math.floor((sw - 120) / 14)));
+  const fingerStart = sx + (sw - edgeFingers * 10) / 2;
 
   let deleteAt = b.gateDeleteAt;
   const tags: ComponentChildren[] = [];
@@ -191,6 +312,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
       const m = routeMid(route);
       tags.push(
         <g key={`tag${i}`} class={`bus-tag${on ? ' on' : ''}${live ? '' : ' idle'}`} transform={`translate(${m.x},${m.y})`}>
+          <rect class="real-ic-shadow" x={-11} y={-7.5} width={24} height={18} rx={9} />
           <rect x={-12} y={-9} width={24} height={18} rx={9} />
           {upright(0, 0, <text>{live && bus !== null ? bus : '–'}</text>)}
         </g>,
@@ -216,9 +338,11 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
         for (const h of pts) {
           smdBridges.push(
             <g key={`${i}-${segIdx}-${h.x},${h.y}`} transform={`translate(${h.x},${h.y}) rotate(${deg})`} pointer-events="none">
-              <rect class="real-smd-pad" x={-9} y={-4} width={4} height={8} rx={0.8} />
-              <rect class="real-smd-pad" x={5} y={-4} width={4} height={8} rx={0.8} />
-              <rect class="real-smd-body" x={-5.5} y={-4.5} width={11} height={9} rx={1} />
+              <rect class="real-ic-shadow" x={-9} y={-3.5} width={19} height={9.5} rx={1.4} />
+              <rect class="real-smd-pad" x={-9.6} y={-4.4} width={4.2} height={8.8} rx={1} fill="url(#r-metal-v)" />
+              <rect class="real-smd-pad" x={5.4} y={-4.4} width={4.2} height={8.8} rx={1} fill="url(#r-metal-v)" />
+              <rect class="real-smd-body" x={-5.8} y={-4.8} width={11.6} height={9.6} rx={1.1} />
+              <rect class="real-ic-sheen" x={-5.8} y={-4.8} width={11.6} height={9.6} rx={1.1} fill="url(#r-ic-sheen)" />
               {/* Tik ekranda sahna akslangan — markazlashgan belgi o'z joyida to'g'rilanadi (silk() ga qarang). */}
               <text class="real-smd-mark" x={0} y={0} transform={b.vertical ? 'scale(1,-1)' : undefined}>
                 000
@@ -241,16 +365,25 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
         <path
           class="wire-line"
           d={d}
-          style={!on && !selected && offStroke ? { stroke: offStroke, opacity: 0.85 } : undefined}
+          style={!on && !selected && offStroke ? { stroke: offStroke, opacity: 0.9 } : undefined}
         />
+        <path class="real-wire-spec" d={d} />
         {on && !selected && <path class="real-wire-pulse" d={d} />}
         {smdBridges}
       </g>
     );
   });
 
+  const boardTitle = isMinor
+    ? 'SAMARQAND // MINOR-IV'
+    : style === 'pcb'
+      ? 'LOGIC-GATE // FR-4 REV-4'
+      : style === 'scifi'
+        ? 'NEXUS-DECK // MK-IV'
+        : 'BENCH // CH-01';
+
   return (
-    <div class={`board board-real style-${style}`} ref={b.wrapRef}>
+    <div class={`board board-real style-${style}${isMinor ? ' style-minor' : ''}`} ref={b.wrapRef}>
       <svg
         ref={b.svgRef}
         class={`board-svg ${b.targetClass}${b.moving.value ? ' moving' : ''}`}
@@ -265,56 +398,191 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
         onContextMenu={(e) => e.preventDefault()}
       >
         <defs>
+          {/* Studiya yoritilishi: plata ustidagi yumshoq diagonal yorug'lik gradienti */}
+          <linearGradient id="r-slab-sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.08 }} />
+            <stop offset="45%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.015 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--shadow)', stopOpacity: 0.34 }} />
+          </linearGradient>
+
+          {/* Epoksid chip / anodlangan korpus ustidagi 2.5D yorug'lik jilosi */}
+          <linearGradient id="r-ic-sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.16 }} />
+            <stop offset="38%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.04 }} />
+            <stop offset="62%" style={{ stopColor: 'var(--shadow)', stopOpacity: 0.0 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--shadow)', stopOpacity: 0.34 }} />
+          </linearGradient>
+
+          {/* Qalaylangan metall oyoqchalar va SMD kontaktlar uchun silindrik yaltirash */}
+          <linearGradient id="r-metal-v" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'var(--bezel)', stopOpacity: 0.92 }} />
+            <stop offset="22%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="46%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.94 }} />
+            <stop offset="74%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.85 }} />
+          </linearGradient>
+
+          {/* Oltin/mis ENIG kavshar maydonchasi */}
+          <radialGradient id="r-pad-grad" cx="35%" cy="32%" r="70%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.65 }} />
+            <stop offset="36%" style={{ stopColor: 'var(--copper)', stopOpacity: 1 }} />
+            <stop offset="82%" style={{ stopColor: 'var(--bronze)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--bezel)', stopOpacity: 0.95 }} />
+          </radialGradient>
+
+          {/* Jez va zanglamas po'lat montaj vintlari */}
+          <radialGradient id="r-screw-brass" cx="34%" cy="30%" r="70%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.85 }} />
+            <stop offset="34%" style={{ stopColor: 'var(--copper)', stopOpacity: 1 }} />
+            <stop offset="78%" style={{ stopColor: 'var(--bronze)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.95 }} />
+          </radialGradient>
+          <radialGradient id="r-screw-silver" cx="34%" cy="30%" r="70%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.9 }} />
+            <stop offset="34%" style={{ stopColor: 'var(--silver)', stopOpacity: 1 }} />
+            <stop offset="78%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.92 }} />
+          </radialGradient>
+
+          {/* Panel LED xrom/jez gardishi */}
+          <linearGradient id="r-bezel-grad" x1="15%" y1="10%" x2="85%" y2="90%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 0.85 }} />
+            <stop offset="28%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="66%" style={{ stopColor: 'var(--bezel)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--silver)', stopOpacity: 0.8 }} />
+          </linearGradient>
+
+          {/* Optik LED gumbaz linzasi (o'chiq va yoniq) + GPU yorug'lik halosi */}
+          <radialGradient id="r-led-off" cx="34%" cy="30%" r="72%">
+            <stop offset="0%" style={{ stopColor: 'var(--muted)', stopOpacity: 0.48 }} />
+            <stop offset="48%" style={{ stopColor: 'var(--lamp)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--board)', stopOpacity: 1 }} />
+          </radialGradient>
+          <radialGradient id="r-led-on" cx="38%" cy="34%" r="68%">
+            <stop offset="0%" style={{ stopColor: 'var(--pulse)', stopOpacity: 1 }} />
+            <stop offset="30%" style={{ stopColor: 'var(--lamp-on-stroke)', stopOpacity: 1 }} />
+            <stop offset="70%" style={{ stopColor: 'var(--lamp-on)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--on)', stopOpacity: 0.95 }} />
+          </radialGradient>
+          <radialGradient id="r-led-halo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style={{ stopColor: 'var(--lamp-on)', stopOpacity: 0.6 }} />
+            <stop offset="40%" style={{ stopColor: 'var(--on)', stopOpacity: 0.24 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--on)', stopOpacity: 0 }} />
+          </radialGradient>
+
+          {/* Tumbler tugma qalpoqchasi va chuqur OLED oynasi */}
+          <radialGradient id="r-knob-grad" cx="36%" cy="30%" r="70%">
+            <stop offset="0%" style={{ stopColor: 'var(--shine)', stopOpacity: 1 }} />
+            <stop offset="42%" style={{ stopColor: 'var(--knob)', stopOpacity: 1 }} />
+            <stop offset="86%" style={{ stopColor: 'var(--lead)', stopOpacity: 1 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--pin-stroke)', stopOpacity: 1 }} />
+          </radialGradient>
+          <linearGradient id="r-oled-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style={{ stopColor: 'var(--board)', stopOpacity: 0.96 }} />
+            <stop offset="50%" style={{ stopColor: 'var(--bezel)', stopOpacity: 0.9 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--board)', stopOpacity: 1 }} />
+          </linearGradient>
+
+          {/* Plata sirti teksturasi (FR-4 via teshiklar, Samarqand girih, maket uyachalari, ESD, Sci-Fi) */}
           <pattern id="real-grid" width={24} height={24} patternUnits="userSpaceOnUse">
             {style === 'breadboard' ? (
               <>
-                <rect x={4.5} y={4.5} width={3} height={3} rx={0.5} fill="var(--grid)" />
-                <rect x={16.5} y={4.5} width={3} height={3} rx={0.5} fill="var(--grid)" />
-                <rect x={4.5} y={16.5} width={3} height={3} rx={0.5} fill="var(--grid)" />
-                <rect x={16.5} y={16.5} width={3} height={3} rx={0.5} fill="var(--grid)" />
+                {[
+                  [4.5, 4.5],
+                  [16.5, 4.5],
+                  [4.5, 16.5],
+                  [16.5, 16.5],
+                ].map(([hx, hy]) => (
+                  <g key={`${hx},${hy}`}>
+                    <rect x={hx - 0.6} y={hy - 0.6} width={4.2} height={4.2} rx={0.8} fill="var(--bevel-top)" opacity={0.9} />
+                    <rect x={hx} y={hy} width={3.2} height={3.2} rx={0.5} fill="var(--knob-ink)" opacity={0.52} />
+                    <rect x={hx + 0.6} y={hy + 0.6} width={2} height={2} rx={0.3} fill="var(--bezel)" opacity={0.55} />
+                  </g>
+                ))}
+              </>
+            ) : isMinor ? (
+              <>
+                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.8} opacity={0.42} />
+                <path d="M12,9.2 L14.8,12 L12,14.8 L9.2,12 Z" fill="none" stroke="var(--copper)" stroke-width={0.65} opacity={0.35} />
+                <circle cx={12} cy={12} r={1.8} fill="var(--copper)" opacity={0.32} />
+                <circle cx={12} cy={12} r={0.85} fill="var(--board)" />
               </>
             ) : style === 'pcb' ? (
               <>
-                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.8} opacity={0.35} />
-                <circle cx={12} cy={12} r={1.3} fill="var(--grid)" />
+                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.75} opacity={0.35} />
+                <circle cx={12} cy={12} r={2.3} fill="var(--copper)" opacity={0.34} />
+                <circle cx={12} cy={12} r={1.05} fill="var(--board)" />
               </>
             ) : style === 'scifi' ? (
               <>
-                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.8} opacity={0.45} />
-                <path d="M10,12 H14 M12,10 V14" fill="none" stroke="var(--grid)" stroke-width={0.9} opacity={0.75} />
+                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.8} opacity={0.48} />
+                <path d="M9.5,12 H14.5 M12,9.5 V14.5" fill="none" stroke="var(--pin-stroke)" stroke-width={0.85} opacity={0.42} />
+                <circle cx={12} cy={12} r={0.9} fill="var(--accent)" opacity={0.28} />
               </>
             ) : (
               <>
-                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.8} opacity={0.45} />
-                <circle cx={12} cy={12} r={0.9} fill="var(--grid)" />
+                <path d="M24,0 H0 V24" fill="none" stroke="var(--grid)" stroke-width={0.85} opacity={0.5} />
+                <path d="M10.5,12 H13.5 M12,10.5 V13.5" fill="none" stroke="var(--muted)" stroke-width={0.7} opacity={0.25} />
               </>
             )}
           </pattern>
         </defs>
 
         <g transform={`translate(${b.view.tx},${b.view.ty}) scale(${b.view.s})${b.vertical ? ` ${TRANSPOSE}` : ''}`}>
-          <rect class="board-bg" x={-5000} y={-5000} width={10000} height={10000} fill="url(#real-grid)" opacity={0.45} />
+          <rect class="board-bg" x={-5000} y={-5000} width={10000} height={10000} fill="url(#real-grid)" opacity={0.28} />
 
-          {/* Asosiy plata korpusi / maket asos */}
+          {/* Asosiy 2.5D plata korpusi / maket asos */}
           <g class="real-substrate" pointer-events="none">
+            {/* Plata ostidagi chuqur stol soyasi va 2.5D qalinlik cheti */}
+            <rect class="real-slab-shadow" x={sx + 4} y={sy + 7} width={sw} height={sh} rx={13} />
+            <rect class="real-slab-edge" x={sx} y={sy + 4} width={sw} height={sh} rx={12} />
             <rect class="real-slab" x={sx} y={sy} width={sw} height={sh} rx={12} />
-            <rect class="real-slab" x={sx} y={sy} width={sw} height={sh} rx={12} fill="url(#real-grid)" opacity={0.8} />
+            <rect class="real-slab-tex" x={sx} y={sy} width={sw} height={sh} rx={12} fill="url(#real-grid)" opacity={0.9} />
+            <rect class="real-slab-tex" x={sx} y={sy} width={sw} height={sh} rx={12} fill="url(#r-slab-sheen)" />
             <rect class="real-slab-bevel" x={sx + 2} y={sy + 2} width={sw - 4} height={sh - 4} rx={10} />
+            <rect class="real-slab-inner-frame" x={sx + 7} y={sy + 7} width={sw - 14} height={sh - 14} rx={7} />
+
             {style === 'breadboard' ? (
               <>
-                <line class="real-rail-pos" x1={sx + 16} y1={sy + 10} x2={sx + sw - 16} y2={sy + 10} />
-                <line class="real-rail-gnd" x1={sx + 16} y1={sy + sh - 10} x2={sx + sw - 16} y2={sy + sh - 10} />
+                <line class="real-rail-pos" x1={sx + 18} y1={sy + 11} x2={sx + sw - 18} y2={sy + 11} />
+                <line class="real-rail-gnd" x1={sx + 18} y1={sy + sh - 11} x2={sx + sw - 18} y2={sy + sh - 11} />
+                <rect class="real-rail-groove-shadow" x={sx + 10} y={(sy + sy + sh) / 2 - 4.5} width={sw - 20} height={9.5} rx={3.5} />
                 <rect class="real-rail-groove" x={sx + 10} y={(sy + sy + sh) / 2 - 4} width={sw - 20} height={8} rx={3} />
-                {silk(sx + 20, sy + 20, '+5V DC')}
+                {silk(sx + 20, sy + 21, '+5V DC')}
                 {silk(sx + 20, sy + sh - 16, 'GND 0V')}
               </>
             ) : (
               <>
-                <Screw x={sx + 12} y={sy + 12} />
-                <Screw x={sx + sw - 12} y={sy + 12} />
-                <Screw x={sx + 12} y={sy + sh - 12} />
-                <Screw x={sx + sw - 12} y={sy + sh - 12} />
-                {silk(sx + 24, sy + 14, style === 'pcb' ? 'LOGIC-GATE // FR4 REV-3' : style === 'scifi' ? 'NEXUS-DECK // MK-IV' : 'BENCH // CH-01')}
+                <Screw x={sx + 14} y={sy + 14} brass={style === 'pcb'} />
+                <Screw x={sx + sw - 14} y={sy + 14} brass={style === 'pcb'} />
+                <Screw x={sx + 14} y={sy + sh - 14} brass={style === 'pcb'} />
+                <Screw x={sx + sw - 14} y={sy + sh - 14} brass={style === 'pcb'} />
+                {style === 'pcb' && (
+                  <>
+                    <Fiducial x={sx + 30} y={sy + sh - 14} />
+                    <Fiducial x={sx + sw - 30} y={sy + 14} />
+                    {/* Pastki chetdagi oltin kontakt tishchalari (PCI / ENIG edge connector) */}
+                    {Array.from({ length: edgeFingers }, (_, fi) => (
+                      <rect
+                        key={fi}
+                        class="real-edge-finger"
+                        x={fingerStart + fi * 10}
+                        y={sy + sh - 6.5}
+                        width={6}
+                        height={6.5}
+                        rx={1}
+                        fill="url(#r-pad-grad)"
+                      />
+                    ))}
+                  </>
+                )}
+                {style === 'scifi' && (
+                  <path
+                    class="real-scifi-corners"
+                    d={`M${sx + 26},${sy + 6} h14 M${sx + sw - 40},${sy + 6} h14 M${sx + 26},${sy + sh - 6} h14 M${sx + sw - 40},${sy + sh - 6} h14`}
+                  />
+                )}
+                {silk(sx + 28, sy + 16, boardTitle)}
               </>
             )}
           </g>
@@ -326,8 +594,10 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
               const on = live && b.values.get(net) === 1;
               return (
                 <g key={`${net}@${at.x},${at.y}`} pointer-events="none">
-                  <circle class="real-ic-pad" cx={at.x} cy={at.y} r={5.4} />
-                  <circle class={`wire-dot${on ? ' on' : ''}${live ? '' : ' idle'}`} cx={at.x} cy={at.y} r={3.4} />
+                  <circle class="real-pad-ring" cx={at.x} cy={at.y} r={6.6} />
+                  <circle class="real-ic-pad" cx={at.x} cy={at.y} r={5.4} fill="url(#r-pad-grad)" />
+                  <circle class={`wire-dot${on ? ' on' : ''}${live ? '' : ' idle'}`} cx={at.x} cy={at.y} r={3.5} />
+                  <circle class="real-dot-shine" cx={at.x - 1.1} cy={at.y - 1.1} r={1.1} />
                 </g>
               );
             })}
@@ -338,6 +608,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             const live = b.reached(g.id, 0);
             const on = live && b.values.get(g.id) === 1;
             const selected = b.sel?.kind === 'gate' && b.sel.id === g.id;
+            const blk = isBlock(g.type);
             return (
               <g
                 key={g.id}
@@ -354,24 +625,33 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   onKeyDown={(e) => b.onGateKey(e, g)}
                 >
                   <rect class="gate-hit" x={4} y={-2} width={GATE_W - 8} height={gateH(g) + 4} rx={8} />
-                  {isBlock(g.type) ? <GateShape type={g.type} /> : <RealGateBody type={g.type} style={style} />}
                   {isBlock(g.type) ? (
+                    <RealBlockBody
+                      type={g.type}
+                      style={style}
+                      isBusPort={(idx, isOut) => b.busPort(isOut ? sourcePort(g.id, idx) : `${g.id}:${idx}`)}
+                    />
+                  ) : (
+                    <RealGateBody type={g.type} style={style} />
+                  )}
+                  {blk ? (
                     <>
-                      {label('gate-label block-label', 36, gateH(g) / 2, blockText(g.type))}
-                      {b.blockLabels(g).ins.map((n, i) => n && <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>)}
+                      {label('gate-label block-label', 36, gateH(g) / 2 - 4, blockText(g.type))}
+                      {label('chip-code', 36, gateH(g) / 2 + 8, CHIP_CODE[g.type])}
+                      {b.blockLabels(g).ins.map((n, i) => n && <Fragment key={`i${i}`}>{label('block-pin', 14.5, inputPortY(g, i), n)}</Fragment>)}
                       {b.blockLabels(g).outs.map(
-                        (n, k) => n && <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>,
+                        (n, k) => n && <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57.5, outputPortY(g, k), n)}</Fragment>,
                       )}
                     </>
                   ) : g.type === 'DFF' ? (
                     <>
-                      {label('gate-label', 35, 32, 'DFF', 28, GATE_H / 2)}
-                      {label('gate-sub', 35, 40, b.states.get(g.id), 44, GATE_H / 2)}
+                      {label('gate-label', 35, 31.5, 'DFF', 28, GATE_H / 2)}
+                      {label('gate-sub', 35, 39.5, b.states.get(g.id), 44, GATE_H / 2)}
                     </>
                   ) : (
                     <>
-                      {label('gate-label', 35, 32, g.type, 29, GATE_H / 2)}
-                      {label('chip-code', 35, 40, CHIP_CODE[g.type], 43, GATE_H / 2)}
+                      {label('gate-label', 35, 31.5, g.type, 29, GATE_H / 2)}
+                      {label('chip-code', 35, 39.5, CHIP_CODE[g.type], 43, GATE_H / 2)}
                     </>
                   )}
                 </g>
@@ -384,7 +664,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   const id = sourcePort(g.id, k);
                   if (b.hidden(id)) return null;
                   const outOn = b.reached(id, 0) && b.values.get(id) === 1;
-                  const name = isBlock(g.type) ? `${b.gateName.get(g.id)!} ${b.blockOutName(g, k)}` : b.gateName.get(g.id)!;
+                  const name = blk ? `${b.gateName.get(g.id)!} ${b.blockOutName(g, k)}` : b.gateName.get(g.id)!;
                   return port(id, GATE_W, outputPortY(g, k), true, b.usedSources.has(id), outOn, a11y.gateOut(name));
                 })}
               </g>
@@ -399,6 +679,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             const on = b.bits[k] === 1;
             return (
               <g key={`in:${name}`} class={`pin pin-in${on ? ' on' : ''}`} transform={`translate(${p.x},${p.y})`}>
+                <MetalLead x0={-15} x1={0} y={0} padX={0} />
                 <g
                   data-kind="pin"
                   data-pin={k}
@@ -409,24 +690,38 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                   aria-label={name}
                   onKeyDown={(e) => b.onPinKey(e, k)}
                 >
-                  <rect class="real-ic-shadow" x={-76} y={-18} width={64} height={40} rx={9} />
-                  <rect class="real-sw-housing" x={-78} y={-20} width={64} height={40} rx={9} />
-                  <circle class="real-ic-pad" cx={-73} cy={-15} r={1.3} />
-                  <circle class="real-ic-pad" cx={-73} cy={15} r={1.3} />
-                  {label('pin-name', -64, 0, name)}
+                  <rect class="real-ic-shadow-soft real-deco" x={-75.5} y={-16} width={64} height={40} rx={9} />
+                  <rect class="real-ic-shadow real-deco" x={-76.8} y={-17.8} width={64} height={40} rx={8.5} />
+                  <rect class="real-sw-housing" x={-78} y={-20} width={64} height={40} rx={8.5} />
+                  <rect class="real-ic-sheen real-deco" x={-78} y={-20} width={64} height={40} rx={8.5} fill="url(#r-ic-sheen)" />
+                  <rect class="real-ic-die real-deco" x={-75} y={-17} width={58} height={34} rx={6} />
+                  <rect class="real-ic-bevel real-deco" x={-76.6} y={-18.6} width={61.2} height={37.2} rx={7.5} />
+                  <line class="real-top-rim" x1={-70} y1={-18.8} x2={-22} y2={-18.8} />
+                  <MicroScrew x={-73.2} y={-15.2} r={1.6} />
+                  <MicroScrew x={-73.2} y={15.2} r={1.6} />
+                  {/* Holat mikro-LED indikatori (A/B yoniq-o'chiqligini uzoqdan ham ko'rsatadi) */}
+                  <g class="real-sw-led-g" transform="translate(-62,-11.5)">
+                    <circle class="real-ic-led-halo" r={5.5} fill="url(#r-led-halo)" />
+                    <circle class="real-ic-led-bezel" r={2.6} fill="url(#r-bezel-grad)" />
+                    <circle class="real-sw-led" r={1.8} />
+                  </g>
+                  {label('pin-name', -62, 3, name)}
                   {upright(
-                    -34,
+                    -33.5,
                     0,
                     <g class="switch">
+                      {/* Chuqur metall tumbler uyasi */}
+                      <rect class="real-sw-well" x={-16} y={-10} width={32} height={20} rx={10} fill="url(#r-bezel-grad)" />
                       <rect class="sw-track" x={-14} y={-8} width={28} height={16} rx={8} />
                       <g class="sw-knob" style={{ transform: `translateX(${on ? 6 : -6}px)` }}>
-                        <circle r={7} />
+                        <circle class="real-knob-shadow" cy={1.2} r={7.3} />
+                        <circle class="real-knob-cap" r={7.2} fill="url(#r-knob-grad)" />
+                        <circle class="real-knob-ring" r={5.2} />
                         <text class="sw-val">{on ? 1 : 0}</text>
                       </g>
                     </g>,
                   )}
                 </g>
-                <line class="lead" x1={-14} y1={0} x2={0} y2={0} />
                 {port(`in:${name}`, 0, 0, true, b.usedSources.has(`in:${name}`), on, a11y.source(name))}
               </g>
             );
@@ -447,22 +742,31 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 class={`pin pin-out${v === 1 ? ' on' : ''}${state}${b.highlight === name ? ' err' : ''}`}
                 transform={`translate(${p.x},${p.y})`}
               >
-                <line class="lead" x1={0} y1={0} x2={14} y2={0} />
-                <rect class="real-ic-shadow" x={16} y={-18} width={60} height={40} rx={9} />
-                <rect class="pin-box" x={14} y={-20} width={60} height={40} rx={9} />
-                {label('pin-name', 30, 0, name)}
+                <MetalLead x0={0} x1={15} y={0} padX={0} />
+                <rect class="real-ic-shadow-soft" x={16.5} y={-16} width={62} height={40} rx={9} />
+                <rect class="real-ic-shadow" x={15.2} y={-17.8} width={62} height={40} rx={8.5} />
+                <rect class="pin-box real-out-housing" x={14} y={-20} width={62} height={40} rx={8.5} />
+                <rect class="real-ic-sheen" x={14} y={-20} width={62} height={40} rx={8.5} fill="url(#r-ic-sheen)" />
+                <rect class="real-ic-die" x={17} y={-17} width={56} height={34} rx={6} />
+                <rect class="real-ic-bevel" x={15.4} y={-18.6} width={59.2} height={37.2} rx={7.5} />
+                <line class="real-top-rim" x1={22} y1={-18.8} x2={68} y2={-18.8} />
+                <MicroScrew x={71.2} y={-15.2} r={1.6} />
+                <MicroScrew x={71.2} y={15.2} r={1.6} />
+                {label('pin-name', 29, 0, name)}
                 {upright(
-                  56,
+                  54,
                   0,
                   <g class="lamp-g">
-                    <circle class="lamp-halo" r={16} />
-                    <circle class="real-led-outer" r={12.5} />
-                    <circle class="lamp-bezel" r={10} />
-                    <circle class="lamp" r={7.2} />
-                    <circle class="lamp-shine" cx={-2.5} cy={-2.5} r={2.2} />
+                    <circle class="lamp-halo real-lamp-halo" r={22} fill="url(#r-led-halo)" />
+                    <circle class="real-led-outer" r={13.5} />
+                    <circle class="lamp-bezel real-lamp-bezel" r={11} fill="url(#r-bezel-grad)" />
+                    <circle class="real-lamp-cup" r={8.6} />
+                    <circle class="lamp real-lamp-dome" r={7.6} />
+                    <path class="real-lamp-crescent" d="M-4.6,-2.2 A5.2,5.2 0 0 1 2.2,-4.6" />
+                    <circle class="lamp-shine" cx={-2.8} cy={-2.8} r={2} />
                   </g>,
                 )}
-                {exp !== undefined && label('pin-exp', 44, 32, `${t.play.expected.toLowerCase()}: ${exp}`, 90, 0)}
+                {exp !== undefined && label('pin-exp', 45, 32, `${t.play.expected.toLowerCase()}: ${exp}`, 90, 0)}
                 {port(`out:${name}`, 0, 0, false, b.driven.has(`out:${name}`), v === 1, a11y.output(name))}
               </g>
             );

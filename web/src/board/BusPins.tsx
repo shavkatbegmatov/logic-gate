@@ -36,8 +36,16 @@ export function BusInPin({ b, group, real, port }: PinProps) {
   const head = `in:${group.pins[0]}`;
   return (
     <g class="pin pin-in pin-bus" transform={`translate(${p.x},${p.y})`}>
-      {real && <rect class="real-ic-shadow" x={x0 + 2} y={-20} width={w} height={44} rx={9} />}
+      {real && <rect class="real-ic-shadow-soft" x={x0 + 2.5} y={-18} width={w} height={44} rx={9.5} />}
+      {real && <rect class="real-ic-shadow" x={x0 + 1.2} y={-19.8} width={w} height={44} rx={9} />}
       <rect class={real ? 'pin-box real-sw-housing' : 'pin-box'} x={x0} y={-22} width={w} height={44} rx={9} />
+      {real && (
+        <>
+          <rect class="real-ic-sheen" x={x0} y={-22} width={w} height={44} rx={9} fill="url(#r-ic-sheen)" />
+          <rect class="real-ic-die" x={x0 + 3} y={-19} width={w - 6} height={38} rx={6.5} />
+          <rect class="real-ic-bevel" x={x0 + 1.4} y={-20.6} width={w - 2.8} height={41.2} rx={8} />
+        </>
+      )}
       {text(b, 'pin-name', x0 + 15, -8, group.name, x0 + 11, 0)}
       {text(b, 'bus-val', x0 + 15, 11, value, x0 + 27, 0)}
       {group.pins.map((name, j) => {
@@ -58,7 +66,9 @@ export function BusInPin({ b, group, real, port }: PinProps) {
           >
             <title>{name}</title>
             <rect x={cx - 10} y={-14} width={20} height={28} rx={5} />
-            {text(b, 'bus-bit-val', cx, 0, on ? 1 : 0)}
+            {real && <rect class="real-ic-sheen real-deco" x={cx - 10} y={-14} width={20} height={28} rx={5} fill="url(#r-ic-sheen)" />}
+            {real && <line class="real-bus-led" x1={cx - 5} y1={-10.5} x2={cx + 5} y2={-10.5} />}
+            {text(b, 'bus-bit-val', cx, real ? 1.5 : 0, on ? 1 : 0)}
           </g>
         );
       })}
@@ -84,10 +94,19 @@ export function BusOutPin({ b, group, real, port }: PinProps) {
   return (
     <g class={`pin pin-out pin-bus${v ? ' on' : ''}${state}${err ? ' err' : ''}`} transform={`translate(${p.x},${p.y})`}>
       <line class="lead bus-lead" x1={0} y1={0} x2={14} y2={0} />
-      {real && <rect class="real-ic-shadow" x={16} y={-20} width={w} height={44} rx={9} />}
-      <rect class="pin-box" x={14} y={-22} width={w} height={44} rx={9} />
-      {text(b, 'pin-name', 30, 0, group.name, 30, 0)}
-      <rect class="bus-screen" x={44} y={-14} width={BUS_OUT_X - 52} height={28} rx={5} />
+      {real && <rect class="real-ic-shadow-soft" x={16.5} y={-18} width={w} height={44} rx={9.5} />}
+      {real && <rect class="real-ic-shadow" x={15.2} y={-19.8} width={w} height={44} rx={9} />}
+      <rect class={real ? 'pin-box real-out-housing' : 'pin-box'} x={14} y={-22} width={w} height={44} rx={9} />
+      {real && (
+        <>
+          <rect class="real-ic-sheen" x={14} y={-22} width={w} height={44} rx={9} fill="url(#r-ic-sheen)" />
+          <rect class="real-ic-die" x={17} y={-19} width={w - 6} height={38} rx={6.5} />
+          <rect class="real-ic-bevel" x={15.4} y={-20.6} width={w - 2.8} height={41.2} rx={8} />
+        </>
+      )}
+      {text(b, 'pin-name', 29, 0, group.name, 29, 0)}
+      <rect class="bus-screen" x={44} y={-14} width={BUS_OUT_X - 52} height={28} rx={5} fill={real ? 'url(#r-oled-grad)' : undefined} />
+      {real && <line class="real-glass-glint" x1={47} y1={-11} x2={58} y2={-11} />}
       {text(b, 'bus-num', 44 + (BUS_OUT_X - 52) / 2, 0, v === null ? '–' : v)}
       {exp !== null && text(b, 'pin-exp', 53, 34, `${t.play.expected.toLowerCase()}: ${exp}`, BUS_OUT_X + 16, 0)}
       {port(head, 0, 0, false, b.driven.has(head), !!v, t.play.a11y.output(group.name))}

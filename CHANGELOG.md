@@ -5,6 +5,11 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.34.2 — 2026-11-25
+
+- 2D Real rejimi AAA apparat darajasiga ko'tarildi: 2.5D qalinlikli plata, Phillips montaj vintlari, oltin chekka kontaktlari, qalaylangan metall oyoqchali 74HC chiplar va blok modullari, yaltiroq mis yo'llar hamda optik gumbazli LED chiroqlar.
+- «Mis va lojuvard» (Samarqand), «Sanoat PCB», «Laboratoriya», «Maket platasi», «Sci-Fi» hamda «Haqiqiy plata» uslublarida o'chiq simlar kontrasti va chip detallari yangilandi («Daftar» va «Chizma» o'zgarishsiz qoldi).
+
 ## 2.34.1 — 2026-11-25
 
 - «Tartibga keltirish» algoritmi yangilandi: chiqish elementlari oxirgi ustunda pinlar ro'parasiga, ichki zanjirlar esa qo'shni ustunlarga kesishishlarni kamaytirib va to'g'ri gorizontal simlar bilan joylanadi.

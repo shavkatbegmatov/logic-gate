@@ -38,6 +38,16 @@ const warned = new Set<string>();
 const loadFailed = (which: string) => {
   if (warned.has(which)) return;
   warned.add(which);
+  // Yangi deploydan keyin ochiq qolgan eski sahifada chunk hash eskirgan bo'lishi mumkin — bir marta yangilab ko'ramiz.
+  try {
+    if (which === 'real2d' && !sessionStorage.getItem('lg.chunk-reload')) {
+      sessionStorage.setItem('lg.chunk-reload', '1');
+      location.reload();
+      return;
+    }
+  } catch {
+    // sessionStorage yopiq bo'lsa — oddiy xabar.
+  }
   showToast(t.loadFailed, 'error', 5000);
 };
 
