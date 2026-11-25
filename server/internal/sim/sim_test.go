@@ -31,8 +31,8 @@ func TestReferenceSolutions(t *testing.T) {
 	if err := json.Unmarshal(raw, &sols); err != nil {
 		t.Fatal(err)
 	}
-	if len(pack.Levels) != 60 {
-		t.Fatalf("60 ta daraja kutilgan, %d bor", len(pack.Levels))
+	if len(pack.Levels) != 66 {
+		t.Fatalf("66 ta daraja kutilgan, %d bor", len(pack.Levels))
 	}
 	for _, l := range pack.Levels {
 		var (
@@ -354,7 +354,7 @@ func oldCheckSeq(spec Spec, m Machine, c Circuit) (gates int, trace []int, err *
 // randomCircuit — tasodifiy spec va sxema: ko'pincha to'g'ri (kombinatsion manba — oldingi element yoki
 // istalgan trigger), ba'zan sikl, ulanmagan kirish yoki ko'p trigger bilan.
 func randomCircuit(rng *rand.Rand) (Spec, Circuit) {
-	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC", "SPLIT", "JOIN", "NOT4", "ADD4", "MUX4", "INC4"}}
+	spec := Spec{Gates: []string{"NOT", "AND", "OR", "XOR", "NAND", "NOR", "XNOR", "DFF", "HA", "FA", "MUX", "DEC", "SPLIT", "JOIN", "NOT4", "ADD4", "MUX4", "INC4", "NOR4", "ONE", "ZERO", "SUB4", "AND4", "OR4", "XOR4", "ALU4"}}
 	for i := range 1 + rng.IntN(4) {
 		spec.Inputs = append(spec.Inputs, string(rune('A'+i)))
 	}
@@ -456,7 +456,7 @@ func sameResult(t *testing.T, what string, g1 int, r1 []int, e1 *Error, g2 int, 
 func TestStepMatchesOld(t *testing.T) {
 	rng := rand.New(rand.NewPCG(1, 2))
 	valid, traces := 0, 0
-	for i := range 4000 {
+	for i := range 6000 {
 		spec, c := randomCircuit(rng)
 		target := map[string]string{}
 		for _, o := range spec.Outputs {

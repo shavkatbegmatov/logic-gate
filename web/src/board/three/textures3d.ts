@@ -2,7 +2,7 @@
 import { BLOCK_TYPES, GATE_TYPES, isBlock, type GateType } from '../../sim/types';
 import type { RealStyle } from '../../theme';
 import { CHIP_CODE } from '../GateShape';
-import { DFF_BODY, SHAPES } from '../shapes';
+import { blockText, DFF_BODY, SHAPES } from '../shapes';
 
 export interface UVRect {
   u0: number;
@@ -120,27 +120,31 @@ export const PALETTES_3D: Record<RealStyle, StylePalette3D> = {
   },
 };
 
-/** Atlasdagi kataklar: 4 ustun, har holat (0/1) uchun ATLAS_ROWS qator. */
+/**
+ * Atlasdagi kataklar (256×256): ATLAS_COLS ustun, har holat (0/1) uchun ATLAS_ROWS qator. 8 ustunda 26 tur —
+ * 2048×2048: telefonlardagi eng kichik WebGL chegarasi (4096) ichida, 64 turgacha sig'adi.
+ */
 const ATLAS_TYPES: GateType[] = [...GATE_TYPES, 'DFF', ...BLOCK_TYPES];
-const ATLAS_ROWS = Math.ceil(ATLAS_TYPES.length / 4);
+const ATLAS_COLS = 8;
+const ATLAS_ROWS = Math.ceil(ATLAS_TYPES.length / ATLAS_COLS);
 
 export function gateAtlasUV(type: GateType, on = false): UVRect {
   const idx = Math.max(0, ATLAS_TYPES.indexOf(type));
-  const col = idx % 4;
-  const row = Math.floor(idx / 4) + (on ? ATLAS_ROWS : 0);
-  const pad = 0.004;
+  const col = idx % ATLAS_COLS;
+  const row = Math.floor(idx / ATLAS_COLS) + (on ? ATLAS_ROWS : 0);
+  const pad = 0.004 / 2;
   const rows = ATLAS_ROWS * 2;
   return {
-    u0: col * 0.25 + pad,
+    u0: col / ATLAS_COLS + pad,
     v0: row / rows + pad,
-    u1: (col + 1) * 0.25 - pad,
+    u1: (col + 1) / ATLAS_COLS - pad,
     v1: (row + 1) / rows - pad,
   };
 }
 
 export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
   const c = document.createElement('canvas');
-  c.width = 1024;
+  c.width = 256 * ATLAS_COLS;
   c.height = 256 * ATLAS_ROWS * 2;
   const ctx = c.getContext('2d')!;
 
@@ -159,8 +163,8 @@ export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
 
   for (const on of [false, true]) {
     ATLAS_TYPES.forEach((type, idx) => {
-      const col = idx % 4;
-      const row = Math.floor(idx / 4) + (on ? ATLAS_ROWS : 0);
+      const col = idx % ATLAS_COLS;
+      const row = Math.floor(idx / ATLAS_COLS) + (on ? ATLAS_ROWS : 0);
       const ox = col * 256;
       const oy = row * 256;
 
@@ -220,7 +224,7 @@ export function buildChipAtlasCanvas(style: RealStyle): HTMLCanvasElement {
       ctx.textBaseline = 'middle';
       ctx.fillStyle = on ? onText : offStroke;
       ctx.font = '700 42px "IBM Plex Mono", monospace';
-      ctx.fillText(type, 128, 162);
+      ctx.fillText(blockText(type), 128, 162);
 
       ctx.fillStyle = on ? onCol : offSub;
       ctx.font = '600 24px "IBM Plex Mono", monospace';

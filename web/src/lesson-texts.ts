@@ -294,6 +294,35 @@ const uz: Record<string, Lesson> = {
       },
     ],
   },
+  alu: {
+    title: 'ALU — protsessorning hisoblovchi yuragi',
+    blocks: [
+      {
+        p: "Protsessorning deyarli har bir buyrug'i bitta qurilmadan o'tadi: arifmetik-mantiqiy qurilma (ALU). Unga ikki son va amal kodi beriladi, u esa natija va bayroqlarni qaytaradi. Bu bo'limda ALU ni qadamma-qadam yig'asiz.",
+      },
+      { h: 'Manfiy son va ayirish' },
+      { f: ["−A = NOT A + 1   (ikkilik to'ldiruvchi kod)", 'A − B = A + NOT B + 1', '3 − 5 = 3 + 1010 + 1 = 1110 = 14   (C = 0 — qarz bor)'] },
+      {
+        p: "To'rt bitda son 16 ga yetganda yana 0 dan boshlanadi — soat 12 dan keyin 1 ga o'tgani kabi. Shuning uchun ayirish uchun alohida qurilma kerak emas: summator B ning teskarisini qo'shadi, Ci = 1 esa yetishmagan birni beradi. Summator ko'chirishi Co = 1 bo'lsa, qarz yo'q (A ≥ B).",
+      },
+      { h: 'Amal kodi' },
+      {
+        table: [
+          ['F1 F0', 'Buyruq', 'R', 'C'],
+          ['00', 'ADD', 'A + B', 'Co'],
+          ['01', 'SUB', 'A − B', 'Co'],
+          ['10', 'AND', 'A AND B', '0'],
+          ['11', 'OR', 'A OR B', '0'],
+        ],
+      },
+      {
+        p: "Z bayrog'i natija 0 ekanini bildiradi. Taqqoslash ham shunga tayanadi: A − B = 0 bo'lsa, sonlar teng, qarz bo'lsa, A < B. Keyingi bo'limlarda protsessor dasturda aynan shu bayroqlarga qarab sakraydi.",
+      },
+      {
+        tip: "Mashhur 74181 mikrosxemasi (1970) — to'rt bitli ALU: bitta korpusda 32 ta amal. Bir nechtasini yonma-yon qo'yib, o'sha davrning ko'plab kompyuterlari yig'ilgan.",
+      },
+    ],
+  },
 };
 
 const ru: Record<string, Lesson> = {
@@ -575,6 +604,35 @@ const ru: Record<string, Lesson> = {
       },
       {
         tip: '«64-битный процессор» значит, что его шины и регистры шириной 64 бита. А первый микропроцессор Intel 4004 (1971) был четырёхбитным — как в этом разделе.',
+      },
+    ],
+  },
+  alu: {
+    title: 'АЛУ — вычислительное сердце процессора',
+    blocks: [
+      {
+        p: 'Почти каждая команда процессора проходит через одно устройство — арифметико-логическое (АЛУ). Ему дают два числа и код операции, а оно возвращает результат и флаги. В этом разделе вы соберёте АЛУ шаг за шагом.',
+      },
+      { h: 'Отрицательное число и вычитание' },
+      { f: ['−A = NOT A + 1   (дополнительный код)', 'A − B = A + NOT B + 1', '3 − 5 = 3 + 1010 + 1 = 1110 = 14   (C = 0 — есть заём)'] },
+      {
+        p: 'В четырёх битах число, дойдя до 16, снова начинается с 0 — как часы после 12 переходят на 1. Поэтому отдельное устройство для вычитания не нужно: сумматор прибавляет инверсию B, а Ci = 1 даёт недостающую единицу. Если перенос сумматора Co = 1, заёма нет (A ≥ B).',
+      },
+      { h: 'Код операции' },
+      {
+        table: [
+          ['F1 F0', 'Команда', 'R', 'C'],
+          ['00', 'ADD', 'A + B', 'Co'],
+          ['01', 'SUB', 'A − B', 'Co'],
+          ['10', 'AND', 'A AND B', '0'],
+          ['11', 'OR', 'A OR B', '0'],
+        ],
+      },
+      {
+        p: 'Флаг Z говорит, что результат равен 0. На этом держится и сравнение: если A − B = 0, числа равны, если был заём, A < B. В следующих разделах процессор будет переходить по программе именно по этим флагам.',
+      },
+      {
+        tip: 'Знаменитая микросхема 74181 (1970) — четырёхбитное АЛУ: 32 операции в одном корпусе. Ставя несколько таких рядом, собирали многие компьютеры той эпохи.',
       },
     ],
   },

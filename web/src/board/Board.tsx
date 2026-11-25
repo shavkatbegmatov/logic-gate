@@ -9,6 +9,7 @@ import type { Editor } from './editor';
 import { BusInPin, BusOutPin } from './BusPins';
 import { CHIP_CODE, GateShape } from './GateShape';
 import { GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
+import { blockText } from './shapes';
 import { routeD } from './routing';
 import { capture, TRANSPOSE, useBoard2D } from './useBoard2D';
 
@@ -229,7 +230,7 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
                   <GateShape type={g.type} chip={chip} />
                   {isBlock(g.type) ? (
                     <>
-                      {label('gate-label block-label', 36, gateH(g) / 2, g.type)}
+                      {label('gate-label block-label', 36, gateH(g) / 2, blockText(g.type))}
                       {b.blockLabels(g).ins.map((n, i) => n && <Fragment key={`i${i}`}>{label('block-pin', 15, inputPortY(g, i), n)}</Fragment>)}
                       {b.blockLabels(g).outs.map(
                         (n, k) => n && <Fragment key={`o${k}`}>{label('block-pin block-pin-out', 57, outputPortY(g, k), n)}</Fragment>,

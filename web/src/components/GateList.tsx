@@ -16,6 +16,8 @@ function truthLine(type: GateType): string {
     // Blok: "A B Ci → S Co" sarlavhasi va har qator bitlari.
     const b = BLOCKS[type];
     const n = b.inputs.length;
+    // Doimiy manba: kirishi yo'q.
+    if (!n) return `${b.outputs[0]} = ${gateOutputValues(type, [])[0]}`;
     const rows = Array.from({ length: 1 << n }, (_, r) => `${rowBits(n, r).join('')}→${gateOutputValues(type, rowBits(n, r)).join('')}`);
     return `${b.inputs.join(' ')} → ${b.outputs.join(' ')}:  ${rows.join('  ')}`;
   }

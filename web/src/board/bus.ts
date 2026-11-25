@@ -169,16 +169,20 @@ export function blockPortNames(type: BlockType): { ins: (string | null)[]; outs:
 }
 
 /**
- * Korpusdagi oyoq yozuvlari: blokPortNames kabi, lekin bir tomoni yagona shina bo'lsa (SPLIT kirishi, JOIN
- * chiqishi, NOT4) — u tomonda yozuv yo'q: adashib bo'lmaydi, korpus o'rtasidagi nom esa ustiga tushardi.
+ * Korpusdagi oyoq yozuvlari: blokPortNames kabi, lekin bir tomonida yagona port bo'lsa (SPLIT kirishi, JOIN
+ * chiqishi, NOT4, NOR4 va doimiy manba chiqishi) — u tomonda yozuv yo'q: adashib bo'lmaydi, korpus o'rtasidagi
+ * nom esa ustiga tushardi. Ko'p bitli shina tomonida ham faqat shina boshida yozuv bor.
  */
 export function blockPinLabels(type: BlockType): { ins: (string | null)[]; outs: (string | null)[] } {
   const d = BLOCKS[type];
   const names = blockPortNames(type);
-  const single = (spans: BusSpan[] | undefined, n: number) => spans?.length === 1 && spans[0][0] === 0 && spans[0][1] === n;
+  const single = (spans: BusSpan[] | undefined, n: number) =>
+    (n === 1 && !spans?.length) || (spans?.length === 1 && spans[0][0] === 0 && spans[0][1] === n);
+  // Bitli bloklar (HA, FA, MUX, DEC) yozuvlari o'zgarmaydi: qoida shinali bloklar va doimiy manbalar uchun.
+  const plain = !d.bus && d.inputs.length > 0;
   return {
-    ins: single(d.bus?.in, d.inputs.length) ? names.ins.map(() => null) : names.ins,
-    outs: single(d.bus?.out, d.outputs.length) ? names.outs.map(() => null) : names.outs,
+    ins: !plain && single(d.bus?.in, d.inputs.length) ? names.ins.map(() => null) : names.ins,
+    outs: !plain && single(d.bus?.out, d.outputs.length) ? names.outs.map(() => null) : names.outs,
   };
 }
 
@@ -213,6 +217,32 @@ const EXAMPLES: Partial<Record<BlockType, number[][]>> = {
     [3, 9, 1],
   ],
   INC4: [[7], [9], [15]],
+  NOR4: [[0], [5], [8]],
+  SUB4: [
+    [7, 3],
+    [3, 7],
+    [9, 9],
+  ],
+  AND4: [
+    [12, 10],
+    [5, 3],
+  ],
+  OR4: [
+    [12, 10],
+    [5, 3],
+  ],
+  XOR4: [
+    [12, 10],
+    [5, 5],
+  ],
+  // A B F1 F0: qo'shish (toshib ketish bilan), ayirish (qarz bilan va nol natija), AND, OR.
+  ALU4: [
+    [9, 8, 0, 0],
+    [3, 7, 0, 1],
+    [6, 6, 0, 1],
+    [12, 10, 1, 0],
+    [12, 10, 1, 1],
+  ],
 };
 
 export interface BusExamples {
