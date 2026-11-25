@@ -9,6 +9,10 @@ Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.
 
 - O'yin tezroq ochiladi: darajalar jadvallari, vazifa matnlari va maslahatlar endi o'yin ochilgandan keyin, fonda yuklanadi (ochilishda yuklanadigan hajm 123 → 111 KB).
 
+## 2.33.0 — 2026-11-25
+
+- Hikoya yana to'rt bo'limga yetdi: «Tarozi minorasi» (Kombinatsion sxemalar), «Kumush ombor» (Faqat NAND), «Hisob xonasi» (Shinalar) va «Ustozning yuragi» (ALU). Har birida kirish va yakuniy sahnalar, har darajada o'z hikoya qatori; Chiroq «qo'sh», «hammasi bittadan», «birga» va «hisobla» degan so'zlarni o'rganadi.
+
 ## 2.32.0 — 2026-11-25
 
 - Yangi, 11-bo'lim — «ALU» (112 ★ dan ochiladi): protsessorning hisoblovchi yuragini yig'asiz. 6 ta daraja: manfiy son, ayirgich, «qo'sh yoki ayir», mantiqiy blok, taqqoslagich va to'rt amalli ALU.
