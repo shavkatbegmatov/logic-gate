@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.34.4 — 2026-11-26
+
+- 2D Real va Sxema rejimlarida sim ko'prikchalari (yoy va SMD 000 rezistorlar) chizilish tartibidan qat'i nazar endi doim kesishgan sim ustidan o'tadi.
+
 ## 2.34.3 — 2026-11-25
 
 - 2D Real rejimdagi kirish manbalari (A, B, ...) haqiqiy mexanik SPDT metall tumblerlarga aylantirildi: olti qirrali xrom/jez gayka, silindrik richag, tushma soya va pilot SMD LED indikatori.

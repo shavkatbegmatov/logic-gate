@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.34.4',
+    date: '2026-11-26',
+    uz: [
+      "2D Real va Sxema rejimlarida sim ko'prikchalari (yoy va SMD 000 rezistorlar) chizilish tartibidan qat'i nazar endi doim kesishgan sim ustidan o'tadi.",
+    ],
+    ru: [
+      'В режимах 2D Real и «Схема» мостики проводов (дуги и SMD-перемычки 000) теперь всегда рисуются поверх пересекаемого провода независимо от порядка подключения.',
+    ],
+  },
+  {
     version: '2.34.3',
     date: '2026-11-25',
     uz: [

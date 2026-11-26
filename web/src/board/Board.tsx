@@ -10,7 +10,7 @@ import { BusInPin, BusOutPin } from './BusPins';
 import { CHIP_CODE, GateShape } from './GateShape';
 import { GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
 import { blockText } from './shapes';
-import { routeD } from './routing';
+import { routeParts } from './routing';
 import { capture, TRANSPOSE, useBoard2D } from './useBoard2D';
 
 export { capture };
@@ -123,11 +123,13 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
 
   let deleteAt = b.gateDeleteAt;
   const tags: ComponentChildren[] = [];
+  const hopOverpasses: ComponentChildren[] = [];
+  const dotPts = b.routed.dots.map((d) => d.at);
   const wireEls = b.wires.map((w, i) => {
     const route = b.routed.routes[i];
     // Shinaning qolgan bitlari — boshi bilan bitta qalin sim.
     if (!route || b.bund.rep[i] !== i) return null;
-    const d = routeD(route, b.routed.hops[i], b.sharp, cut);
+    const { d, hopD, hopArcD } = routeParts(route, b.routed.hops[i], b.sharp, cut, dotPts);
     const live = b.reached(w.from, 1);
     const bus = b.busWireValue(i);
     const on = live && (bus === undefined ? b.values.get(w.from) === 1 : !!bus);
@@ -148,10 +150,21 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
       const off = bus === undefined ? 14 : 26;
       deleteAt = { x: m.x, y: m.y + (b.vertical ? off : -off) };
     }
+    const wireCls = `wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`;
+    if (hopD) {
+      // Ko'prikcha yoylari barcha simlardan ustda chiziladi — pastki sim yoyni kesib o'tmaydi.
+      hopOverpasses.push(
+        <g key={`hop-${w.from}>${w.to}`} class={`${wireCls} wire-overpass`} pointer-events="none">
+          <path class="wire-hop-gap" d={hopArcD} />
+          {on && <path class="wire-glow" d={hopD} />}
+          <path class="wire-line" d={hopD} />
+        </g>,
+      );
+    }
     return (
       <g
         key={`${w.from}>${w.to}`}
-        class={`wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
+        class={wireCls}
         data-kind="wire"
         data-index={i}
       >
@@ -214,6 +227,7 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
               const on = live && b.values.get(net) === 1;
               return <circle key={`${net}@${at.x},${at.y}`} class={`wire-dot${on ? ' on' : ''}${live ? '' : ' idle'}`} cx={at.x} cy={at.y} r={4} />;
             })}
+            {hopOverpasses}
             {tags}
           </g>
 

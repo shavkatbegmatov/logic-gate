@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Circuit, Gate, Spec } from '../sim/types';
 import { layout, outputColumn, type Point } from './geometry';
-import { crossing, divergence, routeAll, routeD } from './routing';
+import { crossing, divergence, routeAll, routeD, routeParts } from './routing';
 
 type S = { ax: number; ay: number; bx: number; by: number };
 
@@ -196,7 +196,23 @@ describe('simlarni birgalikda yo\'naltirish', () => {
     const totalHops = routed.hops.reduce((n, w) => n + w.reduce((m, s) => m + s.length, 0), 0);
     expect(totalHops).toBe(1);
     const hopWire = routed.hops.findIndex((w) => w.some((s) => s.length));
-    expect(routeD(routed.routes[hopWire]!, routed.hops[hopWire])).toMatch(/ A[\d.]+,[\d.]+ 0 0 [01] /);
+    const parts = routeParts(routed.routes[hopWire]!, routed.hops[hopWire]);
+    expect(parts.d).toBe(routeD(routed.routes[hopWire]!, routed.hops[hopWire]));
+    expect(parts.d).toMatch(/ A[\d.]+,[\d.]+ 0 0 [01] /);
+    expect(parts.hopArcD).toMatch(/^M[\d.-]+,[\d.-]+ A[\d.]+,[\d.]+ 0 0 [01] /);
+    expect(parts.hopD).toContain(parts.hopArcD.slice(parts.hopArcD.indexOf('A')));
+    // Ko'priksiz simda ustki qatlam bo'sh bo'ladi.
+    const plainWire = routed.hops.findIndex((w) => w.every((s) => s.length === 0));
+    expect(routeParts(routed.routes[plainWire]!, routed.hops[plainWire]).hopD).toBe('');
+    // Tepada yaqin tugun nuqtasi bo'lsa — gorizontal ko'prik yoyi pastga burilib tugundan qochadi.
+    const line = [
+      { x: 0, y: 20 },
+      { x: 100, y: 20 },
+    ];
+    const up = routeParts(line, [[{ x: 50, y: 20 }]]);
+    const away = routeParts(line, [[{ x: 50, y: 20 }]], undefined, 10, [{ x: 50, y: 8 }]);
+    expect(up.hopArcD).toContain('0 0 1');
+    expect(away.hopArcD).toContain('0 0 0');
   });
 });
 

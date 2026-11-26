@@ -6,7 +6,7 @@ import type { Editor } from './editor';
 import { BusInPin, BusOutPin } from './BusPins';
 import { CHIP_CODE } from './GateShape';
 import { bounds, GATE_H, GATE_W, gateH, inputPortY, outputPortY, routeMid, wirePath } from './geometry';
-import { routeD } from './routing';
+import { routeParts } from './routing';
 import { BLOCK_BODY, BLOCK_SHAPE, blockText, DFF_BODY, inputLeads, outputLeads, outputY, SHAPES } from './shapes';
 import { TRANSPOSE, useBoard2D } from './useBoard2D';
 
@@ -298,13 +298,15 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
 
   let deleteAt = b.gateDeleteAt;
   const tags: ComponentChildren[] = [];
+  const bridgeOverpasses: ComponentChildren[] = [];
+  const dotPts = b.routed.dots.map((d) => d.at);
   const wireEls = b.wires.map((w, i) => {
     const route = b.routed.routes[i];
     // Shinaning qolgan bitlari — boshi bilan bitta qalin sim (lenta kabel).
     if (!route || b.bund.rep[i] !== i) return null;
     // PCB rejimida kesishish ustiga SMD 000 ko'prik qo'yiladi; boshqa uslublarda — ko'tarilgan yoy.
     const hops = style === 'pcb' ? [] : b.routed.hops[i];
-    const d = routeD(route, hops, b.sharp);
+    const { d, hopD, hopArcD } = routeParts(route, hops, b.sharp, 10, dotPts);
     const live = b.reached(w.from, 1);
     const bus = b.busWireValue(i);
     const on = live && (bus === undefined ? b.values.get(w.from) === 1 : !!bus);
@@ -328,16 +330,17 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
     }
     const insulated = style === 'breadboard' || style === 'bench';
     const offStroke = insulated ? netColor(w.from) : undefined;
-    const smdBridges: ComponentChildren[] = [];
+    const wireCls = `wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`;
     if (style === 'pcb') {
+      // Barcha SMD 000 ko'priklar hamma simlardan keyin ustki qatlamda chiziladi — hech bir sim ustidan kesib o'tmaydi.
       b.routed.hops[i].forEach((pts, segIdx) => {
         if (!pts.length || segIdx >= route.length - 1) return;
         const p0 = route[segIdx];
         const p1 = route[segIdx + 1];
         const deg = (Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180) / Math.PI;
         for (const h of pts) {
-          smdBridges.push(
-            <g key={`${i}-${segIdx}-${h.x},${h.y}`} transform={`translate(${h.x},${h.y}) rotate(${deg})`} pointer-events="none">
+          bridgeOverpasses.push(
+            <g key={`smd-${i}-${segIdx}-${h.x},${h.y}`} transform={`translate(${h.x},${h.y}) rotate(${deg})`} pointer-events="none">
               <rect class="real-ic-shadow" x={-9} y={-3.5} width={19} height={9.5} rx={1.4} />
               <rect class="real-smd-pad" x={-9.6} y={-4.4} width={4.2} height={8.8} rx={1} fill="url(#r-metal-v)" />
               <rect class="real-smd-pad" x={5.4} y={-4.4} width={4.2} height={8.8} rx={1} fill="url(#r-metal-v)" />
@@ -351,11 +354,28 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
           );
         }
       });
+    } else if (hopD) {
+      // Ko'prik yoylari hamma simlardan ustda chiziladi — chizilish tartibidan qat'i nazar ko'prik kesishgan sim ustidan o'tadi.
+      bridgeOverpasses.push(
+        <g key={`hop-${w.from}>${w.to}`} class={`${wireCls} wire-overpass`} pointer-events="none">
+          <path class="real-hop-shadow" d={hopArcD} transform="translate(1.5,2.8)" />
+          <path class="real-hop-rim" d={hopArcD} />
+          <path class="real-wire-base" d={hopD} />
+          {on && <path class="wire-glow" d={hopD} />}
+          <path
+            class="wire-line"
+            d={hopD}
+            style={!on && !selected && offStroke ? { stroke: offStroke, opacity: 1 } : undefined}
+          />
+          <path class="real-wire-spec" d={hopD} />
+          {on && !selected && <path class="real-wire-pulse" d={hopD} />}
+        </g>,
+      );
     }
     return (
       <g
         key={`${w.from}>${w.to}`}
-        class={`wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`}
+        class={wireCls}
         data-kind="wire"
         data-index={i}
       >
@@ -369,7 +389,6 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
         />
         <path class="real-wire-spec" d={d} />
         {on && !selected && <path class="real-wire-pulse" d={d} />}
-        {smdBridges}
       </g>
     );
   });
@@ -627,6 +646,7 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
                 </g>
               );
             })}
+            {bridgeOverpasses}
             {tags}
           </g>
 

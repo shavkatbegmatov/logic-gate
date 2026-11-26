@@ -419,12 +419,18 @@ function dotsFor(wires: Wire[], routes: (Point[] | null)[]): { net: string; at: 
 const n = (v: number) => Math.round(v * 100) / 100;
 
 /**
- * Yo'l chizig'i: perpendikulyar burchaklar 45° bilan kesiladi (geometry.routePath kabi), ko'prikcha
- * nuqtalarida — yarim aylana. Ko'prikcha "yuqoriga" (y kamayadigan tomonga) bo'rtadi. sharp — kesilmaydigan
- * burchaklar (tarmoqlanish nuqtasi: u yerda toza "T" va nuqta). Ko'prikcha burchakka yaqin bo'lsa, burchak
- * kesigi kichrayadi — yoy bilan ustma-ust tushmaydi.
+ * Yo'l chizig'i va ustki ko'prik yoylari: perpendikulyar burchaklar 45° bilan kesiladi (geometry.routePath kabi),
+ * ko'prikcha nuqtalarida — yarim aylana. `hopD` faqat ko'prik yoylarini (ikki tomonda qisqa chok qanotlari bilan)
+ * qaytaradi — SVG da barcha simlardan keyin ustki qatlamda chizilganda ko'prik hech qachon kesishgan sim tagida
+ * qolib ketmaydi (hatto ikki sim o'zaro bir necha joyda kesishsa ham).
  */
-export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => boolean = () => false, r = 10): string {
+export function routeParts(
+  pts: Point[],
+  hops: Point[][] = [],
+  sharp: (p: Point) => boolean = () => false,
+  r = 10,
+  avoid: Point[] = [],
+): { d: string; hopD: string; hopArcD: string } {
   const last = pts.length - 1;
   const before: Point[] = pts.slice();
   const after: Point[] = pts.slice();
@@ -447,7 +453,11 @@ export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => 
       after[i] = { x: c.x + Math.sign(nx.x - c.x) * cut, y: c.y + Math.sign(nx.y - c.y) * cut };
     }
   }
+  const clearance = (px: number, py: number) =>
+    avoid.reduce((best, a) => Math.min(best, Math.hypot(px - a.x, py - a.y)), Infinity);
   let d = `M${n(pts[0].x)},${n(pts[0].y)}`;
+  let hopD = '';
+  let hopArcD = '';
   for (let k = 0; k < last; k++) {
     const s = k === 0 ? pts[0] : after[k];
     const e = k + 1 === last ? pts[last] : before[k + 1];
@@ -462,7 +472,9 @@ export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => 
       const uy = (e.y - s.y) / len;
       // sweep 1 — yoy harakat yo'nalishining chap tomoniga bo'rtadi (ekranda y pastga): o'ngga ketayotganda
       // bu — yuqori; chapga ketayotganda yuqori o'ng tomonda (sweep 0). Vertikal qism — chapga bo'rtadi.
-      const sweep = ux > 1e-9 || (Math.abs(ux) < 1e-9 && uy < 0) ? 1 : 0;
+      const baseSweep = ux > 1e-9 || (Math.abs(ux) < 1e-9 && uy < 0) ? 1 : 0;
+      const bx = baseSweep ? uy : -uy;
+      const by = baseSweep ? -ux : ux;
       let prevEnd = 0;
       for (let m = 0; m < list.length; m++) {
         const { h, at } = list[m];
@@ -470,11 +482,35 @@ export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => 
         const maxR = Math.min(HOP_R, at - prevEnd, len - at, nextMid - at);
         if (maxR < 3.5) continue;
         const hr = maxR >= HOP_R ? HOP_R : Math.round(maxR * 10) / 10;
-        d += ` L${n(h.x - ux * hr)},${n(h.y - uy * hr)} A${hr},${hr} 0 0 ${sweep} ${n(h.x + ux * hr)},${n(h.y + uy * hr)}`;
+        let sweep = baseSweep;
+        if (avoid.length) {
+          const d1 = clearance(h.x + bx * hr, h.y + by * hr);
+          const d0 = clearance(h.x - bx * hr, h.y - by * hr);
+          if (d1 < 11 && d0 > d1 + 4) sweep = 1 - baseSweep;
+        }
+        const a0x = n(h.x - ux * hr);
+        const a0y = n(h.y - uy * hr);
+        const a1x = n(h.x + ux * hr);
+        const a1y = n(h.y + uy * hr);
+        const arc = `A${hr},${hr} 0 0 ${sweep} ${a1x},${a1y}`;
+        d += ` L${a0x},${a0y} ${arc}`;
+        hopArcD += `${hopArcD ? ' ' : ''}M${a0x},${a0y} ${arc}`;
+        const leadIn = Math.min(2, Math.max(0, at - hr - prevEnd));
+        const leadOut = Math.min(2, Math.max(0, nextMid - (at + hr)));
+        const p0x = n(h.x - ux * (hr + leadIn));
+        const p0y = n(h.y - uy * (hr + leadIn));
+        const p1x = n(h.x + ux * (hr + leadOut));
+        const p1y = n(h.y + uy * (hr + leadOut));
+        hopD += `${hopD ? ' ' : ''}M${p0x},${p0y}${leadIn > 0.1 ? ` L${a0x},${a0y}` : ''} ${arc}${leadOut > 0.1 ? ` L${p1x},${p1y}` : ''}`;
         prevEnd = at + hr;
       }
     }
     d += ` L${n(e.x)},${n(e.y)}`;
   }
-  return d;
+  return { d, hopD, hopArcD };
+}
+
+/** Yo'l chizig'i (to'liq SVG path d). */
+export function routeD(pts: Point[], hops: Point[][] = [], sharp: (p: Point) => boolean = () => false, r = 10): string {
+  return routeParts(pts, hops, sharp, r).d;
 }
