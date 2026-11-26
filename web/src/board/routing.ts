@@ -43,6 +43,10 @@ export interface Routed {
   hops: Point[][][];
   /** Tarmoqlanish nuqtalari (manba — tarmoq). */
   dots: { net: string; at: Point }[];
+  /** SVG chizish tartibi (sim indekslari): ko'prikli sim kesishgan simidan keyin — bitta uzluksiz chiziq bo'lib ustidan o'tadi. */
+  order: number[];
+  /** Siklik qo'sh kesishish (A B dan, B esa A dan sakragan) bo'lsa, faqat siklni yechadigan qayta-ustki ko'priklar. */
+  backHops: Point[][][];
 }
 
 interface Seg {
@@ -305,17 +309,26 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
     placed.push(...segments(best!.pts, net, i));
   }
 
-  const hops = hopsFor(wires, routes);
+  const { hops, edges } = hopsFor(wires, routes);
   const dots = dotsFor(wires, routes);
+  const { order: zOrder, backHops } = paintOrder(wires.length, edges);
   if (rep) {
     rep.forEach((r, i) => {
       if (r !== i) {
         routes[i] = routes[r];
         hops[i] = hops[r];
+        backHops[i] = backHops[r];
       }
     });
   }
-  return { routes, hops, dots };
+  return { routes, hops, dots, order: zOrder, backHops };
+}
+
+interface HopEdge {
+  over: number;
+  under: number;
+  seg: number;
+  at: Point;
 }
 
 /**
@@ -324,8 +337,9 @@ export function routeAll(wires: Wire[], gates: Map<string, Gate>, lay: Layout, q
  * turgan bo'lsa — ikkinchi kesishuvchi qismga o'tkaziladi, shunda kesishish ko'priksiz qolib ulangandek
  * ko'rinmaydi.
  */
-function hopsFor(wires: Wire[], routes: (Point[] | null)[]): Point[][][] {
+function hopsFor(wires: Wire[], routes: (Point[] | null)[]): { hops: Point[][][]; edges: HopEdge[] } {
   const hops: Point[][][] = routes.map((r) => (r ? r.slice(1).map(() => []) : []));
+  const edges: HopEdge[] = [];
   const all: Seg[] = [];
   routes.forEach((r, i) => r && all.push(...segments(r, wires[i].from, i)));
   const rank = { h: 2, d: 1, v: 0 };
@@ -352,10 +366,57 @@ function hopsFor(wires: Wire[], routes: (Point[] | null)[]): Point[][][] {
         if (roomOf(a, p) >= 4.5 && freeOf(a, p, HOP_R + 2)) host = a;
         else if (roomOf(b, p) >= 4.5 && freeOf(b, p, HOP_R + 2)) host = b;
       }
-      if (host) hops[host.wire][host.index].push(p);
+      if (host) {
+        const under = host === s ? q : s;
+        hops[host.wire][host.index].push(p);
+        edges.push({ over: host.wire, under: under.wire, seg: host.index, at: p });
+      }
     }
   }
-  return hops;
+  return { hops, edges };
+}
+
+/**
+ * Topologik chizish tartibi (Kahn): `over` simi `under` simidan keyin chiziladi — shunda ko'prikli sim
+ * choksiz bitta uzluksiz yo'l sifatida pastki sim ustidan o'tadi. Kam uchraydigan o'zaro siklda faqat
+ * siklga tushgan ko'prik `backHops` ga ajratiladi.
+ */
+function paintOrder(count: number, edges: HopEdge[]): { order: number[]; backHops: Point[][][] } {
+  const adj: Set<number>[] = Array.from({ length: count }, () => new Set());
+  const indeg = new Int32Array(count);
+  for (const e of edges) {
+    if (e.under === e.over || adj[e.under].has(e.over)) continue;
+    adj[e.under].add(e.over);
+    indeg[e.over]++;
+  }
+  const ready: number[] = [];
+  for (let i = 0; i < count; i++) if (indeg[i] === 0) ready.push(i);
+  const order: number[] = [];
+  while (ready.length) {
+    ready.sort((a, b) => a - b);
+    const u = ready.shift()!;
+    order.push(u);
+    for (const v of adj[u]) {
+      indeg[v]--;
+      if (indeg[v] === 0) ready.push(v);
+    }
+  }
+  if (order.length < count) {
+    const seen = new Set(order);
+    for (let i = 0; i < count; i++) if (!seen.has(i)) order.push(i);
+  }
+  const rank = new Int32Array(count);
+  order.forEach((w, idx) => {
+    rank[w] = idx;
+  });
+  const backHops: Point[][][] = Array.from({ length: count }, () => []);
+  for (const e of edges) {
+    if (rank[e.over] < rank[e.under]) {
+      while (backHops[e.over].length <= e.seg) backHops[e.over].push([]);
+      backHops[e.over][e.seg].push(e.at);
+    }
+  }
+  return { order, backHops };
 }
 
 /** Ikki yo'l (bir manbadan) qayerda ayriladi: umumiy boshlanishining oxiri; boshidanoq ayrilsa — null. */
@@ -418,11 +479,18 @@ function dotsFor(wires: Wire[], routes: (Point[] | null)[]): { net: string; at: 
 
 const n = (v: number) => Math.round(v * 100) / 100;
 
+export interface HopCap {
+  x: number;
+  y: number;
+  rx: number;
+  deg: number;
+}
+
 /**
- * Yo'l chizig'i va ustki ko'prik yoylari: perpendikulyar burchaklar 45° bilan kesiladi (geometry.routePath kabi),
- * ko'prikcha nuqtalarida — yarim aylana. `hopD` faqat ko'prik yoylarini (ikki tomonda qisqa chok qanotlari bilan)
- * qaytaradi — SVG da barcha simlardan keyin ustki qatlamda chizilganda ko'prik hech qachon kesishgan sim tagida
- * qolib ketmaydi (hatto ikki sim o'zaro bir necha joyda kesishsa ham).
+ * Yo'l chizig'i va ko'prik qismlari:
+ *  - `smooth = false` (Sxema / Daftar / Chizma): klassik yarim aylana `A` ko'prikchasi;
+ *  - `smooth = true` (2D Real): keskin 90° sinishsiz, C1-silliq kubik Bezye kabel yoyi.
+ *  - `avoid`: yaqin begona tugun nuqtalari bo'lsa, yoy ulardan qarshi tomonga buriladi.
  */
 export function routeParts(
   pts: Point[],
@@ -430,12 +498,14 @@ export function routeParts(
   sharp: (p: Point) => boolean = () => false,
   r = 10,
   avoid: Point[] = [],
-): { d: string; hopD: string; hopArcD: string } {
+  smooth = false,
+): { d: string; hopD: string; hopArcD: string; hopCaps: HopCap[] } {
   const last = pts.length - 1;
   const before: Point[] = pts.slice();
   const after: Point[] = pts.slice();
+  const pad = smooth ? HOP_R * 1.45 : HOP_R + 1;
   const near = (k: number, c: Point) =>
-    Math.min(Infinity, ...(hops[k] ?? []).map((h) => Math.hypot(h.x - c.x, h.y - c.y) - HOP_R - 1));
+    Math.min(Infinity, ...(hops[k] ?? []).map((h) => Math.hypot(h.x - c.x, h.y - c.y) - pad));
   for (let i = 1; i < last; i++) {
     const p = pts[i - 1];
     const c = pts[i];
@@ -458,6 +528,7 @@ export function routeParts(
   let d = `M${n(pts[0].x)},${n(pts[0].y)}`;
   let hopD = '';
   let hopArcD = '';
+  const hopCaps: HopCap[] = [];
   for (let k = 0; k < last; k++) {
     const s = k === 0 ? pts[0] : after[k];
     const e = k + 1 === last ? pts[last] : before[k + 1];
@@ -470,11 +541,12 @@ export function routeParts(
     if (list.length && len > 0) {
       const ux = (e.x - s.x) / len;
       const uy = (e.y - s.y) / len;
+      const deg = Math.round((Math.atan2(uy, ux) * 180) / Math.PI);
       // sweep 1 — yoy harakat yo'nalishining chap tomoniga bo'rtadi (ekranda y pastga): o'ngga ketayotganda
       // bu — yuqori; chapga ketayotganda yuqori o'ng tomonda (sweep 0). Vertikal qism — chapga bo'rtadi.
       const baseSweep = ux > 1e-9 || (Math.abs(ux) < 1e-9 && uy < 0) ? 1 : 0;
-      const bx = baseSweep ? uy : -uy;
-      const by = baseSweep ? -ux : ux;
+      const baseBx = baseSweep ? uy : -uy;
+      const baseBy = baseSweep ? -ux : ux;
       let prevEnd = 0;
       for (let m = 0; m < list.length; m++) {
         const { h, at } = list[m];
@@ -483,31 +555,61 @@ export function routeParts(
         if (maxR < 3.5) continue;
         const hr = maxR >= HOP_R ? HOP_R : Math.round(maxR * 10) / 10;
         let sweep = baseSweep;
+        let bx = baseBx;
+        let by = baseBy;
         if (avoid.length) {
           const d1 = clearance(h.x + bx * hr, h.y + by * hr);
           const d0 = clearance(h.x - bx * hr, h.y - by * hr);
-          if (d1 < 11 && d0 > d1 + 4) sweep = 1 - baseSweep;
+          if (d1 < 11 && d0 > d1 + 4) {
+            sweep = 1 - baseSweep;
+            bx = -bx;
+            by = -by;
+          }
         }
-        const a0x = n(h.x - ux * hr);
-        const a0y = n(h.y - uy * hr);
-        const a1x = n(h.x + ux * hr);
-        const a1y = n(h.y + uy * hr);
-        const arc = `A${hr},${hr} 0 0 ${sweep} ${a1x},${a1y}`;
-        d += ` L${a0x},${a0y} ${arc}`;
-        hopArcD += `${hopArcD ? ' ' : ''}M${a0x},${a0y} ${arc}`;
-        const leadIn = Math.min(2, Math.max(0, at - hr - prevEnd));
-        const leadOut = Math.min(2, Math.max(0, nextMid - (at + hr)));
-        const p0x = n(h.x - ux * (hr + leadIn));
-        const p0y = n(h.y - uy * (hr + leadIn));
-        const p1x = n(h.x + ux * (hr + leadOut));
-        const p1y = n(h.y + uy * (hr + leadOut));
-        hopD += `${hopD ? ' ' : ''}M${p0x},${p0y}${leadIn > 0.1 ? ` L${a0x},${a0y}` : ''} ${arc}${leadOut > 0.1 ? ` L${p1x},${p1y}` : ''}`;
-        prevEnd = at + hr;
+        if (smooth) {
+          // Silliq C1-uzluksiz kubik Bezye kabel yoyi (keskin 90° burchaksiz).
+          const maxSpan = Math.min(hr * 1.65, at - prevEnd, len - at, nextMid - at);
+          const span = Math.max(hr, Math.round(maxSpan * 10) / 10);
+          const lift = Math.round(hr * 1.12 * 10) / 10;
+          const a0x = n(h.x - ux * span);
+          const a0y = n(h.y - uy * span);
+          const a1x = n(h.x + ux * span);
+          const a1y = n(h.y + uy * span);
+          const mx = n(h.x + bx * lift);
+          const my = n(h.y + by * lift);
+          const c1 = span * 0.48;
+          const c2 = span * 0.42;
+          const curve =
+            `C${n(a0x + ux * c1)},${n(a0y + uy * c1)} ${n(mx - ux * c2)},${n(my - uy * c2)} ${mx},${my} ` +
+            `C${n(mx + ux * c2)},${n(my + uy * c2)} ${n(a1x - ux * c1)},${n(a1y - uy * c1)} ${a1x},${a1y}`;
+          d += ` L${a0x},${a0y} ${curve}`;
+          hopArcD += `${hopArcD ? ' ' : ''}M${a0x},${a0y} ${curve}`;
+          hopD += `${hopD ? ' ' : ''}M${a0x},${a0y} ${curve}`;
+          hopCaps.push({ x: n((h.x + mx) / 2), y: n((h.y + my) / 2), rx: n(span * 0.85), deg });
+          prevEnd = at + span;
+        } else {
+          const a0x = n(h.x - ux * hr);
+          const a0y = n(h.y - uy * hr);
+          const a1x = n(h.x + ux * hr);
+          const a1y = n(h.y + uy * hr);
+          const arc = `A${hr},${hr} 0 0 ${sweep} ${a1x},${a1y}`;
+          d += ` L${a0x},${a0y} ${arc}`;
+          hopArcD += `${hopArcD ? ' ' : ''}M${a0x},${a0y} ${arc}`;
+          const leadIn = Math.min(2, Math.max(0, at - hr - prevEnd));
+          const leadOut = Math.min(2, Math.max(0, nextMid - (at + hr)));
+          const p0x = n(h.x - ux * (hr + leadIn));
+          const p0y = n(h.y - uy * (hr + leadIn));
+          const p1x = n(h.x + ux * (hr + leadOut));
+          const p1y = n(h.y + uy * (hr + leadOut));
+          hopD += `${hopD ? ' ' : ''}M${p0x},${p0y}${leadIn > 0.1 ? ` L${a0x},${a0y}` : ''} ${arc}${leadOut > 0.1 ? ` L${p1x},${p1y}` : ''}`;
+          hopCaps.push({ x: n(h.x), y: n(h.y), rx: n(hr * 1.1), deg });
+          prevEnd = at + hr;
+        }
       }
     }
     d += ` L${n(e.x)},${n(e.y)}`;
   }
-  return { d, hopD, hopArcD };
+  return { d, hopD, hopArcD, hopCaps };
 }
 
 /** Yo'l chizig'i (to'liq SVG path d). */

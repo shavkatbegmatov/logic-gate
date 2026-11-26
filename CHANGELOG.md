@@ -5,6 +5,10 @@ O'yinchilar uchun sodda tilda. O'yinning o'zida: Sozlamalar → «Yangiliklar».
 
 Versiya raqami: yangi imkoniyat — o'rta raqam (2.1.0), tuzatish — oxirgi (2.0.1), katta o'zgarish — birinchi (3.0.0).
 
+## 2.34.5 — 2026-11-26
+
+- 2D Real ko'prik yoylari keskin burchaksiz silliq C1 Bezye kabel shaklida va topologik tartibda bitta uzluksiz sim sifatida chiziladigan bo'ldi — ulanish choki butunlay yo'qoldi, ostiga esa yumshoq 3D soya tushadi.
+
 ## 2.34.4 — 2026-11-26
 
 - 2D Real va Sxema rejimlarida sim ko'prikchalari (yoy va SMD 000 rezistorlar) chizilish tartibidan qat'i nazar endi doim kesishgan sim ustidan o'tadi.

@@ -36,6 +36,16 @@ export function headline(seen: string | null, list: Release[] = CHANGELOG): Rele
 
 export const CHANGELOG: Release[] = [
   {
+    version: '2.34.5',
+    date: '2026-11-26',
+    uz: [
+      "2D Real ko'prik yoylari keskin burchaksiz silliq C1 Bezye kabel shaklida va topologik tartibda bitta uzluksiz sim sifatida chiziladigan bo'ldi — ulanish choki butunlay yo'qoldi, ostiga esa yumshoq 3D soya tushadi.",
+    ],
+    ru: [
+      'В режиме 2D Real дуги перемычек теперь рисуются как плавная непрерывная кривая Безье в топологическом порядке проводов — без видимых стыков, с мягкой рассеянной тенью под проводом.',
+    ],
+  },
+  {
     version: '2.34.4',
     date: '2026-11-26',
     uz: [

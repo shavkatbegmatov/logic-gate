@@ -213,6 +213,11 @@ describe('simlarni birgalikda yo\'naltirish', () => {
     const away = routeParts(line, [[{ x: 50, y: 20 }]], undefined, 10, [{ x: 50, y: 8 }]);
     expect(up.hopArcD).toContain('0 0 1');
     expect(away.hopArcD).toContain('0 0 0');
+    // 2D Real silliq C1 Bezye ko'prik yoyi hamda topologik chizish tartibi (ko'prikli sim keyin chiziladi).
+    const smooth = routeParts(line, [[{ x: 50, y: 20 }]], undefined, 10, [], true);
+    expect(smooth.d).toContain(' C');
+    expect(smooth.hopCaps).toHaveLength(1);
+    expect(routed.order.indexOf(hopWire)).toBeGreaterThan(routed.order.indexOf(plainWire));
   });
 });
 

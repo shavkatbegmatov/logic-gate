@@ -300,13 +300,16 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
   const tags: ComponentChildren[] = [];
   const bridgeOverpasses: ComponentChildren[] = [];
   const dotPts = b.routed.dots.map((d) => d.at);
-  const wireEls = b.wires.map((w, i) => {
+  // Topologik tartib (b.routed.order): ko'prikli sim kesishgan simidan keyin bitta uzluksiz chiziq bo'lib chiziladi —
+  // hech qanday chok, qirqim yoki ikki qavatli soya izi qolmaydi.
+  const wireEls = b.routed.order.map((i) => {
+    const w = b.wires[i];
     const route = b.routed.routes[i];
     // Shinaning qolgan bitlari — boshi bilan bitta qalin sim (lenta kabel).
-    if (!route || b.bund.rep[i] !== i) return null;
-    // PCB rejimida kesishish ustiga SMD 000 ko'prik qo'yiladi; boshqa uslublarda — ko'tarilgan yoy.
+    if (!w || !route || b.bund.rep[i] !== i) return null;
+    // PCB rejimida kesishish ustiga SMD 000 ko'prik qo'yiladi; boshqa uslublarda — silliq C1 Bezye kabel yoyi.
     const hops = style === 'pcb' ? [] : b.routed.hops[i];
-    const { d, hopD, hopArcD } = routeParts(route, hops, b.sharp, 10, dotPts);
+    const { d, hopCaps } = routeParts(route, hops, b.sharp, 10, dotPts, true);
     const live = b.reached(w.from, 1);
     const bus = b.busWireValue(i);
     const on = live && (bus === undefined ? b.values.get(w.from) === 1 : !!bus);
@@ -354,23 +357,28 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
           );
         }
       });
-    } else if (hopD) {
-      // Ko'prik yoylari hamma simlardan ustda chiziladi — chizilish tartibidan qat'i nazar ko'prik kesishgan sim ustidan o'tadi.
-      bridgeOverpasses.push(
-        <g key={`hop-${w.from}>${w.to}`} class={`${wireCls} wire-overpass`} pointer-events="none">
-          <path class="real-hop-shadow" d={hopArcD} transform="translate(1.5,2.8)" />
-          <path class="real-hop-rim" d={hopArcD} />
-          <path class="real-wire-base" d={hopD} />
-          {on && <path class="wire-glow" d={hopD} />}
-          <path
-            class="wire-line"
-            d={hopD}
-            style={!on && !selected && offStroke ? { stroke: offStroke, opacity: 1 } : undefined}
-          />
-          <path class="real-wire-spec" d={hopD} />
-          {on && !selected && <path class="real-wire-pulse" d={hopD} />}
-        </g>,
-      );
+    } else if (b.routed.backHops[i]?.some((s) => s.length)) {
+      // Faqat kam uchraydigan o'zaro siklik kesishishda — siklga tushgan yagona yoy ustki qatlamda chiziladi.
+      const back = routeParts(route, b.routed.backHops[i], b.sharp, 10, dotPts, true);
+      if (back.hopD) {
+        bridgeOverpasses.push(
+          <g key={`hop-${w.from}>${w.to}`} class={`${wireCls} wire-overpass`} pointer-events="none">
+            {back.hopCaps.map((c, ci) => (
+              <ellipse
+                key={`bao-${ci}`}
+                cx={c.x + 1.2}
+                cy={c.y + 1.8}
+                rx={c.rx}
+                ry={5.6}
+                transform={`rotate(${c.deg} ${c.x + 1.2} ${c.y + 1.8})`}
+                fill="url(#r-hop-ao)"
+              />
+            ))}
+            <path class="wire-line" d={back.hopD} style={!on && !selected && offStroke ? { stroke: offStroke } : undefined} />
+            <path class="real-wire-spec" d={back.hopD} />
+          </g>,
+        );
+      }
     }
     return (
       <g
@@ -380,12 +388,25 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
         data-index={i}
       >
         <path class="wire-hit" d={d} />
+        {/* Ko'prik ostidagi yumshoq radial soya — pastki simga choksiz 3D balandlik beradi */}
+        {hopCaps.map((c, ci) => (
+          <ellipse
+            key={`ao-${ci}`}
+            cx={c.x + 1.2}
+            cy={c.y + 1.8}
+            rx={c.rx}
+            ry={5.6}
+            transform={`rotate(${c.deg} ${c.x + 1.2} ${c.y + 1.8})`}
+            fill="url(#r-hop-ao)"
+            pointer-events="none"
+          />
+        ))}
         <path class="real-wire-base" d={d} />
         {on && <path class="wire-glow" d={d} />}
         <path
           class="wire-line"
           d={d}
-          style={!on && !selected && offStroke ? { stroke: offStroke, opacity: 0.9 } : undefined}
+          style={!on && !selected && offStroke ? { stroke: offStroke } : undefined}
         />
         <path class="real-wire-spec" d={d} />
         {on && !selected && <path class="real-wire-pulse" d={d} />}
@@ -527,6 +548,13 @@ export function BoardReal2D({ editor, expected, topInset = 0 }: Props) {
             <stop offset="50%" style={{ stopColor: 'var(--gate-fill)', stopOpacity: 0.94 }} />
             <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 1 }} />
           </linearGradient>
+
+          {/* Ko'prik ostidagi choksiz sochilgan tushma soya (pastki sim ustiga yumshoq 3D soya tashlaydi) */}
+          <radialGradient id="r-hop-ao" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.44 }} />
+            <stop offset="45%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0.18 }} />
+            <stop offset="100%" style={{ stopColor: 'var(--knob-ink)', stopOpacity: 0 }} />
+          </radialGradient>
 
           {/* Plata sirti teksturasi (FR-4 via teshiklar, Samarqand girih, maket uyachalari, ESD, Sci-Fi) */}
           <pattern id="real-grid" width={24} height={24} patternUnits="userSpaceOnUse">

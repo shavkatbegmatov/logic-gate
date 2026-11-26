@@ -3425,41 +3425,14 @@ p.join-or {
 .wire-hop-gap {
   fill: none;
   stroke: var(--board);
-  stroke-width: calc(var(--trace-w) + 4px);
+  stroke-width: calc(var(--trace-w) + 3.6px);
   stroke-linecap: butt;
   stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .wire.bus .wire-hop-gap {
   stroke-width: calc(var(--trace-w) * 2.2 + 4px);
-}
-
-.real-hop-shadow {
-  fill: none;
-  stroke: var(--knob-ink);
-  stroke-width: calc(var(--trace-w) + 3.2px);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.42;
-  pointer-events: none;
-}
-
-.real-hop-rim {
-  fill: none;
-  stroke: var(--knob-ink);
-  stroke-width: calc(var(--trace-w) + 2.6px);
-  stroke-linecap: butt;
-  stroke-linejoin: round;
-  opacity: 0.46;
-  pointer-events: none;
-}
-
-.wire.bus .real-hop-shadow {
-  stroke-width: calc(var(--trace-w) * 2.2 + 4px);
-}
-
-.wire.bus .real-hop-rim {
-  stroke-width: calc(var(--trace-w) * 2.2 + 3px);
 }
 
 .real-wire-spec {

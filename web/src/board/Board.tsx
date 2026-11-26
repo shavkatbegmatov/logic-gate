@@ -125,11 +125,12 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
   const tags: ComponentChildren[] = [];
   const hopOverpasses: ComponentChildren[] = [];
   const dotPts = b.routed.dots.map((d) => d.at);
-  const wireEls = b.wires.map((w, i) => {
+  const wireEls = b.routed.order.map((i) => {
+    const w = b.wires[i];
     const route = b.routed.routes[i];
     // Shinaning qolgan bitlari — boshi bilan bitta qalin sim.
-    if (!route || b.bund.rep[i] !== i) return null;
-    const { d, hopD, hopArcD } = routeParts(route, b.routed.hops[i], b.sharp, cut, dotPts);
+    if (!w || !route || b.bund.rep[i] !== i) return null;
+    const { d, hopArcD } = routeParts(route, b.routed.hops[i], b.sharp, cut, dotPts);
     const live = b.reached(w.from, 1);
     const bus = b.busWireValue(i);
     const on = live && (bus === undefined ? b.values.get(w.from) === 1 : !!bus);
@@ -151,15 +152,16 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
       deleteAt = { x: m.x, y: m.y + (b.vertical ? off : -off) };
     }
     const wireCls = `wire${bus !== undefined ? ' bus' : ''}${on ? ' on' : ''}${selected ? ' sel' : ''}${live ? '' : ' idle'}${front ? ' front' : ''}`;
-    if (hopD) {
-      // Ko'prikcha yoylari barcha simlardan ustda chiziladi — pastki sim yoyni kesib o'tmaydi.
-      hopOverpasses.push(
-        <g key={`hop-${w.from}>${w.to}`} class={`${wireCls} wire-overpass`} pointer-events="none">
-          <path class="wire-hop-gap" d={hopArcD} />
-          {on && <path class="wire-glow" d={hopD} />}
-          <path class="wire-line" d={hopD} />
-        </g>,
-      );
+    if (b.routed.backHops[i]?.some((s) => s.length)) {
+      const back = routeParts(route, b.routed.backHops[i], b.sharp, cut, dotPts);
+      if (back.hopD) {
+        hopOverpasses.push(
+          <g key={`hop-${w.from}>${w.to}`} class={`${wireCls} wire-overpass`} pointer-events="none">
+            <path class="wire-hop-gap" d={back.hopArcD} />
+            <path class="wire-line" d={back.hopD} />
+          </g>,
+        );
+      }
     }
     return (
       <g
@@ -169,6 +171,7 @@ function BoardSchematic({ editor, expected, topInset = 0 }: BoardProps) {
         data-index={i}
       >
         <path class="wire-hit" d={d} />
+        {hopArcD && <path class="wire-hop-gap" d={hopArcD} />}
         {on && <path class="wire-glow" d={d} />}
         <path class="wire-line" d={d} />
       </g>
